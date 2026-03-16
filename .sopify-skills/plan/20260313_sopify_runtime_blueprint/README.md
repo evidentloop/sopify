@@ -96,13 +96,13 @@ R0 需要补齐：
 - 仓库内新增 `scripts/sopify_runtime.py` 作为默认 repo-local 原始输入入口
 - `scripts/go_plan_runtime.py` 退回为 plan-only helper
 - `runtime/output.py` 已将 `RuntimeResult` 渲染为 Sopify 统一摘要
-- 本地验证已覆盖 plan / state / replay 落盘与重复执行目录冲突处理
-- README、AGENTS、design skill、蓝图任务单口径已对齐
+- `.gitignore` 已只忽略 runtime 本地产物，`tests/test_runtime.py` 不再被误忽略
+- 新增 `scripts/sync-runtime-assets.sh`，可把 runtime bundle 同步到目标仓库 `.sopify-runtime/`
+- 新增 `scripts/check-runtime-smoke.sh`，并已将 runtime unit test + smoke check 接入 CI
+- README、AGENTS、蓝图任务单口径已对齐
 
 当前仍未收口：
 
-- 面向安装分发的 runtime 资产自动同步
-- CI 与进仓测试纳入
 - `~compare` 的通用入口自动桥接
 - `~go exec` / `workflow-learning` 的独立 runtime helper
 

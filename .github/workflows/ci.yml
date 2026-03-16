@@ -22,3 +22,20 @@ jobs:
 
       - name: Check version consistency
         run: bash scripts/check-version-consistency.sh
+
+  runtime-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run runtime unit tests
+        run: python3 -m unittest tests/test_runtime.py
+
+      - name: Run runtime smoke check
+        run: bash scripts/check-runtime-smoke.sh

@@ -71,11 +71,12 @@ cp -r Codex/Skills/CN/* ~/.codex/
 Notes:
 
 - The copy commands above sync skill docs, templates, and sub-skill folders only; they do not automatically install the repo-root `runtime/` and `scripts/` into another project
+- To sync runtime assets into another repository, run `bash scripts/sync-runtime-assets.sh /path/to/project`; this creates a self-contained `.sopify-runtime/` bundle in the target repo by default
 - This repository currently closes two repo-local runtime entry points:
   - `scripts/sopify_runtime.py`: the default raw-input entry, which hands input directly to the router
   - `scripts/go_plan_runtime.py`: the plan-only helper, which forces the `~go plan` path
 - `scripts/model_compare_runtime.py` is the runtime implementation for `~compare`, not the default generic CLI entry
-- If you want to reuse the runtime assets, keep this repository's `runtime/` and `scripts/` together instead of copying only `Codex/Skills/*` or `Claude/Skills/*`
+- For secondary integration, do not copy only `Codex/Skills/*` or `Claude/Skills/*`; sync the `.sopify-runtime/` bundle as well
 
 ### Verify Installation
 
@@ -85,6 +86,28 @@ Show skills list
 ```
 
 **Expected:** Agent lists 7 skills (analyze, design, develop, kb, templates, model-compare, workflow-learning)
+
+### Vendored Runtime Bundle
+
+If you want to reuse this runtime directly inside another repository:
+
+```bash
+# 1. Sync the runtime bundle from this repository
+bash scripts/sync-runtime-assets.sh /path/to/project
+
+# 2. Validate the raw-input entry in the target repository
+python3 /path/to/project/.sopify-runtime/scripts/sopify_runtime.py --workspace-root /path/to/project "Refactor the database layer"
+
+# 3. Optional: run the portable tests and smoke check
+python3 -m unittest /path/to/project/.sopify-runtime/tests/test_runtime.py
+bash /path/to/project/.sopify-runtime/scripts/check-runtime-smoke.sh
+```
+
+Notes:
+
+- `.sopify-runtime/` keeps a self-contained `runtime/` + `scripts/` + `tests/` layout
+- the default vendored entry is `.sopify-runtime/scripts/sopify_runtime.py`
+- the vendored plan-only helper is `.sopify-runtime/scripts/go_plan_runtime.py`
 
 ### First Use
 
@@ -125,6 +148,9 @@ python3 scripts/go_plan_runtime.py "Refactor the database layer"
 
 # Validate against another workspace
 python3 scripts/sopify_runtime.py --workspace-root /path/to/project "Refactor the database layer"
+
+# Self-check the current runtime bundle
+bash scripts/check-runtime-smoke.sh
 ```
 
 Expected result:
@@ -139,9 +165,11 @@ Current boundary:
 - closed repo-local runtime helpers:
   - `scripts/sopify_runtime.py`: default raw-input entry
   - `scripts/go_plan_runtime.py`: plan-only helper
+- `scripts/sync-runtime-assets.sh` can now sync the runtime bundle into `.sopify-runtime/` in another repository
+- the `.sopify-runtime/` bundle already includes portable `tests/test_runtime.py` and `scripts/check-runtime-smoke.sh`
 - the generic entry still does not auto-bridge `~compare` or `workflow-learning`
 - no standalone develop bridge is provided yet for `~go exec`
-- the current shape is better suited for self-use and secondary integration than for a full installer flow
+- the current shape now fits self-use and secondary integration, but it is still not a full host-side installer flow
 
 ---
 
@@ -260,7 +288,9 @@ Note: intent recognition for replay/review/why-explanations remains available in
 Notes:
 
 - The default repo-local runtime entry is `scripts/sopify_runtime.py`, which passes raw input to the router
+- When vendored into another repository, the default entry becomes `.sopify-runtime/scripts/sopify_runtime.py`
 - `scripts/go_plan_runtime.py` is reserved for the plan-only slice
+- The vendored plan-only helper is `.sopify-runtime/scripts/go_plan_runtime.py`
 - `~compare` still relies on a host-side dedicated bridge, rather than the generic entry
 
 ---
