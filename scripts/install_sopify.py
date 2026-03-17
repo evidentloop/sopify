@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install Sopify host prompts and runtime bundle into a workspace."""
+"""Install Sopify host prompts and the global payload, then optionally prewarm a workspace."""
 
 from __future__ import annotations
 
@@ -13,9 +13,9 @@ if str(REPO_ROOT) not in sys.path:
 
 from installer.hosts import get_host_adapter
 from installer.hosts.base import install_host_assets
-from installer.models import InstallError, InstallResult, parse_install_target
-from installer.runtime_bundle import sync_runtime_bundle
-from installer.validate import run_bundle_smoke_check, validate_bundle_install, validate_host_install
+from installer.models import BootstrapResult, InstallError, InstallResult, parse_install_target
+from installer.payload import install_global_payload, run_workspace_bootstrap
+from installer.validate import run_bundle_smoke_check, validate_bundle_install, validate_host_install, validate_payload_install
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -27,41 +27,60 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--workspace",
-        default=".",
-        help="Target workspace root. Defaults to the current directory.",
+        default=None,
+        help="Optional workspace root to prewarm with `.sopify-runtime/`. If omitted, only the host prompt layer and global payload are installed.",
     )
     return parser
 
 
-def run_install(*, target_value: str, workspace_value: str, repo_root: Path, home_root: Path | None = None) -> InstallResult:
+def run_install(*, target_value: str, workspace_value: str | None, repo_root: Path, home_root: Path | None = None) -> InstallResult:
     target = parse_install_target(target_value)
-    workspace_root = Path(workspace_value).expanduser().resolve()
-    if not workspace_root.exists():
+    workspace_root = Path(workspace_value).expanduser().resolve() if workspace_value is not None else None
+    if workspace_root is not None and not workspace_root.exists():
         raise InstallError(f"Workspace does not exist: {workspace_root}")
-    if not workspace_root.is_dir():
+    if workspace_root is not None and not workspace_root.is_dir():
         raise InstallError(f"Workspace is not a directory: {workspace_root}")
 
     resolved_home = (home_root or Path.home()).expanduser().resolve()
     adapter = get_host_adapter(target.host)
 
-    host_paths = install_host_assets(
+    host_install = install_host_assets(
         adapter,
         repo_root=repo_root,
         home_root=resolved_home,
         language_directory=target.language_directory,
     )
-    bundle_root = sync_runtime_bundle(repo_root, workspace_root)
-    bundle_paths = validate_bundle_install(bundle_root)
+    payload_install = install_global_payload(adapter, repo_root=repo_root, home_root=resolved_home)
     verified_host_paths = validate_host_install(adapter, home_root=resolved_home)
-    smoke_output = run_bundle_smoke_check(bundle_root)
+    verified_payload_paths = validate_payload_install(payload_install.root)
+    smoke_output = run_bundle_smoke_check(payload_install.root / "bundle")
 
-    verified_paths = tuple(dict.fromkeys((*host_paths, *verified_host_paths, *bundle_paths)))
+    workspace_bootstrap: BootstrapResult | None = None
+    bundle_root: Path | None = None
+    if workspace_root is not None:
+        workspace_bootstrap = run_workspace_bootstrap(payload_install.root, workspace_root)
+        bundle_root = workspace_bootstrap.bundle_root
+        validate_bundle_install(bundle_root)
+
     return InstallResult(
         target=target,
         workspace_root=workspace_root,
         host_root=adapter.destination_root(resolved_home),
+        payload_root=payload_install.root,
         bundle_root=bundle_root,
-        verified_paths=verified_paths,
+        host_install=host_install.__class__(
+            action=host_install.action,
+            root=host_install.root,
+            version=host_install.version,
+            paths=tuple(dict.fromkeys((*host_install.paths, *verified_host_paths))),
+        ),
+        payload_install=payload_install.__class__(
+            action=payload_install.action,
+            root=payload_install.root,
+            version=payload_install.version,
+            paths=tuple(dict.fromkeys((*payload_install.paths, *verified_payload_paths))),
+        ),
+        workspace_bootstrap=workspace_bootstrap,
         smoke_output=smoke_output,
     )
 
@@ -70,13 +89,41 @@ def render_result(result: InstallResult) -> str:
     lines = [
         "Installed Sopify successfully:",
         f"  target: {result.target.value}",
-        f"  workspace: {result.workspace_root}",
         f"  host root: {result.host_root}",
-        f"  bundle root: {result.bundle_root}",
+        f"  payload root: {result.payload_root}",
+        f"  workspace: {result.workspace_root if result.workspace_root is not None else '(not requested)'}",
+        f"  bundle root: {result.bundle_root if result.bundle_root is not None else '(not requested)'}",
         "",
-        "Verified:",
+        "Host:",
+        f"  action: {result.host_install.action}",
+        f"  version: {result.host_install.version or 'unknown'}",
     ]
-    lines.extend(f"  - {path}" for path in result.verified_paths)
+    lines.extend(f"  - {path}" for path in result.host_install.paths)
+    lines.extend(
+        [
+            "",
+            "Payload:",
+            f"  action: {result.payload_install.action}",
+            f"  version: {result.payload_install.version or 'unknown'}",
+        ]
+    )
+    lines.extend(f"  - {path}" for path in result.payload_install.paths)
+    lines.append("")
+    lines.append("Workspace:")
+    if result.workspace_bootstrap is None:
+        lines.append("  action: skipped")
+        lines.append("  reason: workspace bootstrap not requested")
+    else:
+        lines.extend(
+            [
+                f"  action: {result.workspace_bootstrap.action}",
+                f"  state: {result.workspace_bootstrap.state}",
+                f"  reason: {result.workspace_bootstrap.reason_code}",
+                f"  message: {result.workspace_bootstrap.message}",
+            ]
+        )
+        if result.workspace_bootstrap.bundle_root != Path("."):
+            lines.append(f"  - {result.workspace_bootstrap.bundle_root}")
     lines.extend(
         [
             "",
@@ -84,9 +131,12 @@ def render_result(result: InstallResult) -> str:
             f"  {result.smoke_output}",
             "",
             "Next:",
-            "  Reopen the target workspace in the selected host and use Sopify commands or plain requests.",
         ]
     )
+    if result.workspace_root is None:
+        lines.append("  Trigger Sopify inside any project workspace to bootstrap `.sopify-runtime/` on demand.")
+    else:
+        lines.append("  Reopen the workspace in the selected host and use Sopify commands or plain requests.")
     return "\n".join(lines)
 
 
@@ -110,4 +160,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

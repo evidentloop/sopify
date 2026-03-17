@@ -51,10 +51,10 @@
 **一键接入（推荐）：**
 
 ```bash
-# 当前目录作为目标仓库
+# 仅做全局安装（推荐首次在本仓库根目录执行）
 bash scripts/install-sopify.sh --target codex:zh-CN
 
-# 指定目标仓库
+# 显式预热某个目标仓库（可选）
 bash scripts/install-sopify.sh --target claude:en-US --workspace /path/to/project
 ```
 
@@ -67,8 +67,9 @@ bash scripts/install-sopify.sh --target claude:en-US --workspace /path/to/projec
 
 说明：
 
-- installer 会同时安装宿主提示层，并把 `.sopify-runtime/` bundle 同步到目标仓库
-- `--workspace` 可省略，默认使用当前目录
+- installer 会安装宿主提示层，并在宿主根目录下安装全局 Sopify payload
+- 若传入 `--workspace`，installer 会额外为该仓库预热 `.sopify-runtime/`
+- 若不传 `--workspace`，后续只要在任意项目仓库里触发 Sopify，宿主会按需自动 bootstrap 当前仓库的 `.sopify-runtime/`
 - 该命令适合作为最终用户的一键接入入口
 
 ### 验证安装
@@ -98,6 +99,9 @@ bash /path/to/project/.sopify-runtime/scripts/check-runtime-smoke.sh
 
 说明：
 
+- 选定宿主的全局 payload 默认位于 `~/.codex/sopify/` 或 `~/.claude/sopify/`
+- 全局 payload 采用 `payload-manifest.json + bundle/ + helpers/` 结构
+- 宿主在项目仓库内识别到 Sopify 触发后，会先读取全局 payload，再按需为当前仓库补齐 `.sopify-runtime/`
 - `.sopify-runtime/` 保持 `runtime/` + `scripts/` + `tests/` 的自包含布局
 - `.sopify-runtime/manifest.json` 是 bundle 的机器契约；宿主接入应优先读取 manifest，再回退到默认脚本路径
 - vendored 入口默认是 `.sopify-runtime/scripts/sopify_runtime.py`
@@ -108,6 +112,9 @@ bash /path/to/project/.sopify-runtime/scripts/check-runtime-smoke.sh
 ### 首次使用
 
 ```bash
+# 进入任意项目仓库后，直接触发 Sopify；
+# 若当前仓库尚未准备 `.sopify-runtime/`，宿主会先自动补齐再继续执行。
+
 # 1. 简单任务 → 直接执行
 "修复 src/utils.ts 第 42 行的 typo"
 

@@ -16,6 +16,10 @@ This changelog is maintained manually (not auto-generated).
 
 ### Added
 
+- Host-local Sopify payload layout under `~/.codex/sopify/` / `~/.claude/sopify/`, including:
+  - `payload-manifest.json`
+  - `bundle/`
+  - `helpers/bootstrap_workspace.py`
 - Minimal KB bootstrap in `runtime/kb.py`, creating `project.md`, `wiki/overview.md`, `user/preferences.md`, and `history/index.md` on first runtime execution.
 - New bundle manifest contract in `runtime/manifest.py`, written to `.sopify-runtime/manifest.json` during bundle sync.
 - New runtime handoff contract in `runtime/handoff.py`, written to `.sopify-skills/state/current_handoff.json` for non-terminal routes.
@@ -34,6 +38,16 @@ This changelog is maintained manually (not auto-generated).
 
 ### Changed
 
+- Installer semantics now split into:
+  - host prompt-layer install
+  - host-local payload install
+  - optional current-workspace prewarm through the same bootstrap helper used later by the host
+- `--workspace` is now optional prewarm input instead of an implicit current-directory sync.
+- Added workspace bootstrap contract:
+  - when Sopify is triggered inside a project workspace and `.sopify-runtime/manifest.json` is missing or incompatible, the host should call the installed bootstrap helper first
+  - after bootstrap succeeds, execution continues through the repo-local bundle manifest
+- Added no-silent-downgrade behavior for workspace bundle bootstrap:
+  - if a workspace bundle is newer than the installed global payload, bootstrap skips instead of overwriting it
 - Updated bundle sync, installer validation, and smoke checks to treat `.sopify-runtime/manifest.json` as a required control-plane artifact.
 - Updated runtime output to render `Next:` from the structured handoff contract before falling back to route-only copy.
 - Refactored runtime builtin-skill discovery to a catalog-first model via `runtime/builtin_catalog.py`, so vendored bundles no longer depend on scanning `Codex/Skills` or `Claude/Skills` trees.

@@ -20,16 +20,23 @@ def validate_host_install(adapter: HostAdapter, *, home_root: Path) -> tuple[Pat
 
 def validate_bundle_install(bundle_root: Path) -> tuple[Path, ...]:
     """Ensure the synced bundle contains the minimum required assets."""
-    expected_paths = (
-        bundle_root / "manifest.json",
-        bundle_root / "runtime" / "__init__.py",
-        bundle_root / "scripts" / "sopify_runtime.py",
-        bundle_root / "scripts" / "check-runtime-smoke.sh",
-        bundle_root / "tests" / "test_runtime.py",
-    )
+    expected_paths = expected_bundle_paths(bundle_root)
     missing = [path for path in expected_paths if not path.exists()]
     if missing:
         raise InstallError(f"Bundle verification failed: {missing[0]}")
+    return expected_paths
+
+
+def validate_payload_install(payload_root: Path) -> tuple[Path, ...]:
+    """Ensure the host-local Sopify payload contains its manifest, helper, and bundle template."""
+    expected_paths = (
+        payload_root / "payload-manifest.json",
+        payload_root / "helpers" / "bootstrap_workspace.py",
+        *expected_bundle_paths(payload_root / "bundle"),
+    )
+    missing = [path for path in expected_paths if not path.exists()]
+    if missing:
+        raise InstallError(f"Payload verification failed: {missing[0]}")
     return expected_paths
 
 
@@ -49,3 +56,14 @@ def run_bundle_smoke_check(bundle_root: Path) -> str:
         details = completed.stderr.strip() or completed.stdout.strip() or "unknown smoke failure"
         raise InstallError(f"Bundle smoke check failed: {details}")
     return completed.stdout.strip()
+
+
+def expected_bundle_paths(bundle_root: Path) -> tuple[Path, ...]:
+    """Return the stable set of files every Sopify bundle must contain."""
+    return (
+        bundle_root / "manifest.json",
+        bundle_root / "runtime" / "__init__.py",
+        bundle_root / "scripts" / "sopify_runtime.py",
+        bundle_root / "scripts" / "check-runtime-smoke.sh",
+        bundle_root / "tests" / "test_runtime.py",
+    )

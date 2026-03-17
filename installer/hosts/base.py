@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import re
 import shutil
 
-from installer.models import InstallError
+from installer.models import InstallError, InstallPhaseResult
 
 _IGNORE_PATTERNS = shutil.ignore_patterns(".DS_Store", "Thumbs.db", "__pycache__")
+_SOPIFY_VERSION_RE = re.compile(r"^<!--\s*SOPIFY_VERSION:\s*(?P<version>.+?)\s*-->$", re.MULTILINE)
 
 
 @dataclass(frozen=True)
@@ -26,12 +28,23 @@ class HostAdapter:
     def destination_root(self, home_root: Path) -> Path:
         return home_root / self.destination_dirname
 
+    def payload_root(self, home_root: Path) -> Path:
+        return self.destination_root(home_root) / "sopify"
+
     def expected_paths(self, home_root: Path) -> tuple[Path, ...]:
         root = self.destination_root(home_root)
         return (
             root / self.header_filename,
             root / "skills" / "sopify" / "analyze" / "SKILL.md",
             root / "skills" / "sopify" / "design" / "SKILL.md",
+        )
+
+    def expected_payload_paths(self, home_root: Path) -> tuple[Path, ...]:
+        payload_root = self.payload_root(home_root)
+        return (
+            payload_root / "payload-manifest.json",
+            payload_root / "bundle" / "manifest.json",
+            payload_root / "helpers" / "bootstrap_workspace.py",
         )
 
 
@@ -41,7 +54,7 @@ def install_host_assets(
     repo_root: Path,
     home_root: Path,
     language_directory: str,
-) -> tuple[Path, ...]:
+) -> InstallPhaseResult:
     """Install or update Sopify prompt-layer assets for one host."""
     source_root = adapter.source_root(repo_root, language_directory)
     header_source = source_root / adapter.header_filename
@@ -52,6 +65,19 @@ def install_host_assets(
         raise InstallError(f"Missing source skills directory: {skills_source}")
 
     destination_root = adapter.destination_root(home_root)
+    expected_paths = adapter.expected_paths(home_root)
+    source_version = read_sopify_version(header_source)
+    destination_header = destination_root / adapter.header_filename
+    destination_version = read_sopify_version(destination_header)
+    if source_version is not None and source_version == destination_version and all(path.exists() for path in expected_paths):
+        return InstallPhaseResult(
+            action="skipped",
+            root=destination_root,
+            version=source_version,
+            paths=expected_paths,
+        )
+
+    action = "updated" if destination_root.exists() else "installed"
     destination_root.mkdir(parents=True, exist_ok=True)
 
     header_destination = destination_root / adapter.header_filename
@@ -63,5 +89,19 @@ def install_host_assets(
     skills_destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(skills_source, skills_destination, ignore=_IGNORE_PATTERNS)
 
-    return adapter.expected_paths(home_root)
+    return InstallPhaseResult(
+        action=action,
+        root=destination_root,
+        version=source_version,
+        paths=adapter.expected_paths(home_root),
+    )
 
+
+def read_sopify_version(path: Path) -> str | None:
+    """Read the Sopify version header from a host prompt file when present."""
+    if not path.is_file():
+        return None
+    match = _SOPIFY_VERSION_RE.search(path.read_text(encoding="utf-8"))
+    if match is None:
+        return None
+    return match.group("version").strip()

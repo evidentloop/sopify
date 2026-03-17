@@ -134,6 +134,7 @@ Complex Task (full 3 phases):
 | `~compare` | Multi-model parallel comparison (includes session default model by default; falls back with reasons when usable model count is below 2) |
 
 Note: when the current repository provides `scripts/sopify_runtime.py`, raw input should prefer that default repo-local runtime entry; when the runtime is vendored into another repository, the host should read `.sopify-runtime/manifest.json` first to choose the entry, and only then fall back to `.sopify-runtime/scripts/sopify_runtime.py`; use the matching `go_plan_runtime.py` helper only when you explicitly want the plan-only path.
+Note: when Sopify is triggered inside a project workspace and the workspace does not yet have a compatible `.sopify-runtime/manifest.json`, the host should read `~/.codex/sopify/payload-manifest.json` and call `~/.codex/sopify/helpers/bootstrap_workspace.py --workspace-root <cwd>` first; once bootstrap succeeds, continue through the repo-local bundle manifest.
 Note: after runtime execution, if `.sopify-skills/state/current_handoff.json` exists, the host should prioritize its `required_host_action`, `recommended_skill_ids`, and `artifacts` to decide the next step; the rendered `Next:` line is only a human-facing summary, not the sole machine contract.
 
 **workflow-learning proactive capture policy:**
@@ -286,6 +287,8 @@ Semantic analysis routing:
 
 **Host Integration Contract:**
 - `Codex/Skills` is prompt-layer guidance only; it is not the machine contract for the vendored runtime.
+- `~/.codex/sopify/payload-manifest.json` is only the global preflight contract; it does not replace the workspace bundle manifest.
+- When a workspace is missing a compatible bundle, the host should call `~/.codex/sopify/helpers/bootstrap_workspace.py` before trying to route through vendored runtime entries.
 - For vendored runtime entry selection, treat `.sopify-runtime/manifest.json` as the source of truth.
 - For post-run continuation, treat `.sopify-skills/state/current_handoff.json` as the source of truth and fall back to the rendered `Next:` text only when the handoff file is missing.
 
@@ -417,11 +420,13 @@ scripts/sopify_runtime.py                    # default repo-local raw-input entr
 scripts/go_plan_runtime.py                   # helper for the plan-only slice
 .sopify-runtime/scripts/go_plan_runtime.py   # vendored helper for the plan-only slice
 scripts/model_compare_runtime.py             # runtime implementation for ~compare, not the default generic entry
+~/.codex/sopify/payload-manifest.json        # Codex global payload metadata used during workspace preflight
+~/.codex/sopify/helpers/bootstrap_workspace.py # Codex global helper used to bootstrap `.sopify-runtime/` into a workspace
 .sopify-runtime/manifest.json                # vendored bundle machine contract; hosts should read this first
 .sopify-skills/state/current_handoff.json    # structured handoff written by the runtime; hosts should read this first after execution
 ```
 
-Note: the default entry is `scripts/sopify_runtime.py`; when vendored, prefer `.sopify-runtime/manifest.json` to select the entry and fall back to `.sopify-runtime/scripts/sopify_runtime.py`; `go_plan_runtime.py` is only for plan-only; after execution the host should read `.sopify-skills/state/current_handoff.json` before trusting `Next:`; `~compare` still depends on a host-side dedicated bridge.
+Note: the default entry is `scripts/sopify_runtime.py`; when vendored, prefer `.sopify-runtime/manifest.json` to select the entry; if the workspace bundle is missing or incompatible, the host should preflight through `~/.codex/sopify/payload-manifest.json` and call `~/.codex/sopify/helpers/bootstrap_workspace.py` first; `go_plan_runtime.py` is only for plan-only; after execution the host should read `.sopify-skills/state/current_handoff.json` before trusting `Next:`; `~compare` still depends on a host-side dedicated bridge.
 
 **Configuration File:** `sopify.config.yaml` (project root)
 

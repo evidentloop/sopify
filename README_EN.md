@@ -51,10 +51,10 @@
 **One-command setup (recommended):**
 
 ```bash
-# Use the current directory as the target workspace
+# Install the host prompt layer and global payload only
 bash scripts/install-sopify.sh --target codex:zh-CN
 
-# Use an explicit workspace path
+# Optionally prewarm a specific workspace
 bash scripts/install-sopify.sh --target claude:en-US --workspace /path/to/project
 ```
 
@@ -67,8 +67,9 @@ Supported `target` values:
 
 Notes:
 
-- The installer sets up the selected host prompt layer and syncs the `.sopify-runtime/` bundle into the target workspace
-- `--workspace` is optional and defaults to the current directory
+- The installer sets up the selected host prompt layer and installs a host-local Sopify payload
+- When `--workspace` is provided, the installer also prewarms `.sopify-runtime/` in that workspace
+- When `--workspace` is omitted, Sopify bootstraps `.sopify-runtime/` on demand the first time it is triggered inside a project workspace
 - This is the recommended entry point for end users
 
 ### Verify Installation
@@ -98,6 +99,9 @@ bash /path/to/project/.sopify-runtime/scripts/check-runtime-smoke.sh
 
 Notes:
 
+- The selected host keeps a global payload under `~/.codex/sopify/` or `~/.claude/sopify/`
+- The global payload uses a `payload-manifest.json + bundle/ + helpers/` layout
+- When Sopify is triggered inside a project workspace, the host checks the global payload first and bootstraps `.sopify-runtime/` only when needed
 - `.sopify-runtime/` keeps a self-contained `runtime/` + `scripts/` + `tests/` layout
 - `.sopify-runtime/manifest.json` is the machine contract for the bundle; host integrations should read the manifest first and only fall back to fixed script paths if needed
 - the default vendored entry is `.sopify-runtime/scripts/sopify_runtime.py`
@@ -108,6 +112,9 @@ Notes:
 ### First Use
 
 ```bash
+# After the initial install, enter any project workspace and trigger Sopify directly.
+# If `.sopify-runtime/` is missing, the host bootstraps it first and then continues.
+
 # 1. Simple task → Direct execution
 "Fix the typo on line 42 in src/utils.ts"
 
