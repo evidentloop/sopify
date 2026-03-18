@@ -130,14 +130,18 @@ Complex Task (full 3 phases):
 |---------|-------------|
 | `~go` | Auto-detect and execute full workflow |
 | `~go plan` | Plan only, no execution |
-| `~go exec` | Execute existing plan |
+| `~go exec` | Advanced recovery/debug entry; use only when an active plan or recovery state already exists |
 | `~go finalize` | Close out the current metadata-managed plan |
 | `~compare` | Multi-model parallel comparison (includes session default model by default; falls back with reasons when usable model count is below 2) |
 
 Note: when the current repository provides `scripts/sopify_runtime.py`, raw input should prefer that default repo-local runtime entry; when the runtime is vendored into another repository, the host should read `.sopify-runtime/manifest.json` first to choose the entry, and only then fall back to `.sopify-runtime/scripts/sopify_runtime.py`; use the matching `go_plan_runtime.py` helper only when you explicitly want the plan-only path.
 Note: when Sopify is triggered inside a project workspace and the workspace does not yet have a compatible `.sopify-runtime/manifest.json`, the host should read `~/.claude/sopify/payload-manifest.json` and call `~/.claude/sopify/helpers/bootstrap_workspace.py --workspace-root <cwd>` first; once bootstrap succeeds, continue through the repo-local bundle manifest.
 Note: after runtime execution, if `.sopify-skills/state/current_handoff.json` exists, the host should prioritize its `required_host_action`, `recommended_skill_ids`, and `artifacts` to decide the next step; the rendered `Next:` line is only a human-facing summary, not the sole machine contract.
-Note: when `current_handoff.json.required_host_action == confirm_decision`, the host must also read `.sopify-skills/state/current_decision.json`, present the question/options/recommended_option_id to the user, and wait for confirmation before resuming the default runtime entry; do not materialize the formal plan or jump to `~go exec` before confirmation.
+Note: the standard path does not require users to remember `~go exec`; once a plan reaches `ready_for_execution`, the host should continue through `confirm_execute` plus natural-language confirmation.
+Note: if `current_handoff.json.artifacts.execution_gate` exists, the host must also read its `gate_status / blocking_reason / plan_completion / next_required_action` fields together with `.sopify-skills/state/current_run.json.stage` before deciding whether the plan is merely generated or has already reached `ready_for_execution`.
+Note: when `current_handoff.json.required_host_action == answer_questions`, the host must also read `.sopify-skills/state/current_clarification.json`, present the missing_facts/questions to the user, and wait for supplemental facts before resuming the default runtime entry; do not materialize the formal plan or jump to `~go exec` before the clarification is resolved.
+Note: when `current_handoff.json.required_host_action == confirm_decision`, the host must first read `current_handoff.json.artifacts.decision_checkpoint` and `decision_submission_state`; only fall back to `.sopify-skills/state/current_decision.json` when the handoff does not contain the full checkpoint. Present the question/options/recommended_option_id to the user and wait for confirmation before resuming the default runtime entry; do not materialize the formal plan or jump to `~go exec` before confirmation.
+Note: when `current_handoff.json.required_host_action == confirm_execute`, the host must also read `current_handoff.json.artifacts.execution_summary`, show at least `plan_path / summary / task_count / risk_level / key_risk / mitigation`, and wait for a natural-language confirmation such as `continue / next / start` (or explicit plan feedback) before resuming the default runtime entry; do not jump into develop or treat `~go exec` as a bypass before that confirmation is resolved.
 
 **workflow-learning proactive capture policy:**
 ```yaml
@@ -270,7 +274,7 @@ User Input
 Check command prefix (~go, ~go plan, ~go exec, ~go finalize, ~compare)
     ↓
 ├─ ~go finalize → Close out the active plan (refresh blueprint index, archive into history, clear active state)
-├─ ~go exec → Execute existing plan
+├─ ~go exec → Enter the advanced recovery/debug path (only when an active plan or recovery state already exists)
 ├─ ~go plan → Plan mode (Analysis → Design; prefer scripts/sopify_runtime.py or .sopify-runtime/scripts/sopify_runtime.py for raw input, and use the matching go_plan_runtime.py only for the plan-only slice)
 ├─ ~go → Full workflow mode
 ├─ ~compare → Model compare (wired to scripts/model_compare_runtime.py runtime)
@@ -297,17 +301,23 @@ Semantic analysis routing:
 | Full Development | >5 files or architectural changes | Full 3-phase workflow |
 
 **Host Integration Contract:**
-- `Claude/Skills` is prompt-layer guidance only; it is not the machine contract for the vendored runtime.
+- `Codex/Skills` is prompt-layer guidance only; it is not the machine contract for the vendored runtime.
 - `~/.claude/sopify/payload-manifest.json` is only the global preflight contract; it does not replace the workspace bundle manifest.
 - When a workspace is missing a compatible bundle, the host should call `~/.claude/sopify/helpers/bootstrap_workspace.py` before trying to route through vendored runtime entries.
 - For vendored runtime entry selection, treat `.sopify-runtime/manifest.json` as the source of truth.
 - For post-run continuation, treat `.sopify-skills/state/current_handoff.json` as the source of truth and fall back to the rendered `Next:` text only when the handoff file is missing.
+- If handoff `artifacts.execution_gate` exists, treat it together with `.sopify-skills/state/current_run.json.stage` as the sole execution-gate contract; do not infer plan readiness from the plan path or the rendered `Next:` text.
+- When `current_handoff.json.required_host_action == answer_questions`, treat `.sopify-skills/state/current_clarification.json` as the sole machine contract for the active missing-facts checkpoint.
+- The preferred clarification UX is to show `missing_facts` plus `questions[*]` and collect a natural-language supplement from the user; while clarification is pending, do not materialize the formal plan or jump to `~go exec`.
+- After the user supplements the facts, the host should re-enter the default runtime entry in the same workspace and let runtime continue planning; if `current_clarification.json` is cleared afterwards, that is the expected close-out behavior.
 - `~go finalize` still goes through the default runtime entry and does not require an extra host bridge; first version only supports metadata-managed plans and rejects legacy plans instead of auto-migrating them.
-- When `current_handoff.json.required_host_action == confirm_decision`, treat `.sopify-skills/state/current_decision.json` as the sole machine contract for the active design split.
+- When `current_handoff.json.required_host_action == confirm_decision`, treat `current_handoff.json.artifacts.decision_checkpoint` plus `decision_submission_state` as the primary machine contract for the active design split; `.sopify-skills/state/current_decision.json` remains the fallback state file and legacy projection source.
 - For a pending decision, the preferred host UX is to show the `question`, list `options[*]` in order, and highlight `recommended_option_id`; users may answer with `1/2/...` or explicitly use `~decide choose <option_id>`.
 - `~decide status|choose|cancel` is a debug/override surface only; the normal path is for the host to enter the confirmation loop automatically from the `confirm_decision` handoff.
 - While a decision is pending, the host must not create or rewrite the formal plan on its own and must not treat the rendered `Next:` text as an executable machine instruction.
 - After the user confirms, the host should re-enter the default runtime entry in the same workspace and let runtime materialize the single formal plan; if `current_decision.json` is cleared afterwards, that is the expected close-out behavior.
+- Treat `~go exec` as an advanced recovery entry only; when there is no active plan or recovery state, the host must not present it as the normal implementation path.
+- Even when the user explicitly types `~go exec`, the host must still honor the machine contract for `clarification_pending / decision_pending / execution_confirm_pending` instead of bypassing those checkpoints.
 
 ---
 
@@ -368,7 +378,7 @@ Changes: 3 files
   - .sopify-skills/plan/20260115_feature/design.md
   - .sopify-skills/plan/20260115_feature/tasks.md
 
-Next: ~go exec to execute or reply with feedback
+Next: Continue plan review or execution in the host session, or reply with feedback
 ```
 
 ### P3 | Development
@@ -426,7 +436,7 @@ Next: Please verify the functionality
 ```
 ~go              # Full workflow auto-execution
 ~go plan         # Plan only, no execution
-~go exec         # Execute existing plan
+~go exec         # Advanced recovery/debug entry, not the default next step in the main flow
 ~go finalize     # Explicitly close out the current metadata-managed plan
 ~compare         # Compare one prompt across models (fallbacks below 2 usable models with explicit reasons)
 ```
@@ -437,15 +447,19 @@ scripts/sopify_runtime.py                    # default repo-local raw-input entr
 .sopify-runtime/scripts/sopify_runtime.py    # default vendored raw-input entry after secondary integration
 scripts/go_plan_runtime.py                   # helper for the plan-only slice
 .sopify-runtime/scripts/go_plan_runtime.py   # vendored helper for the plan-only slice
+scripts/decision_bridge_runtime.py           # internal host bridge helper for `confirm_decision`, with inspect / submit / prompt
+.sopify-runtime/scripts/decision_bridge_runtime.py # vendored decision bridge helper, without changing the default runtime entry
 scripts/model_compare_runtime.py             # runtime implementation for ~compare, not the default generic entry
-~/.claude/sopify/payload-manifest.json       # Claude global payload metadata used during workspace preflight
+~/.claude/sopify/payload-manifest.json        # Claude global payload metadata used during workspace preflight
 ~/.claude/sopify/helpers/bootstrap_workspace.py # Claude global helper used to bootstrap `.sopify-runtime/` into a workspace
 .sopify-runtime/manifest.json                # vendored bundle machine contract; hosts should read this first
 .sopify-skills/state/current_handoff.json    # structured handoff written by the runtime; hosts should read this first after execution
-.sopify-skills/state/current_decision.json   # decision checkpoint state; read only when handoff requests confirm_decision
+.sopify-skills/state/current_run.json        # active run state; includes the current stage and execution_gate snapshot
+.sopify-skills/state/current_clarification.json # clarification checkpoint state; read only when handoff requests answer_questions
+.sopify-skills/state/current_decision.json   # decision checkpoint fallback state; read when handoff lacks the full checkpoint
 ```
 
-Note: the default entry is `scripts/sopify_runtime.py`; when vendored, prefer `.sopify-runtime/manifest.json` to select the entry; if the workspace bundle is missing or incompatible, the host should preflight through `~/.claude/sopify/payload-manifest.json` and call `~/.claude/sopify/helpers/bootstrap_workspace.py` first; `go_plan_runtime.py` is only for plan-only; `~go finalize` has no dedicated helper and is still handled by the default runtime entry; after execution the host should read `.sopify-skills/state/current_handoff.json` before trusting `Next:`; if `required_host_action=confirm_decision`, continue into `.sopify-skills/state/current_decision.json`; `~compare` still depends on a host-side dedicated bridge.
+Note: the default entry is `scripts/sopify_runtime.py`; when vendored, prefer `.sopify-runtime/manifest.json` to select the entry; if the workspace bundle is missing or incompatible, the host should preflight through `~/.claude/sopify/payload-manifest.json` and call `~/.claude/sopify/helpers/bootstrap_workspace.py` first; `go_plan_runtime.py` is only for plan-only; `~go finalize` has no dedicated helper and is still handled by the default runtime entry; after execution the host should read `.sopify-skills/state/current_handoff.json` before trusting `Next:`; if `required_host_action=answer_questions`, continue into `.sopify-skills/state/current_clarification.json`; if `required_host_action=confirm_decision`, first consume `current_handoff.json.artifacts.decision_checkpoint / decision_submission_state` and only fall back to `.sopify-skills/state/current_decision.json`; in the current documented scope, hosts may call `scripts/decision_bridge_runtime.py inspect --host cli` (vendored: `.sopify-runtime/scripts/decision_bridge_runtime.py`) and then write the normalized submission through `submit` or `prompt`; the helper path and host hints are also exposed through `.sopify-runtime/manifest.json -> limits.decision_bridge_entry / limits.decision_bridge_hosts`; `~compare` still depends on a host-side dedicated bridge.
 
 **Configuration File:** `sopify.config.yaml` (project root)
 

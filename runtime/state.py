@@ -6,10 +6,10 @@ from datetime import datetime, timezone
 import json
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Optional
+from typing import Any, Mapping, Optional
 
 from .handoff import read_runtime_handoff, write_runtime_handoff
-from .models import DecisionState, PlanArtifact, RouteDecision, RunState, RuntimeConfig, RuntimeHandoff
+from .models import ClarificationState, DecisionState, DecisionSubmission, PlanArtifact, RouteDecision, RunState, RuntimeConfig, RuntimeHandoff
 
 
 class StateStore:
@@ -22,6 +22,7 @@ class StateStore:
         self.last_route_path = self.root / "last_route.json"
         self.current_plan_path = self.root / "current_plan.json"
         self.current_handoff_path = self.root / "current_handoff.json"
+        self.current_clarification_path = self.root / "current_clarification.json"
         self.current_decision_path = self.root / "current_decision.json"
 
     def ensure(self) -> None:
@@ -59,6 +60,39 @@ class StateStore:
     def clear_current_plan(self) -> None:
         self.current_plan_path.unlink(missing_ok=True)
 
+    def get_current_clarification(self) -> Optional[ClarificationState]:
+        payload = self._read_json(self.current_clarification_path)
+        return ClarificationState.from_dict(payload) if payload else None
+
+    def set_current_clarification(self, clarification_state: ClarificationState) -> None:
+        self.ensure()
+        self._write_json(self.current_clarification_path, clarification_state.to_dict())
+
+    def set_current_clarification_response(
+        self,
+        *,
+        response_text: str,
+        response_fields: Mapping[str, Any],
+        response_source: str | None,
+        response_message: str = "",
+    ) -> Optional[ClarificationState]:
+        """Persist host-collected clarification answers without rewriting the whole flow."""
+        current = self.get_current_clarification()
+        if current is None:
+            return None
+        updated = current.with_response(
+            response_text=response_text,
+            response_fields=response_fields,
+            response_source=response_source,
+            response_message=response_message,
+            submitted_at=iso_now(),
+        )
+        self.set_current_clarification(updated)
+        return updated
+
+    def clear_current_clarification(self) -> None:
+        self.current_clarification_path.unlink(missing_ok=True)
+
     def get_current_decision(self) -> Optional[DecisionState]:
         payload = self._read_json(self.current_decision_path)
         return DecisionState.from_dict(payload) if payload else None
@@ -66,6 +100,15 @@ class StateStore:
     def set_current_decision(self, decision_state: DecisionState) -> None:
         self.ensure()
         self._write_json(self.current_decision_path, decision_state.to_dict())
+
+    def set_current_decision_submission(self, submission: DecisionSubmission) -> Optional[DecisionState]:
+        """Persist host-collected decision answers without rewriting the whole state file."""
+        current = self.get_current_decision()
+        if current is None:
+            return None
+        updated = current.with_submission(submission)
+        self.set_current_decision(updated)
+        return updated
 
     def clear_current_decision(self) -> None:
         self.current_decision_path.unlink(missing_ok=True)
@@ -88,6 +131,7 @@ class StateStore:
         self.clear_current_run()
         self.clear_current_plan()
         self.clear_current_handoff()
+        self.clear_current_clarification()
         self.clear_current_decision()
 
     def update_active_run(self, *, stage: Optional[str] = None, status: Optional[str] = None) -> Optional[RunState]:
@@ -104,6 +148,7 @@ class StateStore:
             updated_at=iso_now(),
             plan_id=current.plan_id,
             plan_path=current.plan_path,
+            execution_gate=current.execution_gate,
         )
         self.set_current_run(updated)
         return updated

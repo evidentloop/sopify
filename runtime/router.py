@@ -6,8 +6,10 @@ from dataclasses import dataclass
 import re
 from typing import Iterable
 
-from .decision import parse_decision_response
-from .models import DecisionState, RouteDecision, RuntimeConfig, SkillMeta
+from .clarification import has_submitted_clarification, parse_clarification_response
+from .decision import has_submitted_decision, parse_decision_response
+from .execution_confirm import parse_execution_confirm_response
+from .models import ClarificationState, DecisionState, RouteDecision, RuntimeConfig, SkillMeta
 from .state import StateStore
 
 _COMMAND_PATTERNS = (
@@ -22,6 +24,9 @@ SUPPORTED_ROUTE_NAMES = (
     "workflow",
     "light_iterate",
     "quick_fix",
+    "clarification_pending",
+    "clarification_resume",
+    "execution_confirm_pending",
     "resume_active",
     "exec_plan",
     "cancel_active",
@@ -97,6 +102,8 @@ class Router:
     def classify(self, user_input: str, *, skills: Iterable[SkillMeta]) -> RouteDecision:
         text = user_input.strip()
         active_run = self.state_store.get_current_run()
+        current_plan = self.state_store.get_current_plan()
+        current_clarification = self.state_store.get_current_clarification()
         current_decision = self.state_store.get_current_decision()
 
         decide_decision = _classify_decide_command(text)
@@ -104,8 +111,15 @@ class Router:
             return self._with_capture(decide_decision)
 
         command_decision = _classify_command(text)
-        if command_decision is not None:
-            return self._with_capture(command_decision)
+        if current_clarification is not None and current_clarification.status == "pending":
+            pending_clarification = _classify_pending_clarification(
+                text,
+                current_clarification,
+                command_decision=command_decision,
+                skills=skills,
+            )
+            if pending_clarification is not None:
+                return self._with_capture(pending_clarification)
 
         if _contains_intent(text, _REPLAY_KEYWORDS):
             return RouteDecision(
@@ -127,10 +141,28 @@ class Router:
                 active_run_action="cancel",
             )
 
-        if current_decision is not None and current_decision.status in {"pending", "confirmed"}:
-            pending_decision = _classify_pending_decision(text, current_decision, skills=skills)
+        if current_decision is not None and current_decision.status in {"pending", "collecting", "confirmed", "cancelled", "timed_out"}:
+            pending_decision = _classify_pending_decision(
+                text,
+                current_decision,
+                command_decision=command_decision,
+                skills=skills,
+            )
             if pending_decision is not None:
                 return self._with_capture(pending_decision)
+
+        if active_run is not None and current_plan is not None:
+            pending_execution_confirm = _classify_pending_execution_confirm(
+                text,
+                active_run_stage=active_run.stage,
+                command_decision=command_decision,
+                skills=skills,
+            )
+            if pending_execution_confirm is not None:
+                return self._with_capture(pending_execution_confirm)
+
+        if command_decision is not None:
+            return self._with_capture(command_decision)
 
         if active_run is not None and _normalize(text) in _CONTINUE_KEYWORDS:
             return self._with_capture(
@@ -215,6 +247,7 @@ class Router:
             capture_mode=capture_mode,
             runtime_skill_id=decision.runtime_skill_id,
             active_run_action=decision.active_run_action,
+            artifacts=decision.artifacts,
         )
 
 
@@ -307,7 +340,53 @@ def _classify_decide_command(text: str) -> RouteDecision | None:
     )
 
 
-def _classify_pending_decision(text: str, current_decision: DecisionState, *, skills: Iterable[SkillMeta]) -> RouteDecision | None:
+def _classify_pending_decision(
+    text: str,
+    current_decision: DecisionState,
+    *,
+    command_decision: RouteDecision | None,
+    skills: Iterable[SkillMeta],
+) -> RouteDecision | None:
+    if (
+        current_decision.status in {"pending", "collecting", "cancelled", "timed_out"}
+        and has_submitted_decision(current_decision)
+        and (command_decision is None or command_decision.route_name != "decision_pending")
+    ):
+        return RouteDecision(
+            route_name="decision_resume",
+            request_text=text,
+            reason="Structured decision submission is ready to be resumed",
+            complexity="medium",
+            should_recover_context=True,
+            candidate_skill_ids=_candidate_skills(skills, "design"),
+            active_run_action="resume_submitted_decision",
+        )
+
+    if command_decision is not None:
+        if command_decision.route_name in {"plan_only", "workflow", "light_iterate"}:
+            return None
+        if command_decision.route_name == "exec_plan":
+            if current_decision.status == "pending":
+                return RouteDecision(
+                    route_name="decision_pending",
+                    request_text=text,
+                    reason="Pending decision checkpoint must be resolved before exec recovery can continue",
+                    complexity="medium",
+                    should_recover_context=True,
+                    candidate_skill_ids=_candidate_skills(skills, "design"),
+                    active_run_action="inspect_decision",
+                )
+            return RouteDecision(
+                route_name="decision_resume",
+                request_text=text,
+                reason="Confirmed decision checkpoint is being materialized through the exec recovery entry",
+                command=command_decision.command,
+                complexity="medium",
+                should_recover_context=True,
+                candidate_skill_ids=_candidate_skills(skills, "design"),
+                active_run_action="materialize_confirmed_decision",
+            )
+
     response = parse_decision_response(current_decision, text)
     if response.action == "status":
         return RouteDecision(
@@ -330,6 +409,137 @@ def _classify_pending_decision(text: str, current_decision: DecisionState, *, sk
             active_run_action="decision_response",
         )
     return None
+
+
+def _classify_pending_clarification(
+    text: str,
+    current_clarification: ClarificationState,
+    *,
+    command_decision: RouteDecision | None,
+    skills: Iterable[SkillMeta],
+) -> RouteDecision | None:
+    if command_decision is not None:
+        if command_decision.route_name in {"plan_only", "workflow", "light_iterate"}:
+            return None
+        if command_decision.route_name == "exec_plan":
+            return RouteDecision(
+                route_name="clarification_pending",
+                request_text=text,
+                reason="Pending clarification must be answered before execution can continue",
+                complexity="medium",
+                should_recover_context=True,
+                candidate_skill_ids=_candidate_skills(skills, "analyze", "design"),
+                active_run_action="inspect_clarification",
+            )
+
+    if has_submitted_clarification(current_clarification) and _normalize(text) in _CONTINUE_KEYWORDS:
+        return RouteDecision(
+            route_name="clarification_resume",
+            request_text=text,
+            reason="Restoring planning from structured clarification answers",
+            complexity="medium",
+            should_recover_context=True,
+            candidate_skill_ids=_candidate_skills(skills, "analyze", "design"),
+            active_run_action="clarification_response_from_state",
+        )
+
+    response = parse_clarification_response(current_clarification, text)
+    if response.action == "status":
+        return RouteDecision(
+            route_name="clarification_pending",
+            request_text=text,
+            reason="Pending clarification is still waiting for factual details",
+            complexity="medium",
+            should_recover_context=True,
+            candidate_skill_ids=_candidate_skills(skills, "analyze", "design"),
+            active_run_action="inspect_clarification",
+        )
+    if response.action == "cancel":
+        return RouteDecision(
+            route_name="cancel_active",
+            request_text=text,
+            reason="Clarification cancelled by user",
+            complexity="simple",
+            should_recover_context=True,
+            active_run_action="cancel",
+        )
+    if response.action == "answer":
+        return RouteDecision(
+            route_name="clarification_resume",
+            request_text=text,
+            reason="Received supplemental facts for the pending clarification",
+            complexity="medium",
+            should_recover_context=True,
+            candidate_skill_ids=_candidate_skills(skills, "analyze", "design"),
+            active_run_action="clarification_response",
+        )
+    return RouteDecision(
+        route_name="clarification_pending",
+        request_text=text,
+        reason=response.message or "Clarification still needs more factual details",
+        complexity="medium",
+        should_recover_context=True,
+        candidate_skill_ids=_candidate_skills(skills, "analyze", "design"),
+        active_run_action="inspect_clarification",
+    )
+
+
+def _classify_pending_execution_confirm(
+    text: str,
+    *,
+    active_run_stage: str,
+    command_decision: RouteDecision | None,
+    skills: Iterable[SkillMeta],
+) -> RouteDecision | None:
+    if active_run_stage not in {"ready_for_execution", "execution_confirm_pending"}:
+        return None
+
+    if command_decision is not None:
+        if command_decision.route_name in {"plan_only", "workflow", "light_iterate"}:
+            return None
+        if command_decision.route_name == "exec_plan":
+            return RouteDecision(
+                route_name="execution_confirm_pending",
+                request_text=text,
+                reason="Execution confirmation is still required before develop can start",
+                complexity="medium",
+                should_recover_context=True,
+                candidate_skill_ids=_candidate_skills(skills, "develop"),
+                active_run_action="inspect_execution_confirm",
+            )
+
+    response = parse_execution_confirm_response(text)
+    if response.action == "cancel":
+        return RouteDecision(
+            route_name="cancel_active",
+            request_text=text,
+            reason="Execution confirmation cancelled by user",
+            complexity="simple",
+            should_recover_context=True,
+            active_run_action="cancel",
+        )
+
+    action_to_reason = {
+        "confirm": "Matched a natural-language execution confirmation reply",
+        "status": "Execution confirmation is still waiting for user confirmation",
+        "revise": "Received plan feedback before execution confirmation",
+        "invalid": response.message or "Execution confirmation still requires a valid reply",
+    }
+    action_to_active_run_action = {
+        "confirm": "confirm_execution",
+        "status": "inspect_execution_confirm",
+        "revise": "revise_execution",
+        "invalid": "inspect_execution_confirm",
+    }
+    return RouteDecision(
+        route_name="execution_confirm_pending",
+        request_text=text,
+        reason=action_to_reason.get(response.action, "Execution confirmation is still pending"),
+        complexity="medium",
+        should_recover_context=True,
+        candidate_skill_ids=_candidate_skills(skills, "develop"),
+        active_run_action=action_to_active_run_action.get(response.action, "inspect_execution_confirm"),
+    )
 
 
 def _estimate_complexity(text: str) -> _ComplexitySignal:

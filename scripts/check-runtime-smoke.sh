@@ -23,14 +23,25 @@ if [[ ! -f "$RUNTIME_ENTRY" ]]; then
   exit 1
 fi
 
-MANIFEST_FILE="$BUNDLE_ROOT/manifest.json"
-if [[ ! -f "$MANIFEST_FILE" ]]; then
-  echo "Missing bundle manifest: $MANIFEST_FILE" >&2
-  exit 1
-fi
-
 WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/sopify-runtime-smoke.XXXXXX")"
 trap 'rm -rf "$WORK_DIR"' EXIT
+
+MANIFEST_FILE="$BUNDLE_ROOT/manifest.json"
+if [[ ! -f "$MANIFEST_FILE" ]]; then
+  # The source repository does not commit a root manifest.json; generate a
+  # transient manifest so the same smoke script can validate both layouts.
+  if [[ -f "$BUNDLE_ROOT/runtime/manifest.py" ]]; then
+    MANIFEST_FILE="$WORK_DIR/generated-manifest.json"
+    PYTHONPATH="$BUNDLE_ROOT${PYTHONPATH:+:$PYTHONPATH}" \
+      python3 -m runtime.manifest \
+        --source-root "$BUNDLE_ROOT" \
+        --bundle-root "$BUNDLE_ROOT" \
+        --output "$MANIFEST_FILE" >/dev/null
+  else
+    echo "Missing bundle manifest: $MANIFEST_FILE" >&2
+    exit 1
+  fi
+fi
 
 OUTPUT="$(
   python3 "$RUNTIME_ENTRY" \
@@ -42,6 +53,8 @@ OUTPUT="$(
 PLAN_DIR="$WORK_DIR/.sopify-skills/plan"
 STATE_FILE="$WORK_DIR/.sopify-skills/state/current_plan.json"
 HANDOFF_FILE="$WORK_DIR/.sopify-skills/state/current_handoff.json"
+CLARIFICATION_BRIDGE_ENTRY="$BUNDLE_ROOT/scripts/clarification_bridge_runtime.py"
+DECISION_BRIDGE_ENTRY="$BUNDLE_ROOT/scripts/decision_bridge_runtime.py"
 REPLAY_DIR="$WORK_DIR/.sopify-skills/replay/sessions"
 PROJECT_FILE="$WORK_DIR/.sopify-skills/project.md"
 OVERVIEW_FILE="$WORK_DIR/.sopify-skills/wiki/overview.md"
@@ -60,6 +73,16 @@ fi
 
 if [[ ! -f "$HANDOFF_FILE" ]]; then
   echo "Smoke check failed: missing handoff file: $HANDOFF_FILE" >&2
+  exit 1
+fi
+
+if [[ ! -f "$CLARIFICATION_BRIDGE_ENTRY" ]]; then
+  echo "Smoke check failed: missing clarification bridge helper: $CLARIFICATION_BRIDGE_ENTRY" >&2
+  exit 1
+fi
+
+if [[ ! -f "$DECISION_BRIDGE_ENTRY" ]]; then
+  echo "Smoke check failed: missing decision bridge helper: $DECISION_BRIDGE_ENTRY" >&2
   exit 1
 fi
 

@@ -18,6 +18,8 @@
 3. 下游项目即使接入 Sopify，也缺一个默认存在、可快速理解项目的全局入口索引
 4. 文档更新更多依赖语义触发和人工记忆，缺少稳定的生命周期收口点
 5. `plan` 与 `history` 的落点、时机、是否进 git 目前没有统一默认策略
+6. 普通开发请求与 `~go` 主链路在生成 plan 后停点偏早，容易让用户误以为还必须记住 `~go exec`
+7. “plan 已生成”与“plan 已可执行”当前没有被清晰区分，缺少统一的机器执行门禁与执行前确认
 
 ## 当前 runtime 基线
 
@@ -34,9 +36,9 @@
   - `wiki/overview.md`
   - `user/preferences.md`
   - `history/index.md`
-- `workflow-learning` 的 replay 能力仍保留为可选扩展，不纳入基础文档治理契约
+- `workflow-learning` 的 replay 能力仍保留为可选扩展，不纳入基础文档治理契约；但 runtime replay 摘要已能记录 decision / compare 的关键结论
 - metadata-managed plan 的 `~go finalize -> history` 收口归档已落地
-- `~compare` 的宿主专用桥接与 `~go exec` develop bridge 仍属于后续阶段能力
+- `~compare` 仍依赖宿主专用桥接，但 handoff 已可输出 `compare_decision_contract` facade，clarification 也已可输出 `clarification_form`；二者都复用同一套“默认入口不变”的桥接原则
 
 当前不变的工程原则：
 
@@ -69,6 +71,13 @@
 - 设计阶段若出现多方案分叉，应能先进入决策确认，再生成唯一正式 plan
 - 决策结果能稳定落到 plan 与 blueprint，而不是散落在聊天上下文中
 
+### 5. 主链路默认自动推进，但代码执行前仍有人类确认
+
+- 普通开发请求与 `~go` 应自动推进到“执行前确认”这一关
+- `~go plan` 明确只到 plan，不进入执行确认
+- `~go exec` 只作为恢复、调试、高级显式入口
+- 任何代码执行前，都应先通过机器执行门禁，再由用户确认继续
+
 ## 决策确认能力要解决的问题
 
 当前设计阶段还缺一段明确的“用户拍板”链路，导致以下问题会反复出现：
@@ -86,6 +95,20 @@
 - 在确认后只生成一份正式 plan
 - 让长期结论在收口时再按规则进入 blueprint
 
+## 执行门禁要解决的问题
+
+当前主链路如果只根据“plan 文件已经写出来”就进入 develop，会留下两个明显问题：
+
+1. plan 可能仍缺关键事实信息，此时应继续澄清，而不是执行
+2. plan 可能仍存在长期契约分叉或未消解风险，此时应先进入决策确认，而不是执行
+3. 即便机器判断 plan 已可执行，代码真正落地前仍应由用户做一次轻量确认
+
+因此，第二阶段的目标不是“让 runtime 自动写代码”，而是：
+
+- 先用机器规则判断当前 plan 是否达到可执行状态
+- 若未达到，则稳定分流到 `clarification_pending` 或 `decision_pending`
+- 若达到，则进入统一的执行前确认，而不是直接进入 develop
+
 ## 范围
 
 ### 范围内
@@ -95,6 +118,7 @@
 - `blueprint/README.md` 作为项目全局索引的强约束模板
 - 首次触发与首次进入 plan 生命周期时的默认文档行为
 - 与 decision checkpoint 的衔接规则
+- 主链路的机器执行门禁、执行前用户确认与高级恢复入口边界
 
 ### 范围外
 
@@ -126,3 +150,6 @@
 7. design 多方案分叉时，能在正式 plan 生成前进入明确的 pending decision 状态
 8. 用户确认结果会完整写入 plan，但 blueprint 只保留稳定长期结论
 9. 中断后再次进入同一仓库时，宿主能恢复未完成的 decision checkpoint，而不是重新丢给模型猜测
+10. 普通开发请求与 `~go` 默认自动推进到执行前确认，而不是要求普通用户记住 `~go exec`
+11. 只有当 plan 通过机器执行门禁时，才允许进入执行确认
+12. `~go exec` 只作为恢复/调试入口，不能绕过决策确认或执行前确认

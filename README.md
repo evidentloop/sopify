@@ -106,6 +106,10 @@ bash /path/to/project/.sopify-runtime/scripts/check-runtime-smoke.sh
 - `.sopify-runtime/manifest.json` 是 bundle 的机器契约；宿主接入应优先读取 manifest，再回退到默认脚本路径
 - vendored 入口默认是 `.sopify-runtime/scripts/sopify_runtime.py`
 - plan-only helper 对应 `.sopify-runtime/scripts/go_plan_runtime.py`
+- `answer_questions` 命中后可选使用内部 helper `.sopify-runtime/scripts/clarification_bridge_runtime.py` 读取/写回轻量 clarification form；它不是新的主入口
+- manifest 会通过 `limits.clarification_bridge_entry` 与 `limits.clarification_bridge_hosts` 暴露该 helper 与宿主桥接提示
+- `confirm_decision` 命中后可选使用内部 helper `.sopify-runtime/scripts/decision_bridge_runtime.py` 读取/写回桥接契约；它不是新的主入口
+- manifest 会通过 `limits.decision_bridge_entry` 与 `limits.decision_bridge_hosts` 暴露该 helper 与宿主桥接提示
 - builtin skill 发现由 `runtime/builtin_catalog.py` 负责，不依赖 bundle 内再携带 `Codex/Skills` 或 `Claude/Skills` 文档目录
 - 非闭环路由现在会写入 `.sopify-skills/state/current_handoff.json`，`Next:` 文案优先基于 handoff contract 渲染
 
@@ -178,17 +182,24 @@ bash scripts/check-runtime-smoke.sh
 - 已收口 repo-local runtime helper：
   - `scripts/sopify_runtime.py`：默认原始输入入口
   - `scripts/go_plan_runtime.py`：plan-only helper
+  - `scripts/clarification_bridge_runtime.py`：`answer_questions` 阶段的内部宿主桥接 helper，提供 `inspect / submit / prompt`，不替代默认入口
+  - `scripts/decision_bridge_runtime.py`：`confirm_decision` 阶段的内部宿主桥接 helper，提供 `inspect / submit / prompt`，不替代默认入口
 - 已提供 `scripts/sync-runtime-assets.sh`，用于把 runtime bundle 同步到目标仓库的 `.sopify-runtime/`
 - bundle 同步后会生成 `.sopify-runtime/manifest.json`，用于描述入口、支持路由、builtin catalog 与 handoff 文件位置
 - runtime 现已真正写入 `.sopify-skills/state/current_handoff.json`，供宿主读取结构化下一步动作
 - runtime 现已在真实项目首次触发时补最小 `blueprint/README.md`，并在首次进入 plan 生命周期时补齐完整 `blueprint/`
-- runtime 现已支持第一版 decision checkpoint：plan 设计阶段命中显式多方案分叉时，会先写入 `.sopify-skills/state/current_decision.json`，待确认后再生成正式 plan
+- runtime 现已支持增强版 clarification checkpoint：当 planning 请求缺少最小事实锚点时，会先写入 `.sopify-skills/state/current_clarification.json`；handoff 会同时附带 `clarification_form / clarification_submission_state`，宿主可通过 `runtime/clarification_bridge.py + scripts/clarification_bridge_runtime.py` 采集结构化补充信息，再通过默认入口恢复规划
+- runtime 现已支持增强版 decision checkpoint：除显式多方案分叉外，还可优先消费 `RouteDecision.artifacts.decision_candidates` 的结构化候选方案，在满足“至少 2 个有效候选且 tradeoff 显著”时通过 `runtime/decision_templates.py + runtime/decision_policy.py` 生成统一 checkpoint，写入 handoff artifacts 与 `.sopify-skills/state/current_decision.json`，待确认后再生成正式 plan
+- runtime 现已支持第一版 execution gate：plan 物化后会写入 machine contract，区分 `plan_generated` 与 `ready_for_execution`，不再只靠 `Next:` 文案暗示
+- runtime 现已支持第一版 execution confirm：gate ready 后会统一输出 `execution_confirm_pending` handoff，写入 `confirm_execute` machine action 与最小执行摘要
+- `~compare` 在至少返回 2 个成功结果时，会在 `current_handoff.json.artifacts.compare_decision_contract` 中附带 shortlist facade，供宿主复用 `DecisionCheckpoint` 形态的选择 UI；当前不会自动改写成主链路 `current_decision.json`
+- replay 摘要现已稳定记录 decision checkpoint 创建、推荐项、推荐理由、最终选择与关键约束；`input / textarea` 原文默认不回放
 - runtime 现已支持第一版 `~go finalize`：对 metadata-managed 活动 plan 执行 README 托管区块刷新、`history/` 归档与活动状态清理
 - `.sopify-runtime/` bundle 内已包含便携 `tests/test_runtime.py` 与 `scripts/check-runtime-smoke.sh`
 - 当前 `P1-A/P1-B` 已落地：首次运行会 bootstrap 最小 KB 骨架，显式 `~go finalize` 可完成 metadata-managed plan 的收口归档
 - 旧遗留 plan 当前不会被自动迁移；第一版 finalize 只支持新 runtime 生成、带元数据的 plan
 - 当前 KB 快照只读取根配置、manifest 与顶层目录，不做源码级扫描
-- 不属于本轮发布切片：`~compare` 的通用入口自动桥接、`workflow-learning` 的独立 runtime helper、`~go exec` develop bridge
+- 不属于本轮发布切片：`~compare` 通过通用入口自动创建/恢复 `current_decision.json`、`workflow-learning` 的独立 runtime helper、`~go exec` develop bridge
 - 因此当前已经适合“自用 + 二次接入”，但仍不是完整宿主安装器形态
 
 ### 文档治理约定
@@ -209,9 +220,46 @@ bash scripts/check-runtime-smoke.sh
 第一版 decision checkpoint 说明：
 
 - 仅在 `~go plan / ~go / 进入 planning 路由` 时生效
-- 当前自动触发基于显式多选分叉，识别符包括 `还是 / vs / or`
-- 命中后会先暂停正式 plan 生成，并输出文本 fallback 供用户直接回复 `1/2` 或 `~decide choose <option_id>`
+- 当前自动触发已收口到 `runtime/decision_policy.py`：基线仍支持“显式多选分叉 + 架构关键词（如 `还是 / vs / or`）”；若 `RouteDecision.artifacts.decision_candidates` 提供结构化候选，则优先按“至少 2 个有效候选且 tradeoff 显著”触发，并支持 `decision_suppress / decision_preference_locked / decision_single_obvious / decision_information_only` 抑制
+- 命中后会先暂停正式 plan 生成；宿主应优先读取 `current_handoff.json.artifacts.decision_checkpoint / decision_submission_state`，`.sopify-skills/state/current_decision.json` 作为状态兜底
+- 第一版模板已收口到 `runtime/decision_templates.py::strategy_pick`，并保留文本 fallback，供用户直接回复 `1/2` 或 `~decide choose <option_id>`
+- handoff 还会附带 `decision_policy_id / decision_trigger_reason`，便于宿主或 replay 摘要理解本次 checkpoint 的触发依据
+- 当前文档范围内，宿主可通过内部 helper `scripts/decision_bridge_runtime.py inspect` 读取 CLI bridge contract，再通过 `submit` 或 `prompt --renderer interactive|text|auto` 写回结构化 submission；默认恢复入口仍是 `scripts/sopify_runtime.py`
+- vendored bundle 会通过 `.sopify-runtime/manifest.json -> limits.decision_bridge_entry / limits.decision_bridge_hosts` 暴露该 helper 与宿主 UI 提示
 - `go_plan_runtime.py` 在 decision pending 时也会返回成功，不会把“等待确认”误判成失败
+
+第一版 clarification checkpoint 说明：
+
+- 仅在 `~go plan / ~go / 进入 planning 路由` 时生效
+- 当前自动触发基于“缺最小事实锚点”的确定性规则，例如目标对象或预期结果仍不明确
+- 命中后会先暂停正式 plan 生成，并写入 `.sopify-skills/state/current_clarification.json`
+- 宿主看到 `current_handoff.json.required_host_action == answer_questions` 时，应优先读取 `current_handoff.json.artifacts.clarification_form / clarification_submission_state`；`.sopify-skills/state/current_clarification.json` 继续作为状态兜底
+- 当前文档范围内，宿主可通过内部 helper `scripts/clarification_bridge_runtime.py inspect` 读取轻量 form contract，再通过 `submit` 或 `prompt --renderer interactive|text|auto` 写回结构化补充信息；默认恢复入口仍是 `scripts/sopify_runtime.py`
+- vendored bundle 会通过 `.sopify-runtime/manifest.json -> limits.clarification_bridge_entry / limits.clarification_bridge_hosts` 暴露该 helper 与宿主 UI 提示
+- 当前主交互宿主是 CLI 型宿主（例如 Codex CLI、Claude Code）；decision / clarification 的当前文档范围只收口 CLI 终端问答桥接
+- `go_plan_runtime.py` 在 clarification pending 时也会返回成功，不会把“等待补充信息”误判成失败
+
+第一版 execution gate 说明：
+
+- gate 会在 plan 物化后立即运行，并把 machine contract 写入 `current_run.json.execution_gate` 与 `current_handoff.json.artifacts.execution_gate`
+- 当前固定字段为 `gate_status / blocking_reason / plan_completion / next_required_action`
+- `plan_generated` 表示 plan 已存在但 gate 尚未通过；`ready_for_execution` 表示 plan 已通过机器执行门禁
+- decision confirmed 后不会直接跳到 develop，而是会重新进入 gate；若 gate 仍发现阻塞风险，会再次回到 `decision_pending`
+
+第一版 execution confirm 说明：
+
+- 当 gate 结果为 `ready` 时，runtime 会把当前 plan 收口到 `execution_confirm_pending`，并把 `required_host_action` 设为 `confirm_execute`
+- `current_handoff.json.artifacts.execution_summary` 会稳定提供 `plan_path / summary / task_count / risk_level / key_risk / mitigation`
+- 用户可以直接用自然语言 `继续 / next / 开始` 确认执行；确认后活动 run 会进入 `executing`
+- 若用户在确认阶段给出修改意见，runtime 会保留 execution-confirm 路径，但把 handoff 回退为 `review_or_execute_plan`
+- 普通主链路不需要记忆 `~go exec`；宿主继续按 `confirm_execute` handoff 与自然语言确认入口推进即可
+- `~go exec` 仅保留为高级恢复/调试入口；即使在 gate ready 阶段也不会直接跳入 develop，而是会先落到同一套 execution-confirm 入口
+
+第一版 replay 摘要说明：
+
+- replay 会记录 decision checkpoint 创建、推荐项、推荐理由、最终选择与关键约束摘要
+- `~compare` 至少产生 2 个成功结果时，replay 也会记录 shortlist 数量、推荐结果与推荐依据
+- `input / textarea` 等自由输入默认只记为“已提供补充说明”，不会在 replay 中回放原文
 
 ---
 
@@ -324,7 +372,7 @@ multi_model:
 |-----|------|
 | `~go` | 全流程自动执行 |
 | `~go plan` | 只规划不执行；当前仓库提供 `scripts/go_plan_runtime.py` 作为 plan-only helper |
-| `~go exec` | 执行已有方案 |
+| `~go exec` | 高级恢复/调试入口；仅在已有活动 plan 或恢复态存在时使用，不是普通主链路默认下一步 |
 | `~go finalize` | 对当前 metadata-managed plan 执行收口事务：刷新 blueprint 索引、归档到 history、清理活动状态 |
 | `~compare` | 按配置并发对比多个模型；运行时实现收口在 `scripts/model_compare_runtime.py`，但默认通用入口不会自动构造 compare payload |
 
@@ -334,6 +382,8 @@ multi_model:
 - 若以 bundle 方式接入到其他仓库，默认入口对应 `.sopify-runtime/scripts/sopify_runtime.py`
 - `scripts/go_plan_runtime.py` 只用于 plan-only slice
 - vendored plan-only helper 对应 `.sopify-runtime/scripts/go_plan_runtime.py`
+- 普通用户不需要记住 `~go exec`；标准链路会在 plan/gate ready 后进入 `execution_confirm_pending`，再由宿主引导自然语言确认
+- `~go exec` 若没有活动 plan 或恢复态，只会返回高级恢复提示，不会产出 develop handoff
 - `~go finalize` 没有单独 helper，仍走默认 runtime 入口；第一版仅支持 metadata-managed plan，旧遗留 plan 会被拒绝而不是自动迁移
 - `~compare` 仍依赖宿主侧专用桥接，通用入口不会自动接通
 
@@ -365,6 +415,7 @@ source ~/.zshrc
 - 默认会纳入“当前会话默认模型”（`include_default_model` 默认 `true`，未配置也生效）
 - 默认启用上下文桥接（`context_bridge=true`）：存在扩展模型候选时，会将“问题 + context_pack”统一发送；`false` 时仅发送问题文本（应急旁路）
 - `~compare` 执行实现已收口到 `scripts/model_compare_runtime.py`（入口调用 `run_model_compare_runtime`）
+- 至少产生 2 个成功结果时，handoff 会附带 `artifacts.compare_decision_contract`，提供 shortlist 版 `DecisionCheckpoint` facade 与推荐项，宿主可复用 decision bridge UI；当前不会自动创建 `current_decision.json`
 - 执行层细节（抽取/脱敏/截断链路、预算、空包保护）统一以 `scripts/model_compare_runtime.py` 与子技能 `model-compare` 文档为准
 - 可用模型数达到 2 才进入并发对比（该阈值为内置规则，无需配置）
 - 降级原因建议使用统一 reason code（如 `MISSING_API_KEY`、`INSUFFICIENT_USABLE_MODELS`），避免中英文口径漂移
@@ -456,7 +507,7 @@ Changes: 3 files
   - .sopify-skills/plan/20260115_user_auth/design.md
   - .sopify-skills/plan/20260115_user_auth/tasks.md
 
-Next: ~go exec 执行 或 回复修改意见
+Next: 在宿主会话中继续评审或执行方案，或直接回复修改意见
 ```
 
 **状态符号：**

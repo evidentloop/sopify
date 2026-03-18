@@ -54,8 +54,11 @@ required_paths=(
   "$RUNTIME_SRC"
   "$SCRIPTS_SRC/sopify_runtime.py"
   "$SCRIPTS_SRC/go_plan_runtime.py"
+  "$SCRIPTS_SRC/clarification_bridge_runtime.py"
+  "$SCRIPTS_SRC/decision_bridge_runtime.py"
   "$SCRIPTS_SRC/model_compare_runtime.py"
   "$SCRIPTS_SRC/check-runtime-smoke.sh"
+  "$SCRIPTS_SRC/sync-runtime-assets.sh"
   "$TESTS_SRC/test_runtime.py"
 )
 
@@ -74,8 +77,11 @@ mkdir -p "$BUNDLE_DIR/scripts" "$BUNDLE_DIR/tests"
 rsync -a --delete --prune-empty-dirs \
   --include='sopify_runtime.py' \
   --include='go_plan_runtime.py' \
+  --include='clarification_bridge_runtime.py' \
+  --include='decision_bridge_runtime.py' \
   --include='model_compare_runtime.py' \
   --include='check-runtime-smoke.sh' \
+  --include='sync-runtime-assets.sh' \
   --exclude='*' \
   "$SCRIPTS_SRC/" "$BUNDLE_DIR/scripts/"
 
@@ -94,8 +100,11 @@ PYTHONPATH="$ROOT_DIR${PYTHONPATH:+:$PYTHONPATH}" \
 chmod +x \
   "$BUNDLE_DIR/scripts/sopify_runtime.py" \
   "$BUNDLE_DIR/scripts/go_plan_runtime.py" \
+  "$BUNDLE_DIR/scripts/clarification_bridge_runtime.py" \
+  "$BUNDLE_DIR/scripts/decision_bridge_runtime.py" \
   "$BUNDLE_DIR/scripts/model_compare_runtime.py" \
-  "$BUNDLE_DIR/scripts/check-runtime-smoke.sh"
+  "$BUNDLE_DIR/scripts/check-runtime-smoke.sh" \
+  "$BUNDLE_DIR/scripts/sync-runtime-assets.sh"
 
 cat <<EOF
 Synced Sopify runtime bundle:

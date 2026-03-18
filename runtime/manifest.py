@@ -10,6 +10,7 @@ from tempfile import NamedTemporaryFile
 from typing import Any, Mapping
 
 from .builtin_catalog import load_builtin_skills
+from .clarification import CURRENT_CLARIFICATION_RELATIVE_PATH
 from .decision import CURRENT_DECISION_RELATIVE_PATH
 from .handoff import CURRENT_HANDOFF_RELATIVE_PATH
 from .router import SUPPORTED_ROUTE_NAMES
@@ -19,6 +20,8 @@ MANIFEST_SCHEMA_VERSION = "1"
 DEFAULT_MANIFEST_FILENAME = "manifest.json"
 DEFAULT_ENTRY = "scripts/sopify_runtime.py"
 PLAN_ONLY_ENTRY = "scripts/go_plan_runtime.py"
+DECISION_BRIDGE_ENTRY = "scripts/decision_bridge_runtime.py"
+CLARIFICATION_BRIDGE_ENTRY = "scripts/clarification_bridge_runtime.py"
 _SOPIFY_VERSION_RE = re.compile(r"^<!--\s*SOPIFY_VERSION:\s*(?P<version>.+?)\s*-->$", re.MULTILINE)
 _CHANGELOG_VERSION_RE = re.compile(r"^## \[(?P<version>[^\]]+)\]", re.MULTILINE)
 
@@ -106,7 +109,12 @@ def build_bundle_manifest(
             "plan_scaffold": True,
             "kb_bootstrap": True,
             "decision_checkpoint": True,
+            "decision_bridge": True,
+            "clarification_checkpoint": True,
+            "clarification_bridge": True,
+            "execution_gate": True,
             "replay_capture": True,
+            "writes_clarification_file": True,
             "writes_handoff_file": True,
             "writes_decision_file": True,
             "runtime_skill_ids": list(runtime_skill_ids),
@@ -117,6 +125,9 @@ def build_bundle_manifest(
                 "workflow",
                 "light_iterate",
                 "quick_fix",
+                "clarification_pending",
+                "clarification_resume",
+                "execution_confirm_pending",
                 "resume_active",
                 "exec_plan",
                 "decision_pending",
@@ -127,11 +138,34 @@ def build_bundle_manifest(
             ],
             "host_bridge_status": {
                 "develop": "required",
+                "execution_confirm": "required",
                 "compare": "required",
                 "replay": "required",
             },
             "runtime_payload_required_skill_ids": ["model-compare"],
+            "clarification_file": CURRENT_CLARIFICATION_RELATIVE_PATH,
             "decision_file": CURRENT_DECISION_RELATIVE_PATH,
+            "clarification_bridge_entry": CLARIFICATION_BRIDGE_ENTRY,
+            "clarification_bridge_hosts": {
+                "cli": {
+                    "preferred_mode": "interactive_form",
+                    "fallback_renderer": "text",
+                    "input": "line_prompt",
+                    "textarea": "multiline_text",
+                },
+            },
+            "decision_bridge_entry": DECISION_BRIDGE_ENTRY,
+            "decision_bridge_hosts": {
+                "cli": {
+                    "preferred_mode": "interactive_form",
+                    "fallback_renderer": "text",
+                    "select": "interactive_select",
+                    "multi_select": "interactive_multi_select",
+                    "confirm": "interactive_confirm",
+                    "input": "line_prompt",
+                    "textarea": "multiline_text",
+                },
+            },
         },
     )
 

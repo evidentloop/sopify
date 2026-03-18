@@ -37,9 +37,8 @@ def install_global_payload(
     host_root = adapter.destination_root(home_root)
     payload_root = adapter.payload_root(home_root)
     desired_version = _source_payload_version(adapter, repo_root)
-    expected_paths = adapter.expected_payload_paths(home_root)
 
-    if _payload_is_current(payload_root, desired_version, expected_paths):
+    if _payload_is_current(payload_root, desired_version):
         return InstallPhaseResult(
             action="skipped",
             root=payload_root,
@@ -85,8 +84,14 @@ def run_workspace_bootstrap(payload_root: Path, workspace_root: Path) -> Bootstr
     return result
 
 
-def _payload_is_current(payload_root: Path, desired_version: str | None, expected_paths: tuple[Path, ...]) -> bool:
-    if not all(path.exists() for path in expected_paths):
+def _payload_is_current(payload_root: Path, desired_version: str | None) -> bool:
+    # A payload is current only when the whole vendored bundle still passes the
+    # same structural verification used after installation. This prevents an
+    # older, partial bundle from being skipped just because the top-level
+    # manifest files still exist and their versions happen to match.
+    try:
+        validate_payload_install(payload_root)
+    except InstallError:
         return False
 
     payload_manifest = _read_json(payload_root / PAYLOAD_MANIFEST_FILENAME)

@@ -200,7 +200,7 @@ Tasks: {N} items
 Changes: {N} files
   - .sopify-skills/plan/...
 
-Next: ~go exec to execute or reply with feedback
+Next: Continue plan review or execution in the host session, or reply with feedback
 ```
 
 ---
@@ -212,7 +212,7 @@ workflow.mode = strict:
   → Output summary → Wait for user confirmation
 
 workflow.mode = adaptive:
-  → If triggered by ~go command → Auto-enter development
+  → If triggered by ~go command → Automatically continue into execution confirmation / downstream host flow
   → If triggered by ~go plan command → Output summary and stop
 
 User replies with feedback:

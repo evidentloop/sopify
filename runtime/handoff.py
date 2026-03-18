@@ -7,8 +7,11 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Mapping, Sequence
 
+from .clarification import CURRENT_CLARIFICATION_RELATIVE_PATH, build_scope_clarification_form, clarification_submission_state_payload
+from .compare_decision import build_compare_decision_contract
 from .decision import CURRENT_DECISION_RELATIVE_PATH
-from .models import KbArtifact, PlanArtifact, RouteDecision, RuntimeHandoff
+from .execution_confirm import build_execution_summary
+from .models import KbArtifact, PlanArtifact, RouteDecision, RunState, RuntimeConfig, RuntimeHandoff
 
 HANDOFF_SCHEMA_VERSION = "1"
 CURRENT_HANDOFF_FILENAME = "current_handoff.json"
@@ -19,6 +22,9 @@ _ROUTE_HANDOFF_KIND = {
     "workflow": "workflow",
     "light_iterate": "light_iterate",
     "quick_fix": "quick_fix",
+    "clarification_pending": "clarification",
+    "clarification_resume": "clarification",
+    "execution_confirm_pending": "execution_confirm",
     "resume_active": "develop",
     "exec_plan": "develop",
     "decision_pending": "decision",
@@ -31,18 +37,23 @@ _ROUTE_HANDOFF_KIND = {
 
 def build_runtime_handoff(
     *,
+    config: RuntimeConfig,
     decision: RouteDecision,
     run_id: str,
+    current_run: RunState | None,
     current_plan: PlanArtifact | None,
     kb_artifact: KbArtifact | None,
     replay_session_dir: str | None,
     skill_result: Mapping[str, Any] | None,
+    current_clarification: Any | None,
     current_decision: Any | None,
     notes: Sequence[str],
 ) -> RuntimeHandoff | None:
     """Build the structured host handoff for an actionable route."""
     handoff_kind = _ROUTE_HANDOFF_KIND.get(decision.route_name)
     if handoff_kind is None:
+        return None
+    if not _should_emit_handoff(decision=decision, current_run=current_run, current_plan=current_plan):
         return None
 
     normalized_notes = tuple(note.strip() for note in notes if note and note.strip())
@@ -57,15 +68,19 @@ def build_runtime_handoff(
         plan_path=current_plan.path if current_plan is not None else None,
         handoff_kind=handoff_kind,
         required_host_action=_required_host_action(
-            decision.route_name,
+            decision,
             skill_result_present=bool(skill_result),
         ),
         recommended_skill_ids=tuple(decision.candidate_skill_ids),
         artifacts=_collect_handoff_artifacts(
+            config=config,
+            decision=decision,
+            current_run=current_run,
             current_plan=current_plan,
             kb_artifact=kb_artifact,
             replay_session_dir=replay_session_dir,
             skill_result=skill_result,
+            current_clarification=current_clarification,
             current_decision=current_decision,
         ),
         notes=normalized_notes,
@@ -92,11 +107,18 @@ def write_runtime_handoff(path: Path, handoff: RuntimeHandoff) -> None:
     temp_path.replace(path)
 
 
-def _required_host_action(route_name: str, *, skill_result_present: bool) -> str:
+def _required_host_action(decision: RouteDecision, *, skill_result_present: bool) -> str:
+    route_name = decision.route_name
     if route_name == "plan_only":
         return "review_or_execute_plan"
     if route_name in {"workflow", "light_iterate"}:
         return "continue_host_workflow"
+    if route_name in {"clarification_pending", "clarification_resume"}:
+        return "answer_questions"
+    if route_name == "execution_confirm_pending":
+        if decision.active_run_action == "revise_execution":
+            return "review_or_execute_plan"
+        return "confirm_execute"
     if route_name in {"resume_active", "exec_plan"}:
         return "continue_host_develop"
     if route_name == "quick_fix":
@@ -114,13 +136,26 @@ def _required_host_action(route_name: str, *, skill_result_present: bool) -> str
 
 def _collect_handoff_artifacts(
     *,
+    config: RuntimeConfig,
+    decision: RouteDecision,
+    current_run: RunState | None,
     current_plan: PlanArtifact | None,
     kb_artifact: KbArtifact | None,
     replay_session_dir: str | None,
     skill_result: Mapping[str, Any] | None,
+    current_clarification: Any | None,
     current_decision: Any | None,
 ) -> Mapping[str, Any]:
     artifacts: dict[str, Any] = {}
+    if current_run is not None:
+        artifacts["run_stage"] = current_run.stage
+        if current_run.execution_gate is not None:
+            artifacts["execution_gate"] = current_run.execution_gate.to_dict()
+    if current_plan is not None and _should_attach_execution_summary(decision=decision, current_run=current_run):
+        artifacts["execution_summary"] = build_execution_summary(
+            plan_artifact=current_plan,
+            config=config,
+        ).to_dict()
     if current_plan is not None and current_plan.files:
         artifacts["plan_files"] = list(current_plan.files)
     if kb_artifact is not None and kb_artifact.files:
@@ -129,10 +164,86 @@ def _collect_handoff_artifacts(
         artifacts["replay_session_dir"] = replay_session_dir
     if skill_result:
         artifacts["skill_result_keys"] = sorted(skill_result.keys())
+        if decision.route_name == "compare":
+            compare_contract = build_compare_decision_contract(
+                question=decision.request_text,
+                skill_result=skill_result,
+                language=config.language,
+            )
+            if compare_contract is not None:
+                artifacts["compare_decision_contract"] = compare_contract
+    if current_clarification is not None:
+        artifacts["clarification_file"] = CURRENT_CLARIFICATION_RELATIVE_PATH
+        artifacts["clarification_id"] = getattr(current_clarification, "clarification_id", None)
+        artifacts["clarification_status"] = getattr(current_clarification, "status", None)
+        artifacts["missing_facts"] = list(getattr(current_clarification, "missing_facts", ()))
+        artifacts["questions"] = list(getattr(current_clarification, "questions", ()))
+        artifacts["clarification_form"] = build_scope_clarification_form(
+            current_clarification,
+            language=config.language,
+        )
+        artifacts["clarification_submission_state"] = clarification_submission_state_payload(current_clarification)
     if current_decision is not None:
         artifacts["decision_file"] = CURRENT_DECISION_RELATIVE_PATH
         artifacts["decision_id"] = getattr(current_decision, "decision_id", None)
         artifacts["decision_status"] = getattr(current_decision, "status", None)
         artifacts["decision_option_ids"] = [getattr(option, "option_id", "") for option in getattr(current_decision, "options", ())]
         artifacts["recommended_option_id"] = getattr(current_decision, "recommended_option_id", None)
+        artifacts["decision_primary_field_id"] = getattr(current_decision, "primary_field_id", None)
+        artifacts["selected_option_id"] = getattr(current_decision, "selected_option_id", None)
+        artifacts["decision_policy_id"] = getattr(current_decision, "policy_id", None)
+        artifacts["decision_trigger_reason"] = getattr(current_decision, "trigger_reason", None)
+        checkpoint = getattr(current_decision, "active_checkpoint", None)
+        if checkpoint is not None and hasattr(checkpoint, "to_dict"):
+            artifacts["decision_checkpoint"] = checkpoint.to_dict()
+        artifacts["decision_submission_state"] = _decision_submission_state(current_decision)
+    if decision.route_name == "execution_confirm_pending" and decision.active_run_action == "revise_execution":
+        artifacts["execution_feedback"] = decision.request_text.strip()
     return artifacts
+
+
+def _decision_submission_state(current_decision: Any) -> Mapping[str, Any]:
+    submission = getattr(current_decision, "submission", None)
+    if submission is None:
+        return {
+            "status": "empty",
+            "source": None,
+            "resume_action": None,
+            "submitted_at": None,
+            "has_answers": False,
+            "answer_keys": [],
+        }
+
+    answers = getattr(submission, "answers", {})
+    answer_keys = sorted(str(key) for key in answers.keys()) if isinstance(answers, Mapping) else []
+    payload: dict[str, Any] = {
+        "status": getattr(submission, "status", "empty"),
+        "source": getattr(submission, "source", None),
+        "resume_action": getattr(submission, "resume_action", None),
+        "submitted_at": getattr(submission, "submitted_at", None),
+        "has_answers": bool(answer_keys),
+        "answer_keys": answer_keys,
+    }
+    message = str(getattr(submission, "message", "") or "").strip()
+    if message:
+        payload["message"] = message
+    return payload
+
+
+def _should_attach_execution_summary(*, decision: RouteDecision, current_run: RunState | None) -> bool:
+    if decision.route_name == "execution_confirm_pending":
+        return True
+    if current_run is None:
+        return False
+    if current_run.stage in {"ready_for_execution", "execution_confirm_pending", "executing"}:
+        return True
+    execution_gate = current_run.execution_gate
+    return execution_gate is not None and execution_gate.gate_status == "ready"
+
+
+def _should_emit_handoff(*, decision: RouteDecision, current_run: RunState | None, current_plan: PlanArtifact | None) -> bool:
+    if decision.route_name != "exec_plan":
+        return True
+    # ~go exec is an advanced recovery/debug entry; when it does not converge
+    # back into the standard checkpoints, avoid emitting a misleading develop handoff.
+    return False

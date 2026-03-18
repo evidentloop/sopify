@@ -200,7 +200,7 @@ full (完整结构):
 Changes: {N} files
   - .sopify-skills/plan/...
 
-Next: ~go exec 执行 或 回复修改意见
+Next: 在宿主会话中继续评审或执行方案，或直接回复修改意见
 ```
 
 ---
@@ -212,7 +212,7 @@ workflow.mode = strict:
   → 输出摘要 → 等待用户确认
 
 workflow.mode = adaptive:
-  → 如果是 ~go 命令触发 → 自动进入开发实施
+  → 如果是 ~go 命令触发 → 自动推进到执行前确认/后续宿主链路
   → 如果是 ~go plan 命令触发 → 输出摘要并停止
 
 用户回复修改意见:

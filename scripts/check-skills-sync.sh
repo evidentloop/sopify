@@ -10,7 +10,7 @@ usage() {
 Usage: scripts/check-skills-sync.sh
 
 Check whether Claude/* mirrors Codex/* for Sopify skills.
-For header files, ~/.codex/sopify.config.yaml is expected to be rewritten as ~/.claude/sopify.config.yaml.
+For header files, Claude-specific config/helper paths are expected to be rewritten from ~/.codex/* to ~/.claude/*.
 On mismatch, run:
   bash scripts/sync-skills.sh
 EOF
@@ -26,7 +26,10 @@ status=0
 render_expected_claude_header() {
   local source_file="$1"
   local target_file="$2"
-  sed 's#~/.codex/sopify\.config\.yaml#~/.claude/sopify.config.yaml#g' "$source_file" >"$target_file"
+  sed \
+    -e 's#~/.codex/sopify\.config\.yaml#~/.claude/sopify.config.yaml#g' \
+    -e 's#~/.codex/sopify/#~/.claude/sopify/#g' \
+    "$source_file" >"$target_file"
 }
 
 check_lang() {

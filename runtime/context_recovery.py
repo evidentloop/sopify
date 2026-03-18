@@ -29,6 +29,7 @@ def recover_context(
     """
     current_run = state_store.get_current_run()
     current_plan = state_store.get_current_plan()
+    current_clarification = state_store.get_current_clarification()
     current_decision = state_store.get_current_decision()
     last_route = state_store.get_last_route()
 
@@ -36,6 +37,7 @@ def recover_context(
         return RecoveredContext(
             current_run=current_run,
             current_plan=current_plan,
+            current_clarification=current_clarification,
             current_decision=current_decision,
             last_route=last_route,
         )
@@ -54,6 +56,7 @@ def recover_context(
         loaded_files=tuple(loaded_files),
         current_run=current_run,
         current_plan=current_plan,
+        current_clarification=current_clarification,
         current_decision=current_decision,
         last_route=last_route,
         documents=documents,

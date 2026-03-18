@@ -31,6 +31,8 @@ def sync_runtime_bundle(repo_root: Path, workspace_root: Path, *, bundle_dirname
         bundle_root / "manifest.json",
         bundle_root / "runtime" / "__init__.py",
         bundle_root / "scripts" / "sopify_runtime.py",
+        bundle_root / "scripts" / "clarification_bridge_runtime.py",
+        bundle_root / "scripts" / "decision_bridge_runtime.py",
         bundle_root / "scripts" / "check-runtime-smoke.sh",
         bundle_root / "tests" / "test_runtime.py",
     )

@@ -9,9 +9,9 @@ Usage: scripts/sync-skills.sh
 
 Sync Sopify skill content from Codex/* to Claude/*:
   - Codex/Skills/CN/AGENTS.md -> Claude/Skills/CN/CLAUDE.md
-    (auto-rewrite ~/.codex/sopify.config.yaml -> ~/.claude/sopify.config.yaml)
+    (auto-rewrite ~/.codex/* Claude-specific config/helper paths)
   - Codex/Skills/EN/AGENTS.md -> Claude/Skills/EN/CLAUDE.md
-    (auto-rewrite ~/.codex/sopify.config.yaml -> ~/.claude/sopify.config.yaml)
+    (auto-rewrite ~/.codex/* Claude-specific config/helper paths)
   - Codex/Skills/{CN,EN}/skills/sopify/* -> Claude/Skills/{CN,EN}/skills/sopify/*
 EOF
 }
@@ -25,7 +25,10 @@ render_claude_header() {
   local source_file="$1"
   local target_file="$2"
 
-  sed 's#~/.codex/sopify\.config\.yaml#~/.claude/sopify.config.yaml#g' "$source_file" >"$target_file"
+  sed \
+    -e 's#~/.codex/sopify\.config\.yaml#~/.claude/sopify.config.yaml#g' \
+    -e 's#~/.codex/sopify/#~/.claude/sopify/#g' \
+    "$source_file" >"$target_file"
 }
 
 sync_lang() {

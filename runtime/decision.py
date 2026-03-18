@@ -2,43 +2,28 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from hashlib import sha1
 import re
-from typing import Optional
+from typing import Any, Optional
 
-from .models import DecisionOption, DecisionSelection, DecisionState, RouteDecision, RuntimeConfig
+from .decision_policy import match_decision_policy, should_trigger_decision_policy
+from .decision_templates import PRIMARY_OPTION_FIELD_ID, build_strategy_pick_template
+from .models import (
+    DecisionOption,
+    DecisionSelection,
+    DecisionState,
+    DecisionSubmission,
+    ExecutionGate,
+    PlanArtifact,
+    RouteDecision,
+    RuntimeConfig,
+)
 
 CURRENT_DECISION_FILENAME = "current_decision.json"
 CURRENT_DECISION_RELATIVE_PATH = f".sopify-skills/state/{CURRENT_DECISION_FILENAME}"
 
-_PLANNING_ROUTES = {"plan_only", "workflow", "light_iterate"}
-_ARCHITECTURE_KEYWORDS = (
-    "runtime",
-    "bundle",
-    "payload",
-    "manifest",
-    "handoff",
-    "workspace",
-    "host",
-    "blueprint",
-    "history",
-    "plan",
-    "state",
-    "目录",
-    "契约",
-    "蓝图",
-    "归档",
-    "宿主",
-    "工作区",
-    "根目录",
-)
-_ALTERNATIVE_PATTERNS = (
-    re.compile(r"(?P<left>.+?)\s+还是\s+(?P<right>.+)", re.IGNORECASE),
-    re.compile(r"(?P<left>.+?)\s+vs\.?\s+(?P<right>.+)", re.IGNORECASE),
-    re.compile(r"(?P<left>.+?)\s+or\s+(?P<right>.+)", re.IGNORECASE),
-)
 _DECIDE_COMMAND_RE = re.compile(r"^~decide(?:\s+(?P<verb>status|cancel|choose))?(?:\s+(?P<body>.+))?$", re.IGNORECASE)
 _STATUS_ALIASES = {"status", "查看决策", "查看当前决策", "decision status"}
 _CONTINUE_ALIASES = {"继续", "继续执行", "下一步", "resume", "continue", "next"}
@@ -58,51 +43,122 @@ class DecisionResponse:
 
 def should_trigger_decision_checkpoint(route: RouteDecision) -> bool:
     """Return True when the current planning route should pause for a decision."""
-    if route.route_name not in _PLANNING_ROUTES:
-        return False
-    text = route.request_text.strip()
-    if not text:
-        return False
-    if not _contains_architecture_keywords(text):
-        return False
-    return _extract_alternatives(text) is not None
+    return should_trigger_decision_policy(route)
 
 
 def build_decision_state(route: RouteDecision, *, config: RuntimeConfig) -> DecisionState | None:
     """Create a deterministic decision packet from a planning request."""
-    if not should_trigger_decision_checkpoint(route):
+    match = match_decision_policy(route)
+    if match is None:
         return None
-
-    extracted = _extract_alternatives(route.request_text)
-    if extracted is None:
-        return None
-    left, right = extracted
 
     created_at = iso_now()
     feature_key = _feature_key(route.request_text)
-    options = (
-        _build_option("option_1", left, recommended=True, language=config.language),
-        _build_option("option_2", right, recommended=False, language=config.language),
+    options = match.options or tuple(
+        _build_option(
+            f"option_{index}",
+            raw_text,
+            recommended=(index - 1) == match.recommended_option_index,
+            language=config.language,
+        )
+        for index, raw_text in enumerate(match.option_texts, start=1)
     )
-    context_files = _context_files(config)
+    summary = match.summary or _summary_for_language(config.language)
+    recommended_option_id = (
+        options[match.recommended_option_index].option_id
+        if 0 <= match.recommended_option_index < len(options)
+        else None
+    )
+    default_option_id = (
+        options[match.default_option_index].option_id
+        if 0 <= match.default_option_index < len(options)
+        else recommended_option_id
+    )
+    rendered = build_strategy_pick_template(
+        checkpoint_id=_decision_id(route.request_text),
+        question=match.question,
+        summary=summary,
+        options=options,
+        language=config.language,
+        recommended_option_id=recommended_option_id,
+        default_option_id=default_option_id,
+    )
+    context_files = tuple(dict.fromkeys((*_context_files(config), *match.context_files)))
 
     return DecisionState(
+        schema_version="2",
         decision_id=_decision_id(route.request_text),
         feature_key=feature_key,
         phase="design",
         status="pending",
-        decision_type="architecture_choice",
-        question=route.request_text.strip(),
-        summary=_summary_for_language(config.language),
-        options=options,
-        recommended_option_id=options[0].option_id,
-        default_option_id=options[0].option_id,
+        decision_type=match.decision_type,
+        question=match.question,
+        summary=summary,
+        options=rendered.options,
+        checkpoint=rendered.checkpoint,
+        recommended_option_id=rendered.recommended_option_id,
+        default_option_id=rendered.default_option_id,
         context_files=context_files,
         resume_route=route.route_name,
         request_text=route.request_text,
         requested_plan_level=route.plan_level,
         capture_mode=route.capture_mode,
         candidate_skill_ids=route.candidate_skill_ids,
+        policy_id=match.policy_id,
+        trigger_reason=match.trigger_reason,
+        created_at=created_at,
+        updated_at=created_at,
+    )
+
+
+def build_execution_gate_decision_state(
+    route: RouteDecision,
+    *,
+    gate: ExecutionGate,
+    current_plan: PlanArtifact,
+    config: RuntimeConfig,
+) -> DecisionState | None:
+    """Create a follow-up decision checkpoint for gate-detected blocking risks."""
+    if gate.gate_status != "decision_required" or gate.blocking_reason in {"none", "unresolved_decision"}:
+        return None
+
+    created_at = iso_now()
+    decision_type = f"execution_gate_{gate.blocking_reason}"
+    question, summary, options = _gate_decision_payload(
+        gate.blocking_reason,
+        plan_path=current_plan.path,
+        language=config.language,
+    )
+    rendered = build_strategy_pick_template(
+        checkpoint_id=_execution_gate_decision_id(current_plan.plan_id, gate.blocking_reason),
+        question=question,
+        summary=summary,
+        options=options,
+        language=config.language,
+        recommended_option_id=options[0].option_id,
+        default_option_id=options[0].option_id,
+    )
+    return DecisionState(
+        schema_version="2",
+        decision_id=_execution_gate_decision_id(current_plan.plan_id, gate.blocking_reason),
+        feature_key=current_plan.plan_id,
+        phase="design",
+        status="pending",
+        decision_type=decision_type,
+        question=question,
+        summary=summary,
+        options=rendered.options,
+        checkpoint=rendered.checkpoint,
+        recommended_option_id=rendered.recommended_option_id,
+        default_option_id=rendered.default_option_id,
+        context_files=(current_plan.path, *current_plan.files),
+        resume_route=route.route_name,
+        request_text=route.request_text,
+        requested_plan_level=current_plan.level,
+        capture_mode=route.capture_mode,
+        candidate_skill_ids=route.candidate_skill_ids,
+        policy_id="execution_gate_blocking_risk",
+        trigger_reason=gate.blocking_reason,
         created_at=created_at,
         updated_at=created_at,
     )
@@ -143,28 +199,82 @@ def parse_decision_response(decision_state: DecisionState, user_input: str) -> D
     return DecisionResponse(action="invalid", message=f"Unrecognized decision response: {text}")
 
 
+def update_decision_submission(
+    decision_state: DecisionState,
+    *,
+    answers: dict[str, Any],
+    source: str,
+    resume_action: str = "submit",
+    raw_input: str = "",
+    message: str = "",
+    status: str = "submitted",
+) -> DecisionState:
+    """Persist a structured submission before runtime resumes the checkpoint."""
+    submission = DecisionSubmission(
+        status=status,
+        source=source,
+        answers=answers,
+        raw_input=raw_input,
+        message=message,
+        submitted_at=iso_now(),
+        resume_action=resume_action,
+    )
+    return decision_state.with_submission(submission)
+
+
+def has_submitted_decision(decision_state: DecisionState) -> bool:
+    """Return True when a host bridge already collected structured answers."""
+    return decision_state.has_submitted_answers
+
+
+def response_from_submission(decision_state: DecisionState) -> DecisionResponse | None:
+    """Interpret a structured submission written by the host bridge."""
+    submission = decision_state.submission
+    if submission is None or submission.status not in {"submitted", "confirmed", "cancelled", "timed_out"}:
+        return None
+
+    normalized_action = submission.resume_action.strip().casefold()
+    if normalized_action in {"cancel", "cancelled"} or submission.status == "cancelled":
+        return DecisionResponse(action="cancel", source=submission.source)
+    if normalized_action in {"status", "inspect"}:
+        return DecisionResponse(action="status", source=submission.source)
+    if submission.status == "timed_out":
+        return DecisionResponse(action="invalid", source=submission.source, message=submission.message or "Decision submission timed out")
+
+    option_id = _option_id_from_submission(decision_state, submission)
+    if option_id is None:
+        return DecisionResponse(
+            action="invalid",
+            source=submission.source,
+            message=submission.message or "Structured decision submission did not contain a valid option",
+        )
+    return DecisionResponse(action="choose", option_id=option_id, source=submission.source)
+
+
 def confirm_decision(decision_state: DecisionState, *, option_id: str, source: str, raw_input: str) -> DecisionState:
     """Mark a decision as confirmed while preserving recovery data."""
     now = iso_now()
-    return DecisionState(
-        decision_id=decision_state.decision_id,
-        feature_key=decision_state.feature_key,
-        phase=decision_state.phase,
+    answers = _selection_answers(decision_state, option_id)
+    previous_submission = decision_state.submission
+    submission = DecisionSubmission(
         status="confirmed",
-        decision_type=decision_state.decision_type,
-        question=decision_state.question,
-        summary=decision_state.summary,
-        options=decision_state.options,
-        recommended_option_id=decision_state.recommended_option_id,
-        default_option_id=decision_state.default_option_id,
-        context_files=decision_state.context_files,
-        resume_route=decision_state.resume_route,
-        request_text=decision_state.request_text,
-        requested_plan_level=decision_state.requested_plan_level,
-        capture_mode=decision_state.capture_mode,
-        candidate_skill_ids=decision_state.candidate_skill_ids,
-        selection=DecisionSelection(option_id=option_id, source=source, raw_input=raw_input),
-        created_at=decision_state.created_at,
+        source=source or (previous_submission.source if previous_submission is not None else "text"),
+        answers=answers,
+        raw_input=raw_input or (previous_submission.raw_input if previous_submission is not None else ""),
+        message=previous_submission.message if previous_submission is not None else "",
+        submitted_at=(previous_submission.submitted_at if previous_submission is not None else None) or now,
+        resume_action="submit",
+    )
+    return replace(
+        decision_state,
+        status="confirmed",
+        submission=submission,
+        selection=DecisionSelection(
+            option_id=option_id,
+            source=source,
+            raw_input=raw_input,
+            answers=answers,
+        ),
         updated_at=now,
         confirmed_at=now,
         consumed_at=None,
@@ -174,57 +284,13 @@ def confirm_decision(decision_state: DecisionState, *, option_id: str, source: s
 def consume_decision(decision_state: DecisionState) -> DecisionState:
     """Mark a decision as consumed before clearing it from current state."""
     now = iso_now()
-    return DecisionState(
-        decision_id=decision_state.decision_id,
-        feature_key=decision_state.feature_key,
-        phase=decision_state.phase,
-        status="consumed",
-        decision_type=decision_state.decision_type,
-        question=decision_state.question,
-        summary=decision_state.summary,
-        options=decision_state.options,
-        recommended_option_id=decision_state.recommended_option_id,
-        default_option_id=decision_state.default_option_id,
-        context_files=decision_state.context_files,
-        resume_route=decision_state.resume_route,
-        request_text=decision_state.request_text,
-        requested_plan_level=decision_state.requested_plan_level,
-        capture_mode=decision_state.capture_mode,
-        candidate_skill_ids=decision_state.candidate_skill_ids,
-        selection=decision_state.selection,
-        created_at=decision_state.created_at,
-        updated_at=now,
-        confirmed_at=decision_state.confirmed_at,
-        consumed_at=now,
-    )
+    return replace(decision_state, status="consumed", updated_at=now, consumed_at=now)
 
 
 def stale_decision(decision_state: DecisionState) -> DecisionState:
     """Return a stale copy when a pending checkpoint is superseded."""
     now = iso_now()
-    return DecisionState(
-        decision_id=decision_state.decision_id,
-        feature_key=decision_state.feature_key,
-        phase=decision_state.phase,
-        status="stale",
-        decision_type=decision_state.decision_type,
-        question=decision_state.question,
-        summary=decision_state.summary,
-        options=decision_state.options,
-        recommended_option_id=decision_state.recommended_option_id,
-        default_option_id=decision_state.default_option_id,
-        context_files=decision_state.context_files,
-        resume_route=decision_state.resume_route,
-        request_text=decision_state.request_text,
-        requested_plan_level=decision_state.requested_plan_level,
-        capture_mode=decision_state.capture_mode,
-        candidate_skill_ids=decision_state.candidate_skill_ids,
-        selection=decision_state.selection,
-        created_at=decision_state.created_at,
-        updated_at=now,
-        confirmed_at=decision_state.confirmed_at,
-        consumed_at=decision_state.consumed_at,
-    )
+    return replace(decision_state, status="stale", updated_at=now)
 
 
 def option_by_id(decision_state: DecisionState, option_id: str) -> DecisionOption | None:
@@ -234,31 +300,6 @@ def option_by_id(decision_state: DecisionState, option_id: str) -> DecisionOptio
             return option
     return None
 
-
-def _contains_architecture_keywords(text: str) -> bool:
-    lowered = text.casefold()
-    return any(keyword.casefold() in lowered for keyword in _ARCHITECTURE_KEYWORDS)
-
-
-def _extract_alternatives(text: str) -> tuple[str, str] | None:
-    stripped = text.strip().rstrip("？?。.")
-    for pattern in _ALTERNATIVE_PATTERNS:
-        match = pattern.search(stripped)
-        if not match:
-            continue
-        left = _clean_option(match.group("left"))
-        right = _clean_option(match.group("right"))
-        if left and right and left.casefold() != right.casefold():
-            return left, right
-    return None
-
-
-def _clean_option(value: str) -> str:
-    cleaned = value.strip().strip("：:")
-    cleaned = re.sub(r"^(决策|选择|方案|option)\s*[：:]\s*", "", cleaned, flags=re.IGNORECASE)
-    return cleaned[:120].rstrip()
-
-
 def _build_option(option_id: str, raw_text: str, *, recommended: bool, language: str) -> DecisionOption:
     summary = raw_text
     if language == "en-US":
@@ -267,19 +308,17 @@ def _build_option(option_id: str, raw_text: str, *, recommended: bool, language:
     else:
         tradeoffs = ("会改变后续 plan 结构与长期蓝图写入。",)
         impacts = ("需要先确认，再生成唯一正式 plan。",)
-    return DecisionOption(
-        option_id=option_id,
-        title=raw_text,
-        summary=summary,
-        tradeoffs=tradeoffs,
-        impacts=impacts,
-        recommended=recommended,
-    )
+    return DecisionOption(option_id=option_id, title=raw_text, summary=summary, tradeoffs=tradeoffs, impacts=impacts, recommended=recommended)
 
 
 def _decision_id(request_text: str) -> str:
     digest = sha1(request_text.encode("utf-8")).hexdigest()[:8]
     return f"decision_{digest}"
+
+
+def _execution_gate_decision_id(plan_id: str, blocking_reason: str) -> str:
+    digest = sha1(f"{plan_id}:{blocking_reason}".encode("utf-8")).hexdigest()[:8]
+    return f"decision_gate_{digest}"
 
 
 def _feature_key(request_text: str) -> str:
@@ -308,6 +347,97 @@ def _summary_for_language(language: str) -> str:
     return "检测到会影响正式 plan 与长期契约的设计分叉，需要先确认再继续。"
 
 
+def _gate_decision_payload(
+    blocking_reason: str,
+    *,
+    plan_path: str,
+    language: str,
+) -> tuple[str, str, tuple[DecisionOption, ...]]:
+    if language == "en-US":
+        mapping = {
+            "destructive_change": (
+                f"The plan at `{plan_path}` still includes a destructive change. Which path should runtime treat as approved?",
+                "A destructive change still needs explicit approval before the plan may progress.",
+                (
+                    _gate_option("option_1", "Narrow to a reversible rollout", "Keep the change reversible with backups or staged fallback.", recommended=True),
+                    _gate_option("option_2", "Proceed with the destructive change", "Allow the risky destructive step in this round.", recommended=False),
+                ),
+            ),
+            "auth_boundary": (
+                f"The plan at `{plan_path}` still touches auth or permission boundaries. Which path is approved?",
+                "The current auth boundary impact still needs an explicit decision.",
+                (
+                    _gate_option("option_1", "Preserve the current auth boundary", "Reuse the current auth model and narrow the implementation scope.", recommended=True),
+                    _gate_option("option_2", "Change auth behavior in this round", "Allow auth or permission behavior to change as part of this round.", recommended=False),
+                ),
+            ),
+            "schema_change": (
+                f"The plan at `{plan_path}` still implies a schema-level change. Which path is approved?",
+                "A schema-level change still needs an explicit rollout decision.",
+                (
+                    _gate_option("option_1", "Use a compatible migration path", "Keep the schema change compatible and reversible.", recommended=True),
+                    _gate_option("option_2", "Allow the direct schema change", "Permit the direct schema change in this round.", recommended=False),
+                ),
+            ),
+            "scope_tradeoff": (
+                f"The plan at `{plan_path}` still contains an unresolved scope tradeoff. Which path is approved?",
+                "The plan still contains an unresolved scope tradeoff that should be confirmed first.",
+                (
+                    _gate_option("option_1", "Narrow the scope", "Pick the smallest stable path and postpone the rest.", recommended=True),
+                    _gate_option("option_2", "Expand the scope now", "Absorb the coupled changes in the current round.", recommended=False),
+                ),
+            ),
+        }
+    else:
+        mapping = {
+            "destructive_change": (
+                f"`{plan_path}` 里仍包含破坏性变更，当前需要拍板这轮到底按哪条路径执行。",
+                "当前 plan 仍包含破坏性变更，需要先明确批准的执行路径。",
+                (
+                    _gate_option("option_1", "收敛为可回滚方案", "保留备份、回滚或渐进切换，优先走可逆路径。", recommended=True),
+                    _gate_option("option_2", "接受这轮直接执行破坏性变更", "允许本轮直接落破坏性步骤。", recommended=False),
+                ),
+            ),
+            "auth_boundary": (
+                f"`{plan_path}` 仍触及认证或权限边界，当前需要拍板本轮是否允许修改这条边界。",
+                "当前 plan 仍触及认证或权限边界，需要先明确批准路径。",
+                (
+                    _gate_option("option_1", "保持现有认证边界", "沿用现有权限模型，收窄本轮实现范围。", recommended=True),
+                    _gate_option("option_2", "本轮允许改认证或权限行为", "允许本轮一并修改认证或权限行为。", recommended=False),
+                ),
+            ),
+            "schema_change": (
+                f"`{plan_path}` 仍包含 schema 级改动，当前需要拍板采用哪条迁移路径。",
+                "当前 plan 仍包含 schema 级改动，需要先明确批准的迁移路径。",
+                (
+                    _gate_option("option_1", "走兼容迁移路径", "优先采用兼容、可回滚的 schema 迁移方案。", recommended=True),
+                    _gate_option("option_2", "接受这轮直接改 schema", "允许本轮直接落 schema 级变更。", recommended=False),
+                ),
+            ),
+            "scope_tradeoff": (
+                f"`{plan_path}` 仍存在范围取舍，当前需要拍板本轮到底收敛还是扩展。",
+                "当前 plan 仍存在范围取舍，需要先确认正式执行路径。",
+                (
+                    _gate_option("option_1", "收窄范围", "优先选择最小稳定路径，其余部分后续再做。", recommended=True),
+                    _gate_option("option_2", "扩大范围一并处理", "接受耦合改动，本轮一并推进。", recommended=False),
+                ),
+            ),
+        }
+
+    return mapping.get(blocking_reason, mapping["scope_tradeoff"])
+
+
+def _gate_option(option_id: str, title: str, summary: str, *, recommended: bool) -> DecisionOption:
+    return DecisionOption(
+        option_id=option_id,
+        title=title,
+        summary=summary,
+        tradeoffs=(summary,),
+        impacts=("Will immediately feed back into the execution gate.",),
+        recommended=recommended,
+    )
+
+
 def _match_option(decision_state: DecisionState, raw_text: str) -> str | None:
     text = raw_text.strip()
     if not text:
@@ -320,13 +450,40 @@ def _match_option(decision_state: DecisionState, raw_text: str) -> str | None:
 
     normalized = _normalize_text(text)
     for option in decision_state.options:
-        if normalized == option.option_id.casefold():
+        if text.casefold() == option.option_id.casefold():
+            return option.option_id
+        if normalized == _normalize_text(option.option_id):
             return option.option_id
         if normalized == _normalize_text(option.title):
             return option.option_id
         if normalized == _normalize_text(option.summary):
             return option.option_id
     return None
+
+
+def _option_id_from_submission(decision_state: DecisionState, submission: DecisionSubmission) -> str | None:
+    # Hosts may submit against a renamed primary field or the legacy
+    # `selected_option_id` key during the transition.
+    field_id = decision_state.primary_field_id or PRIMARY_OPTION_FIELD_ID
+    candidate = submission.answers.get(field_id)
+    if candidate is None and field_id != PRIMARY_OPTION_FIELD_ID:
+        candidate = submission.answers.get(PRIMARY_OPTION_FIELD_ID)
+    if isinstance(candidate, list):
+        candidate = candidate[0] if candidate else None
+    if isinstance(candidate, bool):
+        return None
+    if candidate is None:
+        return None
+    return _match_option(decision_state, str(candidate))
+
+
+def _selection_answers(decision_state: DecisionState, option_id: str) -> dict[str, Any]:
+    answers: dict[str, Any] = {}
+    if decision_state.submission is not None:
+        answers.update(decision_state.submission.answers)
+    field_id = decision_state.primary_field_id or PRIMARY_OPTION_FIELD_ID
+    answers[field_id] = option_id
+    return answers
 
 
 def _normalize_text(value: str) -> str:

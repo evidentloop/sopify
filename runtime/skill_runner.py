@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+import sys
 from typing import Any, Mapping
 
 from .models import SkillMeta
@@ -41,9 +42,13 @@ def run_runtime_skill(skill: SkillMeta, *, payload: Mapping[str, Any]) -> Mappin
 
 
 def _load_module(path: Path, skill_id: str) -> Any:
-    spec = importlib.util.spec_from_file_location(f"sopify_runtime_{skill_id.replace('-', '_')}", path)
+    module_name = f"sopify_runtime_{skill_id.replace('-', '_')}"
+    spec = importlib.util.spec_from_file_location(module_name, path)
     if spec is None or spec.loader is None:
         raise SkillExecutionError(f"Unable to load runtime entry: {path}")
     module = importlib.util.module_from_spec(spec)
+    # Register the module before execution so decorators such as dataclass can
+    # resolve `cls.__module__` through `sys.modules` on newer Python versions.
+    sys.modules[module_name] = module
     spec.loader.exec_module(module)
     return module

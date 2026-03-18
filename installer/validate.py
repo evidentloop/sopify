@@ -64,6 +64,8 @@ def expected_bundle_paths(bundle_root: Path) -> tuple[Path, ...]:
         bundle_root / "manifest.json",
         bundle_root / "runtime" / "__init__.py",
         bundle_root / "scripts" / "sopify_runtime.py",
+        bundle_root / "scripts" / "clarification_bridge_runtime.py",
+        bundle_root / "scripts" / "decision_bridge_runtime.py",
         bundle_root / "scripts" / "check-runtime-smoke.sh",
         bundle_root / "tests" / "test_runtime.py",
     )

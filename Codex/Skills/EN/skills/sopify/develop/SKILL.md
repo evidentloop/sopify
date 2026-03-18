@@ -151,7 +151,7 @@ Blocked tasks:
 Changes: {N} files
   - ...
 
-Next: Run ~go exec after resolving blocks
+Next: Resume the current flow in the host session after resolving the blockers
 ```
 
 **Quick Fix Mode (simple tasks executed directly):**
@@ -181,7 +181,7 @@ Handling:
   2. Mark completed tasks as [x]
   3. Keep current task as [ ]
   4. Output interruption summary
-Recovery: Run ~go exec to continue from interruption point
+Recovery: Resume through the host session by default; use ~go exec only as an advanced recovery entry when an active plan or recovery state already exists
 ```
 
 ### Task Failure
