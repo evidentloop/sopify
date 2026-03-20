@@ -67,10 +67,12 @@ def expected_bundle_paths(bundle_root: Path) -> tuple[Path, ...]:
         bundle_root / "runtime" / "cli_interactive.py",
         bundle_root / "runtime" / "develop_checkpoint.py",
         bundle_root / "runtime" / "decision_bridge.py",
+        bundle_root / "runtime" / "preferences.py",
         bundle_root / "scripts" / "sopify_runtime.py",
         bundle_root / "scripts" / "clarification_bridge_runtime.py",
         bundle_root / "scripts" / "develop_checkpoint_runtime.py",
         bundle_root / "scripts" / "decision_bridge_runtime.py",
+        bundle_root / "scripts" / "preferences_preload_runtime.py",
         bundle_root / "scripts" / "check-runtime-smoke.sh",
         bundle_root / "tests" / "test_runtime.py",
     )

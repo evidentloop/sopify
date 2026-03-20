@@ -65,8 +65,8 @@
 - `DecisionCheckpoint / DecisionSubmission / structured submission resume` 已作为 runtime 机器契约落地
 - `decision_templates / decision_policy / decision bridge helper` 已落地；`decision_policy` 已支持 structured tradeoff candidates，`~compare` handoff 已可输出 `compare_decision_contract` facade，clarification 已可输出 `clarification_form` 并结构化恢复，replay 已记录推荐项/最终选择并默认省略自由输入原文
 - `planning-mode orchestrator + develop-first callback + missing-request reason code` 已收口并有自动化测试保护
-- 下一阶段优先级收敛为“宿主强制 runtime 入口守卫（develop-first）”：把“文档约束”提升为“入口级机器约束”
-- compare / replay 继续作为后续切片，不抢占当前强约束主线
+- 新切片优先级收敛为“当前时间显示 + ~summary 今日详细摘要”，先满足用户侧可见时间与复盘学习诉求
+- `daily index`、`~replay` 与更重的按天 retrieval 保留为后续可选能力，不抢当前主线
 - 保持单活动 plan 模型与既有接入链路，不引入新的主入口、drafts 目录或额外安装步骤
 <!-- sopify:auto:focus:end -->
 
@@ -88,6 +88,6 @@
 ## 维护说明
 
 - 本文件是项目级入口索引，不承载单次任务的完整实现细节。
-- 当前仓库已完成蓝图文档收口；blueprint bootstrap、metadata-managed plan 的 finalize 收口、execution gate、`decision_templates / decision_policy / decision bridge helper` 与 decision runtime contract 已落地；CLI interactive bridge、structured tradeoff policy、compare facade、scope clarify bridge 与 replay 摘要增强也已进入代码主线。下一阶段重点是把“宿主应当先走 runtime”升级为“宿主只能先走 runtime”的入口级约束，优先收口 develop-first 决策回调链路，再扩展 compare/replay 主链接入。
+- 当前仓库已完成蓝图文档收口；blueprint bootstrap、metadata-managed plan 的 finalize 收口、execution gate、`decision_templates / decision_policy / decision bridge helper` 与 decision runtime contract 已落地；CLI interactive bridge、structured tradeoff policy、compare facade、scope clarify bridge 与 replay 摘要增强也已进入代码主线。当前新增主线收敛为“当前时间显示 + ~summary 今日详细摘要”，先满足用户侧可见时间与复盘学习诉求；`daily index`、`~replay` 与更重的按天 retrieval 维持后续可选能力。
 - 自动区块优先保持“短、稳、可扫描”；深入说明进入 `background.md / design.md / tasks.md`。
 - 若人工补充内容与代码、宿主契约、目录契约冲突，以实现与正式蓝图为准，并在后续收口时修正。

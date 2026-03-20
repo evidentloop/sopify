@@ -22,6 +22,7 @@ from .entry_guard import (
 from .clarification import CURRENT_CLARIFICATION_RELATIVE_PATH
 from .decision import CURRENT_DECISION_RELATIVE_PATH
 from .handoff import CURRENT_HANDOFF_RELATIVE_PATH
+from .preferences import PREFERENCES_PRELOAD_STATUSES
 from .router import SUPPORTED_ROUTE_NAMES
 from .state import iso_now
 
@@ -32,6 +33,7 @@ PLAN_ONLY_ENTRY = ENTRY_GUARD_PLAN_ONLY_HELPER_ENTRY
 DECISION_BRIDGE_ENTRY = "scripts/decision_bridge_runtime.py"
 CLARIFICATION_BRIDGE_ENTRY = "scripts/clarification_bridge_runtime.py"
 DEVELOP_CHECKPOINT_ENTRY = "scripts/develop_checkpoint_runtime.py"
+PREFERENCES_PRELOAD_ENTRY = "scripts/preferences_preload_runtime.py"
 _SOPIFY_VERSION_RE = re.compile(r"^<!--\s*SOPIFY_VERSION:\s*(?P<version>.+?)\s*-->$", re.MULTILINE)
 _CHANGELOG_VERSION_RE = re.compile(r"^## \[(?P<version>[^\]]+)\]", re.MULTILINE)
 
@@ -135,6 +137,7 @@ def build_bundle_manifest(
             "develop_resume_context": True,
             "execution_gate": True,
             "planning_mode_orchestrator": True,
+            "preferences_preload": True,
             "runtime_entry_guard": True,
             "replay_capture": True,
             "writes_clarification_file": True,
@@ -209,6 +212,9 @@ def build_bundle_manifest(
             },
             "develop_resume_context_required_fields": list(DEVELOP_RESUME_CONTEXT_REQUIRED_FIELDS),
             "develop_resume_after_actions": list(DEVELOP_RESUME_AFTER_ACTIONS),
+            "preferences_preload_entry": PREFERENCES_PRELOAD_ENTRY,
+            "preferences_preload_contract_version": "1",
+            "preferences_preload_statuses": list(PREFERENCES_PRELOAD_STATUSES),
         },
     )
 

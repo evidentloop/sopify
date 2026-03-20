@@ -29,6 +29,7 @@ _REQUIRED_BUNDLE_CAPABILITIES = {
     "develop_checkpoint_callback": True,
     "develop_resume_context": True,
     "planning_mode_orchestrator": True,
+    "preferences_preload": True,
     "runtime_entry_guard": True,
 }
 

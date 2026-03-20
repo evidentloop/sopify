@@ -82,6 +82,7 @@ class PayloadInstallTests(unittest.TestCase):
             self.assertTrue((payload_root / "bundle" / "scripts" / "clarification_bridge_runtime.py").exists())
             self.assertTrue((payload_root / "bundle" / "scripts" / "develop_checkpoint_runtime.py").exists())
             self.assertTrue((payload_root / "bundle" / "scripts" / "decision_bridge_runtime.py").exists())
+            self.assertTrue((payload_root / "bundle" / "scripts" / "preferences_preload_runtime.py").exists())
             payload_manifest = json.loads((payload_root / "payload-manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(payload_manifest["dependency_model"]["mode"], "stdlib_only")
             self.assertTrue(
@@ -90,6 +91,7 @@ class PayloadInstallTests(unittest.TestCase):
             self.assertTrue(
                 payload_manifest["minimum_workspace_manifest"]["required_capabilities"]["develop_checkpoint_callback"]
             )
+            self.assertTrue(payload_manifest["minimum_workspace_manifest"]["required_capabilities"]["preferences_preload"])
             self.assertTrue(payload_manifest["minimum_workspace_manifest"]["required_capabilities"]["runtime_entry_guard"])
 
 
@@ -208,6 +210,12 @@ class HostPromptContractTests(unittest.TestCase):
             self.assertIn("~/.codex/sopify/payload-manifest.json", prompt)
             self.assertIn("~/.codex/sopify/helpers/bootstrap_workspace.py --workspace-root <cwd>", prompt)
             self.assertIn("缺少或不满足兼容要求的 `.sopify-runtime/manifest.json`", prompt)
+            self.assertIn("每次准备进入 Sopify 的 LLM 回合前", prompt)
+            self.assertIn("limits.preferences_preload_entry", prompt)
+            self.assertIn("scripts/preferences_preload_runtime.py inspect --workspace-root <cwd>", prompt)
+            self.assertIn("fail-open with visibility", prompt)
+            self.assertIn("当前任务明确要求 > `preferences.md` > 默认规则", prompt)
+            self.assertIn("不得自行读取 `preferences.md` 原文做二次拼装", prompt)
             self.assertIn("scripts/develop_checkpoint_runtime.py", prompt)
             self.assertIn("resume_context", prompt)
             self.assertIn("不得自由追问", prompt)
@@ -232,6 +240,12 @@ class HostPromptContractTests(unittest.TestCase):
             self.assertIn("~/.claude/sopify/payload-manifest.json", prompt)
             self.assertIn("~/.claude/sopify/helpers/bootstrap_workspace.py --workspace-root <cwd>", prompt)
             self.assertIn("does not yet have a compatible `.sopify-runtime/manifest.json`", prompt)
+            self.assertIn("before every Sopify LLM round", prompt)
+            self.assertIn("limits.preferences_preload_entry", prompt)
+            self.assertIn("scripts/preferences_preload_runtime.py inspect --workspace-root <cwd>", prompt)
+            self.assertIn("fail-open with visibility", prompt)
+            self.assertIn("current explicit task > preferences.md > default rules", prompt)
+            self.assertIn("never re-read `preferences.md` to rebuild the prompt block manually", prompt)
             self.assertIn("scripts/develop_checkpoint_runtime.py", prompt)
             self.assertIn("resume_context", prompt)
             self.assertIn("must not ask a free-form question", prompt)

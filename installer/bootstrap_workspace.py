@@ -28,10 +28,12 @@ _REQUIRED_BUNDLE_FILES = (
     Path("runtime") / "cli_interactive.py",
     Path("runtime") / "develop_checkpoint.py",
     Path("runtime") / "decision_bridge.py",
+    Path("runtime") / "preferences.py",
     Path("scripts") / "sopify_runtime.py",
     Path("scripts") / "clarification_bridge_runtime.py",
     Path("scripts") / "develop_checkpoint_runtime.py",
     Path("scripts") / "decision_bridge_runtime.py",
+    Path("scripts") / "preferences_preload_runtime.py",
     Path("scripts") / "check-runtime-smoke.sh",
     Path("tests") / "test_runtime.py",
 )

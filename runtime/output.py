@@ -9,6 +9,7 @@ from .clarification import CURRENT_CLARIFICATION_RELATIVE_PATH
 from .decision import CURRENT_DECISION_RELATIVE_PATH
 from .handoff import CURRENT_HANDOFF_RELATIVE_PATH
 from .models import RuntimeResult
+from .state import local_display_now
 
 _PHASE_LABELS = {
     "zh-CN": {
@@ -25,6 +26,7 @@ _PHASE_LABELS = {
         "finalize_active": "开发实施",
         "decision_pending": "方案设计",
         "decision_resume": "方案设计",
+        "summary": "今日详细摘要",
         "compare": "模型对比",
         "replay": "咨询问答",
         "consult": "咨询问答",
@@ -44,6 +46,7 @@ _PHASE_LABELS = {
         "finalize_active": "Development",
         "decision_pending": "Solution Design",
         "decision_resume": "Solution Design",
+        "summary": "Daily Summary",
         "compare": "Model Compare",
         "replay": "Q&A",
         "consult": "Q&A",
@@ -108,6 +111,7 @@ _LABELS = {
         "next_finalize_retry": "补齐 blueprint 更新或切换到 metadata-managed plan 后重试",
         "next_compare": "人工选择候选结果并继续",
         "next_compare_bridge": "继续使用宿主侧 ~compare 专用桥接",
+        "next_summary": "可再次运行 ~summary 刷新，或继续当前开发流",
         "next_replay": "继续使用 workflow-learning 回放链路",
         "next_quick_fix": "在宿主会话中继续执行快速修复",
         "next_consult": "在宿主会话中继续问答，或改成明确变更请求",
@@ -180,6 +184,7 @@ _LABELS = {
         "next_finalize_retry": "Update the blueprint or switch to a metadata-managed plan and retry",
         "next_compare": "Review the candidate outputs and continue",
         "next_compare_bridge": "Use the host-side ~compare bridge for compare execution",
+        "next_summary": "Run ~summary again to refresh, or continue the active development flow",
         "next_replay": "Use the workflow-learning replay flow",
         "next_quick_fix": "Continue the quick-fix flow in the host session",
         "next_consult": "Continue the discussion in the host session, or restate it as a change request",
@@ -221,6 +226,8 @@ def render_runtime_output(
     phase = _phase_label(result, locale)
     status = _status_symbol(result)
     title = _colorize(f"[{brand}] {phase} {status}", title_color=title_color, use_color=use_color)
+    if result.route.route_name == "summary":
+        return _render_daily_summary_output(result, title=title, language=locale)
     changes = _collect_changes(result)
     body = _core_lines(result, locale)
     next_hint = _next_hint(result, locale)
@@ -233,6 +240,9 @@ def render_runtime_output(
     else:
         lines.append(f"  - {labels['none']}")
     lines.extend(["", f"Next: {next_hint}"])
+    time_line = _time_line(result, language=locale)
+    if time_line is not None:
+        lines.append(time_line)
     return "\n".join(lines)
 
 
@@ -259,6 +269,7 @@ def render_runtime_error(
         f"  - {labels['none']}",
         "",
         f"Next: {labels['next_retry']}",
+        f"Time: {local_display_now()}" if locale == "en-US" else f"时间: {local_display_now()}",
     ]
     return "\n".join(lines)
 
@@ -322,6 +333,11 @@ def _core_lines(result: RuntimeResult, language: str) -> list[str]:
         _append_entry_guard_reason_line(lines, result=result, language=language)
         return lines
 
+    if route_name == "summary":
+        if language == "en-US":
+            return [f"{labels['summary']}: generated the detailed recap for today and the current workspace"]
+        return [f"{labels['summary']}: 已生成今天、当前工作区的详细复盘摘要"]
+
     if route_name == "finalize_active":
         if result.plan_artifact is not None:
             return [
@@ -369,6 +385,8 @@ def _core_lines(result: RuntimeResult, language: str) -> list[str]:
 
 
 def _collect_changes(result: RuntimeResult) -> list[str]:
+    if result.route.route_name == "summary":
+        return list(result.generated_files)
     seen: set[str] = set()
     ordered: list[str] = []
     for path in result.kb_artifact.files if result.kb_artifact is not None else ():
@@ -380,6 +398,10 @@ def _collect_changes(result: RuntimeResult) -> list[str]:
             seen.add(path)
             ordered.append(path)
     for path in result.recovered_context.loaded_files:
+        if path not in seen:
+            seen.add(path)
+            ordered.append(path)
+    for path in result.generated_files:
         if path not in seen:
             seen.add(path)
             ordered.append(path)
@@ -405,6 +427,8 @@ def _next_hint(result: RuntimeResult, language: str) -> str:
         return labels["next_answer_questions"]
     if result.route.route_name == "decision_pending":
         return labels["next_decision"]
+    if result.route.route_name == "summary":
+        return labels["next_summary"]
     if result.route.route_name == "exec_plan":
         return labels["next_exec"]
     if result.route.route_name == "cancel_active":
@@ -424,6 +448,8 @@ def _status_symbol(result: RuntimeResult) -> str:
         return "?"
     if route_name == "cancel_active":
         return "✓"
+    if route_name == "summary":
+        return "✓" if result.skill_result else "!"
     if route_name == "compare" and result.skill_result:
         return "✓"
     if route_name in {"workflow", "light_iterate", "quick_fix", "consult", "replay", "resume_active", "exec_plan", "compare"}:
@@ -462,6 +488,8 @@ def _status_message(result: RuntimeResult, language: str) -> str:
         return labels["consult_handoff"]
     if route_name == "compare":
         return labels["compare_ready"] if result.skill_result else labels["compare_handoff"]
+    if route_name == "summary":
+        return labels["next_summary"]
     if route_name == "replay":
         return labels["replay_handoff"]
     if route_name == "decision_pending":
@@ -597,6 +625,39 @@ def _phase_label(result: RuntimeResult, language: str) -> str:
 
 def _normalize_language(language: str) -> str:
     return "en-US" if language == "en-US" else "zh-CN"
+
+
+def _render_daily_summary_output(result: RuntimeResult, *, title: str, language: str) -> str:
+    labels = _LABELS[language]
+    changes = _collect_changes(result)
+    payload = result.skill_result or {}
+    markdown = str(payload.get("summary_markdown") or "").rstrip()
+    next_hint = _next_hint(result, language)
+
+    lines = [title, ""]
+    if markdown:
+        lines.extend(markdown.splitlines())
+    else:
+        lines.append(f"{labels['summary']}: {labels['missing']}")
+    lines.extend(["", "---", f"Changes: {len(changes)} files"])
+    if changes:
+        lines.extend(f"  - {path}" for path in changes)
+    else:
+        lines.append(f"  - {labels['none']}")
+    lines.extend(["", f"Next: {next_hint}"])
+    time_line = _time_line(result, language=language)
+    if time_line is not None:
+        lines.append(time_line)
+    return "\n".join(lines)
+
+
+def _time_line(result: RuntimeResult, *, language: str) -> str | None:
+    activation = result.activation
+    if activation is None or not activation.display_time:
+        return None
+    if language == "en-US":
+        return f"Time: {activation.display_time}"
+    return f"时间: {activation.display_time}"
 
 
 def _colorize(text: str, *, title_color: str, use_color: bool | None) -> str:

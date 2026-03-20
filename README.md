@@ -117,6 +117,23 @@ bash /path/to/project/.sopify-runtime/scripts/check-runtime-smoke.sh
 - builtin skill 发现由 `runtime/builtin_catalog.py` 负责，不依赖 bundle 内再携带 `Codex/Skills` 或 `Claude/Skills` 文档目录
 - 非闭环路由现在会写入 `.sopify-skills/state/current_handoff.json`，`Next:` 文案优先基于 handoff contract 渲染
 
+### 长期偏好预载入
+
+宿主在每次 Sopify 调用前，应基于当前 `workspace_root + plan.directory` 尝试读取：
+
+```text
+<workspace_root>/<plan.directory>/user/preferences.md
+```
+
+最小约束：
+
+- 路径解析必须与 runtime 配置优先级保持一致，不能硬编码 `.sopify-skills/user/preferences.md`
+- `preferences.md` 缺失或读取失败不阻断主链路，首版采用 `fail-open with visibility`
+- 若成功读取，宿主应把它作为“当前工作区的长期协作规则”注入 LLM
+- 固定优先级为：当前任务明确要求 > `preferences.md` > 默认规则
+- “当前任务明确要求”指用户在当前任务中显式给出的临时执行指令；冲突时它优先于 `preferences.md`，不冲突时与长期偏好叠加生效，且默认不回写为长期偏好
+- 这是一段宿主 preflight 能力，不是 runtime 新阶段，也不改变 `RecoveredContext` 语义
+
 ### 硬约束复核（2026-03-19）
 
 以下三条约束已按隔离 smoke 复核：

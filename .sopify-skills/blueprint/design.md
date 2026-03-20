@@ -737,3 +737,435 @@ blueprint 的典型落点：
 - `decision_templates / decision_policy / host bridge helper / CLI bridge contract tests` 已经落地
 - structured tradeoff policy、CLI interactive bridge、compare facade、scope clarify bridge 与 replay 摘要已证明现有 contract 可以继续复用
 - 下一步瓶颈不再是“有没有桥”，而是“哪些场景该触发、compare facade 如何继续收口、各宿主产品如何消费现有 bridge contract”
+
+## 近期切片：当前时间显示与 `~summary`
+
+在 replay 能力上，当前主线不再继续扩张为“按天索引 + 多入口回放”。
+
+近期切片收敛为两个直接面向用户的能力：
+
+1. 每次进入技能包执行时，在输出中显示“当前本地时间”
+2. 提供 `~summary`，默认总结“今天、当前 CLI 根目录（当前工作区）”内的思考链路与代码变更细节
+
+### 用户显示口径
+
+用户侧展示不强调工程字段名，不展示 `package_timestamp / activated_at` 这类内部术语。
+
+用户看到的最小口径应为：
+
+- `时间: 2026-03-19 21:21:41`
+
+设计原则：
+
+- 用户看到的是“现在几点”，而不是内部阶段字段
+- 时间不应抢占正文主信息，也不应重复阶段标题
+- 结构化内部字段继续保留给摘要生成使用
+
+普通阶段输出示例建议：
+
+```text
+[sopify-skills-ai] 方案设计 ✓
+
+方案: .sopify-skills/plan/20260319_task-168cb6
+焦点: 当前时间显示 + ~summary 今日详细摘要
+
+---
+Changes: 3 files
+
+Next: 继续评审方案或确认进入实现
+时间: 2026-03-19 21:21:41
+```
+
+说明：
+
+- 不展示 `技能: design`，因为标题里的“方案设计”已经表达当前阶段
+- 不重复输出“已进入方案设计阶段”这类摘要句
+- 时间作为尾注存在，提醒当前时间点即可
+
+### 当前实现状态（2026-03-20）
+
+- runtime 已补齐 `SkillActivation` 结构化事实，并在普通输出尾部统一展示 `时间: YYYY-MM-DD HH:MM:SS`
+- replay `events.jsonl` 已写入 `metadata.activation`，包含 `skill_id / activated_at / activated_local_day / run_id / route_name`
+- `~summary` 已作为显式命令接入 runtime，默认生成“今天、当前工作区”的详细摘要
+- `~summary` 当前按“确定性收集 -> 写入 `summary.json` -> 渲染 `summary.md`”执行
+- `~summary` 默认纳入未提交改动，并保持 read-only，不覆盖当前 active handoff
+- 已补 `~summary` 首版 4 条硬化测试：同日重复运行 `revision` 递增、`git` 缺失 fallback、`current_run / last_route` 不污染、终端渲染与落盘产物一致
+- 摘要产物当前写入 `.sopify-skills/replay/daily/YYYY-MM/YYYY-MM-DD/`
+
+### `~summary` 的定位
+
+`~summary` 是当前阶段唯一优先的 retrieval 入口。
+
+默认行为：
+
+- 默认作用域是“今天、当前工作区”
+- 默认输出是“详细摘要”，而不是轻量目录页
+- 目标是让用户可以直接复盘、学习、抽取可复用经验
+- 预期使用频率通常是每天 1-2 次，因此首版更适合现算现出，而不是先维护中间索引
+
+`~summary` 输出示例建议：
+
+```text
+[sopify-skills-ai] 今日详细摘要 ✓
+
+范围: 2026-03-19 · 当前工作区
+生成于: 2026-03-19T21:21:41+08:00
+工作区: /Users/weixin.li/Desktop/vs-code-extension/sopify-skills
+说明: 默认已纳入未提交改动；replay 仅作为增强输入。
+
+## 今日概览
+今天围绕当前方案推进了 4 项代码或文档变更，并同步沉淀到可复盘摘要。
+
+---
+Changes: 2 files
+  - .sopify-skills/replay/daily/2026-03/2026-03-19/summary.json
+  - .sopify-skills/replay/daily/2026-03/2026-03-19/summary.md
+
+Next: 可再次运行 ~summary 刷新，或继续当前开发流
+时间: 2026-03-19 21:21:41
+```
+
+### `~summary` 数据契约
+
+`~summary` 不应直接依赖聊天记忆，也不应强依赖 replay，因为当前 replay events 使用率还不高。
+
+推荐输入优先级：
+
+1. 当天 `plan / handoff / state / decision / clarification` 的结构化事实
+2. 当天 Git 事实：文件改动、diff 摘要、提交记录
+3. 当天 replay session，作为可选增强输入
+
+也就是说：
+
+- replay 缺失时，`~summary` 仍然可生成
+- replay 存在时，用它补时间线与解释细节
+
+推荐 `summary.json` schema：
+
+```json
+{
+  "schema_version": "1",
+  "summary_key": "2026-03-19::/Users/weixin.li/Desktop/vs-code-extension/sopify-skills",
+  "scope": {
+    "local_day": "2026-03-19",
+    "workspace_root": "/Users/weixin.li/Desktop/vs-code-extension/sopify-skills",
+    "workspace_label": "当前工作区",
+    "timezone": "Asia/Shanghai"
+  },
+  "revision": 2,
+  "generated_at": "2026-03-19T21:21:41+08:00",
+  "source_window": {
+    "from": "2026-03-19T00:00:00+08:00",
+    "to": "2026-03-19T21:21:41+08:00"
+  },
+  "source_refs": {
+    "plan_files": [
+      {
+        "path": ".sopify-skills/plan/20260319_task-168cb6/design.md",
+        "kind": "plan",
+        "updated_at": "2026-03-19T20:58:00+08:00"
+      }
+    ],
+    "state_files": [
+      {
+        "path": ".sopify-skills/state/current_plan.json",
+        "kind": "state",
+        "updated_at": "2026-03-19T21:10:00+08:00"
+      }
+    ],
+    "handoff_files": [
+      {
+        "path": ".sopify-skills/state/current_handoff.json",
+        "kind": "handoff",
+        "updated_at": "2026-03-19T21:10:00+08:00"
+      }
+    ],
+    "git_refs": {
+      "base_ref": "HEAD",
+      "changed_files": [
+        ".sopify-skills/plan/20260319_task-168cb6/design.md"
+      ],
+      "commits": [
+        {
+          "sha": "abc1234",
+          "title": "Refine summary contract",
+          "authored_at": "2026-03-19T20:45:00+08:00"
+        }
+      ]
+    },
+    "replay_sessions": [
+      {
+        "run_id": "20260319T132141_14a099",
+        "path": ".sopify-skills/replay/sessions/20260319T132141_14a099",
+        "used_for": "timeline"
+      }
+    ]
+  },
+  "facts": {
+    "headline": "今天完成了当前时间显示与 ~summary 主线收敛。",
+    "goals": [
+      {
+        "id": "goal-1",
+        "summary": "收窄当前切片，优先满足可复盘摘要需求。",
+        "evidence_refs": [
+          "plan_files[0]"
+        ]
+      }
+    ],
+    "decisions": [
+      {
+        "id": "decision-1",
+        "summary": "本期不先做 daily index。",
+        "reason": "~summary 一天通常只运行 1-2 次，现算现出更轻。",
+        "status": "confirmed",
+        "evidence_refs": [
+          "plan_files[0]",
+          "handoff_files[0]"
+        ]
+      }
+    ],
+    "code_changes": [
+      {
+        "path": ".sopify-skills/plan/20260319_task-168cb6/design.md",
+        "change_type": "modified",
+        "summary": "把 ~summary 数据契约收敛到可编码 schema。",
+        "reason": "让后续实现不依赖聊天回忆。",
+        "verification": "not_run",
+        "evidence_refs": [
+          "git_refs.changed_files[0]"
+        ]
+      }
+    ],
+    "issues": [
+      {
+        "id": "issue-1",
+        "summary": "replay events 当前使用率不高。",
+        "status": "open",
+        "resolution": "",
+        "evidence_refs": [
+          "replay_sessions[0]"
+        ]
+      }
+    ],
+    "lessons": [
+      {
+        "id": "lesson-1",
+        "summary": "摘要应优先绑定机器事实源，而不是自由聊天文本。",
+        "reusable_pattern": "先确定性收集，再模板渲染。",
+        "evidence_refs": [
+          "state_files[0]",
+          "handoff_files[0]"
+        ]
+      }
+    ],
+    "next_steps": [
+      {
+        "id": "next-1",
+        "summary": "把 summary schema 映射到实际运行时实现。",
+        "priority": "medium",
+        "evidence_refs": [
+          "plan_files[0]"
+        ]
+      }
+    ]
+  },
+  "quality_checks": {
+    "replay_optional": true,
+    "summary_runs_per_day": "1-2",
+    "required_sections_present": true,
+    "missing_inputs": [],
+    "fallback_used": []
+  }
+}
+```
+
+约束建议：
+
+- `summary_key = local_day + "::" + workspace_root`
+- 每个 `local_day + workspace_root` 只维护一份 canonical `summary.json`
+- 同日再次运行 `~summary` 时，刷新同一份文件并递增 `revision`
+- `summary.md` 只作为渲染产物，不作为机器事实源
+
+### `~summary` 的稳定性策略
+
+为了保证链路稳定，建议采用两段式生成：
+
+1. 先做确定性收集，生成 `summary.json`
+2. 再按固定模板渲染 `summary.md`
+
+这意味着：
+
+- 先抽取事实，再做表达
+- 用户摘要与机器输入共用同一份事实基座
+- 当摘要不符合预期时，可以直接回看 `summary.json`，而不是重新猜测
+
+### 新增信息的落盘要求
+
+为了让后续摘要稳定，新增信息优先写入结构化状态，而不是只留在聊天文本里。
+
+推荐优先写入：
+
+1. `plan / state / handoff` 中的关键节点事实
+2. 代码改动事实与验证结果
+3. replay 事件中的阶段时间、动作、原因摘要
+
+首版输出栏目：
+
+- 今日目标与上下文
+- 关键决策与原因
+- 代码变更详解
+- 问题与风险
+- 可复用经验
+- 未完成事项与下一步
+
+后续扩展栏目：
+
+- 执行时间线
+- 更细粒度验证结果
+- 更强的知识复盘结构
+
+### `daily index` 的降级定位
+
+`daily index` 当前不再作为用户主能力。
+
+降级后的定位是：
+
+- 未来如需提速、稳定按天检索、或支持模型批量读取时，再引入轻量索引
+- 在当前阶段，不要求先有 `daily index` 才能生成 `~summary`
+- `~summary` 一天通常只运行 1-2 次，当前频率不足以支撑先做 `daily index` 的收益
+- “本项目”在 monorepo 或子目录场景下语义不稳定，当前应以 `workspace_root` 作为唯一机器作用域
+
+这意味着当前切片可以先采用：
+
+- 直接扫描“今天”的结构化状态与代码改动
+- 现场生成 digest
+- 按需落盘摘要产物
+
+### 后续延展
+
+以下能力保留到后续，而不进入当前主线：
+
+- `daily index`
+- `~replay`
+- 按指定日期读取的多入口检索
+- 更重的日级导航页或统计页
+- 摘要质量优化
+- 验证结果摄取
+- 基于 replay activation 的时间线增强
+
+## 宿主偏好预载入（`preferences-preload-v1`）
+
+### 定位
+
+`preferences-preload-v1` 是宿主 preflight 的窄能力，不是 runtime 主链路的新阶段。
+
+职责边界：
+
+- 宿主负责在每次 Sopify 调用前尝试读取 `preferences.md`
+- runtime 继续负责路由、状态、handoff 与 plan 生命周期
+- `preferences.md` 代表 workspace-scope 的长期协作规则，不属于 active-flow recovery state
+
+### 路径解析规则
+
+宿主必须先按与 runtime 一致的配置优先级解析 `plan.directory`：
+
+1. 项目根 `sopify.config.yaml`
+2. 全局 `~/.codex/sopify.config.yaml`
+3. 默认值 `.sopify-skills`
+
+然后再计算：
+
+```text
+preferences_path = workspace_root / plan.directory / "user/preferences.md"
+```
+
+设计要求：
+
+- 不允许宿主硬编码 `.sopify-skills/user/preferences.md`
+- 不允许跳过 `plan.directory` 解析直接猜路径
+- 解析失败时可降级到默认目录，但必须对宿主可见
+
+### 载入时机
+
+宿主在以下时机必须尝试读取：
+
+- 每次原始用户请求准备进入 Sopify router 之前
+- 每次需要恢复 Sopify 主链路之前
+- 每次准备再次发起新的 Sopify LLM 回合之前
+
+当前范围外：
+
+- 纯 helper / bridge 的无 LLM 机器调用
+- 与 Sopify 无关的普通宿主功能
+
+### 失败策略
+
+首版采用 `fail-open with visibility`：
+
+- `loaded`: 文件存在且成功读取，注入 LLM
+- `missing`: 文件不存在，继续主链路
+- `invalid`: 文件存在但格式或编码异常，继续主链路
+- `read_error`: 文件存在但读取失败，继续主链路
+
+这里的关键约束是：
+
+- `preferences` 不是门禁，不得像 checkpoint 一样 fail-closed
+- 但宿主必须知道本轮是否成功载入，不能静默吞掉状态
+
+### 注入格式
+
+首版不做复杂解析，直接注入原文，并包一层稳定前缀：
+
+```text
+[Long-Term User Preferences]
+Scope: current workspace
+Priority: current task explicit request > this preferences file > default rules
+
+Apply these as durable collaboration rules for this Sopify run.
+If a rule conflicts with the current explicit task, follow the current task.
+
+<raw preferences.md content>
+```
+
+设计要求：
+
+- 首版不做自动归纳、自动提炼、标签分类
+- 首版不做字段级结构化映射
+- 先保证“稳定读到并注入”，再考虑更聪明的消费
+
+### 优先级
+
+固定优先级：
+
+1. 当前任务明确要求
+2. `preferences.md`
+3. 默认规则
+
+这意味着：
+
+- 当前任务可以覆盖长期偏好
+- 长期偏好可以稳定覆盖默认协作风格
+- 不允许把 `preferences.md` 提升为强于当前任务的硬约束
+
+### 为什么不进入 `RecoveredContext`
+
+当前不建议把 `preferences.md` 塞进 `RecoveredContext`，原因是：
+
+- `RecoveredContext` 的语义是 active-flow recovery
+- `preferences.md` 的语义是 workspace-scope durable rules
+- 二者层级不同，合并会降低状态模型清晰度
+
+如果后续需要提高可观测性，更合理的方向是：
+
+- runtime 独立暴露 `preferences_artifact`
+- 宿主把它视为辅助事实，而不是 session 恢复态
+
+### 后续延展
+
+稳定版之后再评估：
+
+- runtime 独立 `preferences_artifact`
+- 轻量结构化解析
+- 偏好分类、自动归纳、自动提炼
+
+这些能力全部依赖首版“宿主稳定预载入”已经成立，不应反向抢占当前切片。

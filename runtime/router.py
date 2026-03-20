@@ -15,6 +15,7 @@ from .skill_resolver import resolve_route_candidate_skills, resolve_runtime_skil
 from .state import StateStore
 
 _COMMAND_PATTERNS = (
+    (re.compile(r"^~summary(?:\s+(?P<body>.+))?$", re.IGNORECASE), "~summary"),
     (re.compile(r"^~go\s+finalize(?:\s+(?P<body>.+))?$", re.IGNORECASE), "~go finalize"),
     (re.compile(r"^~go\s+plan(?:\s+(?P<body>.+))?$", re.IGNORECASE), "~go plan"),
     (re.compile(r"^~go\s+exec(?:\s+(?P<body>.+))?$", re.IGNORECASE), "~go exec"),
@@ -35,6 +36,7 @@ SUPPORTED_ROUTE_NAMES = (
     "finalize_active",
     "decision_pending",
     "decision_resume",
+    "summary",
     "compare",
     "replay",
     "consult",
@@ -275,7 +277,10 @@ class Router:
         )
 
     def _with_capture(self, decision: RouteDecision) -> RouteDecision:
-        capture_mode = _decide_capture_mode(self.config.workflow_learning_auto_capture, decision.complexity)
+        if decision.route_name == "summary":
+            capture_mode = "off"
+        else:
+            capture_mode = _decide_capture_mode(self.config.workflow_learning_auto_capture, decision.complexity)
         return RouteDecision(
             route_name=decision.route_name,
             request_text=decision.request_text,
@@ -300,6 +305,15 @@ def _classify_command(text: str, *, skills: Iterable[SkillMeta]) -> RouteDecisio
             continue
         body = (match.groupdict().get("body") or "").strip()
         request_text = body or text
+        if command == "~summary":
+            return RouteDecision(
+                route_name="summary",
+                request_text=request_text,
+                reason="Matched explicit daily-summary command",
+                command=command,
+                complexity="simple",
+                should_recover_context=True,
+            )
         if command == "~go finalize":
             return RouteDecision(
                 route_name="finalize_active",

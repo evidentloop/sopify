@@ -117,6 +117,23 @@ Notes:
 - builtin skill discovery is owned by `runtime/builtin_catalog.py`, so the bundle does not depend on shipping `Codex/Skills` or `Claude/Skills` directories
 - non-terminal routes now write `.sopify-skills/state/current_handoff.json`, and `Next:` is rendered from the handoff contract first
 
+### Long-Term Preference Preload
+
+Before each Sopify invocation, the host should attempt to read the current workspace preference file using:
+
+```text
+<workspace_root>/<plan.directory>/user/preferences.md
+```
+
+Minimum contract:
+
+- path resolution must follow the same config priority as runtime; the host must not hardcode `.sopify-skills/user/preferences.md`
+- missing or unreadable `preferences.md` must not block the main flow; v1 uses `fail-open with visibility`
+- when loading succeeds, the host should inject it into the LLM as durable collaboration rules for the current workspace
+- the fixed priority is: current explicit task > `preferences.md` > default rules
+- "current explicit task" means the temporary execution instruction the user states explicitly in the current task; when it conflicts with `preferences.md`, it takes precedence, when it does not conflict, both apply together, and it is not written back as a long-term preference by default
+- this is a host-side preflight capability, not a new runtime stage, and it does not change the semantics of `RecoveredContext`
+
 ### Hard-Constraint Recheck (2026-03-19)
 
 The following constraints were revalidated through an isolated smoke run:

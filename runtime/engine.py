@@ -12,6 +12,7 @@ from .clarification import build_clarification_state, has_submitted_clarificatio
 from .compare_decision import build_compare_decision_contract
 from .config import load_runtime_config
 from .context_recovery import recover_context
+from .daily_summary import build_daily_summary
 from .decision import (
     build_decision_state,
     build_execution_gate_decision_state,
@@ -28,13 +29,13 @@ from .execution_gate import evaluate_execution_gate
 from .finalize import finalize_plan
 from .handoff import build_runtime_handoff
 from .kb import bootstrap_kb, ensure_blueprint_scaffold
-from .models import ClarificationState, DecisionState, ExecutionGate, KbArtifact, PlanArtifact, ReplayEvent, RouteDecision, RunState, RuntimeHandoff, RuntimeResult, SkillMeta
+from .models import ClarificationState, DecisionState, ExecutionGate, KbArtifact, PlanArtifact, ReplayEvent, RouteDecision, RunState, RuntimeHandoff, RuntimeResult, SkillActivation, SkillMeta
 from .plan_scaffold import create_plan_scaffold
 from .replay import ReplayWriter, build_compare_replay_event, build_decision_replay_event
 from .router import Router
 from .skill_registry import SkillRegistry
 from .skill_runner import SkillExecutionError, run_runtime_skill
-from .state import StateStore, iso_now
+from .state import StateStore, iso_now, local_day_now, local_display_now, local_iso_now, local_timezone_name
 
 
 def run_runtime(
@@ -72,6 +73,8 @@ def run_runtime(
     skill_result: Mapping[str, Any] | None = None
     replay_session_dir: str | None = None
     handoff: RuntimeHandoff | None = None
+    activation: SkillActivation | None = None
+    generated_files: tuple[str, ...] = ()
     replay_events: list[ReplayEvent] = []
     effective_route = classified_route
     confirmed_decision_for_replay: DecisionState | None = None
@@ -233,7 +236,8 @@ def run_runtime(
                     notes.extend(gate.notes)
                     notes.append("Active run resumed")
 
-    state_store.set_last_route(effective_route)
+    if effective_route.route_name != "summary":
+        state_store.set_last_route(effective_route)
 
     if effective_route.runtime_skill_id is not None:
         skill = _find_skill(skills, effective_route.runtime_skill_id)
@@ -248,6 +252,27 @@ def run_runtime(
             except SkillExecutionError as exc:
                 notes.append(str(exc))
 
+    activation = _build_skill_activation(
+        decision=effective_route,
+        run_state=state_store.get_current_run() or recovered.current_run,
+        current_clarification=state_store.get_current_clarification(),
+        current_decision=state_store.get_current_decision(),
+    )
+
+    if effective_route.route_name == "summary" and activation is not None:
+        # Keep `~summary` read-only so users can inspect the day without disturbing an active handoff.
+        summary_result = build_daily_summary(
+            config=config,
+            state_store=state_store,
+            activation=activation,
+        )
+        skill_result = {
+            "summary": summary_result.artifact.to_dict(),
+            "summary_markdown": summary_result.markdown,
+        }
+        generated_files = summary_result.generated_files
+        notes.extend(summary_result.notes)
+
     if effective_route.capture_mode != "off":
         writer = ReplayWriter(config)
         run_state = state_store.get_current_run() or recovered.current_run
@@ -261,6 +286,7 @@ def run_runtime(
             decision_reason=effective_route.reason,
             result="success",
             artifacts=tuple(plan_artifact.files if plan_artifact is not None else ()),
+            metadata={"activation": activation.to_dict()} if activation is not None else {},
         )
         replay_events.append(replay_event)
         current_decision = state_store.get_current_decision()
@@ -309,6 +335,10 @@ def run_runtime(
 
     if effective_route.route_name == "cancel_active":
         handoff = None
+        state_store.clear_current_handoff()
+    elif effective_route.route_name == "summary":
+        # Preserve the current handoff on disk; `~summary` should not consume or overwrite active flow state.
+        handoff = None
     else:
         current_run = state_store.get_current_run() or recovered.current_run
         current_plan = plan_artifact or state_store.get_current_plan() or recovered.current_plan
@@ -340,6 +370,8 @@ def run_runtime(
         skill_result=skill_result,
         replay_session_dir=replay_session_dir,
         handoff=handoff,
+        activation=activation,
+        generated_files=generated_files,
         notes=tuple(notes),
     )
 
@@ -430,6 +462,58 @@ def _phase_for_route(decision: RouteDecision) -> str:
     if decision.route_name == "compare":
         return "analysis"
     return "analysis"
+
+
+def _build_skill_activation(
+    *,
+    decision: RouteDecision,
+    run_state: RunState | None,
+    current_clarification: ClarificationState | None,
+    current_decision: DecisionState | None,
+) -> SkillActivation:
+    skill_id, skill_name = _activation_target(
+        decision=decision,
+        current_clarification=current_clarification,
+        current_decision=current_decision,
+    )
+    return SkillActivation(
+        skill_id=skill_id,
+        skill_name=skill_name,
+        activated_at=local_iso_now(),
+        activated_local_day=local_day_now(),
+        display_time=local_display_now(),
+        activation_source="runtime_skill" if decision.runtime_skill_id else "route_phase",
+        run_id=run_state.run_id if run_state is not None else _make_run_id(decision.request_text),
+        route_name=decision.route_name,
+        timezone=local_timezone_name(),
+    )
+
+
+def _activation_target(
+    *,
+    decision: RouteDecision,
+    current_clarification: ClarificationState | None,
+    current_decision: DecisionState | None,
+) -> tuple[str, str]:
+    if decision.runtime_skill_id == "model-compare" or decision.route_name == "compare":
+        return ("model-compare", "模型对比")
+    if decision.runtime_skill_id == "workflow-learning" or decision.route_name == "replay":
+        return ("workflow-learning", "复盘学习")
+    if decision.route_name == "summary":
+        return ("summary", "今日详细摘要")
+    if decision.route_name in {"resume_active", "exec_plan", "execution_confirm_pending", "quick_fix", "finalize_active"}:
+        return ("develop", "开发实施")
+    if decision.route_name in {"clarification_pending", "clarification_resume"}:
+        if current_clarification is not None and current_clarification.phase == "develop":
+            return ("develop", "开发实施")
+        return ("analyze", "需求分析")
+    if decision.route_name in {"decision_pending", "decision_resume"}:
+        if current_decision is not None and current_decision.phase == "develop":
+            return ("develop", "开发实施")
+        return ("design", "方案设计")
+    if decision.route_name in {"plan_only", "workflow", "light_iterate"}:
+        return ("design", "方案设计")
+    return ("consult", "咨询问答")
 
 
 def _handle_clarification_resume(

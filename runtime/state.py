@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, time, timezone
 import json
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -170,3 +170,42 @@ class StateStore:
 def iso_now() -> str:
     """Return a stable UTC ISO timestamp."""
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def local_now() -> datetime:
+    """Return the local wall-clock time used for user-facing timestamps."""
+    return datetime.now().astimezone().replace(microsecond=0)
+
+
+def local_iso_now() -> str:
+    """Return a stable local ISO timestamp."""
+    return local_now().isoformat()
+
+
+def local_display_now() -> str:
+    """Return the formatted local time shown in runtime output."""
+    return local_now().strftime("%Y-%m-%d %H:%M:%S")
+
+
+def local_day_now() -> str:
+    """Return the current local day used by the daily summary scope."""
+    return local_now().date().isoformat()
+
+
+def local_timezone_name() -> str:
+    """Return a stable local timezone label when available."""
+    tzinfo = local_now().tzinfo
+    if tzinfo is None:
+        return ""
+    key = getattr(tzinfo, "key", None)
+    if isinstance(key, str) and key.strip():
+        return key
+    name = tzinfo.tzname(None)
+    return str(name or "")
+
+
+def local_day_start_iso(day: str) -> str:
+    """Return the start timestamp for a local-day summary window."""
+    base = local_now()
+    target_date = datetime.fromisoformat(day).date()
+    return datetime.combine(target_date, time.min, tzinfo=base.tzinfo).isoformat()

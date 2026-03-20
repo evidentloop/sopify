@@ -6,6 +6,49 @@ This changelog is maintained manually (not auto-generated).
 
 ## [Unreleased]
 
+### Added
+
+- New `~summary` runtime route with deterministic daily recap artifacts:
+  - `runtime/daily_summary.py`
+  - `.sopify-skills/replay/daily/YYYY-MM/YYYY-MM-DD/summary.json`
+  - `.sopify-skills/replay/daily/YYYY-MM/YYYY-MM-DD/summary.md`
+- New workspace-scoped long-term preference preload helper:
+  - `runtime/preferences.py`
+  - `scripts/preferences_preload_runtime.py`
+- New project bootstrap artifacts for long-term collaboration state:
+  - `.sopify-skills/project.md`
+  - `.sopify-skills/wiki/overview.md`
+  - `.sopify-skills/user/preferences.md`
+
+### Changed
+
+- Runtime output now appends a local wall-clock timestamp to user-visible stage summaries.
+- Replay events now include structured skill-activation metadata for summary and timeline reuse.
+- Bundle manifest / payload / bootstrap contracts now declare and validate the `preferences_preload` capability.
+- Codex / Claude host prompt assets now document `preferences-preload-v1`, including:
+  - `workspace_root + plan.directory + user/preferences.md` path resolution
+  - `fail-open with visibility`
+  - fixed priority `current explicit task > preferences.md > default rules`
+- `~summary` now:
+  - includes uncommitted changes by default
+  - preserves the active handoff / current run / last route
+  - rebuilds invalid existing `summary.json` in place instead of failing
+  - keeps state evidence refs stable when `plan.directory` is customized
+  - renders fully localized English output instead of mixing Chinese templates
+- Blueprint and README docs now treat “current time display + ~summary detailed recap” as the active user-facing slice.
+
+### Tests
+
+- Expanded `tests/test_runtime.py` with `~summary` hardening coverage for:
+  - repeated same-day revision increments
+  - git-unavailable fallback
+  - invalid existing summary rebuild
+  - active-flow preservation
+  - persisted artifact / terminal render consistency
+  - English-only output templates
+  - dynamic state evidence refs under custom `plan.directory`
+- Expanded `tests/test_installer.py` to assert host prompt / bundle wiring for `preferences_preload`.
+
 ## [2026-03-19.183617] - 2026-03-19
 
 ### Scope

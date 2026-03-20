@@ -47,6 +47,24 @@
 - 禁止全量自动加载 `.sopify-skills/`
 - 先收口核心流程，再考虑外围产品层
 
+## 宿主偏好预载入要解决的问题
+
+当前 `user/preferences.md` 已经是最小 KB bootstrap 的标准文件，但它仍然只是“长期偏好存储位”，还不是稳定的 LLM 输入源。
+
+这会带来四个直接问题：
+
+1. 即使偏好已经写入文件，宿主若不主动读取，LLM 本轮仍可能完全看不到
+2. `preferences.md` 的真实路径受 `workspace_root + plan.directory` 共同决定，若宿主硬编码默认路径，配置变更后就会失效
+3. 长期偏好属于 workspace-scope 协作规则，而不是 active-flow runtime state；若直接混入 `RecoveredContext`，会污染上下文层级语义
+4. 偏好缺失或文件异常不应阻断主链路，否则会把“协作风格”错误升级为“执行门禁”
+
+因此，`preferences-preload-v1` 的第一目标不是做更复杂的偏好系统，而是：
+
+- 让宿主在每次进入 Sopify 前稳定尝试读取当前工作区的 `preferences.md`
+- 让偏好以固定优先级进入 LLM，而不是依赖人工记忆
+- 保持 `fail-open with visibility`，缺失偏好不打断主链路
+- 不改变 runtime 主链路、不新增 checkpoint、也不扩大 `.sopify-skills/` 的自动加载范围
+
 ## 目标
 
 ### 1. 零配置开箱即用

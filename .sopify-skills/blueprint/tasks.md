@@ -356,3 +356,44 @@
 - planning 与 develop 等技能引用阶段不存在“人工分析绕过 runtime”的执行通道
 - 宿主是否“可进入决策环节”能由机器检查判定，不再依赖人工解释
 - 用户体验保持零新增步骤；触发 Sopify 后自动完成 runtime 准备并进入统一 checkpoint 主链
+
+## 15. 当前时间显示与今日摘要
+
+- [x] 15.1 在技能进入执行时输出当前本地时间，作为用户侧最小可见时间反馈
+- [x] 15.2 保持内部结构化时间字段可复用给 replay 与摘要生成，但不把工程字段直接暴露给用户
+- [x] 15.3 新增 `~summary`，默认总结“今天、当前工作区”的思考链路与代码变更细节
+- [x] 15.4 固化 `~summary` 的详细摘要模板，保证结果可用于复盘、学习与知识沉淀
+- [x] 15.5 固化 `~summary` 的 source pack 数据契约，明确 `plan/state/git` 为主、`replay` 为可选增强
+- [x] 15.6 明确 `~summary` 首版采用“确定性收集 -> 模板渲染”两段式生成，不依赖 `daily index`
+- [x] 15.7 把“`~summary` 一天通常只运行 1-2 次”写入设计约束，作为本期不先做 `daily index` 的依据
+- [-] 15.8 `daily index` 降级为后续可选能力，仅在需要提速或更稳定按天检索时再评估引入
+- [-] 15.9 `~replay` 与更多按日期 retrieval 入口保留后续能力，不进入当前主线
+- [x] 15.10 为 `~summary` 补 4 条硬化测试：同日 `revision` 递增、`git` 缺失 fallback、`current_run / last_route` 不污染、终端渲染与落盘一致
+- [-] 15.11 摘要质量优化与验证结果摄取降为后续长期优化，不阻塞本期主线收口
+- [-] 15.12 基于 replay activation 的时间线增强保留后续能力，不进入首版交付面
+
+验收标准：
+
+- 用户每次进入技能阶段都能看到“当前时间”
+- 用户只需要一个命令就能拿到“今天、当前工作区”的详细复盘摘要
+- 摘要结果不仅说明改了什么，还能说明为什么这么改、遇到了什么问题、有哪些可复用经验
+- 首版在重复运行、缺少 `git`、存在 active flow 的情况下仍能稳定生成并保持状态不被污染
+
+## 16. 宿主偏好预载入（`preferences-preload-v1`）
+
+- [x] 16.1 固化宿主 preflight 读取 `preferences.md` 的最小契约
+- [x] 16.2 固化 `workspace_root + plan.directory + user/preferences.md` 的路径解析规则，禁止宿主硬编码默认路径
+- [x] 16.3 固化 `fail-open with visibility`：`loaded / missing / invalid / read_error`
+- [x] 16.4 固化注入格式与优先级：当前任务 > preferences > 默认规则
+- [x] 16.5 在 README / README_EN 中补齐宿主接入口径，明确这是 preflight 能力，不是 runtime 新阶段
+- [-] 16.6 runtime 独立 `preferences_artifact` 保留后续评估，不进入首版范围
+- [-] 16.7 偏好分类、自动归纳、自动提炼保留后续评估，不进入首版范围
+
+验收标准：
+
+- 宿主每次 Sopify 调用前都能按当前工作区正确定位 `preferences.md`
+- 自定义 `plan.directory` 时，宿主仍能稳定命中正确路径
+- `preferences.md` 缺失或读取失败不阻断主链路，但宿主可观测
+- 长期偏好能稳定进入 LLM，而不是依赖人工记忆
+- 首版不修改 `RecoveredContext` 语义，也不把偏好系统升级为新的 checkpoint
+- 中文与英文宿主文档口径保持一致，不再让偏好预载入只存在单语文档中

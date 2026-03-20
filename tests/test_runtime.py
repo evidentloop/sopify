@@ -54,12 +54,14 @@ from runtime.plan_orchestrator import (
     PlanOrchestratorError,
     run_plan_loop,
 )
+from runtime.preferences import preload_preferences, preload_preferences_for_workspace
 from runtime.replay import ReplayWriter, build_decision_replay_event
 from runtime.router import Router
 from runtime.skill_registry import SkillRegistry
 from runtime.skill_runner import SkillExecutionError, run_runtime_skill
-from runtime.state import StateStore, iso_now
+from runtime.state import StateStore, iso_now, local_day_now
 from runtime.models import (
+    DailySummaryArtifact,
     DecisionCheckpoint,
     DecisionCondition,
     DecisionField,
@@ -75,6 +77,21 @@ from runtime.models import (
     RuntimeHandoff,
     RunState,
     SkillMeta,
+    SummaryCodeChangeFact,
+    SummaryDecisionFact,
+    SummaryFacts,
+    SummaryGitCommitRef,
+    SummaryGitRefs,
+    SummaryGoalFact,
+    SummaryIssueFact,
+    SummaryLessonFact,
+    SummaryNextStepFact,
+    SummaryQualityChecks,
+    SummaryReplaySessionRef,
+    SummaryScope,
+    SummarySourceRefFile,
+    SummarySourceRefs,
+    SummarySourceWindow,
 )
 from scripts.model_compare_runtime import make_default_candidate
 
@@ -179,6 +196,12 @@ def _enter_active_develop_context(workspace: Path) -> None:
     assert result.handoff.required_host_action == "continue_host_develop"
 
 
+def _init_git_workspace(workspace: Path) -> None:
+    subprocess.run(["git", "-C", str(workspace), "init"], capture_output=True, text=True, check=True)
+    subprocess.run(["git", "-C", str(workspace), "config", "user.name", "Test User"], capture_output=True, text=True, check=True)
+    subprocess.run(["git", "-C", str(workspace), "config", "user.email", "test@example.com"], capture_output=True, text=True, check=True)
+
+
 class RuntimeConfigTests(unittest.TestCase):
     def test_zero_config_uses_defaults(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -260,6 +283,7 @@ class RouterTests(unittest.TestCase):
             cancel_route = router.classify("取消", skills=skills)
             replay_route = router.classify("回放最近一次实现", skills=skills)
             compare_route = router.classify("~compare 方案对比", skills=skills)
+            summary_route = router.classify("~summary", skills=skills)
             consult_route = router.classify("这个方案为什么要这样拆？", skills=skills)
 
             self.assertEqual(resume_route.route_name, "resume_active")
@@ -267,6 +291,8 @@ class RouterTests(unittest.TestCase):
             self.assertEqual(cancel_route.route_name, "cancel_active")
             self.assertEqual(replay_route.route_name, "replay")
             self.assertEqual(compare_route.route_name, "compare")
+            self.assertEqual(summary_route.route_name, "summary")
+            self.assertEqual(summary_route.capture_mode, "off")
             self.assertEqual(consult_route.route_name, "consult")
 
     def test_consult_guard_for_process_semantics_forces_runtime_first(self) -> None:
@@ -1483,6 +1509,139 @@ class DecisionContractTests(unittest.TestCase):
             self.assertEqual(updated.response_fields["expected_outcome"], "补结构化 clarification bridge。")
 
 
+class SummaryContractTests(unittest.TestCase):
+    def test_daily_summary_artifact_roundtrip_preserves_nested_contract(self) -> None:
+        artifact = DailySummaryArtifact(
+            summary_key="2026-03-19::/Users/weixin.li/Desktop/vs-code-extension/sopify-skills",
+            scope=SummaryScope(
+                local_day="2026-03-19",
+                workspace_root="/Users/weixin.li/Desktop/vs-code-extension/sopify-skills",
+                workspace_label="当前工作区",
+                timezone="Asia/Shanghai",
+            ),
+            revision=2,
+            generated_at="2026-03-19T21:21:41+08:00",
+            source_window=SummarySourceWindow(
+                from_ts="2026-03-19T00:00:00+08:00",
+                to_ts="2026-03-19T21:21:41+08:00",
+            ),
+            source_refs=SummarySourceRefs(
+                plan_files=(
+                    SummarySourceRefFile(
+                        path=".sopify-skills/plan/20260319_task-168cb6/design.md",
+                        kind="plan",
+                        updated_at="2026-03-19T20:58:00+08:00",
+                    ),
+                ),
+                state_files=(
+                    SummarySourceRefFile(
+                        path=".sopify-skills/state/current_plan.json",
+                        kind="state",
+                        updated_at="2026-03-19T21:10:00+08:00",
+                    ),
+                ),
+                handoff_files=(
+                    SummarySourceRefFile(
+                        path=".sopify-skills/state/current_handoff.json",
+                        kind="handoff",
+                        updated_at="2026-03-19T21:10:00+08:00",
+                    ),
+                ),
+                git_refs=SummaryGitRefs(
+                    base_ref="HEAD",
+                    changed_files=(".sopify-skills/plan/20260319_task-168cb6/design.md",),
+                    commits=(
+                        SummaryGitCommitRef(
+                            sha="abc1234",
+                            title="Refine summary contract",
+                            authored_at="2026-03-19T20:45:00+08:00",
+                        ),
+                    ),
+                ),
+                replay_sessions=(
+                    SummaryReplaySessionRef(
+                        run_id="20260319T132141_14a099",
+                        path=".sopify-skills/replay/sessions/20260319T132141_14a099",
+                        used_for="timeline",
+                    ),
+                ),
+            ),
+            facts=SummaryFacts(
+                headline="今天完成了当前时间显示与 ~summary 主线收敛。",
+                goals=(
+                    SummaryGoalFact(
+                        fact_id="goal-1",
+                        summary="收窄当前切片，优先满足可复盘摘要需求。",
+                        evidence_refs=("plan_files[0]",),
+                    ),
+                ),
+                decisions=(
+                    SummaryDecisionFact(
+                        fact_id="decision-1",
+                        summary="本期不先做 daily index。",
+                        reason="~summary 一天通常只运行 1-2 次，现算现出更轻。",
+                        status="confirmed",
+                        evidence_refs=("plan_files[0]", "handoff_files[0]"),
+                    ),
+                ),
+                code_changes=(
+                    SummaryCodeChangeFact(
+                        path=".sopify-skills/plan/20260319_task-168cb6/design.md",
+                        change_type="modified",
+                        summary="把 ~summary 数据契约收敛到可编码 schema。",
+                        reason="让后续实现不依赖聊天回忆。",
+                        verification="not_run",
+                        evidence_refs=("git_refs.changed_files[0]",),
+                    ),
+                ),
+                issues=(
+                    SummaryIssueFact(
+                        fact_id="issue-1",
+                        summary="replay events 当前使用率不高。",
+                        status="open",
+                        resolution="",
+                        evidence_refs=("replay_sessions[0]",),
+                    ),
+                ),
+                lessons=(
+                    SummaryLessonFact(
+                        fact_id="lesson-1",
+                        summary="摘要应优先绑定机器事实源，而不是自由聊天文本。",
+                        reusable_pattern="先确定性收集，再模板渲染。",
+                        evidence_refs=("state_files[0]", "handoff_files[0]"),
+                    ),
+                ),
+                next_steps=(
+                    SummaryNextStepFact(
+                        fact_id="next-1",
+                        summary="把 summary schema 映射到实际运行时实现。",
+                        priority="medium",
+                        evidence_refs=("plan_files[0]",),
+                    ),
+                ),
+            ),
+            quality_checks=SummaryQualityChecks(
+                replay_optional=True,
+                summary_runs_per_day="1-2",
+                required_sections_present=True,
+                missing_inputs=(),
+                fallback_used=(),
+            ),
+        )
+
+        payload = artifact.to_dict()
+        restored = DailySummaryArtifact.from_dict(payload)
+
+        self.assertEqual(payload["source_window"]["from"], "2026-03-19T00:00:00+08:00")
+        self.assertEqual(restored.summary_key, artifact.summary_key)
+        self.assertEqual(restored.scope.workspace_root, artifact.scope.workspace_root)
+        self.assertEqual(restored.revision, 2)
+        self.assertEqual(restored.source_refs.git_refs.commits[0].sha, "abc1234")
+        self.assertEqual(restored.facts.decisions[0].status, "confirmed")
+        self.assertTrue(restored.quality_checks.replay_optional)
+        self.assertEqual(restored.to_dict(), payload)
+
+
 class PlanScaffoldTests(unittest.TestCase):
     def test_plan_scaffold_creates_expected_files(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -2163,6 +2322,65 @@ class KnowledgeBaseBootstrapTests(unittest.TestCase):
             readme_path = workspace / ".sopify-skills" / "blueprint" / "README.md"
             self.assertTrue(readme_path.exists())
             self.assertIn("sopify:auto:goal:start", readme_path.read_text(encoding="utf-8"))
+
+
+class PreferencesPreloadTests(unittest.TestCase):
+    def test_preload_preferences_loads_default_workspace_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            config = load_runtime_config(workspace)
+            preferences_path = workspace / ".sopify-skills" / "user" / "preferences.md"
+            preferences_path.parent.mkdir(parents=True, exist_ok=True)
+            preferences_path.write_text("# 用户长期偏好\n\n- 保持严格。\n", encoding="utf-8")
+
+            result = preload_preferences(config)
+
+            self.assertEqual(result.status, "loaded")
+            self.assertTrue(result.injected)
+            self.assertEqual(result.plan_directory, ".sopify-skills")
+            self.assertEqual(Path(result.preferences_path), preferences_path.resolve())
+            self.assertIn("[Long-Term User Preferences]", result.injection_text)
+            self.assertIn("保持严格。", result.injection_text)
+
+    def test_preload_preferences_respects_custom_plan_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            (workspace / "sopify.config.yaml").write_text("plan:\n  directory: .runtime\n", encoding="utf-8")
+            preferences_path = workspace / ".runtime" / "user" / "preferences.md"
+            preferences_path.parent.mkdir(parents=True, exist_ok=True)
+            preferences_path.write_text("# Long-Term User Preferences\n\n- Be concise.\n", encoding="utf-8")
+
+            result = preload_preferences_for_workspace(workspace)
+
+            self.assertEqual(result.status, "loaded")
+            self.assertEqual(result.plan_directory, ".runtime")
+            self.assertEqual(Path(result.preferences_path), preferences_path.resolve())
+            self.assertIn("Be concise.", result.injection_text)
+
+    def test_preload_preferences_reports_missing_without_injection(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+
+            result = preload_preferences_for_workspace(workspace)
+
+            self.assertEqual(result.status, "missing")
+            self.assertFalse(result.injected)
+            self.assertEqual(result.injection_text, "")
+            self.assertIsNone(result.error_code)
+
+    def test_preload_preferences_reports_invalid_utf8(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            preferences_path = workspace / ".sopify-skills" / "user" / "preferences.md"
+            preferences_path.parent.mkdir(parents=True, exist_ok=True)
+            preferences_path.write_bytes(b"\xff\xfe\x00\x00")
+
+            result = preload_preferences_for_workspace(workspace)
+
+            self.assertEqual(result.status, "invalid")
+            self.assertEqual(result.error_code, "invalid_utf8")
+            self.assertFalse(result.injected)
+            self.assertEqual(result.injection_text, "")
 
 
 class EngineIntegrationTests(unittest.TestCase):
@@ -2921,6 +3139,13 @@ class EngineIntegrationTests(unittest.TestCase):
             self.assertIn("方案: .sopify-skills/plan/", rendered)
             self.assertIn("交接: .sopify-skills/state/current_handoff.json", rendered)
             self.assertIn("Next: 在宿主会话中继续评审或执行方案，或直接回复修改意见", rendered)
+            self.assertRegex(rendered, r"时间: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
+
+            events_path = workspace / result.replay_session_dir / "events.jsonl"
+            event_payload = json.loads(events_path.read_text(encoding="utf-8").splitlines()[0])
+            self.assertEqual(event_payload["metadata"]["activation"]["skill_id"], "design")
+            self.assertEqual(event_payload["metadata"]["activation"]["route_name"], "plan_only")
+            self.assertIn("display_time", event_payload["metadata"]["activation"])
 
             script_path = REPO_ROOT / "scripts" / "go_plan_runtime.py"
             completed = subprocess.run(
@@ -2935,6 +3160,210 @@ class EngineIntegrationTests(unittest.TestCase):
             self.assertTrue((workspace / ".sopify-skills" / "replay" / "sessions").exists())
             self.assertTrue((workspace / ".sopify-skills" / "project.md").exists())
             self.assertIn(".sopify-skills/project.md", rendered)
+
+    def test_summary_route_generates_daily_artifacts_and_preserves_active_handoff(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            run_runtime("~go plan 补 runtime 骨架", workspace_root=workspace, user_home=workspace / "home")
+            store = StateStore(load_runtime_config(workspace))
+            before_handoff = store.get_current_handoff()
+            self.assertIsNotNone(before_handoff)
+            assert before_handoff is not None
+
+            result = run_runtime("~summary", workspace_root=workspace, user_home=workspace / "home")
+
+            self.assertEqual(result.route.route_name, "summary")
+            self.assertIsNone(result.handoff)
+            self.assertIsNotNone(result.skill_result)
+            summary_payload = result.skill_result["summary"]
+            self.assertEqual(summary_payload["scope"]["workspace_root"], str(workspace.resolve()))
+            self.assertEqual(len(result.generated_files), 2)
+            for path in result.generated_files:
+                self.assertTrue((workspace / path).exists())
+
+            after_handoff = store.get_current_handoff()
+            self.assertIsNotNone(after_handoff)
+            assert after_handoff is not None
+            self.assertEqual(after_handoff.to_dict(), before_handoff.to_dict())
+
+            rendered = render_runtime_output(
+                result,
+                brand="demo-ai",
+                language="zh-CN",
+                title_color="none",
+                use_color=False,
+            )
+            self.assertIn("[demo-ai] 今日详细摘要 ✓", rendered)
+            self.assertIn("范围:", rendered)
+            self.assertIn("## 代码变更详解", rendered)
+            self.assertIn("Next: 可再次运行 ~summary 刷新，或继续当前开发流", rendered)
+            self.assertRegex(rendered, r"时间: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
+
+    def test_summary_route_includes_uncommitted_git_changes(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            _init_git_workspace(workspace)
+            tracked_file = workspace / "notes.md"
+            tracked_file.write_text("# Notes\n\ninitial\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(workspace), "add", "notes.md"], capture_output=True, text=True, check=True)
+            subprocess.run(["git", "-C", str(workspace), "commit", "-m", "initial notes"], capture_output=True, text=True, check=True)
+            tracked_file.write_text("# Notes\n\nupdated today\n", encoding="utf-8")
+
+            result = run_runtime("~summary", workspace_root=workspace, user_home=workspace / "home")
+
+            self.assertEqual(result.route.route_name, "summary")
+            summary_payload = result.skill_result["summary"]
+            self.assertIn("notes.md", summary_payload["source_refs"]["git_refs"]["changed_files"])
+            code_change_paths = [item["path"] for item in summary_payload["facts"]["code_changes"]]
+            self.assertIn("notes.md", code_change_paths)
+            markdown = result.skill_result["summary_markdown"]
+            self.assertIn("[modified] notes.md", markdown)
+
+    def test_summary_route_increments_revision_when_rerun_same_day(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            run_runtime("~go plan 补 runtime 骨架", workspace_root=workspace, user_home=workspace / "home")
+
+            first = run_runtime("~summary", workspace_root=workspace, user_home=workspace / "home")
+            second = run_runtime("~summary", workspace_root=workspace, user_home=workspace / "home")
+
+            first_payload = first.skill_result["summary"]
+            second_payload = second.skill_result["summary"]
+            self.assertEqual(first_payload["revision"], 1)
+            self.assertEqual(second_payload["revision"], 2)
+            self.assertEqual(first_payload["summary_key"], second_payload["summary_key"])
+
+            summary_json_path = workspace / next(path for path in second.generated_files if path.endswith("summary.json"))
+            persisted = json.loads(summary_json_path.read_text(encoding="utf-8"))
+            self.assertEqual(persisted["revision"], 2)
+            self.assertEqual(persisted["summary_key"], second_payload["summary_key"])
+
+    def test_summary_route_rebuilds_invalid_existing_summary_in_place(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            run_runtime("~go plan 补 runtime 骨架", workspace_root=workspace, user_home=workspace / "home")
+
+            day = local_day_now()
+            summary_dir = workspace / ".sopify-skills" / "replay" / "daily" / day[:7] / day
+            summary_dir.mkdir(parents=True, exist_ok=True)
+            summary_json_path = summary_dir / "summary.json"
+            summary_json_path.write_text("{broken", encoding="utf-8")
+
+            result = run_runtime("~summary", workspace_root=workspace, user_home=workspace / "home")
+
+            summary_payload = result.skill_result["summary"]
+            self.assertEqual(summary_payload["revision"], 1)
+            self.assertIn("existing_summary_invalid", summary_payload["quality_checks"]["fallback_used"])
+            self.assertIn("已直接重建当前版本", result.skill_result["summary_markdown"])
+
+            persisted = json.loads(summary_json_path.read_text(encoding="utf-8"))
+            self.assertEqual(persisted, summary_payload)
+
+    def test_summary_route_falls_back_when_git_binary_is_unavailable(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            run_runtime("~go plan 补 runtime 骨架", workspace_root=workspace, user_home=workspace / "home")
+
+            with mock.patch("runtime.daily_summary.subprocess.run", side_effect=FileNotFoundError("git")):
+                result = run_runtime("~summary", workspace_root=workspace, user_home=workspace / "home")
+
+            summary_payload = result.skill_result["summary"]
+            quality_checks = summary_payload["quality_checks"]
+            self.assertEqual(quality_checks["fallback_used"], ["git_unavailable"])
+            self.assertIn("git_refs.changed_files", quality_checks["missing_inputs"])
+            self.assertNotIn("plan_files", quality_checks["missing_inputs"])
+            self.assertNotIn("state_files", quality_checks["missing_inputs"])
+            self.assertEqual(summary_payload["source_refs"]["git_refs"]["changed_files"], [])
+
+    def test_summary_route_preserves_active_run_and_last_route(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            run_runtime("~go plan 补 runtime 骨架", workspace_root=workspace, user_home=workspace / "home")
+            store = StateStore(load_runtime_config(workspace))
+
+            before_run = store.get_current_run()
+            before_last_route = store.get_last_route()
+            self.assertIsNotNone(before_run)
+            self.assertIsNotNone(before_last_route)
+            assert before_run is not None
+            assert before_last_route is not None
+
+            run_runtime("~summary", workspace_root=workspace, user_home=workspace / "home")
+
+            after_run = store.get_current_run()
+            after_last_route = store.get_last_route()
+            self.assertIsNotNone(after_run)
+            self.assertIsNotNone(after_last_route)
+            assert after_run is not None
+            assert after_last_route is not None
+            self.assertEqual(after_run.to_dict(), before_run.to_dict())
+            self.assertEqual(after_last_route.to_dict(), before_last_route.to_dict())
+            self.assertEqual(after_last_route.route_name, "plan_only")
+
+    def test_summary_route_en_us_output_uses_english_templates(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            (workspace / "sopify.config.yaml").write_text("language: en-US\n", encoding="utf-8")
+            _init_git_workspace(workspace)
+            tracked_file = workspace / "notes.md"
+            tracked_file.write_text("# Notes\n\ninitial\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(workspace), "add", "notes.md"], capture_output=True, text=True, check=True)
+            subprocess.run(["git", "-C", str(workspace), "commit", "-m", "initial notes"], capture_output=True, text=True, check=True)
+            tracked_file.write_text("# Notes\n\nupdated today\n", encoding="utf-8")
+
+            result = run_runtime("~summary", workspace_root=workspace, user_home=workspace / "home")
+
+            markdown = result.skill_result["summary_markdown"]
+            self.assertIn("## Daily Overview", markdown)
+            self.assertIn("## Code Changes", markdown)
+            self.assertIn("Change:", markdown)
+            self.assertNotRegex(markdown, r"[\u4e00-\u9fff]")
+
+    def test_summary_route_uses_dynamic_state_evidence_paths_for_custom_plan_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            (workspace / "sopify.config.yaml").write_text("plan:\n  directory: .runtime\n", encoding="utf-8")
+            run_runtime("~go plan add summary route", workspace_root=workspace, user_home=workspace / "home")
+
+            result = run_runtime("~summary", workspace_root=workspace, user_home=workspace / "home")
+
+            summary_payload = result.skill_result["summary"]
+            state_files = summary_payload["source_refs"]["state_files"]
+            state_index_by_path = {entry["path"]: index for index, entry in enumerate(state_files)}
+            current_run_ref = f"state_files[{state_index_by_path['.runtime/state/current_run.json']}]"
+
+            issue = next(item for item in summary_payload["facts"]["issues"] if item["id"] == "gate-missing_info")
+            next_step = next(item for item in summary_payload["facts"]["next_steps"] if item["id"] == "next-run-stage")
+
+            self.assertEqual(issue["evidence_refs"], [current_run_ref])
+            self.assertEqual(next_step["evidence_refs"], [current_run_ref])
+
+    def test_summary_route_render_matches_persisted_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            run_runtime("~go plan 补 runtime 骨架", workspace_root=workspace, user_home=workspace / "home")
+
+            result = run_runtime("~summary", workspace_root=workspace, user_home=workspace / "home")
+            summary_payload = result.skill_result["summary"]
+            summary_markdown = result.skill_result["summary_markdown"]
+            summary_json_path = workspace / next(path for path in result.generated_files if path.endswith("summary.json"))
+            summary_md_path = workspace / next(path for path in result.generated_files if path.endswith("summary.md"))
+
+            persisted_json = json.loads(summary_json_path.read_text(encoding="utf-8"))
+            persisted_markdown = summary_md_path.read_text(encoding="utf-8")
+            rendered = render_runtime_output(
+                result,
+                brand="demo-ai",
+                language="zh-CN",
+                title_color="none",
+                use_color=False,
+            )
+
+            self.assertEqual(persisted_json, summary_payload)
+            self.assertEqual(persisted_markdown, summary_markdown)
+            self.assertIn(summary_markdown.rstrip(), rendered)
+            self.assertIn(summary_payload["facts"]["headline"], persisted_markdown)
+            self.assertIn(summary_payload["facts"]["headline"], rendered)
 
     def test_run_plan_loop_auto_resolves_decision_checkpoint(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -3133,6 +3562,7 @@ class EngineIntegrationTests(unittest.TestCase):
             self.assertTrue((bundle_root / "scripts" / "clarification_bridge_runtime.py").exists())
             self.assertTrue((bundle_root / "scripts" / "develop_checkpoint_runtime.py").exists())
             self.assertTrue((bundle_root / "scripts" / "decision_bridge_runtime.py").exists())
+            self.assertTrue((bundle_root / "scripts" / "preferences_preload_runtime.py").exists())
             self.assertTrue((bundle_root / "tests" / "test_runtime.py").exists())
             self.assertTrue(manifest_path.exists())
 
@@ -3154,6 +3584,7 @@ class EngineIntegrationTests(unittest.TestCase):
             self.assertTrue(manifest["capabilities"]["develop_resume_context"])
             self.assertTrue(manifest["capabilities"]["execution_gate"])
             self.assertTrue(manifest["capabilities"]["planning_mode_orchestrator"])
+            self.assertTrue(manifest["capabilities"]["preferences_preload"])
             self.assertTrue(manifest["capabilities"]["runtime_entry_guard"])
             self.assertTrue(manifest["capabilities"]["writes_decision_file"])
             self.assertIn("plan_only", manifest["limits"]["host_required_routes"])
@@ -3179,6 +3610,12 @@ class EngineIntegrationTests(unittest.TestCase):
             self.assertEqual(manifest["limits"]["develop_checkpoint_hosts"]["cli"]["preferred_mode"], "structured_callback")
             self.assertIn("working_summary", manifest["limits"]["develop_resume_context_required_fields"])
             self.assertIn("continue_host_develop", manifest["limits"]["develop_resume_after_actions"])
+            self.assertEqual(manifest["limits"]["preferences_preload_entry"], "scripts/preferences_preload_runtime.py")
+            self.assertEqual(manifest["limits"]["preferences_preload_contract_version"], "1")
+            self.assertEqual(
+                manifest["limits"]["preferences_preload_statuses"],
+                ["loaded", "missing", "invalid", "read_error"],
+            )
             self.assertIn("model-compare", manifest["limits"]["runtime_payload_required_skill_ids"])
             self.assertEqual(len(manifest["builtin_skills"]), 7)
             model_compare = next(skill for skill in manifest["builtin_skills"] if skill["skill_id"] == "model-compare")
@@ -3198,6 +3635,24 @@ class EngineIntegrationTests(unittest.TestCase):
                 check=False,
             )
             self.assertEqual(completed.returncode, 0, msg=completed.stderr)
+
+            preferences_script = bundle_root / "scripts" / "preferences_preload_runtime.py"
+            preferences_workspace = temp_root / "preferences-workspace"
+            preferences_workspace.mkdir()
+            preference_file = preferences_workspace / ".sopify-skills" / "user" / "preferences.md"
+            preference_file.parent.mkdir(parents=True, exist_ok=True)
+            preference_file.write_text("# 用户长期偏好\n\n- 严谨输出。\n", encoding="utf-8")
+            preloaded = subprocess.run(
+                [sys.executable, str(preferences_script), "--workspace-root", str(preferences_workspace), "inspect"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(preloaded.returncode, 0, msg=preloaded.stderr)
+            preload_payload = json.loads(preloaded.stdout)
+            self.assertEqual(preload_payload["status"], "ready")
+            self.assertEqual(preload_payload["preferences"]["status"], "loaded")
+            self.assertIn("严谨输出。", preload_payload["preferences"]["injection_text"])
             self.assertIn(".sopify-skills/plan/", completed.stdout)
             self.assertTrue((workspace / ".sopify-skills" / "state" / "current_handoff.json").exists())
             self.assertTrue((workspace / ".sopify-skills" / "state" / "current_plan.json").exists())
