@@ -6,7 +6,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
 [![Docs](https://img.shields.io/badge/docs-CC%20BY%204.0-green.svg)](./LICENSE-docs)
-[![Version](https://img.shields.io/badge/version-2026--03--21.203721-orange.svg)](#version-history)
+[![Version](https://img.shields.io/badge/version-2026--03--21.212430-orange.svg)](#version-history)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
 [English](./README_EN.md) · [简体中文](./README.md) · [Quick Start](#quick-start) · [Configuration](#configuration)
@@ -586,8 +586,6 @@ python3 -m unittest tests.test_runtime -v
 
 See full specs:
 
-- [Skill Authoring 规范（中文）](./docs/skill-authoring.md)
-- [Skill Authoring Guide (English)](./docs/skill-authoring.en.md)
 - [Closure Blueprint](./.sopify-skills/blueprint/skill-standards-refactor.md)
 - [Skill Eval Baseline](./evals/skill_eval_baseline.json)
 - [Skill Eval SLO](./evals/skill_eval_slo.json)
@@ -711,9 +709,6 @@ sopify-skills/
 ├── runtime/
 │   ├── builtin_skill_packages/ # builtin skill machine metadata source
 │   └── builtin_catalog.generated.json
-├── docs/
-│   ├── skill-authoring.md
-│   └── skill-authoring.en.md
 ├── examples/
 │   └── sopify.config.yaml      # Config example
 ├── README.md                   # Chinese docs

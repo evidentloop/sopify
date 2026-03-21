@@ -27,6 +27,36 @@ def _copy_script(relative_path: str, target_root: Path) -> Path:
     return target
 
 
+def _git_subprocess_env() -> dict[str, str]:
+    env = os.environ.copy()
+    for key in (
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+        "GIT_COMMON_DIR",
+        "GIT_DIR",
+        "GIT_GRAFT_FILE",
+        "GIT_IMPLICIT_WORK_TREE",
+        "GIT_INDEX_FILE",
+        "GIT_NAMESPACE",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_PREFIX",
+        "GIT_SUPER_PREFIX",
+        "GIT_WORK_TREE",
+    ):
+        env.pop(key, None)
+    return env
+
+
+def _run_git(root: Path, *args: str, capture_output: bool = True, text: bool = True) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", *args],
+        cwd=root,
+        check=True,
+        capture_output=capture_output,
+        text=text,
+        env=_git_subprocess_env(),
+    )
+
+
 def _minimal_readme(version: str, *, english: bool) -> str:
     anchor = "#version-history" if english else "#版本历史"
     return textwrap.dedent(
@@ -101,15 +131,15 @@ def _init_release_hook_fixture(root: Path, *, missing_claude_targets: bool = Fal
     _write(root / "runtime/gate.py", "print('baseline')\n")
     _write(root / "tests/test_runtime_gate.py", "print('baseline test')\n")
 
-    subprocess.run(["git", "init"], cwd=root, check=True, capture_output=True, text=True)
-    subprocess.run(["git", "config", "user.name", "Test User"], cwd=root, check=True)
-    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=root, check=True)
-    subprocess.run(["git", "add", "."], cwd=root, check=True)
-    subprocess.run(["git", "commit", "-m", "baseline"], cwd=root, check=True, capture_output=True, text=True)
+    _run_git(root, "init")
+    _run_git(root, "config", "user.name", "Test User", capture_output=False, text=False)
+    _run_git(root, "config", "user.email", "test@example.com", capture_output=False, text=False)
+    _run_git(root, "add", ".", capture_output=False, text=False)
+    _run_git(root, "commit", "-m", "baseline")
 
     _write(root / "runtime/gate.py", "print('changed')\n")
     _write(root / "tests/test_runtime_gate.py", "print('changed test')\n")
-    subprocess.run(["git", "add", "runtime/gate.py", "tests/test_runtime_gate.py"], cwd=root, check=True)
+    _run_git(root, "add", "runtime/gate.py", "tests/test_runtime_gate.py", capture_output=False, text=False)
 
 
 class ReleaseHookTests(unittest.TestCase):
@@ -156,6 +186,7 @@ class ReleaseHookTests(unittest.TestCase):
                 capture_output=True,
                 text=True,
                 check=False,
+                env=_git_subprocess_env(),
             )
 
             self.assertEqual(completed.returncode, 0, msg=completed.stderr)
@@ -179,7 +210,7 @@ class ReleaseHookTests(unittest.TestCase):
             completed = subprocess.run(
                 ["bash", str(root / ".githooks" / "pre-commit")],
                 cwd=root,
-                env={**os.environ, "SOPIFY_SKIP_RELEASE_PREFLIGHT": "1"},
+                env={**_git_subprocess_env(), "SOPIFY_SKIP_RELEASE_PREFLIGHT": "1"},
                 capture_output=True,
                 text=True,
                 check=False,

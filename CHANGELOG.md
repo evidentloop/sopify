@@ -6,6 +6,24 @@ This changelog is maintained manually (not auto-generated).
 
 ## [Unreleased]
 
+## [2026-03-21.212430] - 2026-03-21
+
+### Changed
+
+- Updated release-relevant files:
+  - `README.md`
+  - `README_EN.md`
+  - `docs/skill-authoring.en.md`
+  - `docs/skill-authoring.md`
+  - `runtime/daily_summary.py`
+  - `scripts/release-draft-changelog.py`
+
+### Tests
+
+- Updated automated coverage:
+  - `tests/test_release_hooks.py`
+  - `tests/test_runtime.py`
+
 ## [2026-03-21.203721] - 2026-03-21
 
 ### Changed

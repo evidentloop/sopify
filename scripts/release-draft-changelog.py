@@ -4,11 +4,51 @@
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 from pathlib import Path
 
 
 UNRELEASED_HEADER = "## [Unreleased]"
+
+
+def _repo_matches_current_git_env(root: Path) -> bool:
+    env = os.environ
+    work_tree = (env.get("GIT_WORK_TREE") or "").strip()
+    if work_tree:
+        try:
+            return Path(work_tree).resolve() == root.resolve()
+        except OSError:
+            return False
+
+    git_dir = (env.get("GIT_DIR") or "").strip()
+    if git_dir:
+        try:
+            return Path(git_dir).resolve() == (root / ".git").resolve()
+        except OSError:
+            return False
+    return False
+
+
+def git_command_env(root: Path) -> dict[str, str]:
+    env = os.environ.copy()
+    if _repo_matches_current_git_env(root):
+        return env
+    for key in (
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+        "GIT_COMMON_DIR",
+        "GIT_DIR",
+        "GIT_GRAFT_FILE",
+        "GIT_IMPLICIT_WORK_TREE",
+        "GIT_INDEX_FILE",
+        "GIT_NAMESPACE",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_PREFIX",
+        "GIT_SUPER_PREFIX",
+        "GIT_WORK_TREE",
+    ):
+        env.pop(key, None)
+    return env
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -40,6 +80,8 @@ def main(argv: list[str] | None = None) -> int:
     changed_files = [path for path in args.file if str(path).strip()]
     if not changed_files:
         changed_files = staged_files(root)
+    if not changed_files:
+        changed_files = working_tree_files(root)
 
     result = draft_changelog(changelog_path, changed_files)
     print(result)
@@ -52,18 +94,48 @@ def staged_files(root: Path) -> list[str]:
             "git",
             "-C",
             str(root),
+            "-c",
+            "diff.renames=false",
             "diff",
             "--cached",
             "--name-only",
+            "--no-renames",
+            "--no-ext-diff",
             "--diff-filter=ACMRDTUXB",
             "--",
         ],
         capture_output=True,
         text=True,
         check=False,
+        env=git_command_env(root),
     )
     if completed.returncode != 0:
         raise SystemExit(completed.stderr.strip() or "Failed to collect staged files.")
+    return [line.strip() for line in completed.stdout.splitlines() if line.strip()]
+
+
+def working_tree_files(root: Path) -> list[str]:
+    completed = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "diff.renames=false",
+            "diff",
+            "--name-only",
+            "--no-renames",
+            "--no-ext-diff",
+            "HEAD",
+            "--",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        env=git_command_env(root),
+    )
+    if completed.returncode != 0:
+        return []
     return [line.strip() for line in completed.stdout.splitlines() if line.strip()]
 
 

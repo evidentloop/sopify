@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -199,10 +200,41 @@ def _enter_active_develop_context(workspace: Path) -> None:
     assert result.handoff.required_host_action == "continue_host_develop"
 
 
+def _git_subprocess_env() -> dict[str, str]:
+    env = os.environ.copy()
+    # Git hooks export repo-local environment variables. Clear them so tests
+    # that create foreign temp repos do not get redirected back to this repo.
+    for key in (
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+        "GIT_COMMON_DIR",
+        "GIT_DIR",
+        "GIT_GRAFT_FILE",
+        "GIT_IMPLICIT_WORK_TREE",
+        "GIT_INDEX_FILE",
+        "GIT_NAMESPACE",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_PREFIX",
+        "GIT_SUPER_PREFIX",
+        "GIT_WORK_TREE",
+    ):
+        env.pop(key, None)
+    return env
+
+
+def _run_git(workspace: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", "-C", str(workspace), *args],
+        capture_output=True,
+        text=True,
+        check=True,
+        env=_git_subprocess_env(),
+    )
+
+
 def _init_git_workspace(workspace: Path) -> None:
-    subprocess.run(["git", "-C", str(workspace), "init"], capture_output=True, text=True, check=True)
-    subprocess.run(["git", "-C", str(workspace), "config", "user.name", "Test User"], capture_output=True, text=True, check=True)
-    subprocess.run(["git", "-C", str(workspace), "config", "user.email", "test@example.com"], capture_output=True, text=True, check=True)
+    _run_git(workspace, "init")
+    _run_git(workspace, "config", "user.name", "Test User")
+    _run_git(workspace, "config", "user.email", "test@example.com")
 
 
 def _assert_rendered_footer_contract(
@@ -3695,8 +3727,8 @@ class EngineIntegrationTests(unittest.TestCase):
             _init_git_workspace(workspace)
             tracked_file = workspace / "notes.md"
             tracked_file.write_text("# Notes\n\ninitial\n", encoding="utf-8")
-            subprocess.run(["git", "-C", str(workspace), "add", "notes.md"], capture_output=True, text=True, check=True)
-            subprocess.run(["git", "-C", str(workspace), "commit", "-m", "initial notes"], capture_output=True, text=True, check=True)
+            _run_git(workspace, "add", "notes.md")
+            _run_git(workspace, "commit", "-m", "initial notes")
             tracked_file.write_text("# Notes\n\nupdated today\n", encoding="utf-8")
 
             result = run_runtime("~summary", workspace_root=workspace, user_home=workspace / "home")
@@ -3706,6 +3738,32 @@ class EngineIntegrationTests(unittest.TestCase):
             self.assertIn("notes.md", summary_payload["source_refs"]["git_refs"]["changed_files"])
             code_change_paths = [item["path"] for item in summary_payload["facts"]["code_changes"]]
             self.assertIn("notes.md", code_change_paths)
+            markdown = result.skill_result["summary_markdown"]
+            self.assertIn("[modified] notes.md", markdown)
+
+    def test_summary_route_ignores_inherited_git_repo_env(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            _init_git_workspace(workspace)
+            tracked_file = workspace / "notes.md"
+            tracked_file.write_text("# Notes\n\ninitial\n", encoding="utf-8")
+            _run_git(workspace, "add", "notes.md")
+            _run_git(workspace, "commit", "-m", "initial notes")
+            tracked_file.write_text("# Notes\n\nupdated today\n", encoding="utf-8")
+
+            with mock.patch.dict(
+                os.environ,
+                {
+                    "GIT_DIR": str(REPO_ROOT / ".git"),
+                    "GIT_WORK_TREE": str(REPO_ROOT),
+                    "GIT_INDEX_FILE": str(REPO_ROOT / ".git" / "index"),
+                },
+                clear=False,
+            ):
+                result = run_runtime("~summary", workspace_root=workspace, user_home=workspace / "home")
+
+            summary_payload = result.skill_result["summary"]
+            self.assertIn("notes.md", summary_payload["source_refs"]["git_refs"]["changed_files"])
             markdown = result.skill_result["summary_markdown"]
             self.assertIn("[modified] notes.md", markdown)
 
@@ -3797,8 +3855,8 @@ class EngineIntegrationTests(unittest.TestCase):
             _init_git_workspace(workspace)
             tracked_file = workspace / "notes.md"
             tracked_file.write_text("# Notes\n\ninitial\n", encoding="utf-8")
-            subprocess.run(["git", "-C", str(workspace), "add", "notes.md"], capture_output=True, text=True, check=True)
-            subprocess.run(["git", "-C", str(workspace), "commit", "-m", "initial notes"], capture_output=True, text=True, check=True)
+            _run_git(workspace, "add", "notes.md")
+            _run_git(workspace, "commit", "-m", "initial notes")
             tracked_file.write_text("# Notes\n\nupdated today\n", encoding="utf-8")
 
             result = run_runtime("~summary", workspace_root=workspace, user_home=workspace / "home")

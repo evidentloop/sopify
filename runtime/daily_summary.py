@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -993,6 +994,47 @@ def _safe_read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _workspace_matches_current_git_env(workspace_root: Path) -> bool:
+    work_tree = (os.environ.get("GIT_WORK_TREE") or "").strip()
+    if work_tree:
+        try:
+            return Path(work_tree).resolve() == workspace_root.resolve()
+        except OSError:
+            return False
+
+    git_dir = (os.environ.get("GIT_DIR") or "").strip()
+    if git_dir:
+        try:
+            return Path(git_dir).resolve() == (workspace_root / ".git").resolve()
+        except OSError:
+            return False
+    return False
+
+
+def _git_command_env(workspace_root: Path) -> dict[str, str]:
+    env = os.environ.copy()
+    if _workspace_matches_current_git_env(workspace_root):
+        return env
+    # When Sopify runs under a Git hook, Git exports repo-local environment
+    # variables. Clear them so `git -C <workspace>` always targets the intended
+    # workspace, even if the current process was started from another repo.
+    for key in (
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+        "GIT_COMMON_DIR",
+        "GIT_DIR",
+        "GIT_GRAFT_FILE",
+        "GIT_IMPLICIT_WORK_TREE",
+        "GIT_INDEX_FILE",
+        "GIT_NAMESPACE",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_PREFIX",
+        "GIT_SUPER_PREFIX",
+        "GIT_WORK_TREE",
+    ):
+        env.pop(key, None)
+    return env
+
+
 def _is_git_workspace(workspace_root: Path) -> bool:
     try:
         completed = subprocess.run(
@@ -1000,6 +1042,7 @@ def _is_git_workspace(workspace_root: Path) -> bool:
             capture_output=True,
             text=True,
             check=False,
+            env=_git_command_env(workspace_root),
         )
     except FileNotFoundError:
         return False
@@ -1013,6 +1056,7 @@ def _run_git(workspace_root: Path, *args: str) -> str:
             capture_output=True,
             text=True,
             check=False,
+            env=_git_command_env(workspace_root),
         )
     except FileNotFoundError:
         return ""
