@@ -2,11 +2,11 @@
 
 <div align="center">
 
-**配置驱动的自适应 AI 编程技能包**
+**配置驱动的自适应 AI 编程工作流框架**
 
 [![许可证](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
 [![文档](https://img.shields.io/badge/docs-CC%20BY%204.0-green.svg)](./LICENSE-docs)
-[![版本](https://img.shields.io/badge/version-2026--03--23.185925-orange.svg)](#版本历史)
+[![版本](https://img.shields.io/badge/version-2026--03--23.193526-orange.svg)](#版本历史)
 [![欢迎PR](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING_CN.md)
 
 [English](./README_EN.md) · [简体中文](./README.md) · [快速开始](#快速开始) · [配置说明](#配置说明)
@@ -17,7 +17,11 @@
 
 ## 为什么选择 Sopify (Sop AI) Skills？
 
-传统 AI 编程助手对所有任务使用同一套重流程——即使改一个 typo 也要走需求分析、方案设计、开发实施。Sopify 根据复杂度自动路由，让简单任务直接执行，复杂任务才走完整规划。
+传统 AI 编程助手要么对所有任务套同一套重流程，要么只给一次性回答，缺少可恢复、可积累的执行闭环。Sopify 把 AI 编程升级为配置驱动的工作流：简单任务直接执行，复杂任务生成结构化方案包，在关键节点暂停确认，并把过程知识持续沉淀为方案、总结和长期蓝图。
+
+- `自适应执行`：简单任务直接做，复杂任务再规划
+- `可恢复推进`：关键节点暂停确认，中断后可从断点继续
+- `持续沉淀`：plan、summary、blueprint、history 逐步累积
 
 | 任务类型 | 传统方式 | Sopify 路径 |
 |---------|---------|-------------|
@@ -35,43 +39,6 @@
 - 内建多模型对比与 workflow-learning 扩展能力，可按需开启
 
 **设计来源：** Sopify 借鉴 harness engineering 思路，用结构化知识替代自由 prompt、用机器契约替代隐式约定、用可观测 checkpoint 替代盲执行。详见 [工作流说明](./docs/how-sopify-works.md)。
-
-### 建议工作流
-
-```text
-○ 用户输入
-│
-◆ Runtime Gate
-│
-◇ 路由判定
-├── ▸ 咨询 / 对比 / 回放 ───────────→ 直接输出
-└── ▸ 代码任务
-    │
-    ◇ 复杂度判定
-    ├── 简单（≤2 文件）────────────→ 直接执行
-    ├── 中等（3-5 文件）──────────→ 轻量方案包
-    │                               （单文件 `plan.md`）
-    └── 复杂（>5 文件 / 架构变更）
-        ├── 需求分析 ··· 补事实 checkpoint
-        ├── 方案设计 ··· 拍板 checkpoint
-        └── 标准方案包
-            （`background.md` / `design.md` / `tasks.md`）
-            │
-            ◆ 执行确认 ··· 用户确认继续
-            │
-            ◆ 开发实施
-            │
-            ◆ 摘要输出 + Handoff
-            │
-            ◇ 可选：~go finalize
-            ├── 刷新 blueprint 索引
-            ├── 清理 state 活动态
-            └── 归档 → history/
-```
-
-> ◆ = 执行节点　◇ = 判定节点　··· = checkpoint（可暂停，等用户输入后恢复）
->
-> 详细流程与 checkpoint 机制见 [工作流说明](./docs/how-sopify-works.md)。
 
 ## 快速开始
 
@@ -120,7 +87,59 @@ bash scripts/install-sopify.sh --target claude:en-US --workspace /path/to/projec
 "~compare 给这个重构方案做对比分析"
 ```
 
+### 你会看到什么（示意）
+
+```text
+[my-app-ai] 方案设计 ✓
+
+方案: .sopify-skills/plan/20260323_auth/
+概要: JWT 认证 + token 刷新 + 路由守卫
+任务: 5 项
+
+---
+Next: 回复“继续”进入开发实施
+```
+
+这个示意只展示风格与节奏，不代表固定字段；简单任务会更短，复杂任务会在 checkpoint 处暂停等待你确认。
+
 若想先理解 runtime gate、checkpoint 与 plan 生命周期，直接看 [工作流说明](./docs/how-sopify-works.md)。
+
+### 建议工作流
+
+```text
+○ 用户输入
+│
+◆ Runtime Gate
+│
+◇ 路由判定
+├── ▸ 咨询 / 对比 / 回放 ───────────→ 直接输出
+└── ▸ 代码任务
+    │
+    ◇ 复杂度判定
+    ├── 简单（≤2 文件）────────────→ 直接执行
+    ├── 中等（3-5 文件）──────────→ 轻量方案包
+    │                               （单文件 `plan.md`）
+    └── 复杂（>5 文件 / 架构变更）
+        ├── 需求分析 ··· 补事实 checkpoint
+        ├── 方案设计 ··· 拍板 checkpoint
+        └── 标准方案包
+            （`background.md` / `design.md` / `tasks.md`）
+            │
+            ◆ 执行确认 ··· 用户确认继续
+            │
+            ◆ 开发实施
+            │
+            ◆ 摘要输出 + Handoff
+            │
+            ◇ 可选：~go finalize
+            ├── 刷新 blueprint 索引
+            ├── 清理 state 活动态
+            └── 归档 → history/
+```
+
+> ◆ = 执行节点　◇ = 判定节点　··· = checkpoint（可暂停，等用户输入后恢复）
+>
+> 详细流程与 checkpoint 机制见 [工作流说明](./docs/how-sopify-works.md)。
 
 ## 配置说明
 

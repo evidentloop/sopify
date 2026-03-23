@@ -2,11 +2,11 @@
 
 <div align="center">
 
-**Config-driven adaptive AI coding skills**
+**Config-driven adaptive AI coding workflow framework**
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
 [![Docs](https://img.shields.io/badge/docs-CC%20BY%204.0-green.svg)](./LICENSE-docs)
-[![Version](https://img.shields.io/badge/version-2026--03--23.185925-orange.svg)](#version-history)
+[![Version](https://img.shields.io/badge/version-2026--03--23.193526-orange.svg)](#version-history)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
 [English](./README_EN.md) · [简体中文](./README.md) · [Quick Start](#quick-start) · [Configuration](#configuration)
@@ -17,7 +17,11 @@
 
 ## Why Sopify (Sop AI) Skills?
 
-Traditional AI coding assistants run the same heavyweight process for every task — even a one-line typo fix goes through full requirements analysis, solution design, and implementation. Sopify routes by complexity: simple tasks execute directly, and only complex work gets the full planning treatment.
+Traditional AI coding assistants either force every task through the same heavyweight process or return one-shot answers with no recoverable execution loop or durable accumulation. Sopify turns AI coding into a config-driven workflow: simple tasks execute directly, complex tasks become structured plan packages, key checkpoints pause for confirmation, and useful knowledge is continuously accumulated into plans, summaries, and long-lived blueprints.
+
+- `Adaptive execution`: simple tasks run directly, while complex work gets planning when needed
+- `Recoverable progress`: pause for confirmation at key checkpoints and resume from where work stopped
+- `Durable accumulation`: plans, summaries, blueprints, and history compound over time
 
 | Task Type | Traditional | Sopify Path |
 |-----------|------------|-------------|
@@ -36,50 +40,13 @@ Traditional AI coding assistants run the same heavyweight process for every task
 
 **Design rationale:** Sopify applies harness engineering thinking: structured knowledge over free-form prompts, machine contracts over implicit conventions, and observable checkpoints over blind execution. See [How Sopify Works](./docs/how-sopify-works.en.md).
 
-### Recommended Workflow
-
-```text
-○ User Input
-│
-◆ Runtime Gate
-│
-◇ Routing Decision
-├── ▸ Q&A / compare / replay ─────────→ Direct output
-└── ▸ Code task
-    │
-    ◇ Complexity Decision
-    ├── Simple (≤2 files) ────────────→ Direct execution
-    ├── Medium (3-5 files) ───────────→ Light plan package
-    │                                   (single-file `plan.md`)
-    └── Complex (>5 files / architecture change)
-        ├── Requirements ··· Fact checkpoint
-        ├── Design ··· Decision checkpoint
-        └── Standard plan package
-            (`background.md` / `design.md` / `tasks.md`)
-            │
-            ◆ Execution confirmation ··· User confirms
-            │
-            ◆ Implementation
-            │
-            ◆ Summary + handoff
-            │
-            ◇ Optional: ~go finalize
-            ├── Refresh blueprint index
-            ├── Clean active state
-            └── Archive → history/
-```
-
-> ◆ = execution node　◇ = decision node　··· = checkpoint (pauses, then resumes after user input)
->
-> See [How Sopify Works](./docs/how-sopify-works.en.md) for full details on checkpoints and plan lifecycle.
-
 ## Quick Start
 
 ### Installation
 
 ```bash
-# Recommended: install into Codex zh-CN first
-bash scripts/install-sopify.sh --target codex:zh-CN
+# Recommended: install into Codex en-US first
+bash scripts/install-sopify.sh --target codex:en-US
 
 # Optional: prewarm a specific workspace
 bash scripts/install-sopify.sh --target claude:en-US --workspace /path/to/project
@@ -120,7 +87,59 @@ Installer behavior:
 "~compare Compare options for this refactor"
 ```
 
+### What It Looks Like (Illustrative)
+
+```text
+[my-app-ai] Solution Design ✓
+
+Plan: .sopify-skills/plan/20260323_auth/
+Summary: JWT auth + token refresh + route guards
+Tasks: 5 items
+
+---
+Next: Reply "continue" to start implementation
+```
+
+This is only a placeholder example of the pacing and format, not a fixed output contract; simple tasks are shorter, and complex tasks pause at checkpoints for confirmation.
+
 For runtime gate, checkpoints, and plan lifecycle details, see [How Sopify Works](./docs/how-sopify-works.en.md).
+
+### Recommended Workflow
+
+```text
+○ User Input
+│
+◆ Runtime Gate
+│
+◇ Routing Decision
+├── ▸ Q&A / compare / replay ─────────→ Direct output
+└── ▸ Code task
+    │
+    ◇ Complexity Decision
+    ├── Simple (≤2 files) ────────────→ Direct execution
+    ├── Medium (3-5 files) ───────────→ Light plan package
+    │                                   (single-file `plan.md`)
+    └── Complex (>5 files / architecture change)
+        ├── Requirements ··· Fact checkpoint
+        ├── Design ··· Decision checkpoint
+        └── Standard plan package
+            (`background.md` / `design.md` / `tasks.md`)
+            │
+            ◆ Execution confirmation ··· User confirms
+            │
+            ◆ Implementation
+            │
+            ◆ Summary + handoff
+            │
+            ◇ Optional: ~go finalize
+            ├── Refresh blueprint index
+            ├── Clean active state
+            └── Archive → history/
+```
+
+> ◆ = execution node　◇ = decision node　··· = checkpoint (pauses, then resumes after user input)
+>
+> See [How Sopify Works](./docs/how-sopify-works.en.md) for full details on checkpoints and plan lifecycle.
 
 ## Configuration
 

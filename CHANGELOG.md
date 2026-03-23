@@ -6,6 +6,14 @@ This changelog is maintained manually (not auto-generated).
 
 ## [Unreleased]
 
+## [2026-03-23.193526] - 2026-03-23
+
+### Docs
+
+- Refined public documentation:
+  - `README.md`
+  - `README_EN.md`
+
 ## [2026-03-23.185925] - 2026-03-23
 
 ### Docs
