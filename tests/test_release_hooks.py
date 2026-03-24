@@ -335,6 +335,66 @@ class ReleaseHookTests(unittest.TestCase):
             self.assertNotIn("### Skills", unreleased)
             self.assertNotIn("### Changed", unreleased)
 
+    def test_release_draft_ignores_sopify_kb_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            changelog = root / "CHANGELOG.md"
+            _write(changelog, _minimal_changelog("2026-03-20.183348", "2026-03-20"))
+
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(REPO_ROOT / "scripts" / "release-draft-changelog.py"),
+                    "--root",
+                    str(root),
+                    "--file",
+                    ".sopify-skills/history/index.md",
+                    "--file",
+                    ".sopify-skills/plan/20260324_task/tasks.md",
+                    "--file",
+                    "runtime/gate.py",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, msg=completed.stderr)
+            self.assertIn("Auto-drafted CHANGELOG [Unreleased] from 1 changed files.", completed.stdout)
+            unreleased = _unreleased_body(changelog.read_text(encoding="utf-8"))
+            self.assertIn("### Runtime", unreleased)
+            self.assertIn("`runtime/gate.py`", unreleased)
+            self.assertNotIn(".sopify-skills/history/index.md", unreleased)
+            self.assertNotIn(".sopify-skills/plan/20260324_task/tasks.md", unreleased)
+            self.assertNotIn("### Changed", unreleased)
+
+    def test_release_draft_skips_when_only_sopify_kb_paths_changed(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            changelog = root / "CHANGELOG.md"
+            original = _minimal_changelog("2026-03-20.183348", "2026-03-20")
+            _write(changelog, original)
+
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(REPO_ROOT / "scripts" / "release-draft-changelog.py"),
+                    "--root",
+                    str(root),
+                    "--file",
+                    ".sopify-skills/history/index.md",
+                    "--file",
+                    ".sopify-skills/plan/20260324_task/tasks.md",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, msg=completed.stderr)
+            self.assertIn("No release-note-eligible changed files found. Skipped auto-draft.", completed.stdout)
+            self.assertEqual(changelog.read_text(encoding="utf-8"), original)
+
     def test_pre_commit_restores_release_managed_files_when_release_sync_fails(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

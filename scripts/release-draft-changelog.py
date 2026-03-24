@@ -161,10 +161,14 @@ def draft_changelog(changelog_path: Path, changed_files: list[str]) -> str:
     if not normalized_files:
         return "No changed files found. Skipped auto-draft."
 
-    draft = render_draft(normalized_files)
+    eligible_files = [path for path in normalized_files if include_in_changelog(path)]
+    if not eligible_files:
+        return "No release-note-eligible changed files found. Skipped auto-draft."
+
+    draft = render_draft(eligible_files)
     updated = text[:start] + "\n\n" + draft + "\n" + text[end:]
     changelog_path.write_text(updated, encoding="utf-8")
-    return f"Auto-drafted CHANGELOG [Unreleased] from {len(normalized_files)} changed files."
+    return f"Auto-drafted CHANGELOG [Unreleased] from {len(eligible_files)} changed files."
 
 
 def unreleased_bounds(text: str) -> tuple[int, int]:
@@ -201,6 +205,11 @@ def render_draft(changed_files: list[str]) -> str:
         if grouped[title]
     ]
     return "\n\n".join(blocks)
+
+
+def include_in_changelog(path: str) -> bool:
+    normalized = path.strip().replace("\\", "/")
+    return not normalized.startswith(".sopify-skills/")
 
 
 def classify_path(path: str) -> str:
