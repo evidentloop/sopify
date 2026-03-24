@@ -6,6 +6,90 @@ This changelog is maintained manually (not auto-generated).
 
 ## [Unreleased]
 
+## [2026-03-24.212205] - 2026-03-24
+
+### Docs
+
+- Refined public documentation:
+  - `docs/how-sopify-works.en.md`
+  - `docs/how-sopify-works.md`
+
+### Skills
+
+- Synced prompt-layer skills:
+  - `Claude/Skills/CN/CLAUDE.md`
+  - `Claude/Skills/EN/CLAUDE.md`
+  - `Codex/Skills/CN/AGENTS.md`
+  - `Codex/Skills/EN/AGENTS.md`
+
+### Changed
+
+- Updated project files:
+  - `.gitignore`
+  - `.sopify-skills/history/2026-03/20260317_design_decision_confirmation/background.md`
+  - `.sopify-skills/history/2026-03/20260317_design_decision_confirmation/design.md`
+  - `.sopify-skills/history/2026-03/20260317_design_decision_confirmation/tasks.md`
+  - `.sopify-skills/history/2026-03/20260320_helloagents_integration_enhancements/background.md`
+  - `.sopify-skills/history/2026-03/20260320_helloagents_integration_enhancements/design.md`
+  - `.sopify-skills/history/2026-03/20260320_helloagents_integration_enhancements/future_directions.md`
+  - `.sopify-skills/history/2026-03/20260320_helloagents_integration_enhancements/tasks.md`
+  - `.sopify-skills/history/2026-03/20260320_kb_layout_v2/background.md`
+  - `.sopify-skills/history/2026-03/20260320_kb_layout_v2/design.md`
+  - `.sopify-skills/history/2026-03/20260320_kb_layout_v2/tasks.md`
+  - `.sopify-skills/history/2026-03/20260320_preferences-preload-v1/background.md`
+  - `.sopify-skills/history/2026-03/20260320_preferences-preload-v1/design.md`
+  - `.sopify-skills/history/2026-03/20260320_preferences-preload-v1/tasks.md`
+  - `.sopify-skills/history/2026-03/20260320_prompt_runtime_gate/background.md`
+  - `.sopify-skills/history/2026-03/20260320_prompt_runtime_gate/design.md`
+  - `.sopify-skills/history/2026-03/20260320_prompt_runtime_gate/tasks.md`
+  - `.sopify-skills/history/2026-03/20260321_go-plan/background.md`
+  - `.sopify-skills/history/2026-03/20260321_go-plan/design.md`
+  - `.sopify-skills/history/2026-03/20260321_go-plan/evidence/pilot_round1/freyr-h5pages/batch2_observations.md`
+  - `.sopify-skills/history/2026-03/20260321_go-plan/evidence/pilot_round1/freyr-h5pages/batch2_stopcheck.md`
+  - `.sopify-skills/history/2026-03/20260321_go-plan/evidence/pilot_round1/round1_aggregation.md`
+  - `.sopify-skills/history/2026-03/20260321_go-plan/evidence/pilot_round1/rs-sdk/batch3_observations.md`
+  - `.sopify-skills/history/2026-03/20260321_go-plan/evidence/pilot_round1/sopify-skills/batch1_observations.md`
+  - `.sopify-skills/history/2026-03/20260321_go-plan/evidence/pilot_round1/sopify-skills/batch1_stopcheck.md`
+  - `.sopify-skills/history/2026-03/20260321_go-plan/issue_meta_review_no_new_plan.md`
+  - `.sopify-skills/history/2026-03/20260321_go-plan/issue_raise_plan_reuse_fix_to_8_5.md`
+  - `.sopify-skills/history/2026-03/20260321_go-plan/issue_single_active_plan_reuse_with_topic_key.md`
+  - `.sopify-skills/history/2026-03/20260321_go-plan/pilot_review_rubric.md`
+  - `.sopify-skills/history/2026-03/20260321_go-plan/pilot_round1_review_sheet.md`
+  - `.sopify-skills/history/2026-03/20260321_go-plan/pilot_sample_matrix.md`
+  - `.sopify-skills/history/2026-03/20260321_go-plan/tasks.md`
+  - `.sopify-skills/history/2026-03/20260321_go-plan/trigger_matrix.md`
+  - `.sopify-skills/history/2026-03/20260323_models-tests-refactor/background.md`
+  - `.sopify-skills/history/2026-03/20260323_models-tests-refactor/design.md`
+  - `.sopify-skills/history/2026-03/20260323_models-tests-refactor/tasks.md`
+  - `.sopify-skills/history/2026-03/20260323_plan_registry_governance/background.md`
+  - `.sopify-skills/history/2026-03/20260323_plan_registry_governance/design.md`
+  - `.sopify-skills/history/2026-03/20260323_plan_registry_governance/tasks.md`
+  - `.sopify-skills/history/2026-03/20260323_readme-about-changelog/background.md`
+  - `.sopify-skills/history/2026-03/20260323_readme-about-changelog/design.md`
+  - `.sopify-skills/history/2026-03/20260323_readme-about-changelog/tasks.md`
+  - `.sopify-skills/history/2026-03/20260323_runtime-gate-diagnostics/background.md`
+  - `.sopify-skills/history/2026-03/20260323_runtime-gate-diagnostics/design.md`
+  - `.sopify-skills/history/2026-03/20260323_runtime-gate-diagnostics/tasks.md`
+  - `.sopify-skills/history/2026-03/20260323_runtime-session-lease-session-scoped-review-stat/background.md`
+  - `.sopify-skills/history/2026-03/20260323_runtime-session-lease-session-scoped-review-stat/design.md`
+  - `.sopify-skills/history/2026-03/20260323_runtime-session-lease-session-scoped-review-stat/tasks.md`
+  - `.sopify-skills/history/index.md`
+  - `.sopify-skills/plan/20260320_cursor_plugin_install/background.md`
+  - `.sopify-skills/plan/20260320_cursor_plugin_install/design.md`
+  - `.sopify-skills/plan/20260320_cursor_plugin_install/tasks.md`
+  - `.sopify-skills/plan/20260320_default_host_bridge_install/background.md`
+  - `.sopify-skills/plan/20260320_default_host_bridge_install/design.md`
+  - `.sopify-skills/plan/20260320_default_host_bridge_install/tasks.md`
+  - `.sopify-skills/plan/20260323_unified_plan_history_index/background.md`
+  - `.sopify-skills/plan/20260323_unified_plan_history_index/design.md`
+  - `.sopify-skills/plan/20260323_unified_plan_history_index/tasks.md`
+  - `.sopify-skills/plan/20260324_develop-quality-loop/background.md`
+  - `.sopify-skills/plan/20260324_develop-quality-loop/design.md`
+  - `.sopify-skills/plan/20260324_develop-quality-loop/tasks.md`
+  - `.sopify-skills/plan/20260324_task/background.md`
+  - `.sopify-skills/plan/20260324_task/design.md`
+  - `.sopify-skills/plan/20260324_task/tasks.md`
+
 ## [2026-03-24.182745] - 2026-03-24
 
 ### Docs

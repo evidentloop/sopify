@@ -85,10 +85,10 @@ Checkpoint rules:
 │   ├── background.md
 │   ├── design.md
 │   └── tasks.md
-├── plan/                        # L2 active plans (ignored by default)
-│   ├── _registry.yaml
+├── plan/                        # L2 active plans (git tracked)
+│   ├── _registry.yaml           # local machine registry (still ignored)
 │   └── YYYYMMDD_feature/
-├── history/                     # L3 archived plans (ignored by default)
+├── history/                     # L3 archived plans (git tracked)
 │   ├── index.md
 │   └── YYYY-MM/
 ├── state/                       # runtime machine truth (always ignored)
@@ -99,15 +99,16 @@ Checkpoint rules:
 │   └── sessions/<session_id>/...   # parallel review isolation
 ├── user/
 │   └── preferences.md
-└── project.md
+├── project.md
+└── replay/                      # optional replay data (still ignored)
 ```
 
 Layer notes:
 
 - `blueprint/` stores durable knowledge and stable contracts
-- `plan/` stores active work packages, not long-lived blueprint state
-- `history/` stores only closed-out plans
-- `state/` is the machine-truth layer shared by runtime and hosts
+- `plan/` stores active work packages, not long-lived blueprint state; the directory is tracked, but `_registry.yaml` remains locally ignored
+- `history/` stores closed-out plans and is tracked
+- `state/` and `replay/` remain local runtime data ignored by git
 
 ## Appendix: Plan Lifecycle
 

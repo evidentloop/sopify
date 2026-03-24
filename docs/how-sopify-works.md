@@ -85,10 +85,10 @@ Checkpoint 规则：
 │   ├── background.md
 │   ├── design.md
 │   └── tasks.md
-├── plan/                        # L2 活跃方案（默认 ignored）
-│   ├── _registry.yaml
+├── plan/                        # L2 活跃方案（git tracked）
+│   ├── _registry.yaml           # 本地 machine registry（继续 ignored）
 │   └── YYYYMMDD_feature/
-├── history/                     # L3 已归档方案（默认 ignored）
+├── history/                     # L3 已归档方案（git tracked）
 │   ├── index.md
 │   └── YYYY-MM/
 ├── state/                       # 运行态 machine truth（始终 ignored）
@@ -99,15 +99,16 @@ Checkpoint 规则：
 │   └── sessions/<session_id>/...   # 并发 review 隔离
 ├── user/
 │   └── preferences.md
-└── project.md
+├── project.md
+└── replay/                      # 可选回放（继续 ignored）
 ```
 
 层级说明：
 
 - `blueprint/` 承载长期知识与稳定契约
-- `plan/` 保存当前工作方案，不等同于长期蓝图
-- `history/` 只存已收口方案
-- `state/` 是宿主与 runtime 交接的机器事实层
+- `plan/` 保存当前工作方案，不等同于长期蓝图；目录本身纳入版本管理，但 `_registry.yaml` 继续保持本地忽略
+- `history/` 只存已收口方案，并纳入版本管理
+- `state/` 与 `replay/` 仍是宿主与 runtime 的本地运行态数据层
 
 ## 附录：Plan 生命周期
 

@@ -1,5 +1,5 @@
 <!-- bootstrap: lang=zh-CN; encoding=UTF-8 -->
-<!-- SOPIFY_VERSION: 2026-03-24.182745 -->
+<!-- SOPIFY_VERSION: 2026-03-24.212205 -->
 <!-- ARCHITECTURE: Adaptive Workflow + Layered Rules -->
 
 # Sopify (Sop AI) Skills - 自适应 AI 编程助手
@@ -224,15 +224,16 @@ workflow:
 │   ├── background.md
 │   ├── design.md
 │   └── tasks.md
-├── plan/                    # 当前方案，默认忽略
+├── plan/                    # 当前方案，纳入版本管理
+│   ├── _registry.yaml       # 本地 machine registry，继续忽略
 │   └── YYYYMMDD_feature/
-├── history/                 # 已完成方案归档，默认忽略
+├── history/                 # 已完成方案归档，纳入版本管理
 ├── state/                   # 运行态状态，始终忽略
 ├── user/                    # 用户偏好与反馈
 │   ├── preferences.md
 │   └── feedback.jsonl
 ├── project.md               # 技术约定，不与 background/design 重复
-└── replay/                  # 可选回放能力，默认忽略
+└── replay/                  # 可选回放能力，继续忽略
 ```
 
 ### A6 | 生命周期管理

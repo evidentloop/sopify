@@ -1,5 +1,5 @@
 <!-- bootstrap: lang=en-US; encoding=UTF-8 -->
-<!-- SOPIFY_VERSION: 2026-03-24.182745 -->
+<!-- SOPIFY_VERSION: 2026-03-24.212205 -->
 <!-- ARCHITECTURE: Adaptive Workflow + Layered Rules -->
 
 # Sopify (Sop AI) Skills - Adaptive AI Programming Assistant
@@ -224,15 +224,16 @@ Complex: Files > 5, architectural changes, new features
 │   ├── background.md
 │   ├── design.md
 │   └── tasks.md
-├── plan/                    # Current plans, ignored by default
+├── plan/                    # Current plans, tracked in git
+│   ├── _registry.yaml       # Local machine registry, still ignored
 │   └── YYYYMMDD_feature/
-├── history/                 # Completed plan archives, ignored by default
+├── history/                 # Completed plan archives, tracked in git
 ├── state/                   # Runtime state, always ignored
 ├── user/                    # User preferences and feedback
 │   ├── preferences.md
 │   └── feedback.jsonl
 ├── project.md               # Technical conventions, not a duplicate of background/design
-└── replay/                  # Optional replay capability, ignored by default
+└── replay/                  # Optional replay capability, still ignored
 ```
 
 ### A6 | Lifecycle Management
