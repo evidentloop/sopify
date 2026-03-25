@@ -6,7 +6,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
 [![Docs](https://img.shields.io/badge/docs-CC%20BY%204.0-green.svg)](./LICENSE-docs)
-[![Version](https://img.shields.io/badge/version-2026--03--25.101035-orange.svg)](#version-history)
+[![Version](https://img.shields.io/badge/version-2026--03--25.101956-orange.svg)](#version-history)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
 [English](./README_EN.md) · [简体中文](./README.md) · [Quick Start](#quick-start) · [Configuration](#configuration) · [Contributors](./CONTRIBUTORS.md)
@@ -30,10 +30,10 @@ The result is a workflow that can keep moving, be reviewed later, and continue a
 - Plans, history, and blueprint become reusable project assets instead of disposable chat logs.
 - Small tasks stay lightweight, while complex work enters the fuller process only when needed.
 
-### When It's Most Valuable
+### What Kinds of Projects Benefit Most
 
-- Long-lived, complex repositories that need cross-session continuity and auditable execution
-- Workflows willing to maintain plan / blueprint artifacts and consistently close out milestones
+- Multi-stage work that keeps moving in the same repository instead of one-off edits
+- You're willing to manage progress with plan / blueprint artifacts and close out each stage
 
 ## Quick Start
 
