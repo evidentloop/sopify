@@ -2,13 +2,13 @@
 plan_id: 20260327_hotfix
 feature_key: hotfix
 level: standard
-lifecycle_state: active
+lifecycle_state: archived
 knowledge_sync:
   project: review
   background: review
   design: review
   tasks: review
-archive_ready: false
+archive_ready: true
 ---
 
 # 任务清单: 状态机 Hotfix（B1 前置门禁）
