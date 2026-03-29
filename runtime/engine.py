@@ -393,16 +393,9 @@ def _promote_review_state_to_global_execution(
         return (False, [])
 
     notes: list[str] = []
-    existing_owner = existing_global_run
-    if (
-        existing_owner is not None
-        and existing_owner.owner_session_id
-        and session_id
-        and existing_owner.owner_session_id != session_id
-    ):
-        notes.append(
-            f"Soft ownership warning: overwriting global execution context owned by session {existing_owner.owner_session_id}"
-        )
+    owner_warning = _soft_execution_ownership_warning(existing_global_run=existing_global_run, session_id=session_id)
+    if owner_warning is not None:
+        notes.append(owner_warning)
 
     # Promotion is the explicit handoff point from session review state into the
     # single global execution truth used by execution-confirm / resume / finalize.
@@ -429,6 +422,24 @@ def _promote_review_state_to_global_execution(
     return (True, notes)
 
 
+def _soft_execution_ownership_warning(
+    *,
+    existing_global_run: RunState | None,
+    session_id: str | None,
+) -> str | None:
+    if (
+        existing_global_run is not None
+        and existing_global_run.owner_session_id
+        and session_id
+        and existing_global_run.owner_session_id != session_id
+    ):
+        return (
+            f"Soft ownership warning: overwriting global execution context "
+            f"owned by session {existing_global_run.owner_session_id}"
+        )
+    return None
+
+
 def _set_execution_run_state(
     state_store: StateStore,
     run_state: RunState,
@@ -439,6 +450,47 @@ def _set_execution_run_state(
         state_store.set_current_run(run_state)
         return
     state_store.set_current_run(_with_global_run_ownership(run_state, session_id=session_id))
+
+
+def _persist_execution_gate_checkpoint(
+    *,
+    state_store: StateStore,
+    config: RuntimeConfig,
+    current_plan: PlanArtifact,
+    next_run_state: RunState,
+    gate_decision: DecisionState,
+) -> tuple[StateStore, list[str]]:
+    # Execution-gate checkpoints are part of the single execution truth used by
+    # confirm/resume flows. When planning runs inside a session review scope, we
+    # still persist the gate checkpoint globally so later recovery does not see
+    # a session-scoped execution decision that fails provenance loading.
+    notes: list[str] = []
+    execution_store = state_store
+    if state_store.session_id is not None:
+        execution_store = StateStore(config)
+        execution_store.ensure()
+        owner_warning = _soft_execution_ownership_warning(
+            existing_global_run=execution_store.get_current_run(),
+            session_id=state_store.session_id,
+        )
+        if owner_warning is not None:
+            notes.append(owner_warning)
+        execution_store.set_current_plan(current_plan)
+    _set_execution_run_state(
+        execution_store,
+        next_run_state,
+        session_id=state_store.session_id,
+    )
+    execution_store.set_current_decision(gate_decision)
+    if execution_store is not state_store:
+        # Once execution truth is promoted globally, the review-scoped run and
+        # handoff are stale carriers. Keeping them would let snapshot recovery
+        # pick `confirm_execute` from the session side while a global
+        # `confirm_decision` checkpoint already exists, which immediately
+        # fail-closes into a state conflict on the next runtime turn.
+        state_store.clear_current_run()
+        state_store.clear_current_handoff()
+    return (execution_store, notes)
 
 
 def _with_global_run_ownership(run_state: RunState, *, session_id: str | None) -> RunState:
@@ -2742,8 +2794,16 @@ def _apply_execution_gate_to_plan(
             config=config,
         )
         if gate_decision is not None:
-            state_store.set_current_run(next_run_state)
-            state_store.set_current_decision(gate_decision)
+            checkpoint_store, checkpoint_notes = _persist_execution_gate_checkpoint(
+                state_store=state_store,
+                config=config,
+                current_plan=plan_artifact,
+                next_run_state=next_run_state,
+                gate_decision=gate_decision,
+            )
+            notes.extend(checkpoint_notes)
+            if checkpoint_store is not state_store:
+                notes.append("Promoted execution gate checkpoint to global execution truth")
             notes.append(f"Execution gate requested a new decision: {gate_decision.decision_id}")
             return (
                 _decision_pending_route(decision, reason="Execution gate found a blocking risk that still requires confirmation"),

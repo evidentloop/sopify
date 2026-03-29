@@ -474,6 +474,76 @@ class EngineIntegrationTests(unittest.TestCase):
             self.assertIsNotNone(global_run)
             self.assertEqual(global_run.owner_session_id, "session-b")
 
+    def test_execution_gate_promotion_warns_when_replacing_other_session_global_owner(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            config, _, _ = _prepare_ready_plan_state(workspace, request_text="session-a plan", session_id="session-a")
+            run_runtime(
+                "~go exec",
+                workspace_root=workspace,
+                session_id="session-a",
+                user_home=workspace / "home",
+            )
+
+            session_b_store = StateStore(config, session_id="session-b")
+            plan_artifact = create_plan_scaffold("调整 auth boundary", config=config, level="standard")
+            _rewrite_background_scope(
+                workspace,
+                plan_artifact,
+                scope_lines=("runtime/engine.py", "runtime/engine.py, runtime/router.py"),
+                risk_lines=("本轮会调整认证与权限边界", "需要先明确批准路径"),
+            )
+            gate = evaluate_execution_gate(
+                decision=RouteDecision(
+                    route_name="workflow",
+                    request_text="调整 auth boundary",
+                    reason="test",
+                    complexity="complex",
+                    plan_level="standard",
+                    candidate_skill_ids=("develop",),
+                ),
+                plan_artifact=plan_artifact,
+                current_clarification=None,
+                current_decision=None,
+                config=config,
+            )
+            session_b_store.set_current_plan(plan_artifact)
+            session_b_store.set_current_run(
+                RunState(
+                    run_id="run-b",
+                    status="active",
+                    stage="ready_for_execution",
+                    route_name="workflow",
+                    title=plan_artifact.title,
+                    created_at=iso_now(),
+                    updated_at=iso_now(),
+                    plan_id=plan_artifact.plan_id,
+                    plan_path=plan_artifact.path,
+                    execution_gate=gate,
+                )
+            )
+
+            routed, resolved_plan, notes, _ = _advance_planning_route(
+                RouteDecision(
+                    route_name="workflow",
+                    request_text=f"分析下 {plan_artifact.plan_id} 是否可以执行",
+                    reason="test",
+                    complexity="medium",
+                    plan_package_policy="confirm",
+                    capture_mode="summary",
+                ),
+                state_store=session_b_store,
+                config=config,
+                kb_artifact=None,
+            )
+
+            global_run = StateStore(config).get_current_run()
+            self.assertEqual(routed.route_name, "decision_pending")
+            self.assertIsNotNone(resolved_plan)
+            self.assertTrue(any("Soft ownership warning" in note for note in notes))
+            self.assertIsNotNone(global_run)
+            self.assertEqual(global_run.owner_session_id, "session-b")
+
     def test_cancel_active_clears_session_active_plan_binding_checkpoint_without_touching_global_execution(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
@@ -1014,6 +1084,94 @@ class EngineIntegrationTests(unittest.TestCase):
             persisted_decision = StateStore(config).get_current_decision()
             self.assertIsNotNone(persisted_decision)
             self.assertEqual(persisted_decision.phase, "execution_gate")
+
+    def test_session_plan_reference_persists_execution_gate_decision_in_global_scope(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            session_id = "session-a"
+            config, store, plan_artifact = _prepare_ready_plan_state(
+                workspace,
+                request_text="调整 auth boundary",
+                session_id=session_id,
+            )
+            _rewrite_background_scope(
+                workspace,
+                plan_artifact,
+                scope_lines=("runtime/engine.py", "runtime/engine.py, runtime/router.py"),
+                risk_lines=("本轮会调整认证与权限边界", "需要先明确批准路径"),
+            )
+
+            routed, resolved_plan, notes, _ = _advance_planning_route(
+                RouteDecision(
+                    route_name="workflow",
+                    request_text=f"分析下 {plan_artifact.plan_id} 是否可以执行",
+                    reason="test",
+                    complexity="medium",
+                    plan_package_policy="confirm",
+                    capture_mode="summary",
+                ),
+                state_store=store,
+                config=config,
+                kb_artifact=None,
+            )
+
+            self.assertEqual(routed.route_name, "decision_pending")
+            self.assertIsNotNone(resolved_plan)
+            self.assertEqual(resolved_plan.plan_id, plan_artifact.plan_id)
+            self.assertTrue(any("Promoted execution gate checkpoint to global execution truth" in note for note in notes))
+
+            session_store = StateStore(config, session_id=session_id)
+            global_store = StateStore(config)
+            self.assertIsNone(session_store.get_current_decision())
+            self.assertIsNone(session_store.get_current_run())
+            self.assertIsNone(session_store.get_current_handoff())
+
+            persisted_decision = global_store.get_current_decision()
+            self.assertIsNotNone(persisted_decision)
+            self.assertEqual(persisted_decision.phase, "execution_gate")
+            self.assertEqual(global_store.get_current_run().stage, "decision_pending")
+
+    def test_session_plan_reference_followup_runtime_turn_does_not_conflict_after_global_promotion(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            session_id = "session-a"
+            config, store, plan_artifact = _prepare_ready_plan_state(
+                workspace,
+                request_text="调整 auth boundary",
+                session_id=session_id,
+            )
+            _rewrite_background_scope(
+                workspace,
+                plan_artifact,
+                scope_lines=("runtime/engine.py", "runtime/engine.py, runtime/router.py"),
+                risk_lines=("本轮会调整认证与权限边界", "需要先明确批准路径"),
+            )
+
+            _advance_planning_route(
+                RouteDecision(
+                    route_name="workflow",
+                    request_text=f"分析下 {plan_artifact.plan_id} 是否可以执行",
+                    reason="test",
+                    complexity="medium",
+                    plan_package_policy="confirm",
+                    capture_mode="summary",
+                ),
+                state_store=store,
+                config=config,
+                kb_artifact=None,
+            )
+
+            followup = run_runtime(
+                "继续",
+                workspace_root=workspace,
+                session_id=session_id,
+                user_home=workspace / "home",
+            )
+
+            self.assertNotEqual(followup.route.route_name, "state_conflict")
+            self.assertFalse(followup.recovered_context.state_conflict)
+            self.assertEqual(followup.route.route_name, "decision_pending")
+            self.assertEqual(followup.handoff.required_host_action, "confirm_decision")
 
     def test_develop_checkpoint_helper_writes_decision_checkpoint_and_handoff(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
