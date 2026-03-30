@@ -6,6 +6,18 @@ This changelog is maintained manually (not auto-generated).
 
 ## [Unreleased]
 
+## [2026-03-30.142244] - 2026-03-30
+
+### Tests
+
+- Updated automated coverage:
+  - `tests/test_installer_status_doctor.py`
+
+### Changed
+
+- Updated project files:
+  - `installer/inspection.py`
+
 ## [2026-03-30.134624] - 2026-03-30
 
 ### Scripts

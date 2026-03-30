@@ -92,12 +92,13 @@ archive_ready: false
 - [ ] 4.2 将 `installer/payload.py` 从单 `bundle/` 假设改为按 `bundle_version` 两态查找目标 bundle：Exact Pin 精确命中，Host-Delegated 读取唯一 `active_version` 指针
   进展记录：第一组 payload index 实现已把 host payload 默认落点切到 `bundles/<version>/ + active_version`，并保持 `bundle_manifest / bundle_template_dir` 指向 active bundle 以兼容当前 helper 链。显式 `bundle_version` lookup 已进入共享校验/发现层；workspace bootstrap 在 compatibility phase 仍默认消费 `active_version`，待 stub-only 收口后再把 exact-pin 语义完全下沉到 helper。
 - [x] 4.3 同步更新 `validate.py`、`inspection.py` 的 bundle discovery 与兼容性判定
-- [ ] 4.4 同步更新 `scripts/sopify_status.py`、`scripts/sopify_doctor.py` 的可见输出，展示 stub/global/legacy 解析结果，并针对 `global_bundle_missing / global_bundle_incompatible / global_index_corrupted / legacy_fallback_selected` 提供不同的 actionable hint
-  进展记录：底层 status/doctor inspection 已改为解析 versioned payload bundle，workspace/payload/smoke 的 evidence 路径不再写死 `payload_root/bundle`；按 `primary_code` 区分的新提示文案仍待单独收口。
-- [ ] 4.5 同步更新 `scripts/check-install-payload-bundle-smoke.py` 与 distribution 相关校验入口
-  进展记录：repo-local installer 的 post-install smoke 与独立 `check-install-payload-bundle-smoke.py` 已能通过 versioned payload bundle 路径完成校验；剩余工作主要是把这条路径与 4.4 的用户可见输出一起统一成最终 contract。
+- [x] 4.4 同步更新 `scripts/sopify_status.py`、`scripts/sopify_doctor.py` 的可见输出，展示 stub/global/legacy 解析结果，并针对 `global_bundle_missing / global_bundle_incompatible / global_index_corrupted / legacy_fallback_selected` 提供不同的 actionable hint
+  进展记录：`status/doctor` 现统一消费 `installer.inspection` 的 payload bundle resolution；文本输出会显式展示 `source_kind + reason_code`，并按 `GLOBAL_BUNDLE_MISSING / GLOBAL_BUNDLE_INCOMPATIBLE / GLOBAL_INDEX_CORRUPTED / LEGACY_FALLBACK_SELECTED` 输出不同 remediation hint。
+- [x] 4.5 同步更新 `scripts/check-install-payload-bundle-smoke.py` 与 distribution 相关校验入口
+  进展记录：distribution install 输出与独立 `check-install-payload-bundle-smoke.py` 现统一暴露 `payload_bundle` 诊断对象；smoke 会显式校验 `global_active + PAYLOAD_BUNDLE_READY`，distribution 也会打印同一套 source/reason contract。
 - [ ] 4.6 在迁移窗口内兼容旧 `bundle/` 结构，但明确标记为 legacy source，不再作为默认目标态
-- [ ] 4.7 确保 payload index 升级后，installer / doctor / status / smoke 消费的是同一套 reason code 与 source-kind 词汇
+- [x] 4.7 确保 payload index 升级后，installer / doctor / status / smoke 消费的是同一套 reason code 与 source-kind 词汇
+  进展记录：已冻结并接通 `PAYLOAD_BUNDLE_READY / GLOBAL_BUNDLE_MISSING / GLOBAL_BUNDLE_INCOMPATIBLE / GLOBAL_INDEX_CORRUPTED / LEGACY_FALLBACK_SELECTED` 与 `global_active / legacy_layout / unresolved` 词汇，installer、status、doctor、distribution、smoke 与对应单测已共用同一 contract。
 
 ## 4.A | CLI Rendering Layer
 - [ ] 4.A.1 冻结 CLI 渲染适配层边界：只消费 `primary_code + action_level + evidence` 与 `violations[]`，不反向定义新的机器字段

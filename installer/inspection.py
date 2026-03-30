@@ -995,9 +995,12 @@ def _read_json(path: Path) -> dict[str, Any]:
     if not path.is_file():
         return {}
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        payload = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
         return {}
+    if not isinstance(payload, dict):
+        return {}
+    return payload
 
 
 def _payload_evidence_paths(payload_root: Path) -> tuple[Path, ...]:

@@ -191,6 +191,30 @@ class StatusDoctorContractTests(unittest.TestCase):
             self.assertEqual(payload_bundle_check["reason_code"], "LEGACY_FALLBACK_SELECTED")
             self.assertEqual(payload_bundle_check["source_kind"], "legacy_layout")
 
+    def test_status_and_doctor_fail_closed_for_non_object_payload_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as home_dir:
+            home_root = Path(home_dir)
+
+            install_host_assets(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root, language_directory="CN")
+            install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root)
+
+            payload_root = CODEX_ADAPTER.payload_root(home_root)
+            (payload_root / "payload-manifest.json").write_text("[1]", encoding="utf-8")
+
+            status_payload = build_status_payload(home_root=home_root, workspace_root=None)
+            self.assertEqual(status_payload["hosts"][0]["payload_bundle"]["source_kind"], "unresolved")
+            self.assertEqual(status_payload["hosts"][0]["payload_bundle"]["reason_code"], "GLOBAL_INDEX_CORRUPTED")
+
+            doctor_payload = build_doctor_payload(home_root=home_root, workspace_root=None)
+            payload_bundle_check = next(
+                check
+                for check in doctor_payload["checks"]
+                if check["host_id"] == "codex" and check["check_id"] == "payload_bundle_resolution"
+            )
+            self.assertEqual(payload_bundle_check["status"], "fail")
+            self.assertEqual(payload_bundle_check["reason_code"], "GLOBAL_INDEX_CORRUPTED")
+            self.assertEqual(payload_bundle_check["source_kind"], "unresolved")
+
     def test_status_json_contains_required_contract_and_workspace_state(self) -> None:
         with tempfile.TemporaryDirectory() as home_dir, tempfile.TemporaryDirectory() as workspace_dir:
             home_root = Path(home_dir)
