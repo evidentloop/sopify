@@ -6,6 +6,34 @@ This changelog is maintained manually (not auto-generated).
 
 ## [Unreleased]
 
+## [2026-03-30.195249] - 2026-03-30
+
+### Runtime
+
+- Updated runtime internals:
+  - `runtime/workspace_preflight.py`
+
+### Scripts
+
+- Adjusted maintenance scripts:
+  - `scripts/install_sopify.py`
+
+### Tests
+
+- Updated automated coverage:
+  - `tests/test_installer.py`
+  - `tests/test_installer_status_doctor.py`
+  - `tests/test_runtime_gate.py`
+
+### Changed
+
+- Updated project files:
+  - `installer/bootstrap_workspace.py`
+  - `installer/hosts/__init__.py`
+  - `installer/inspection.py`
+  - `installer/payload.py`
+  - `installer/validate.py`
+
 ## [2026-03-30.142244] - 2026-03-30
 
 ### Tests

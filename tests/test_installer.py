@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import re
+import shutil
 import sys
 import tempfile
 import unittest
@@ -14,7 +15,12 @@ if str(REPO_ROOT) not in sys.path:
 
 _FOOTER_TIME_LABELS = ("Generated At:", "生成时间:")
 
-from installer.bootstrap_workspace import _REQUIRED_BUNDLE_FILES, _classify_workspace_bundle
+from installer.bootstrap_workspace import (
+    _REQUIRED_BUNDLE_FILES,
+    _classify_workspace_bundle,
+    _resolve_payload_bundle_manifest_path as _bootstrap_resolve_payload_bundle_manifest_path,
+    _write_workspace_stub_overlay,
+)
 from installer.hosts.base import install_host_assets
 from installer.hosts.claude import CLAUDE_ADAPTER
 from installer.hosts.codex import CODEX_ADAPTER
@@ -77,6 +83,22 @@ def _create_incomplete_payload(*, home_root: Path, version: str) -> Path:
     return payload_root
 
 
+def _write_bundle_layout(
+    bundle_root: Path,
+    *,
+    manifest: dict[str, object],
+    missing_paths: tuple[Path, ...] = (),
+) -> None:
+    _write_json(bundle_root / "manifest.json", manifest)
+    missing = set(missing_paths)
+    for relative_path in _REQUIRED_BUNDLE_FILES:
+        if relative_path == Path("manifest.json") or relative_path in missing:
+            continue
+        path = bundle_root / relative_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("", encoding="utf-8")
+
+
 class PayloadInstallTests(unittest.TestCase):
     def test_payload_is_current_rejects_incomplete_bundle_even_when_versions_match(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -84,6 +106,49 @@ class PayloadInstallTests(unittest.TestCase):
             payload_root = _create_incomplete_payload(home_root=home_root, version="2026-02-13")
 
             self.assertFalse(_payload_is_current(payload_root, "2026-02-13"))
+
+    def test_payload_is_current_rejects_versioned_layout_without_active_version(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            home_root = Path(temp_dir)
+            payload_root = _create_incomplete_payload(home_root=home_root, version="2026-02-13")
+            _write_json(
+                payload_root / "payload-manifest.json",
+                {
+                    "schema_version": "1",
+                    "payload_version": "2026-02-13",
+                    "bundle_version": "2026-02-13",
+                    "bundles_dir": "bundles",
+                    "bundle_manifest": "bundles/2026-02-13/manifest.json",
+                    "bundle_template_dir": "bundles/2026-02-13",
+                    "helper_entry": "helpers/bootstrap_workspace.py",
+                },
+            )
+
+            self.assertFalse(_payload_is_current(payload_root, "2026-02-13"))
+
+    def test_payload_is_current_returns_false_for_legacy_layout_with_invalid_payload_bundle_version(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            home_root = Path(temp_dir)
+            CODEX_ADAPTER.destination_root(home_root).mkdir(parents=True, exist_ok=True)
+            install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root)
+
+            payload_root = CODEX_ADAPTER.payload_root(home_root)
+            payload_manifest_path = payload_root / "payload-manifest.json"
+            payload_manifest = json.loads(payload_manifest_path.read_text(encoding="utf-8"))
+            active_version = payload_manifest["active_version"]
+            shutil.copytree(payload_root / "bundles" / active_version, payload_root / "bundle")
+            payload_manifest.pop("bundles_dir", None)
+            payload_manifest.pop("active_version", None)
+            payload_manifest["bundle_manifest"] = "bundle/manifest.json"
+            payload_manifest["bundle_template_dir"] = "bundle"
+            payload_manifest["bundle_version"] = "latest"
+            payload_manifest_path.write_text(json.dumps(payload_manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+            self.assertFalse(_payload_is_current(payload_root, active_version))
+
+            result = install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root)
+
+            self.assertEqual(result.action, "updated")
 
     def test_install_global_payload_updates_incomplete_existing_payload(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -169,6 +234,15 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
                 "capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
             }
             _write_json(current_manifest_path, current_manifest)
+            global_bundle_root = workspace_root / "payload-bundles" / "2026-02-13"
+            _write_bundle_layout(
+                global_bundle_root,
+                manifest={
+                    "schema_version": "1",
+                    "bundle_version": "2026-02-13",
+                    "capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
+                },
+            )
 
             for relative_path in _REQUIRED_BUNDLE_FILES:
                 if relative_path == Path("scripts") / "clarification_bridge_runtime.py":
@@ -185,9 +259,14 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
                         "required_capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
                     }
                 },
-                bundle_manifest={"schema_version": "1", "bundle_version": "2026-02-13"},
+                bundle_manifest={
+                    "schema_version": "1",
+                    "bundle_version": "2026-02-13",
+                    "capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
+                },
                 current_manifest_path=current_manifest_path,
                 bundle_root=bundle_root,
+                global_bundle_root=global_bundle_root,
             )
 
             self.assertEqual(state, "INCOMPATIBLE")
@@ -212,6 +291,15 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
                 },
             }
             _write_json(current_manifest_path, current_manifest)
+            global_bundle_root = workspace_root / "payload-bundles" / "2026-02-13"
+            _write_bundle_layout(
+                global_bundle_root,
+                manifest={
+                    "schema_version": "1",
+                    "bundle_version": "2026-02-13",
+                    "capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
+                },
+            )
 
             for relative_path in _REQUIRED_BUNDLE_FILES:
                 path = bundle_root / relative_path
@@ -226,14 +314,255 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
                         "required_capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
                     }
                 },
-                bundle_manifest={"schema_version": "1", "bundle_version": "2026-02-13"},
+                bundle_manifest={
+                    "schema_version": "1",
+                    "bundle_version": "2026-02-13",
+                    "capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
+                },
                 current_manifest_path=current_manifest_path,
                 bundle_root=bundle_root,
+                global_bundle_root=global_bundle_root,
             )
 
             self.assertEqual(state, "INCOMPATIBLE")
             self.assertEqual(reason_code, "MISSING_REQUIRED_CAPABILITY")
             self.assertIn("decision_bridge", message)
+            self.assertEqual(from_version, "2026-02-13")
+
+    def test_stub_only_workspace_is_ready_when_stub_and_selected_global_bundle_are_valid(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace_root = Path(temp_dir)
+            bundle_root = workspace_root / ".sopify-runtime"
+            bundle_root.mkdir(parents=True, exist_ok=True)
+            current_manifest_path = bundle_root / "manifest.json"
+            current_manifest = {
+                "schema_version": "1",
+                "stub_version": "1",
+                "bundle_version": "2026-02-13",
+                "locator_mode": "global_first",
+                "required_capabilities": ["runtime_gate", "preferences_preload"],
+                "ignore_mode": "noop",
+                "written_by_host": True,
+            }
+            _write_json(current_manifest_path, current_manifest)
+            global_bundle_root = workspace_root / "payload-bundles" / "2026-02-13"
+            _write_bundle_layout(
+                global_bundle_root,
+                manifest={
+                    "schema_version": "1",
+                    "bundle_version": "2026-02-13",
+                    "capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
+                },
+            )
+
+            state, reason_code, message, from_version = _classify_workspace_bundle(
+                current_manifest=current_manifest,
+                payload_manifest={
+                    "minimum_workspace_manifest": {
+                        "schema_version": "1",
+                        "required_capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
+                    }
+                },
+                bundle_manifest={"schema_version": "1", "bundle_version": "2026-02-13", "capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES)},
+                current_manifest_path=current_manifest_path,
+                bundle_root=bundle_root,
+                global_bundle_root=global_bundle_root,
+            )
+
+            self.assertEqual(state, "READY")
+            self.assertEqual(reason_code, "WORKSPACE_BUNDLE_READY")
+            self.assertIn("valid global bundle", message)
+            self.assertEqual(from_version, "2026-02-13")
+
+    def test_global_only_workspace_does_not_fallback_when_selected_global_bundle_is_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace_root = Path(temp_dir)
+            bundle_root = workspace_root / ".sopify-runtime"
+            bundle_root.mkdir(parents=True, exist_ok=True)
+            current_manifest_path = bundle_root / "manifest.json"
+            current_manifest = {
+                "schema_version": "1",
+                "stub_version": "1",
+                "bundle_version": "2026-02-13",
+                "locator_mode": "global_only",
+                "required_capabilities": ["runtime_gate", "preferences_preload"],
+                "ignore_mode": "noop",
+                "written_by_host": True,
+            }
+            _write_json(current_manifest_path, current_manifest)
+
+            state, reason_code, message, from_version = _classify_workspace_bundle(
+                current_manifest=current_manifest,
+                payload_manifest={
+                    "minimum_workspace_manifest": {
+                        "schema_version": "1",
+                        "required_capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
+                    }
+                },
+                bundle_manifest={
+                    "schema_version": "1",
+                    "bundle_version": "2026-02-13",
+                    "capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
+                },
+                current_manifest_path=current_manifest_path,
+                bundle_root=bundle_root,
+                global_bundle_root=None,
+                global_reason_code="GLOBAL_BUNDLE_MISSING",
+                global_message="Selected global bundle is missing.",
+            )
+
+            self.assertEqual(state, "INCOMPATIBLE")
+            self.assertEqual(reason_code, "GLOBAL_BUNDLE_MISSING")
+            self.assertIn("missing", message)
+            self.assertEqual(from_version, "2026-02-13")
+
+    def test_global_first_workspace_without_legacy_fallback_does_not_fallback_when_selected_global_bundle_is_incompatible(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace_root = Path(temp_dir)
+            bundle_root = workspace_root / ".sopify-runtime"
+            bundle_root.mkdir(parents=True, exist_ok=True)
+            current_manifest_path = bundle_root / "manifest.json"
+            current_manifest = {
+                "schema_version": "1",
+                "stub_version": "1",
+                "bundle_version": "2026-02-13",
+                "locator_mode": "global_first",
+                "legacy_fallback": False,
+                "required_capabilities": ["runtime_gate", "preferences_preload"],
+                "ignore_mode": "noop",
+                "written_by_host": True,
+            }
+            _write_json(current_manifest_path, current_manifest)
+
+            state, reason_code, message, from_version = _classify_workspace_bundle(
+                current_manifest=current_manifest,
+                payload_manifest={
+                    "minimum_workspace_manifest": {
+                        "schema_version": "1",
+                        "required_capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
+                    }
+                },
+                bundle_manifest={
+                    "schema_version": "1",
+                    "bundle_version": "2026-02-13",
+                    "capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
+                },
+                current_manifest_path=current_manifest_path,
+                bundle_root=bundle_root,
+                global_bundle_root=None,
+                global_reason_code="GLOBAL_BUNDLE_INCOMPATIBLE",
+                global_message="Selected global bundle is incompatible.",
+            )
+
+            self.assertEqual(state, "INCOMPATIBLE")
+            self.assertEqual(reason_code, "GLOBAL_BUNDLE_INCOMPATIBLE")
+            self.assertIn("incompatible", message)
+            self.assertEqual(from_version, "2026-02-13")
+
+    def test_global_first_workspace_with_legacy_fallback_returns_ready_when_legacy_runtime_is_complete_and_global_bundle_is_missing(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace_root = Path(temp_dir)
+            bundle_root = workspace_root / ".sopify-runtime"
+            bundle_root.mkdir(parents=True, exist_ok=True)
+            current_manifest_path = bundle_root / "manifest.json"
+            current_manifest = {
+                "schema_version": "1",
+                "stub_version": "1",
+                "bundle_version": "2026-02-13",
+                "locator_mode": "global_first",
+                "legacy_fallback": True,
+                "required_capabilities": ["runtime_gate", "preferences_preload"],
+                "ignore_mode": "noop",
+                "written_by_host": True,
+                "capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
+            }
+            _write_json(current_manifest_path, current_manifest)
+            for relative_path in _REQUIRED_BUNDLE_FILES:
+                if relative_path == Path("manifest.json"):
+                    continue
+                path = bundle_root / relative_path
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("", encoding="utf-8")
+
+            state, reason_code, message, from_version = _classify_workspace_bundle(
+                current_manifest=current_manifest,
+                payload_manifest={
+                    "minimum_workspace_manifest": {
+                        "schema_version": "1",
+                        "required_capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
+                    }
+                },
+                bundle_manifest={
+                    "schema_version": "1",
+                    "bundle_version": "2026-02-13",
+                    "capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
+                },
+                current_manifest_path=current_manifest_path,
+                bundle_root=bundle_root,
+                global_bundle_root=None,
+                global_reason_code="GLOBAL_BUNDLE_MISSING",
+                global_message="Selected global bundle is missing.",
+            )
+
+            self.assertEqual(state, "READY")
+            self.assertEqual(reason_code, "LEGACY_FALLBACK_SELECTED")
+            self.assertIn("legacy", message)
+            self.assertEqual(from_version, "2026-02-13")
+
+    def test_global_first_workspace_with_legacy_fallback_fail_closes_when_legacy_runtime_is_incomplete_and_global_bundle_is_incompatible(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace_root = Path(temp_dir)
+            bundle_root = workspace_root / ".sopify-runtime"
+            bundle_root.mkdir(parents=True, exist_ok=True)
+            current_manifest_path = bundle_root / "manifest.json"
+            current_manifest = {
+                "schema_version": "1",
+                "stub_version": "1",
+                "bundle_version": "2026-02-13",
+                "locator_mode": "global_first",
+                "legacy_fallback": True,
+                "required_capabilities": ["runtime_gate", "preferences_preload"],
+                "ignore_mode": "noop",
+                "written_by_host": True,
+                "capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
+            }
+            _write_json(current_manifest_path, current_manifest)
+            for relative_path in _REQUIRED_BUNDLE_FILES:
+                if relative_path in {Path("manifest.json"), Path("scripts") / "runtime_gate.py"}:
+                    continue
+                path = bundle_root / relative_path
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("", encoding="utf-8")
+
+            state, reason_code, message, from_version = _classify_workspace_bundle(
+                current_manifest=current_manifest,
+                payload_manifest={
+                    "minimum_workspace_manifest": {
+                        "schema_version": "1",
+                        "required_capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
+                    }
+                },
+                bundle_manifest={
+                    "schema_version": "1",
+                    "bundle_version": "2026-02-13",
+                    "capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
+                },
+                current_manifest_path=current_manifest_path,
+                bundle_root=bundle_root,
+                global_bundle_root=None,
+                global_reason_code="GLOBAL_BUNDLE_INCOMPATIBLE",
+                global_message="Selected global bundle is incompatible.",
+            )
+
+            self.assertEqual(state, "INCOMPATIBLE")
+            self.assertEqual(reason_code, "GLOBAL_BUNDLE_INCOMPATIBLE")
+            self.assertIn("incompatible", message)
             self.assertEqual(from_version, "2026-02-13")
 
     def test_validate_bundle_install_requires_runtime_bridge_modules(self) -> None:
@@ -293,6 +622,90 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
             self.assertEqual(manifest["ignore_mode"], "noop")
             self.assertFalse(manifest["legacy_fallback"])
 
+    def test_write_workspace_stub_overlay_writes_frozen_stub_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace_root = Path(temp_dir)
+            bundle_root = workspace_root / ".sopify-runtime"
+            bundle_root.mkdir(parents=True, exist_ok=True)
+            manifest_path = bundle_root / "manifest.json"
+            _write_json(
+                manifest_path,
+                {
+                    "schema_version": "1",
+                    "bundle_version": "2026-02-13",
+                    "capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
+                },
+            )
+
+            _write_workspace_stub_overlay(bundle_root=bundle_root, workspace_root=workspace_root)
+
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            self.assertEqual(manifest["schema_version"], "1")
+            self.assertEqual(manifest["stub_version"], "1")
+            self.assertEqual(manifest["bundle_version"], "2026-02-13")
+            self.assertEqual(manifest["required_capabilities"], ["runtime_gate", "preferences_preload"])
+            self.assertEqual(manifest["locator_mode"], "global_first")
+            self.assertFalse(manifest["legacy_fallback"])
+            self.assertEqual(manifest["ignore_mode"], "noop")
+            self.assertTrue(manifest["written_by_host"])
+
+    def test_write_workspace_stub_overlay_materializes_stub_from_global_bundle_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace_root = Path(temp_dir)
+            bundle_root = workspace_root / ".sopify-runtime"
+
+            _write_workspace_stub_overlay(
+                bundle_root=bundle_root,
+                workspace_root=workspace_root,
+                bundle_manifest={
+                    "schema_version": "1",
+                    "bundle_version": "2026-02-13",
+                    "capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
+                },
+            )
+
+            manifest = json.loads((bundle_root / "manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["schema_version"], "1")
+            self.assertEqual(manifest["stub_version"], "1")
+            self.assertEqual(manifest["bundle_version"], "2026-02-13")
+            self.assertEqual(manifest["required_capabilities"], ["runtime_gate", "preferences_preload"])
+            self.assertEqual(manifest["locator_mode"], "global_first")
+            self.assertEqual(manifest["ignore_mode"], "noop")
+            self.assertTrue(manifest["written_by_host"])
+            self.assertFalse((bundle_root / "scripts").exists())
+
+    def test_write_workspace_stub_overlay_drops_bundle_only_contract_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace_root = Path(temp_dir)
+            bundle_root = workspace_root / ".sopify-runtime"
+
+            _write_workspace_stub_overlay(
+                bundle_root=bundle_root,
+                workspace_root=workspace_root,
+                bundle_manifest={
+                    "schema_version": "1",
+                    "bundle_version": "2026-02-13",
+                    "capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
+                    "default_entry": "scripts/sopify_runtime.py",
+                    "limits": {"runtime_gate_entry": "scripts/runtime_gate.py"},
+                },
+            )
+
+            manifest = json.loads((bundle_root / "manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                set(manifest.keys()),
+                {
+                    "bundle_version",
+                    "ignore_mode",
+                    "legacy_fallback",
+                    "locator_mode",
+                    "required_capabilities",
+                    "schema_version",
+                    "stub_version",
+                    "written_by_host",
+                },
+            )
+
     def test_validate_workspace_stub_manifest_rejects_invalid_bundle_version(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
@@ -310,6 +723,63 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
             )
 
             with self.assertRaisesRegex(Exception, "bundle_version"):
+                validate_workspace_stub_manifest(bundle_root)
+
+    def test_validate_workspace_stub_manifest_treats_null_bundle_version_as_host_delegated(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace_root = Path(temp_dir)
+            bundle_root = workspace_root / ".sopify-runtime"
+            bundle_root.mkdir(parents=True, exist_ok=True)
+            manifest_path = bundle_root / "manifest.json"
+            _write_json(
+                manifest_path,
+                {
+                    "schema_version": "1",
+                    "stub_version": "1",
+                    "bundle_version": None,
+                    "required_capabilities": ["runtime_gate", "preferences_preload"],
+                },
+            )
+
+            _resolved_path, manifest = validate_workspace_stub_manifest(bundle_root)
+            self.assertIsNone(manifest["bundle_version"])
+            self.assertEqual(manifest["locator_mode"], "global_first")
+
+    def test_validate_workspace_stub_manifest_rejects_empty_string_bundle_version(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace_root = Path(temp_dir)
+            bundle_root = workspace_root / ".sopify-runtime"
+            bundle_root.mkdir(parents=True, exist_ok=True)
+            manifest_path = bundle_root / "manifest.json"
+            _write_json(
+                manifest_path,
+                {
+                    "schema_version": "1",
+                    "stub_version": "1",
+                    "bundle_version": "",
+                    "required_capabilities": ["runtime_gate", "preferences_preload"],
+                },
+            )
+
+            with self.assertRaisesRegex(Exception, "bundle_version"):
+                validate_workspace_stub_manifest(bundle_root)
+
+    def test_validate_workspace_stub_manifest_rejects_missing_schema_version(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace_root = Path(temp_dir)
+            bundle_root = workspace_root / ".sopify-runtime"
+            bundle_root.mkdir(parents=True, exist_ok=True)
+            manifest_path = bundle_root / "manifest.json"
+            _write_json(
+                manifest_path,
+                {
+                    "stub_version": "1",
+                    "bundle_version": "2026-02-13",
+                    "required_capabilities": ["runtime_gate", "preferences_preload"],
+                },
+            )
+
+            with self.assertRaisesRegex(Exception, "schema_version"):
                 validate_workspace_stub_manifest(bundle_root)
 
     def test_validate_workspace_stub_manifest_rejects_global_only_legacy_fallback_conflict(self) -> None:
@@ -367,6 +837,86 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
 
             self.assertEqual(bundle_manifest_path, payload_root / "bundles" / "2026-02-13" / "manifest.json")
             self.assertEqual(bundle_manifest["bundle_version"], "2026-02-13")
+
+    def test_validate_payload_manifests_requires_active_version_for_host_delegated_versioned_layout(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            home_root = Path(temp_dir)
+            payload_root = _create_incomplete_payload(home_root=home_root, version="2026-02-13")
+            _write_json(
+                payload_root / "payload-manifest.json",
+                {
+                    "schema_version": "1",
+                    "payload_version": "2026-02-13",
+                    "bundle_version": "2026-02-13",
+                    "bundles_dir": "bundles",
+                    "bundle_manifest": "bundles/2026-02-13/manifest.json",
+                    "bundle_template_dir": "bundles/2026-02-13",
+                    "helper_entry": "helpers/bootstrap_workspace.py",
+                },
+            )
+
+            with self.assertRaisesRegex(InstallError, "active_version"):
+                validate_payload_manifests(payload_root)
+
+    def test_validate_payload_manifests_supports_exact_lookup_against_legacy_bundle_layout(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            home_root = Path(temp_dir)
+            payload_root = CODEX_ADAPTER.payload_root(home_root)
+            legacy_bundle_root = payload_root / "bundle"
+            _write_json(
+                payload_root / "payload-manifest.json",
+                {
+                    "schema_version": "1",
+                    "payload_version": "2026-02-13",
+                    "bundle_version": "2026-02-13",
+                    "bundle_manifest": "bundle/manifest.json",
+                    "bundle_template_dir": "bundle",
+                    "helper_entry": "helpers/bootstrap_workspace.py",
+                },
+            )
+            _write_json(
+                legacy_bundle_root / "manifest.json",
+                {
+                    "schema_version": "1",
+                    "bundle_version": "2026-02-13",
+                    "capabilities": {
+                        "bundle_role": "control_plane",
+                        "manifest_first": True,
+                        "writes_handoff_file": True,
+                    },
+                },
+            )
+            helper_path = payload_root / "helpers" / "bootstrap_workspace.py"
+            helper_path.parent.mkdir(parents=True, exist_ok=True)
+            helper_path.write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+
+            _payload_manifest_path, _payload_manifest, bundle_manifest_path, bundle_manifest = validate_payload_manifests(
+                payload_root,
+                bundle_version="2026-02-13",
+            )
+
+            self.assertEqual(bundle_manifest_path, legacy_bundle_root / "manifest.json")
+            self.assertEqual(bundle_manifest["bundle_version"], "2026-02-13")
+
+    def test_bootstrap_resolver_supports_exact_lookup_against_legacy_bundle_layout_with_active_version_only(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            home_root = Path(temp_dir)
+            payload_root = CODEX_ADAPTER.payload_root(home_root)
+
+            resolved_path = _bootstrap_resolve_payload_bundle_manifest_path(
+                payload_root=payload_root,
+                payload_manifest={
+                    "schema_version": "1",
+                    "payload_version": "2026-02-13",
+                    "active_version": "2026-02-13",
+                    "bundle_manifest": "bundle/manifest.json",
+                    "bundle_template_dir": "bundle",
+                    "helper_entry": "helpers/bootstrap_workspace.py",
+                },
+                bundle_version="2026-02-13",
+            )
+
+            self.assertEqual(resolved_path, payload_root / "bundle" / "manifest.json")
 
     def test_validate_payload_manifests_rejects_escaping_bundles_dir(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

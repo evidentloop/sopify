@@ -116,6 +116,16 @@ def resolve_payload_bundle_root(payload_root: Path, *, bundle_version: str | Non
     return _resolve_payload_bundle_manifest_path(payload_root, payload_manifest, bundle_version=bundle_version).parent
 
 
+def resolve_payload_bundle_manifest_path(
+    payload_root: Path,
+    payload_manifest: Mapping[str, Any],
+    *,
+    bundle_version: str | None = None,
+) -> Path:
+    """Resolve the concrete payload bundle manifest path from an already loaded payload manifest."""
+    return _resolve_payload_bundle_manifest_path(payload_root, dict(payload_manifest), bundle_version=bundle_version)
+
+
 def validate_workspace_bundle_manifest(bundle_root: Path) -> tuple[Path, dict[str, Any]]:
     """Load the workspace-local control-plane manifest without asserting full bundle contents."""
     manifest_path = bundle_root / "manifest.json"
@@ -128,7 +138,8 @@ def validate_workspace_stub_manifest(bundle_root: Path) -> tuple[Path, dict[str,
     manifest_path, manifest = validate_workspace_bundle_manifest(bundle_root)
     workspace_root = bundle_root.parent
     normalized = dict(manifest)
-    normalized["stub_version"] = str(normalized.get("stub_version") or "1")
+    normalized["schema_version"] = _normalize_stub_schema_version(normalized.get("schema_version"))
+    normalized["stub_version"] = _normalize_stub_version(normalized.get("stub_version"))
     normalized["locator_mode"] = _normalize_locator_mode(normalized.get("locator_mode"))
     normalized["bundle_version"] = _normalize_bundle_version(normalized.get("bundle_version"))
     normalized["required_capabilities"] = _normalize_required_capabilities(normalized.get("required_capabilities"))
@@ -166,17 +177,17 @@ def _resolve_payload_bundle_manifest_path(
 ) -> Path:
     requested_version = _normalize_payload_bundle_version(bundle_version) if bundle_version is not None else None
     bundles_dir = _bundles_dir_from_manifest(payload_root, payload_manifest)
-    active_version = _payload_active_version(payload_manifest)
-    if requested_version is not None:
-        if bundles_dir is not None:
-            return payload_root / bundles_dir / requested_version / "manifest.json"
-        if active_version == requested_version:
-            return _legacy_bundle_manifest_path(payload_root, payload_manifest)
-        return payload_root / _DEFAULT_VERSIONED_BUNDLES_DIR / requested_version / "manifest.json"
     if bundles_dir is not None:
+        if requested_version is not None:
+            return payload_root / bundles_dir / requested_version / "manifest.json"
+        active_version = _payload_active_version(payload_manifest)
         if active_version is None:
             raise InstallError("Payload verification failed: active_version")
         return payload_root / bundles_dir / active_version / "manifest.json"
+    if requested_version is not None:
+        if _legacy_payload_bundle_version(payload_manifest) == requested_version:
+            return _legacy_bundle_manifest_path(payload_root, payload_manifest)
+        return payload_root / _DEFAULT_VERSIONED_BUNDLES_DIR / requested_version / "manifest.json"
     return _legacy_bundle_manifest_path(payload_root, payload_manifest)
 
 
@@ -185,10 +196,14 @@ def _bundles_dir_from_manifest(payload_root: Path, payload_manifest: dict[str, A
 
 
 def _payload_active_version(payload_manifest: dict[str, Any]) -> str | None:
-    if "active_version" in payload_manifest:
-        return _normalize_payload_bundle_version(payload_manifest.get("active_version"))
+    return _normalize_payload_bundle_version(payload_manifest.get("active_version"))
+
+
+def _legacy_payload_bundle_version(payload_manifest: dict[str, Any]) -> str | None:
     if "bundle_version" in payload_manifest:
         return _normalize_payload_bundle_version(payload_manifest.get("bundle_version"))
+    if "active_version" in payload_manifest:
+        return _normalize_payload_bundle_version(payload_manifest.get("active_version"))
     return None
 
 
@@ -234,12 +249,26 @@ def _normalize_locator_mode(value: Any) -> str:
     return normalized
 
 
+def _normalize_stub_schema_version(value: Any) -> str:
+    normalized = str(value or "").strip()
+    if not normalized:
+        raise InstallError("Stub verification failed: schema_version")
+    return normalized
+
+
+def _normalize_stub_version(value: Any) -> str:
+    normalized = str(value or "1").strip()
+    if not normalized:
+        raise InstallError("Stub verification failed: stub_version")
+    return normalized
+
+
 def _normalize_bundle_version(value: Any) -> str | None:
     if value is None:
         return None
     normalized = str(value).strip()
     if not normalized:
-        return None
+        raise InstallError("Stub verification failed: bundle_version")
     if normalized == "latest" or not _EXACT_BUNDLE_VERSION_RE.match(normalized):
         raise InstallError("Stub verification failed: bundle_version")
     return normalized

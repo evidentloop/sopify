@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 from types import SimpleNamespace
 import subprocess
 import sys
@@ -32,6 +33,7 @@ from runtime.models import DecisionOption, DecisionState, PlanArtifact, PlanProp
 from runtime.plan_scaffold import create_plan_scaffold
 from runtime.state import StateStore, iso_now, stable_request_sha1
 from runtime.workspace_preflight import _drop_cli_arg_pairs
+from runtime.workspace_preflight import preflight_workspace_runtime
 
 
 def _rewrite_background_scope(
@@ -335,6 +337,7 @@ class RuntimeGateTests(unittest.TestCase):
             self.assertEqual(result["preflight"]["action"], "bootstrapped")
             self.assertEqual(result["preflight"]["host_id"], "codex")
             self.assertTrue((workspace / ".sopify-runtime" / "manifest.json").exists())
+            self.assertFalse((workspace / ".sopify-runtime" / "scripts").exists())
 
     def test_gate_preflight_bootstraps_missing_workspace_for_go_init(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -353,6 +356,109 @@ class RuntimeGateTests(unittest.TestCase):
             self.assertEqual(result["status"], "ready")
             self.assertEqual(result["preflight"]["action"], "bootstrapped")
             self.assertTrue((workspace / ".sopify-runtime" / "manifest.json").exists())
+
+    def test_preflight_returns_selected_pinned_bundle_contract_instead_of_payload_active_bundle(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            home_root = temp_root / "home"
+            workspace = temp_root / "workspace"
+            workspace.mkdir(parents=True, exist_ok=True)
+            payload_manifest_path = _install_payload_manifest_for_gate(home_root=home_root)
+            payload_root = payload_manifest_path.parent
+            payload_manifest = json.loads(payload_manifest_path.read_text(encoding="utf-8"))
+            active_version = str(payload_manifest["active_version"])
+            pinned_version = f"{active_version}-pinned"
+
+            active_bundle_root = payload_root / "bundles" / active_version
+            pinned_bundle_root = payload_root / "bundles" / pinned_version
+            shutil.copytree(active_bundle_root, pinned_bundle_root)
+            pinned_manifest_path = pinned_bundle_root / "manifest.json"
+            pinned_manifest = json.loads(pinned_manifest_path.read_text(encoding="utf-8"))
+            pinned_manifest["bundle_version"] = pinned_version
+            limits = dict(pinned_manifest.get("limits") or {})
+            limits["runtime_gate_entry"] = "scripts/runtime_gate_pinned.py"
+            limits["preferences_preload_entry"] = "scripts/preferences_preload_pinned.py"
+            pinned_manifest["limits"] = limits
+            pinned_manifest_path.write_text(json.dumps(pinned_manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            (pinned_bundle_root / "scripts" / "runtime_gate_pinned.py").write_text("", encoding="utf-8")
+            (pinned_bundle_root / "scripts" / "preferences_preload_pinned.py").write_text("", encoding="utf-8")
+
+            workspace_manifest_path = workspace / ".sopify-runtime" / "manifest.json"
+            workspace_manifest_path.parent.mkdir(parents=True, exist_ok=True)
+            workspace_manifest_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "1",
+                        "stub_version": "1",
+                        "bundle_version": pinned_version,
+                        "locator_mode": "global_first",
+                        "required_capabilities": ["runtime_gate", "preferences_preload"],
+                        "ignore_mode": "noop",
+                        "written_by_host": True,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            result = preflight_workspace_runtime(
+                workspace,
+                request_text="~go plan 补 runtime gate 骨架",
+                payload_manifest_path=payload_manifest_path,
+                user_home=home_root,
+            )
+
+            self.assertEqual(Path(result["bundle_manifest_path"]).resolve(), (pinned_bundle_root / "manifest.json").resolve())
+            self.assertEqual(Path(result["global_bundle_root"]).resolve(), pinned_bundle_root.resolve())
+            self.assertEqual(result["runtime_gate_entry"], "scripts/runtime_gate_pinned.py")
+            self.assertEqual(result["preferences_preload_entry"], "scripts/preferences_preload_pinned.py")
+
+    def test_preflight_exposes_legacy_workspace_entries_when_global_bundle_falls_back(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            home_root = temp_root / "home"
+            workspace = temp_root / "workspace"
+            workspace.mkdir(parents=True, exist_ok=True)
+            payload_manifest_path = _install_payload_manifest_for_gate(home_root=home_root)
+            payload_root = payload_manifest_path.parent
+
+            install_result = subprocess.run(
+                [sys.executable, str(payload_root / "helpers" / "bootstrap_workspace.py"), "--workspace-root", str(workspace)],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            bootstrap_payload = json.loads(install_result.stdout)
+            self.assertEqual(bootstrap_payload["reason_code"], "MISSING_BUNDLE")
+
+            payload_manifest = json.loads(payload_manifest_path.read_text(encoding="utf-8"))
+            selected_version = str(payload_manifest["active_version"])
+            selected_bundle_root = payload_root / "bundles" / selected_version
+            bundle_root = workspace / ".sopify-runtime"
+
+            workspace_manifest_path = bundle_root / "manifest.json"
+            workspace_manifest = json.loads(workspace_manifest_path.read_text(encoding="utf-8"))
+            workspace_manifest["legacy_fallback"] = True
+            workspace_manifest_path.write_text(json.dumps(workspace_manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            for name in ("runtime", "scripts", "tests"):
+                shutil.copytree(selected_bundle_root / name, bundle_root / name)
+
+            shutil.rmtree(selected_bundle_root)
+
+            result = preflight_workspace_runtime(
+                workspace,
+                request_text="~go plan demo",
+                payload_manifest_path=payload_manifest_path,
+                user_home=home_root,
+            )
+
+            self.assertEqual(result["reason_code"], "LEGACY_FALLBACK_SELECTED")
+            self.assertTrue(result["bundle_manifest_path"].endswith(f"/bundles/{selected_version}/manifest.json"))
+            self.assertTrue(result["global_bundle_root"].endswith(f"/bundles/{selected_version}"))
+            self.assertEqual(result["runtime_gate_entry"], "scripts/runtime_gate.py")
+            self.assertEqual(result["preferences_preload_entry"], "scripts/preferences_preload_runtime.py")
 
     def test_gate_preflight_brake_layer_blocks_first_write_even_for_go_command(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -722,6 +828,141 @@ class RuntimeGateTests(unittest.TestCase):
                 result["preflight"]["bundle_manifest_path"].endswith(f"/bundles/{active_version}/manifest.json")
             )
             self.assertTrue(result["preflight"]["global_bundle_root"].endswith(f"/bundles/{active_version}"))
+            self.assertEqual(result["preflight"]["runtime_gate_entry"], "scripts/runtime_gate.py")
+            self.assertEqual(result["preflight"]["preferences_preload_entry"], "scripts/preferences_preload_runtime.py")
+
+    def test_gate_preflight_maps_missing_active_version_to_workspace_preflight_failed(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            workspace = temp_root / "workspace"
+            workspace.mkdir(parents=True, exist_ok=True)
+            payload_manifest_path = _install_payload_manifest_for_gate(home_root=temp_root / "home")
+            payload_manifest = json.loads(payload_manifest_path.read_text(encoding="utf-8"))
+            payload_manifest.pop("active_version", None)
+            payload_manifest_path.write_text(
+                json.dumps(payload_manifest, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+
+            result = enter_runtime_gate(
+                "~go plan demo",
+                workspace_root=workspace,
+                payload_manifest_path=payload_manifest_path,
+                user_home=temp_root / "home",
+            )
+
+            self.assertEqual(result["status"], "error")
+            self.assertEqual(result["error_code"], "workspace_preflight_failed")
+
+    def test_gate_preflight_prefers_detected_codex_host_without_loading_broken_claude_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            workspace = temp_root / "workspace"
+            workspace.mkdir(parents=True, exist_ok=True)
+            home = temp_root / "home"
+            CODEX_ADAPTER.destination_root(home).mkdir(parents=True, exist_ok=True)
+            CLAUDE_ADAPTER.destination_root(home).mkdir(parents=True, exist_ok=True)
+            install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home)
+            claude_payload = install_global_payload(CLAUDE_ADAPTER, repo_root=REPO_ROOT, home_root=home).root
+            (claude_payload / "payload-manifest.json").write_text("{not-json\n", encoding="utf-8")
+
+            with patch.dict(os.environ, {"CODEX_CI": "1"}, clear=True):
+                result = enter_runtime_gate(
+                    "~go plan demo",
+                    workspace_root=workspace,
+                    user_home=home,
+                )
+
+            self.assertEqual(result["status"], "ready")
+            self.assertEqual(result["preflight"]["host_id"], "codex")
+            self.assertEqual(result["preflight"]["payload_root"], str((home / ".codex" / "sopify").resolve()))
+
+    def test_gate_preflight_detected_codex_host_fail_closes_when_only_claude_payload_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            workspace = temp_root / "workspace"
+            workspace.mkdir(parents=True, exist_ok=True)
+            home = temp_root / "home"
+            CLAUDE_ADAPTER.destination_root(home).mkdir(parents=True, exist_ok=True)
+            install_global_payload(CLAUDE_ADAPTER, repo_root=REPO_ROOT, home_root=home)
+
+            with patch.dict(os.environ, {"CODEX_CI": "1"}, clear=True):
+                result = enter_runtime_gate(
+                    "~go plan demo",
+                    workspace_root=workspace,
+                    user_home=home,
+                )
+
+            self.assertEqual(result["status"], "error")
+            self.assertEqual(result["error_code"], "workspace_preflight_failed")
+
+    def test_gate_preflight_requires_explicit_host_selection_when_multiple_payloads_exist(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            workspace = temp_root / "workspace"
+            workspace.mkdir(parents=True, exist_ok=True)
+            home = temp_root / "home"
+            CODEX_ADAPTER.destination_root(home).mkdir(parents=True, exist_ok=True)
+            CLAUDE_ADAPTER.destination_root(home).mkdir(parents=True, exist_ok=True)
+            install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home)
+            install_global_payload(CLAUDE_ADAPTER, repo_root=REPO_ROOT, home_root=home)
+
+            with patch.dict(os.environ, {}, clear=True):
+                result = enter_runtime_gate(
+                    "~go plan demo",
+                    workspace_root=workspace,
+                    user_home=home,
+                )
+
+            self.assertEqual(result["status"], "error")
+            self.assertEqual(result["error_code"], "workspace_preflight_failed")
+            self.assertIn("Multiple installed host payloads found", result["message"])
+
+    def test_gate_preflight_prefers_explicit_host_selection_error_before_loading_broken_manifest_when_multiple_payloads_exist(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            workspace = temp_root / "workspace"
+            workspace.mkdir(parents=True, exist_ok=True)
+            home = temp_root / "home"
+            CODEX_ADAPTER.destination_root(home).mkdir(parents=True, exist_ok=True)
+            CLAUDE_ADAPTER.destination_root(home).mkdir(parents=True, exist_ok=True)
+            install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home)
+            claude_payload = install_global_payload(CLAUDE_ADAPTER, repo_root=REPO_ROOT, home_root=home).root
+            (claude_payload / "payload-manifest.json").write_text("{not-json\n", encoding="utf-8")
+
+            with patch.dict(os.environ, {}, clear=True):
+                result = enter_runtime_gate(
+                    "~go plan demo",
+                    workspace_root=workspace,
+                    user_home=home,
+                )
+
+            self.assertEqual(result["status"], "error")
+            self.assertEqual(result["error_code"], "workspace_preflight_failed")
+            self.assertIn("Multiple installed host payloads found", result["message"])
+
+    def test_gate_preflight_reports_invalid_payload_manifest_for_single_installed_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            workspace = temp_root / "workspace"
+            workspace.mkdir(parents=True, exist_ok=True)
+            home = temp_root / "home"
+            CODEX_ADAPTER.destination_root(home).mkdir(parents=True, exist_ok=True)
+            codex_payload = install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home).root
+            (codex_payload / "payload-manifest.json").write_text("{not-json\n", encoding="utf-8")
+
+            with patch.dict(os.environ, {}, clear=True):
+                result = enter_runtime_gate(
+                    "~go plan demo",
+                    workspace_root=workspace,
+                    user_home=home,
+                )
+
+            self.assertEqual(result["status"], "error")
+            self.assertEqual(result["error_code"], "workspace_preflight_failed")
+            self.assertIn("Invalid payload manifest", result["message"])
 
     def test_gate_preflight_falls_back_when_helper_rejects_host_id_only(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -107,14 +107,24 @@ def _payload_is_current(payload_root: Path, desired_version: str | None) -> bool
         return False
 
     payload_manifest = _read_json(payload_root / PAYLOAD_MANIFEST_FILENAME)
-    bundle_root = resolve_payload_bundle_root(payload_root)
+    try:
+        bundle_root = resolve_payload_bundle_root(payload_root)
+    except InstallError:
+        return False
     bundle_manifest = _read_json(bundle_root / "manifest.json")
     if not payload_manifest or not bundle_manifest:
         return False
 
-    return (
-        payload_manifest.get("payload_version") == desired_version
-        and payload_manifest.get("active_version", payload_manifest.get("bundle_version")) == bundle_manifest.get("bundle_version")
+    try:
+        resolved_bundle_version = _resolved_payload_bundle_version(
+            payload_manifest=payload_manifest,
+            bundle_manifest=bundle_manifest,
+        )
+    except InstallError:
+        return False
+
+    return payload_manifest.get("payload_version") == desired_version and resolved_bundle_version == bundle_manifest.get(
+        "bundle_version"
     )
 
 
@@ -224,3 +234,21 @@ def _payload_bundle_version_or_default(value: Any, *, default: str) -> str:
     if fallback is None:
         raise InstallError("Payload verification failed: bundle_version")
     return fallback
+
+
+def _resolved_payload_bundle_version(
+    *,
+    payload_manifest: dict[str, Any],
+    bundle_manifest: dict[str, Any],
+) -> str | None:
+    if str(payload_manifest.get("bundles_dir") or "").strip():
+        return _normalize_payload_bundle_version(payload_manifest.get("active_version"))
+    for value in (
+        payload_manifest.get("bundle_version"),
+        payload_manifest.get("active_version"),
+        bundle_manifest.get("bundle_version"),
+    ):
+        normalized = _normalize_payload_bundle_version(value)
+        if normalized is not None:
+            return normalized
+    return None

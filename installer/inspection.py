@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from installer.bootstrap_workspace import _classify_workspace_bundle
+from installer.bootstrap_workspace import _classify_workspace_bundle, _resolve_selected_payload_bundle
 from installer.hosts import iter_host_registrations
 from installer.hosts.base import HostAdapter, HostRegistration
 from installer.models import HostCapability, InstallError
@@ -305,17 +305,22 @@ def inspect_host(
             preferences_preload=preferences_preload,
             smoke=smoke,
         )
-    bundle_manifest = _read_json(workspace_root / ".sopify-runtime" / "manifest.json")
     workspace_bundle = _inspect_workspace_bundle(
         adapter=adapter,
         capability=capability,
         home_root=home_root,
         workspace_root=workspace_root,
     )
+    capability_manifest = _resolve_workspace_capability_manifest(
+        adapter=adapter,
+        home_root=home_root,
+        workspace_root=workspace_root,
+        workspace_bundle=workspace_bundle,
+    )
     handoff_first = _inspect_workspace_capability(
         capability=capability,
         workspace_bundle=workspace_bundle,
-        bundle_manifest=bundle_manifest,
+        capability_manifest=capability_manifest,
         check_id="workspace_handoff_first",
         manifest_key="writes_handoff_file",
         recommendation="Refresh the workspace bundle so handoff-first runtime contracts stay available.",
@@ -323,7 +328,7 @@ def inspect_host(
     preferences_preload = _inspect_workspace_capability(
         capability=capability,
         workspace_bundle=workspace_bundle,
-        bundle_manifest=bundle_manifest,
+        capability_manifest=capability_manifest,
         check_id="workspace_preferences_preload",
         manifest_key="preferences_preload",
         recommendation="Refresh the workspace bundle so preferences preload stays available.",
@@ -682,7 +687,7 @@ def _inspect_payload(*, adapter: HostAdapter, capability: HostCapability, home_r
         )
 
 
-def inspect_payload_bundle_resolution(*, payload_root: Path, host_id: str) -> PayloadBundleResolution:
+def inspect_payload_bundle_resolution(*, payload_root: Path, host_id: str, bundle_version: str | None = None) -> PayloadBundleResolution:
     payload_manifest_path = payload_root / "payload-manifest.json"
     if not payload_manifest_path.is_file():
         return PayloadBundleResolution(
@@ -703,7 +708,7 @@ def inspect_payload_bundle_resolution(*, payload_root: Path, host_id: str) -> Pa
 
     source_kind = SOURCE_KIND_GLOBAL_ACTIVE if str(payload_manifest.get("bundles_dir") or "").strip() else SOURCE_KIND_LEGACY_LAYOUT
     try:
-        bundle_root = resolve_payload_bundle_root(payload_root)
+        bundle_root = resolve_payload_bundle_root(payload_root, bundle_version=bundle_version)
     except InstallError:
         return PayloadBundleResolution(
             source_kind=source_kind,
@@ -762,21 +767,76 @@ def _inspect_workspace_bundle(
     payload_root = adapter.payload_root(home_root)
     bundle_root = workspace_root / ".sopify-runtime"
     try:
-        payload_manifest_path, payload_manifest, bundle_manifest_path, bundle_manifest = validate_payload_manifests(payload_root)
-    except InstallError:
+        current_manifest_path, current_manifest = validate_workspace_stub_manifest(bundle_root)
+    except InstallError as exc:
+        current_manifest_path = bundle_root / "manifest.json"
         return InspectionCheck(
             host_id=capability.host_id,
             check_id="workspace_bundle_manifest",
             status=CHECK_FAIL,
-            reason_code="MISSING_REQUIRED_FILE",
-            evidence=tuple(str(path) for path in _payload_evidence_paths(payload_root)),
-            recommendation=f"Install or refresh the {capability.host_id} payload before inspecting workspace bundle health.",
+            reason_code=_reason_code_from_install_error(exc, default="INVALID_WORKSPACE_MANIFEST"),
+            evidence=tuple(str(path) for path in (current_manifest_path, bundle_root) if path.exists()),
+            recommendation=_workspace_bundle_recommendation(
+                capability.host_id,
+                workspace_root,
+                "INVALID_WORKSPACE_MANIFEST",
+                str(exc),
+            ),
         )
+
+    selected_bundle_version = current_manifest.get("bundle_version")
+    selected_bundle_root: Path | None = None
+    bundle_manifest_path: Path | None = None
+    bundle_manifest: dict[str, Any] = {}
+    global_reason_code: str | None = None
+    global_message: str | None = None
     try:
-        current_manifest_path, current_manifest = validate_workspace_stub_manifest(bundle_root)
+        _payload_manifest_path, payload_manifest, bundle_manifest_path, bundle_manifest = validate_payload_manifests(
+            payload_root,
+            bundle_version=selected_bundle_version,
+        )
+        selected_bundle_root = bundle_manifest_path.parent
     except InstallError:
-        current_manifest_path = bundle_root / "manifest.json"
-        current_manifest = {}
+        payload_manifest = _read_json(payload_root / "payload-manifest.json")
+        if payload_manifest:
+            try:
+                (
+                    selected_bundle_root,
+                    bundle_manifest_path,
+                    bundle_manifest,
+                    global_reason_code,
+                    global_message,
+                ) = _resolve_selected_payload_bundle(
+                    payload_root=payload_root,
+                    payload_manifest=payload_manifest,
+                    current_manifest=current_manifest,
+                )
+            except ValueError:
+                payload_manifest = {}
+        if not payload_manifest or (not bundle_manifest and bundle_manifest_path is None):
+            resolution = inspect_payload_bundle_resolution(
+                payload_root=payload_root,
+                host_id=capability.host_id,
+                bundle_version=selected_bundle_version,
+            )
+            evidence = tuple(
+                str(path)
+                for path in (current_manifest_path, resolution.bundle_manifest_path, resolution.bundle_root)
+                if path is not None and path.exists()
+            )
+            return InspectionCheck(
+                host_id=capability.host_id,
+                check_id="workspace_bundle_manifest",
+                status=CHECK_FAIL,
+                reason_code=resolution.reason_code,
+                evidence=evidence,
+                recommendation=_workspace_bundle_recommendation(
+                    capability.host_id,
+                    workspace_root,
+                    resolution.reason_code,
+                    resolution.recommendation or "Selected global bundle is unavailable.",
+                ),
+            )
 
     state, reason_code, message, _from_version = _classify_workspace_bundle(
         current_manifest=current_manifest,
@@ -784,28 +844,10 @@ def _inspect_workspace_bundle(
         bundle_manifest=bundle_manifest,
         current_manifest_path=current_manifest_path,
         bundle_root=bundle_root,
+        global_bundle_root=selected_bundle_root,
+        global_reason_code=global_reason_code,
+        global_message=global_message,
     )
-    if (
-        reason_code == "MISSING_REQUIRED_FILE"
-        and str(current_manifest.get("stub_version") or "").strip()
-        and _looks_like_stub_only_workspace(bundle_root)
-    ):
-        # B1 compatibility phase keeps workspace bootstrap backward-compatible:
-        # the manifest already carries thin-stub fields, but the host still
-        # expects workspace runtime files to be present until the no-workspace-
-        # scripts smoke and rollback validation gates are complete.
-        message = (
-            "Workspace bundle is in the B1 compatibility phase: thin-stub-only "
-            "state is expected to remain non-ready until workspace runtime files "
-            "are no longer required."
-        )
-    if state in STATUS_READY_STATES:
-        try:
-            validate_bundle_install(bundle_root)
-        except InstallError:
-            state = "INCOMPATIBLE"
-            reason_code = "MISSING_REQUIRED_FILE"
-            message = "Workspace bundle is missing required files and must be replaced."
     status = CHECK_FAIL
     if state in STATUS_READY_STATES:
         status = CHECK_PASS
@@ -830,7 +872,7 @@ def _inspect_workspace_capability(
     *,
     capability: HostCapability,
     workspace_bundle: InspectionCheck,
-    bundle_manifest: dict[str, Any],
+    capability_manifest: dict[str, Any],
     check_id: str,
     manifest_key: str,
     recommendation: str,
@@ -844,7 +886,7 @@ def _inspect_workspace_capability(
             evidence=workspace_bundle.evidence,
             recommendation=recommendation,
         )
-    current_capabilities = bundle_manifest.get("capabilities") or {}
+    current_capabilities = capability_manifest.get("capabilities") or {}
     if current_capabilities.get(manifest_key):
         return InspectionCheck(
             host_id=capability.host_id,
@@ -859,6 +901,44 @@ def _inspect_workspace_capability(
         reason_code="MISSING_REQUIRED_CAPABILITY",
         recommendation=recommendation,
     )
+
+
+def _resolve_workspace_capability_manifest(
+    *,
+    adapter: HostAdapter,
+    home_root: Path,
+    workspace_root: Path,
+    workspace_bundle: InspectionCheck,
+) -> dict[str, Any]:
+    if workspace_bundle.status != CHECK_PASS:
+        return {}
+
+    bundle_root = workspace_root / ".sopify-runtime"
+    if workspace_bundle.reason_code == REASON_LEGACY_FALLBACK_SELECTED:
+        try:
+            _manifest_path, capability_manifest = validate_workspace_bundle_manifest(bundle_root)
+        except InstallError:
+            return {}
+        current_capabilities = capability_manifest.get("capabilities")
+        if isinstance(current_capabilities, dict) and current_capabilities:
+            return capability_manifest
+        payload_manifest = _read_json(adapter.payload_root(home_root) / "payload-manifest.json")
+        minimum_manifest = payload_manifest.get("minimum_workspace_manifest") or {}
+        required_capabilities = minimum_manifest.get("required_capabilities")
+        if isinstance(required_capabilities, dict) and required_capabilities:
+            return {"capabilities": dict(required_capabilities)}
+        return capability_manifest
+
+    try:
+        _manifest_path, current_manifest = validate_workspace_stub_manifest(bundle_root)
+        selected_bundle_version = current_manifest.get("bundle_version")
+        _payload_manifest_path, _payload_manifest, _bundle_manifest_path, capability_manifest = validate_payload_manifests(
+            adapter.payload_root(home_root),
+            bundle_version=selected_bundle_version,
+        )
+    except InstallError:
+        return {}
+    return capability_manifest
 
 
 def _inspect_smoke(
@@ -946,6 +1026,13 @@ def _workspace_bundle_recommendation(host_id: str, workspace_root: Path, reason_
             f"Trigger Sopify inside {workspace_root} or run "
             f"python3 scripts/install_sopify.py --target {host_id}:zh-CN --workspace {workspace_root}"
         )
+    if reason_code in {
+        REASON_GLOBAL_BUNDLE_MISSING,
+        REASON_GLOBAL_BUNDLE_INCOMPATIBLE,
+        REASON_GLOBAL_INDEX_CORRUPTED,
+        REASON_LEGACY_FALLBACK_SELECTED,
+    }:
+        return _payload_bundle_recommendation(host_id, reason_code) or message
     return message
 
 

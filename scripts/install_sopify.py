@@ -29,6 +29,7 @@ from installer.validate import (
     validate_bundle_install,
     validate_host_install,
     validate_payload_install,
+    validate_workspace_stub_manifest,
 )
 
 
@@ -87,7 +88,7 @@ def run_install(*, target_value: str, workspace_value: str | None, repo_root: Pa
     if workspace_root is not None:
         workspace_bootstrap = run_workspace_bootstrap(payload_install.root, workspace_root)
         bundle_root = workspace_bootstrap.bundle_root
-        validate_bundle_install(bundle_root)
+        validate_workspace_stub_manifest(bundle_root)
 
     return InstallResult(
         target=target,

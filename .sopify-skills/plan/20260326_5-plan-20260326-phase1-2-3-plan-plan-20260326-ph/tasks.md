@@ -66,37 +66,61 @@ archive_ready: false
 - [ ] 1.6 明确 bootstrap 输出需要暴露的 observability 字段：ignore_target、ignore_mode、reason_code、workspace_kind、target_root、root_resolution_source；并暴露仅覆盖 `thin stub + managed block` 的手动停用路径
 - [ ] 1.7 明确 `confirm_bootstrap` 文案与 direct-write 提示：至少暴露 `target_root / root_resolution_source / fallback_reason`，且不暗示会自动清理 `.sopify-skills/state/` 或知识库
 
+### 当前推荐推进顺序（2026-03-30 评审结论）
+1. `4.2 -> 4.6`
+2. `2.1 -> 2.2`
+3. `3.1 -> 3.6`
+4. `2.3 -> 2.7`
+5. `4.3-4.5 -> 4.A -> 5.x`
+
+说明：
+- `4.2` 先收口 payload bundle 的 `Exact Pin / Host-Delegated` 两态解析；`4.6` 紧随其后把旧 `bundle/` 明确降为 legacy source，避免解析核心继续把兼容路径当默认目标态。
+- `2.1 / 2.2` 可以先冻结 thin stub 两态 contract 与降级规则；但 `2.3 / 2.6 / 2.7` 依赖 `3.4 / 3.6` 对统一解析顺序与 resolved global bundle manifest 入口的收口，不建议在 `3.x` 前全量推进。
+- `4.3-4.5` 与 `5.x` 继续保持后置；它们消费的是前述解析链的稳定语义，不应反向定义 resolution core。
+
 ## 2. P1 | Thin Stub Contract
-- [ ] 2.1 按已冻结 schema 落 workspace-local thin stub：`schema_version / stub_version / bundle_version / required_capabilities / locator_mode / legacy_fallback / ignore_mode / written_by_host`
-- [ ] 2.2 落 thin stub 的最小有效性规则、缺失字段降级规则与 schema evolution 兼容策略，并显式区分“root 选择最低有效性”与“preflight 合同有效性”；至少覆盖 `locator_mode` 缺失视为 `global_first`、`bundle_version` 缺失或 `null` 视为 host-delegated、禁用 semver range / `latest` / 空字符串
+- [x] 2.1 按已冻结 schema 落 workspace-local thin stub：`schema_version / stub_version / bundle_version / required_capabilities / locator_mode / legacy_fallback / ignore_mode / written_by_host`
+  进展记录：`installer/bootstrap_workspace.py` 现会在 workspace manifest 上显式写回 `schema_version / stub_version / bundle_version / required_capabilities / locator_mode / legacy_fallback / ignore_mode / written_by_host` 七项 stub 字段；兼容阶段下仍保留 full manifest 超集，但 stub 合同本身已不再依赖“碰巧沿用 bundle manifest 字段”。
+- [x] 2.2 落 thin stub 的最小有效性规则、缺失字段降级规则与 schema evolution 兼容策略，并显式区分“root 选择最低有效性”与“preflight 合同有效性”；至少覆盖 `locator_mode` 缺失视为 `global_first`、`bundle_version` 缺失或 `null` 视为 host-delegated、禁用 semver range / `latest` / 空字符串
+  进展记录：`installer/validate.py` 已收紧 stub 校验：`schema_version` 缺失直接 fail、`stub_version` 缺失默认 `1`、`locator_mode` 缺失默认 `global_first`、`bundle_version` 缺失或 `null` 视为 host-delegated、显式空字符串/`latest`/非法版本串全部拒绝。`installer/bootstrap_workspace.py::_marker_has_minimum_validity()` 仍只保持“JSON 可解析 + schema_version 存在”的 root 选择最低有效性，未与 preflight stub 合同有效性混用。
   进展记录：当前已落过渡态实现。workspace `.sopify-runtime/manifest.json` 在保持旧 vendored entry 字段兼容的前提下，开始写入 thin stub 字段，并在 `validate.py / inspection.py / bootstrap_workspace.py` 中统一校验默认值与冲突规则；legacy helper 兼容重试现已改为先保留 `--request` 再降级到 workspace-only，避免首次写入授权语义被错误放宽。完整 `stub-only` 收口仍待 payload index 与入口链切换后继续推进。
-  阶段标签：`B1 compatibility phase`。在本阶段，`stub-only => non-ready` 是预期行为，不视为 defect；`ready` 仍要求 manifest 合同通过且 workspace runtime 文件完整。
-- [ ] 2.3 将 workspace classifier 从“整包文件存在”改为“stub 有效 + global bundle 可解析”
-- [ ] 2.4 拆分三层职责：root 选择最低有效性、workspace stub 校验、global bundle 校验、legacy vendored 校验
-- [ ] 2.5 明确 bootstrap 生成物只写 thin stub，不再复制重型 runtime bundle；thin stub 写入采用同目录临时文件 + 原子替换，不引入跨平台文件锁前提
-- [ ] 2.6 落 legacy vendored fallback 决策表与观测字段：`global_only + missing/incompatible -> no fallback`；`global_first + legacy_fallback=true + missing/incompatible -> visible legacy fallback`；禁止 silent downgrade
-- [ ] 2.7 明确 `runtime/manifest.py` 与 installer contract 的边界，避免 stub 与 global bundle manifest 混用
+  进展更新：`2.3 / 2.4` 已收回上述过渡态限制。当前 workspace health 已改为 `stub 有效 + selected global bundle 可解析` 的 stub-first classifier；legacy runtime 文件只在“workspace 内仍存在 legacy vendored 产物”时单独校验，不再作为 stub-only workspace 的 ready 前提。
+- [x] 2.3 将 workspace classifier 从“整包文件存在”改为“stub 有效 + global bundle 可解析”
+  进展记录：`installer/bootstrap_workspace.py` 的主 classifier 已不再把 `_REQUIRED_BUNDLE_FILES` 当作 workspace ready 的先决条件，而是先校验 thin stub，再解析 stub 所选的 global bundle；host-delegated 与 exact pin 都通过同一条 selected-bundle 语义落位。
+- [x] 2.4 拆分三层职责：root 选择最低有效性、workspace stub 校验、global bundle 校验、legacy vendored 校验
+  进展记录：当前已拆成四层责任：`_marker_has_minimum_validity()` 只负责 root 最低有效性；`validate_workspace_stub_manifest()` / bootstrap stub normalizer 负责 workspace stub 合同；selected global bundle 解析与完整性单独校验；legacy vendored runtime 只在产物仍存在时做结构完整性校验。`inspection.py` 与 bootstrap classifier 已共用这套分层语义。
+- [x] 2.5 明确 bootstrap 生成物只写 thin stub，不再复制重型 runtime bundle；thin stub 写入采用同目录临时文件 + 原子替换，不引入跨平台文件锁前提
+  进展记录：bootstrap 写路径已改为 thin-stub-only，workspace 首次 bootstrap 不再复制重型 runtime bundle，stub 写入也已改为同目录临时文件 + 原子替换；`2.7` 已进一步把 workspace manifest 从过渡态 superset 收成纯 stub contract，因此 `2.5` 在当前 core 分支可一并关闭。
+- [x] 2.6 落 legacy vendored fallback 决策表与观测字段：`global_only + missing/incompatible -> no fallback`；`global_first + legacy_fallback=true + missing/incompatible -> visible legacy fallback`；禁止 silent downgrade
+  进展记录：bootstrap/classifier 已按显式决策表收口 `global_only / global_first / legacy_fallback` 组合；`global_first + legacy_fallback=true + global fail + legacy complete` 现稳定返回 `READY + LEGACY_FALLBACK_SELECTED`，`legacy absent/broken` 继续 fail-close 并沿用原始 global reason code。
+- [x] 2.7 明确 `runtime/manifest.py` 与 installer contract 的边界，避免 stub 与 global bundle manifest 混用
+  进展记录：bootstrap 现只写 workspace thin stub 字段，不再把 `capabilities / limits / default_entry` 等 bundle contract 混入 `.sopify-runtime/manifest.json`；`status/doctor` 的 capability 校验也已改为正常路径读取 selected global bundle manifest，仅在 `LEGACY_FALLBACK_SELECTED` 时继续读取 legacy workspace manifest，保持向后兼容。
 
 ## 3. P2 | Host-Aware Preflight
-- [ ] 3.1 为 preflight 入口补正式 ingress contract：`activation_root / host_id / payload_root` 为必填输入，`requested_root` 为可选 observability 输入且推荐宿主在可确定时提供；不再默认靠目录探测推断宿主
-  进展记录：part1 已把 `activation_root / host_id / payload_root / requested_root` 显式贯通到 `scripts/runtime_gate.py -> runtime/gate.py -> runtime/workspace_preflight.py`，并补齐 host-aware 与 explicit-root 的正反回归。严格的 ingress validator、字段级 violation 合同与 fail-closed 渲染仍留给后续收口。
-- [ ] 3.2 将 payload root 解析责任收拢到 `installer/hosts/*` 与 host base contract
-- [ ] 3.3 移除把 `.codex -> .claude` 固定探测顺序当成最终 payload 选择逻辑的实现
-- [ ] 3.4 固化 `stub -> global bundle -> manifest-first gate/preload -> legacy fallback` 的解析顺序
-  进展记录：当前已支持显式 `payload_root` 与 `host_id` 进入 preflight；在提供显式 ingress 信息时，不再把 `.codex -> .claude` 固定顺序当作最终 payload 选择逻辑。兼容阶段下，legacy home/env 扫描仍保留为 fallback，以避免提前切断现有宿主链路；同时已补 request-preserving compatibility fallback 与 `host_id=None` 时优先消费 `SOPIFY_PAYLOAD_MANIFEST` 的正向回归。
-- [ ] 3.5 明确 dual-host 同仓库下的选择规则、冲突提示与 `host_mismatch / ingress_contract_invalid` 的产出边界，并让 monorepo root 复用结果进入同一 observability 词汇表
-- [ ] 3.6 确保 gate / preload 的入口仍由 resolved global bundle manifest 暴露，而不是宿主侧硬编码
+- [x] 3.1 为 preflight 入口补正式 ingress contract：`activation_root / host_id / payload_root` 为必填输入，`requested_root` 为可选 observability 输入且推荐宿主在可确定时提供；不再默认靠目录探测推断宿主
+  进展记录：`activation_root / host_id / payload_root / requested_root` 已稳定贯通到 `scripts/runtime_gate.py -> runtime/gate.py -> runtime/workspace_preflight.py`；preflight 入口现以显式 ingress 字段与 host-aware payload 解析为主，`requested_root` 继续只做 observability。更细的字段级 `violations[]` 与 CLI fail-closed 渲染仍留在后续 diagnostics 层，不在本轮 overbuild。
+- [x] 3.2 将 payload root 解析责任收拢到 `installer/hosts/*` 与 host base contract
+  进展记录：`runtime/workspace_preflight.py` 已移除自带 `.codex/.claude` 路径表，改为通过 `installer.hosts` registry 解析 host payload root 与候选 manifest。
+- [x] 3.3 移除把 `.codex -> .claude` 固定探测顺序当成最终 payload 选择逻辑的实现
+  进展记录：host 未显式指定时，当前选择规则已改为 `SOPIFY_PAYLOAD_MANIFEST > 当前宿主环境 > 单一已安装 payload > 多候选 fail-closed`；不再依赖 `.codex -> .claude` 固定顺序。
+- [x] 3.4 固化 `stub -> global bundle -> manifest-first gate/preload -> legacy fallback` 的解析顺序
+  进展记录：preflight 现统一通过 `installer.validate` 的 payload bundle resolution 解析 `bundle_manifest_path / global_bundle_root`，与 payload index 的 `active_version / legacy layout` 语义保持一致；request-preserving helper compatibility fallback 继续保留，不额外引入新的降级分叉。
+- [x] 3.5 明确 dual-host 同仓库下的选择规则、冲突提示与 `host_mismatch / ingress_contract_invalid` 的产出边界，并让 monorepo root 复用结果进入同一 observability 词汇表
+  进展记录：dual-host 选择规则已先按最小 contract 收口到 preflight 核心：显式 `host_id/payload_root` 继续保留 escape hatch，当前宿主可判定时优先选择匹配 host，无法判定且存在多个已安装 payload 时 fail-closed；typed `host_mismatch / ingress_contract_invalid` 的用户可见渲染继续后置到 `4.A/5.x`，避免在 preflight core 过度设计。
+- [x] 3.6 确保 gate / preload 的入口仍由 resolved global bundle manifest 暴露，而不是宿主侧硬编码
+  进展记录：preflight 现从 resolved global bundle manifest 暴露 `runtime_gate_entry / preferences_preload_entry`；versioned/current bundle 走 manifest-first 暴露，legacy fixture 缺失 `limits.*` 时继续按兼容路径放行，不阻断现有 helper fallback smoke。
 
 ## 4. P3 | Payload Index 与 Diagnostics
 - [x] 4.1 定义 payload-manifest 中的 versioned bundle index schema，与 `bundles/<version>/` 布局对应，并包含 host-delegated 模式所需的唯一 `active_version` 指针；其值格式必须与 thin stub 的 `bundle_version` Exact Pin 一致
-- [ ] 4.2 将 `installer/payload.py` 从单 `bundle/` 假设改为按 `bundle_version` 两态查找目标 bundle：Exact Pin 精确命中，Host-Delegated 读取唯一 `active_version` 指针
-  进展记录：第一组 payload index 实现已把 host payload 默认落点切到 `bundles/<version>/ + active_version`，并保持 `bundle_manifest / bundle_template_dir` 指向 active bundle 以兼容当前 helper 链。显式 `bundle_version` lookup 已进入共享校验/发现层；workspace bootstrap 在 compatibility phase 仍默认消费 `active_version`，待 stub-only 收口后再把 exact-pin 语义完全下沉到 helper。
+- [x] 4.2 将 `installer/payload.py` 从单 `bundle/` 假设改为按 `bundle_version` 两态查找目标 bundle：Exact Pin 精确命中，Host-Delegated 读取唯一 `active_version` 指针
+  进展记录：已收紧 `installer/payload.py / installer/validate.py` 的 payload bundle 解析：versioned layout 下 Host-Delegated 只认 `active_version`，缺失时 fail-closed 为 `GLOBAL_INDEX_CORRUPTED`；Exact Pin 继续精确命中 `bundles/<version>/manifest.json`，不再把顶层 `bundle_version` 当作 versioned host-delegated 指针兜底。
 - [x] 4.3 同步更新 `validate.py`、`inspection.py` 的 bundle discovery 与兼容性判定
 - [x] 4.4 同步更新 `scripts/sopify_status.py`、`scripts/sopify_doctor.py` 的可见输出，展示 stub/global/legacy 解析结果，并针对 `global_bundle_missing / global_bundle_incompatible / global_index_corrupted / legacy_fallback_selected` 提供不同的 actionable hint
   进展记录：`status/doctor` 现统一消费 `installer.inspection` 的 payload bundle resolution；文本输出会显式展示 `source_kind + reason_code`，并按 `GLOBAL_BUNDLE_MISSING / GLOBAL_BUNDLE_INCOMPATIBLE / GLOBAL_INDEX_CORRUPTED / LEGACY_FALLBACK_SELECTED` 输出不同 remediation hint。
 - [x] 4.5 同步更新 `scripts/check-install-payload-bundle-smoke.py` 与 distribution 相关校验入口
   进展记录：distribution install 输出与独立 `check-install-payload-bundle-smoke.py` 现统一暴露 `payload_bundle` 诊断对象；smoke 会显式校验 `global_active + PAYLOAD_BUNDLE_READY`，distribution 也会打印同一套 source/reason contract。
-- [ ] 4.6 在迁移窗口内兼容旧 `bundle/` 结构，但明确标记为 legacy source，不再作为默认目标态
+- [x] 4.6 在迁移窗口内兼容旧 `bundle/` 结构，但明确标记为 legacy source，不再作为默认目标态
+  进展记录：已保留 legacy `bundle/manifest.json` 的显式 exact-pin 兼容路径，但仅在无 `bundles_dir` 的旧布局下生效；`status / doctor` 新增回归覆盖 versioned layout 缺失 `active_version` 时 fail-closed，而旧 `bundle/` 继续以 `legacy_layout / LEGACY_FALLBACK_SELECTED` 暴露为兼容来源。
 - [x] 4.7 确保 payload index 升级后，installer / doctor / status / smoke 消费的是同一套 reason code 与 source-kind 词汇
   进展记录：已冻结并接通 `PAYLOAD_BUNDLE_READY / GLOBAL_BUNDLE_MISSING / GLOBAL_BUNDLE_INCOMPATIBLE / GLOBAL_INDEX_CORRUPTED / LEGACY_FALLBACK_SELECTED` 与 `global_active / legacy_layout / unresolved` 词汇，installer、status、doctor、distribution、smoke 与对应单测已共用同一 contract。
 
