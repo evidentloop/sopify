@@ -6,6 +6,13 @@ This changelog is maintained manually (not auto-generated).
 
 ## [Unreleased]
 
+## [2026-03-31.142215] - 2026-03-31
+
+### Changed
+
+- Updated project files:
+  - `CHANGELOG.md`
+
 ## [2026-03-31.140148] - 2026-03-31
 
 ### Runtime
@@ -486,12 +493,13 @@ This changelog is maintained manually (not auto-generated).
   - `.sopify-skills/history/2026-03/20260320_prompt_runtime_gate/tasks.md`
   - `.sopify-skills/history/2026-03/20260321_go-plan/background.md`
   - `.sopify-skills/history/2026-03/20260321_go-plan/design.md`
-  - `.sopify-skills/history/2026-03/20260321_go-plan/evidence/pilot_round1/freyr-h5pages/batch2_observations.md`
-  - `.sopify-skills/history/2026-03/20260321_go-plan/evidence/pilot_round1/freyr-h5pages/batch2_stopcheck.md`
-  - `.sopify-skills/history/2026-03/20260321_go-plan/evidence/pilot_round1/round1_aggregation.md`
-  - `.sopify-skills/history/2026-03/20260321_go-plan/evidence/pilot_round1/rs-sdk/batch3_observations.md`
-  - `.sopify-skills/history/2026-03/20260321_go-plan/evidence/pilot_round1/sopify-skills/batch1_observations.md`
-  - `.sopify-skills/history/2026-03/20260321_go-plan/evidence/pilot_round1/sopify-skills/batch1_stopcheck.md`
+  - `external_archive://pilot_round1/freyr-h5pages/batch2_observations.md`
+  - `external_archive://pilot_round1/freyr-h5pages/batch2_stopcheck.md`
+  - `external_archive://pilot_round1/round1_aggregation.md`
+  - `external_archive://pilot_round1/rs-sdk/batch3_observations.md`
+  - `external_archive://pilot_round1/sopify-skills/batch1_observations.md`
+  - `external_archive://pilot_round1/sopify-skills/batch1_stopcheck.md`
+  - `(2026-03-31 note) the above local evidence bundle was externalized; see .sopify-skills/history/2026-03/20260321_go-plan/evidence_archive_notice.md`
   - `.sopify-skills/history/2026-03/20260321_go-plan/issue_meta_review_no_new_plan.md`
   - `.sopify-skills/history/2026-03/20260321_go-plan/issue_raise_plan_reuse_fix_to_8_5.md`
   - `.sopify-skills/history/2026-03/20260321_go-plan/issue_single_active_plan_reuse_with_topic_key.md`
