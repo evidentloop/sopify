@@ -16,6 +16,29 @@ from installer.validate import run_bundle_smoke_check
 
 
 class BundleSmokeFailureDetailsTests(unittest.TestCase):
+    def test_smoke_uses_explicit_payload_manifest_env(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            bundle_root = root / "bundle"
+            smoke_script = bundle_root / "scripts" / "check-runtime-smoke.sh"
+            smoke_script.parent.mkdir(parents=True, exist_ok=True)
+            smoke_script.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+            payload_manifest = root / "payload-manifest.json"
+            payload_manifest.write_text("{}", encoding="utf-8")
+
+            passed = subprocess.CompletedProcess(
+                args=["bash", str(smoke_script)],
+                returncode=0,
+                stdout="ok",
+                stderr="",
+            )
+            with patch("installer.validate.subprocess.run", return_value=passed) as mock_run:
+                output = run_bundle_smoke_check(bundle_root, payload_manifest_path=payload_manifest)
+
+            self.assertEqual(output, "ok")
+            env = mock_run.call_args.kwargs.get("env") or {}
+            self.assertEqual(env.get("SOPIFY_PAYLOAD_MANIFEST"), str(payload_manifest))
+
     def test_failure_details_always_include_exit_status_and_command(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             bundle_root = Path(temp_dir)

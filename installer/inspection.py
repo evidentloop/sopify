@@ -958,7 +958,10 @@ def _inspect_smoke(
 
     try:
         bundle_root = resolve_payload_bundle_root(adapter.payload_root(home_root))
-        stdout = run_bundle_smoke_check(bundle_root)
+        stdout = run_bundle_smoke_check(
+            bundle_root,
+            payload_manifest_path=adapter.payload_root(home_root) / "payload-manifest.json",
+        )
         evidence = (stdout.splitlines()[0],) if stdout else ()
         return InspectionCheck(
             host_id=capability.host_id,

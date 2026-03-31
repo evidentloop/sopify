@@ -81,7 +81,10 @@ def run_install(*, target_value: str, workspace_value: str | None, repo_root: Pa
     payload_install = install_global_payload(adapter, repo_root=repo_root, home_root=resolved_home)
     verified_host_paths = validate_host_install(adapter, home_root=resolved_home)
     verified_payload_paths = validate_payload_install(payload_install.root)
-    smoke_output = run_bundle_smoke_check(resolve_payload_bundle_root(payload_install.root))
+    smoke_output = run_bundle_smoke_check(
+        resolve_payload_bundle_root(payload_install.root),
+        payload_manifest_path=payload_install.root / "payload-manifest.json",
+    )
 
     workspace_bootstrap: BootstrapResult | None = None
     bundle_root: Path | None = None
