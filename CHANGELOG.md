@@ -6,6 +6,39 @@ This changelog is maintained manually (not auto-generated).
 
 ## [Unreleased]
 
+## [2026-04-02.162241] - 2026-04-02
+
+### Runtime
+
+- Updated runtime internals:
+  - `runtime/gate_output.py`
+  - `runtime/workspace_preflight.py`
+
+### Tests
+
+- Updated automated coverage:
+  - `tests/test_installer.py`
+  - `tests/test_runtime_gate.py`
+
+### Changed
+
+- Updated project files:
+  - `installer/bootstrap_workspace.py`
+
+## [2026-04-02.140640] - 2026-04-02
+
+### Scripts
+
+- Adjusted maintenance scripts:
+  - `scripts/check-install-payload-bundle-smoke.py`
+
+### Changed
+
+- Updated project files:
+  - `installer/distribution.py`
+  - `installer/inspection.py`
+  - `installer/outcome_contract.py`
+
 ## [2026-04-02.130950] - 2026-04-02
 
 ### Docs
