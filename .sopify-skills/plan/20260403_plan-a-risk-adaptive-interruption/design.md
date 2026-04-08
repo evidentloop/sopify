@@ -37,6 +37,44 @@
 
 因此，本方案的核心设计对象应该是“action-in-context classifier”，而不是“全局意图分类器”。
 
+## 执行包-1 收口：语义类簇、边界归属与非目标
+
+本节对应 `tasks.md` 的 `1.1 ~ 1.3 + 2.1`，作用是把 A-1 ~ A-8 从“逐 case 罗列”收口成当前可执行的设计输入。
+
+### 1. 语义类簇（替代逐 case 平铺）
+
+| 类簇 | 纳入样本 | 冻结语义 | 当前处理优先级 |
+| --- | --- | --- | --- |
+| C1 只读刹车与咨询改道 | A-1, A-8 | 显式 `explain-only / analysis-only / no-write / no-package / just-analyze` 在 pending checkpoint 内优先解释为 `write_scope` 上的 brake signal，默认改道 `consult_readonly` 并保持当前 checkpoint 身份不变 | v1 gate |
+| C2 checkpoint 生命周期与 referent 锚定 | A-3, A-4, A-7 | 围绕“当前 plan / 当前 checkpoint / 当前问题”的目标锚定与生命周期动作判定；`status / inspect / retopic / cancel` 只能在当前 machine truth 已允许的动作面内解析 | v1 gate，其中 A-7 为冻结回归基线 |
+| C3 从句级推进歧义与 parser 稳健性 | A-2, A-5 | 同一句中的推进、修订、解释、取消等动作在局部从句上互相竞争；v1 先以 parser-first + fail-close 收口，无法唯一化时回到 `inspect / constrained_choice_required` | A-5 为 v1 gate，A-2 暂列 robustness backlog |
+| C4 machine-truth 证据门与冲突阻断 | A-6 | `ready_for_execution` 只在 machine truth 稳定且证据链闭环时成立；一旦进入 `state_conflicted / abort_conflict`，必须 fail-close，禁止沿旧 checkpoint 链隐式重试 | v1 gate |
+
+### 2. 为什么这些类簇属于本方案，而不是其他主线
+
+| 类簇 | 归属理由 | 不属于什么 |
+| --- | --- | --- |
+| C1 只读刹车与咨询改道 | 这是宿主对局部 checkpoint 内“只分析、不执行”表达的动作解释问题，核心是 host-facing recall debt，而不是状态机字段错误 | 不属于既有 correctness hotfix；不要求改 `ExecutionGate` 字段或 route schema |
+| C2 checkpoint 生命周期与 referent 锚定 | 这是在既有 `required_host_action / checkpoint_id / plan referent` 上做目标锚定，解决“当前在对哪个对象说话” | 不属于对外 contract 主线重构；不改 state model，只规范局部动作面 |
+| C3 从句级推进歧义与 parser 稳健性 | 这是局部 clause 解析和冲突裁决能力不足，属于 parser-first 收口范围 | 不属于全局自由语义理解；也不构成单独的新 classifier 项 |
+| C4 machine-truth 证据门与冲突阻断 | 这是在既有 `gate + snapshot + handoff` 上补“何时禁止推进”的证据门，目的是让 execution confirm 与 conflict fail-close 口径一致 | 不属于另起 `contract-safety` 子项；不重开 control-plane 主线 |
+
+### 3. brake signal 的冻结语义
+
+1. `analysis-only / no-write / no-package / just-analyze` 统一归并为同一个 brake signal 家族，不再按个别样本文案分散处理。
+2. 该家族的目标槽位固定为 `write_scope.materialize_or_execute`，优先级高于一般推进动作，但低于显式结构化选择提交。
+3. 命中该家族且当前处于 pending checkpoint 时，默认出口为 `consult_readonly`；必须保持 `current_decision / current_plan_proposal / current_run.stage` 不变。
+4. 该家族只在“当前 checkpoint 已存在且 machine truth 稳定”的局部动作面内生效，不扩展成全局咨询分类器。
+
+### 4. non-goals（执行包-1 冻结）
+
+1. 不把本方案扩展成全局自由意图分类器，也不把 side-classifier 提前拉进 v1 主链。
+2. 不重开既有 correctness hotfix 已收口的问题，不借执行包-1 顺手修补状态机正确性历史债。
+3. 不改 `ExecutionGate` 核心字段、`gate_status` 值集、`required_host_action` 命名或现有 handoff contract 主 schema。
+4. 不把 assistant prose、长聊天 transcript 或“最近一轮看起来像什么”当作恢复真相源；恢复仍以 machine contract 证明为准。
+5. 不把 Doc-1 的公开发布面治理并入 A-1 ~ A-8 的 runtime 语义类；Doc-1 继续是独立治理面。
+6. 不要求用户手动清理 legacy state 目录；相关问题统一留给 `6.4~6.6 / 19.x` 的 quarantine + escape hatch 处理。
+
 ## 发布面治理规则（Doc-1）
 
 定位：
@@ -298,6 +336,18 @@
 2. 其中 `unresolved_outcome_family` 作为稳定聚合维度，优先于更细粒度的 outcome 文本，避免后续 outcome 细化导致 streak key 抖动。
 3. 若未来需要在 family 之下继续细分，只允许作为观测维度追加，不得回写破坏 P0 streak 主键。
 
+#### 0.4.2 runtime stage 与 plan 里程碑的命名区分
+
+1. `current_run.stage=ready_for_execution` 仅表示当前 runtime/session 已经恢复到“可进入 review/execute plan”的机器入口。
+2. 它不等同于本方案任务清单中的里程碑 `Ready-for-V1-Execution`；后者仍要求 `boundary-core + v1-guard-rails + sample-invariant-gate + v1-scope-finalize` 与 Checkpoint A/B/C 全部通过。
+3. 因此，出现 session 级 `ready_for_execution` 时，宿主只可理解为“当前轮 machine truth 已允许继续 plan review / execution confirm”，不得据此宣称本方案已经完成 v1 实施前门禁。
+
+#### 0.4.3 session 真相与 legacy global carrier 的账本边界
+
+1. 当 gate + snapshot + handoff 已能证明当前轮的 `plan_review` / `review_or_execute_plan` 恢复目标时，该 session-scope 事实优先用于本轮宿主动作。
+2. 若全局 `current_*` 仍保留旧的 `decision_pending / auth_boundary` carrier，应将其归类为 `legacy pending state / quarantine debt` 候选，而不是自动视为“拍板未完成”。
+3. 已被结构化 submission 消费的 decision，不应因为旧 carrier 残留而重新打开；旧 carrier 的清理、隔离、恢复语义统一归入 `6.4~6.6 / 19.x` 处理。
+
 #### 0.5 P0 适用边界与非目标
 
 1. 本节只冻结跨层最小闭环，不冻结 continuity / projection 的计划语境连续性层。
@@ -442,45 +492,266 @@ SignalPriorityResolution:
 
 > 收敛依据：v1 收敛以 Checkpoint B 为准。完整口径见本文档 §Checkpoint B。
 
+### 1.2 执行包-2 收口：统一 fail-close 入口与裁决字段
+
+本节对应 `tasks.md` 的 `9.1 ~ 9.4`，目标是把“未知输入默认动作、禁止隐式推进、最小裁决字段、来源接线顺序”收成单一规范。
+
+#### 1.2.1 各 `required_host_action` 的未知输入默认动作
+
+前提：本表只适用于 `truth_status=stable` 且决定当前合法动作面的 machine contract 有效的场景。若 truth 不稳定或 contract 无效，应优先回到 §2《Failure Recovery Table》的 blocking branch。
+
+| `required_host_action` | 未知输入 / no_candidate 默认归一结果 | 默认宿主交互 | 明确禁止的隐式动作 |
+| --- | --- | --- | --- |
+| `answer_questions` | `resolution_failure.no_match -> repeat_current_checkpoint` | `reask_answer_questions` | 不得隐式补全答案、不得隐式结束 clarification |
+| `confirm_decision` | `resolution_failure.no_match -> repeat_current_checkpoint` | `reask_confirm_decision` | 不得隐式 choose 默认选项、不得隐式 consume decision |
+| `confirm_plan_package` | `resolution_failure.no_match -> repeat_current_checkpoint` | `reask_confirm_plan_package` | 不得隐式 confirm proposal、不得隐式物化 plan |
+| `confirm_execute` | `resolution_failure.no_match -> repeat_current_checkpoint` | `reask_confirm_execute` | 不得隐式开始 develop、不得隐式提交 execution confirm |
+| `review_or_execute_plan` | `resolution_failure.no_match -> repeat_current_checkpoint` | `reask_plan_review` | 不得隐式进入 develop、不得隐式当成 revise/confirm/cancel |
+
+补充冻结：
+
+1. “未知输入”定义为：输入未命中任何允许信号，或命中信号但无法形成合法 `target_slot` 绑定。
+2. `review_or_execute_plan` 仍沿统一 fail-close 入口处理，不因为它处于 `normal_runtime_followup` 就获得额外的隐式推进权限。
+3. 上表只定义 no-candidate 默认动作；若同槽位冲突无法唯一化，则统一走 `ambiguous -> fallback_on_conflict`，默认仍停在当前 checkpoint / review 链。
+
+#### 1.2.2 统一 fail-close 入口
+
+1. `Deterministic Guard` 先根据 `allowed_response_mode / required_host_action / current_run.stage / checkpoint_request / execution_gate` 生成当前唯一允许动作面。
+2. 任何用户输入都必须先落到 `CandidateSignal[]`；不存在“先猜动作、再补 reason”的旁路。
+3. 若 `CandidateSignal[]` 为空，或候选全部因 `enabled_checkpoint_kinds / allowed_origins / origin_evidence_cap / target_slot` 校验失败而被剔除，统一记为 `resolution_status=no_candidate`。
+4. 若同 `target_slot` 的候选在固定顺序后仍无法唯一化，统一记为 `resolution_status=ambiguous`。
+5. `no_candidate / ambiguous` 都不得直接生成推进型 `resolved_action`；只能进入 `fallback_on_conflict` 或 Failure Recovery Table。
+6. 除显式结构化选择、显式 cancel、显式 revise、显式 inspect 之外，任何自由文本都默认不具备推进效力。
+
+#### 1.2.3 9.x 最小裁决字段冻结
+
+`SignalPriorityRow` 的最小冻结字段为：
+
+- `signal_group`
+- `target_kind`
+- `target_slot`
+- `evidence_tier`
+- `mutually_exclusive_with`
+- `fallback_on_conflict`
+
+对应硬规则：
+
+1. `signal_group` 只用于表达动作语义层级，不表达来源；来源统一由 `signal_origin` 建模。
+2. `target_kind` 只定义目标对象层级，`target_slot` 才是冲突域的最小单位；冲突裁决默认以 `target_slot` 为准，不以整句文本为准。
+3. `evidence_tier` 只比较证据强度，不提供推进许可；推进许可仍受 Guard 和动作面限制。
+4. `mutually_exclusive_with` 只在同 `target_slot` 内生效；不同 `target_slot` 的信号默认允许并存，除非被 `suppresses` 明确压制。
+5. `fallback_on_conflict` 的 v0.1 允许值只冻结为 `ambiguous | inspect | explicit_choice_required`；不得返回 `continue` 一类推进型降级。
+
+未知输入直接落入 fail-close 的条件：
+
+1. 缺失 `signal_id / target_slot / signal_origin / evidence_tier` 任一关键字段。
+2. `target_slot` 不在当前 checkpoint 的允许动作面内。
+3. `signal_origin` 不在该表行的 `allowed_origins` 中。
+4. `evidence_tier` 超过该来源的 `origin_evidence_cap`。
+5. 表匹配后无任何候选保留。
+
+#### 1.2.4 signal origin 接线顺序冻结
+
+1. 候选来源最小集合固定为 `deterministic_rule | parser_clause_inference | semantic_classifier`。
+2. 固定裁决顺序为 `origin_precedence -> evidence_rank -> priority`，不得交换。
+3. `origin_precedence` 固定为：
+   - `deterministic_rule: 300`
+   - `parser_clause_inference: 200`
+   - `semantic_classifier: 100`
+4. `evidence_rank` 固定为：
+   - `literal_alias: 400`
+   - `explicit_pattern: 300`
+   - `local_clause_inference: 200`
+   - `weak_semantic_hint: 100`
+5. classifier 在 v0.1 只能作为最弱来源接线，且 `evidence_tier` 上限固定为 `weak_semantic_hint`；它只能补候选，不能提升 parser/rule 已失败的动作为推进动作。
+6. 规则信号永远压制 classifier 信号；parser 信号可以被 rule 压制，但不能反向压制 rule。
+
+#### 1.2.5 本节的非目标
+
+1. 不在执行包-2 直接定义完整 Failure Recovery Table 行资产；那属于 `10.x`。
+2. 不在执行包-2 落地 Side-Effect Mapping；那属于 `18.3+` 与后续实现阶段。
+3. 不在执行包-2 增加新的 `required_host_action` 或 checkpoint kind。
+
 ### 2. 失败恢复表 (Failure Recovery Table)
 
-**作用：** 解决判定失败（无法识别、冲突、状态缺失等）时，系统如何安全退守并避免陷入死循环。
+本节对应 `tasks.md` 的 `10.1 ~ 10.3`，作用是把 §0.2 的主失败裁决优先级落成统一的 `Failure Recovery Table` 合同；`10.4 ~ 10.6` 的宿主提示层见下文 `§2.1`。
+
+**作用：** 把“局部判定失败 / machine truth 不稳定 / effect contract 不可执行”统一压成可枚举、可回放、可统计的恢复语义，避免不同 checkpoint 或不同实现层各自定义一套 fallback。
 
 **求值顺序：**
 
-1. 先根据 `failure_type + source_layer` 命中基础恢复行，得到基础 `fallback_action`。
-2. 再根据 `counts_toward_streak` 与当前 streak 计数，决定是否升级到 `soft_warning_action` 或 `fuse_blown_action`。
-3. `fallback_action` 决定状态级退守方向，`prompt_mode` 决定宿主如何交互；熔断只允许升级交互强度，不允许降低 fail-close 等级。
+1. 先按 §0.2 的 `primary_failure_priority` 选出唯一 `primary_failure_type`；其余失败原因只进入 `secondary_reason_codes` 做审计，不参与主裁决。
+2. 再用 `primary_failure_type + required_host_action` 命中基础恢复行，得到 `fallback_action / prompt_mode / retry_policy / reason_code / unresolved_outcome_family`。
+3. 最后再根据 `counts_toward_streak` 与当前 streak 计数，决定是否升级宿主交互强度；熔断只允许增强约束，不允许降低 fail-close 等级。
 
-**最小可编码 Schema：**
-- `failure_type`: string (如 no_match, ambiguous, state_missing)
-- `source_layer`: enum (guard | parser | projection | classifier | state_guard)
-- `recoverability`: enum (deterministic_permanent | transient_retryable | user_recoverable)
-- `fallback_action`: enum (inspect | stay_blocked | explicit_choice_required | visible_error)
-- `prompt_mode`: enum (free_text_hint | constrained_choice_required | hard_block_until_choice)
-- `visible_error`: bool (是否需要显式报错给宿主用户)
-- `counts_toward_streak`: bool (是否计入无进展熔断)
-- `soft_warning_action`: enum (none | free_text_hint)
-- `fuse_blown_action`: enum (none | constrained_choice_required | hard_block_until_choice)
-- `reset_streak_when`: [enum] (如 checkpoint_changed | explicit_choice_submitted | state_progressed)
-- `retry_policy`: enum (no_retry | host_retry_allowed | user_rephrase_only)
-- `reason_code`: string (如 `recovery.transient.ambiguous.inspect`)
+**10.1 最小 family 集冻结：**
 
-**首批样例行（v0.1）：**
+| `primary_failure_type` | members | 进入主裁决的条件 | 说明 |
+| --- | --- | --- | --- |
+| `non_stable_truth` | `state_missing`, `state_conflicted` | machine truth 未稳定 | 优先级最高；只要命中，本轮不得继续 resolution |
+| `truth_layer_contract_invalid` | `gate_contract_invalid`, `handoff_contract_invalid`, `checkpoint_contract_invalid`, `action_projection_contract_invalid` | 决定合法动作面的机器契约失效 | 只覆盖 truth layer / action projection contract，不扩展到 effect 层 |
+| `resolution_failure` | `no_match`, `ambiguous`, `malformed_input`, `semantic_unavailable`, `context_budget_exceeded` | `truth_status == stable` 且当前动作面可解析，但无法唯一落成动作 | `semantic_unavailable / context_budget_exceeded` 主要为 vNext classifier 预留，但仍属于同一 family |
+| `effect_contract_invalid` | `schema_mismatch`, `version_mismatch`, `missing_required_field`, `unsupported_transition` | `truth_status == stable` 且动作已识别，但 effect contract 不允许执行 | 只表示副作用层 fail-close，不重开 truth/resolution 层定义 |
 
-| case_ref | failure_type | source_layer | recoverability | fallback_action | prompt_mode | counts_toward_streak | soft_warning_action | fuse_blown_action | reset_streak_when | retry_policy | reason_code |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| A-5_mixed_clause_conflict | `ambiguous` | `parser` | `user_recoverable` | `inspect` | `free_text_hint` | `true` | `free_text_hint` | `constrained_choice_required` | `[checkpoint_changed, explicit_choice_submitted, state_progressed]` | `user_rephrase_only` | `recovery.user_recoverable.ambiguous.inspect` |
-| missing_runtime_state | `state_missing` | `state_guard` | `deterministic_permanent` | `stay_blocked` | `hard_block_until_choice` | `false` | `none` | `none` | `[]` | `no_retry` | `recovery.deterministic.state_missing.blocked` |
-| vnext_classifier_budget_exceeded | `context_budget_exceeded` | `classifier` | `deterministic_permanent` | `inspect` | `free_text_hint` | `false` | `none` | `none` | `[checkpoint_changed, state_progressed]` | `no_retry` | `recovery.deterministic.context_budget_exceeded.inspect` |
+补充冻结：
 
-说明：
+1. `resolution_failure` 和 `effect_contract_invalid` 是本组必须冻结的最小 family；其 member 集不再按模块私有扩展。
+2. 新增 member 只能通过更新 `primary_failure_families` 资产、配套 schema/case matrix 与文档一起进入，不允许在 parser/runtime 里本地硬编码旁路。
+3. `effect_contract_invalid` 若与 `non_stable_truth` 或 `truth_layer_contract_invalid` 同时出现，只能降为 `secondary_reason_codes`；不得反客为主。
 
-1. `A-5_mixed_clause_conflict` 是当前 parser-first v1 最典型的用户可恢复失败：先退回 `inspect`，再由 streak 逻辑决定是否升级为 `constrained_choice_required`。
-2. `state_missing` 属于 machine-fact 不足，不应靠自由重试或模型补猜恢复。
-3. `context_budget_exceeded` 主要为 vNext classifier 预留；当前样例固定为 deterministic failure，不做自动重试。
+**10.2 跨 checkpoint 降级映射：**
+
+| `primary_failure_type` | 所有 checkpoint 的基础退守语义 | `prompt_mode` 映射 | `retry_policy` | `reason_code` 词法 |
+| --- | --- | --- | --- | --- |
+| `non_stable_truth` | `enter_blocking_recovery_branch` | 固定为 `request_state_recovery` | `manual_recovery_only` | `recovery.non_stable_truth.fail_closed.{required_host_action}` |
+| `truth_layer_contract_invalid` | `enter_blocking_recovery_branch` | 固定为 `request_state_recovery` | `manual_recovery_only` | `recovery.truth_layer_contract_invalid.fail_closed.{required_host_action}` |
+| `resolution_failure` | `repeat_current_checkpoint` | `answer_questions -> reask_answer_questions`；`confirm_decision -> reask_confirm_decision`；`confirm_plan_package -> reask_confirm_plan_package`；`confirm_execute -> reask_confirm_execute`；`review_or_execute_plan -> reask_plan_review` | `allow_retry_after_user_input` | `recovery.resolution_failure.inspect_required.{required_host_action}` |
+| `effect_contract_invalid` | `block_side_effect_and_retry_when_safe` | 固定为 `safe_retry_after_contract_fix` | `retry_after_contract_fix` | `recovery.effect_contract_invalid.fail_closed.{required_host_action}` |
+
+归并口径：
+
+1. `primary_failure_type` 始终由 §0.2 的固定优先级决定；`secondary_reason_codes` 只记录同轮次的次级失败信号，不允许覆盖基础恢复行。
+2. `required_host_action` 只允许影响该 family 的 checkpoint 变体，不允许把同一 family 解释成另一套 fallback 语义。
+3. `unresolved_outcome_family` 在 v1 只冻结为 `fail_closed | inspect_required`；同类失败在不同 checkpoint 上必须落到同一聚合 family，避免 streak key 漂移。
+
+**10.3 parser-first v1 与 vNext classifier 共享失败语义层：**
+
+1. parser-first v1 和未来 classifier 都只能产出已冻结的 family/member 组合；它们共享同一 `Failure Recovery Table`，不允许各自维护 fallback 表。
+2. `semantic_unavailable / context_budget_exceeded` 虽然主要由 classifier 产生，但一旦命中，仍统一折叠到 `resolution_failure`，沿同一 `repeat_current_checkpoint + reask_*` 语义处理。
+3. parser 的 `no_match / ambiguous / malformed_input` 与 classifier 的弱语义失败共用同一个 `resolution_failure` 家族，区别只允许保留在 `secondary_reason_codes` 或观测字段中。
+4. 若未来 classifier 需要新增失败类型，必须先扩展统一 family 集和恢复表，再允许接线；不得先在 classifier 分支里落地一套局部 fallback。
 
 > 收敛依据：v1 收敛以 Checkpoint B 为准。完整口径见本文档 §Checkpoint B。
+
+### 2.1 执行包-3 收口：恢复/熔断/遗留隔离
+
+本节对应 `tasks.md` 的 `10.4 ~ 10.6 + 11.1 ~ 11.3 + 19.1 ~ 19.4`。目标不是新增状态树，而是把用户可见恢复文案、同 checkpoint 熔断和 legacy pending state 隔离统一收成可落实现的单一 contract。
+
+#### 2.1.1 `reason_code -> host_facing_message_template` 映射
+
+`Failure Recovery Table` 先给出 `primary_failure_type / fallback_action / prompt_mode / reason_code`，宿主侧可见提示再由独立模板层生成。模板层只负责“把已冻结的恢复语义翻译成人可执行的提示”，不允许反向决定动作。
+
+| 匹配键 | 模板语义 | 宿主正文骨架 | 下一步提示来源 |
+| --- | --- | --- | --- |
+| `recovery.non_stable_truth.fail_closed.*` | machine truth 不稳定，必须先恢复状态 | `当前运行态无法安全继续{required_host_action_label}；我会保持 fail-close。请先{escape_hatch_hint}。` | `request_state_recovery` |
+| `recovery.truth_layer_contract_invalid.fail_closed.*` | 决定合法动作面的 contract 无效 | `当前机器契约不完整，无法安全执行{required_host_action_label}；请先{contract_fix_hint}后重试。` | `request_state_recovery` |
+| `recovery.resolution_failure.inspect_required.*` | 输入不足以形成唯一动作，停在当前 checkpoint | `当前输入还不足以唯一判定{required_host_action_label}；我先保持在当前 checkpoint。请{rephrase_hint}。` | `reask_* / reask_plan_review` |
+| `recovery.effect_contract_invalid.fail_closed.*` | 动作已识别，但副作用 contract 不允许执行 | `当前动作已识别，但执行副作用未通过校验；不会继续推进。请先{safe_retry_hint}。` | `safe_retry_after_contract_fix` |
+
+补充冻结：
+
+1. 模板查找顺序固定为 `exact reason_code -> reason_code family prefix -> prompt_mode fallback template`，不得按自由文本模糊匹配。
+2. `host_facing_message_template` 只决定正文，不覆盖 `fallback_action / prompt_mode / required_host_action / Next`。
+3. 同一 `reason_code` 在同一 locale 下只能有一个有效模板；locale 缺失时回退默认 locale，不得把缺模板解释成允许继续。
+4. `review_or_execute_plan` 与各 `confirm_*` 共享同一 family 级模板 contract，只允许替换 `required_host_action_label / next_hint` 一类受控插值，不允许复制出另一套恢复语义。
+
+#### 2.1.2 模板插值安全 allowlist
+
+模板不允许直接访问原始 state JSON，也不允许直接插值用户原话。运行时只能先把 `ActionProjection + ContextSnapshot + locale labels` 压缩成 `TemplateRenderContext`，再做受控渲染。
+
+`TemplateRenderContext` 的允许变量集合冻结为：
+
+- `required_host_action_label`
+- `checkpoint_kind_label`
+- `checkpoint_id`
+- `plan_id`
+- `plan_path`
+- `resume_target_kind`
+- `truth_status`
+- `primary_failure_type`
+- `unresolved_outcome_family`
+- `analysis_summary`
+- `risk_level`
+- `key_risk`
+- `missing_facts_summary`
+- `decision_question`
+- `escape_hatch_hint`
+- `contract_fix_hint`
+- `rephrase_hint`
+- `safe_retry_hint`
+
+硬规则：
+
+1. 模板中的 `{variable}` 必须全部来自上述 allowlist；asset 校验阶段发现越界变量即 fail-close 拒绝加载。
+2. 允许变量必须能在 `ActionProjection` 或 `ContextSnapshot` 中被结构化证明；不得直接引用 `current_handoff.artifacts` 的任意深层 key。
+3. 原始用户输入、assistant prose、任意 JSON path、列表索引和函数式表达式一律禁止进入模板插值。
+4. 模板允许“变量缺值”，但不允许“变量越界”；缺值走渲染兜底，不走 Python `KeyError`。
+
+#### 2.1.3 模板渲染失败兜底
+
+当模板缺失、变量缺值、locale 渲染失败或格式非法时，主链不得抛异常，必须保留原 recovery 判定并回退安全文案。
+
+| `prompt_mode` | 兜底正文 | 兜底行为 |
+| --- | --- | --- |
+| `request_state_recovery` | `当前运行态暂不允许继续；已保持 fail-close。请先执行恢复动作后重试。` | 保持 blocking branch，不得弱化为 inspect |
+| `reask_* / reask_plan_review` | `当前输入还不足以继续；我先停在当前 checkpoint。请换一种更明确的说法。` | 保持 repeat current checkpoint |
+| `safe_retry_after_contract_fix` | `当前动作已识别，但暂时不能安全执行；请修复契约后重试。` | 保持 side-effect blocked |
+
+补充冻结：
+
+1. 模板渲染失败时，`primary_failure_type / reason_code / fallback_action / prompt_mode` 保持原值，不得因为渲染问题改写恢复决策。
+2. 运行时必须追加非阻断审计标记 `message_template_render_failed`；该标记只进入日志/观测/审计，不替代主 `reason_code`。
+3. 兜底文案只能等价或更强地表达原 fail-close 语义，不得把 `stay_blocked` 退化成 `inspect` 或把 `explicit_choice_required` 退化成自由文本提示。
+
+#### 2.1.4 same checkpoint no-progress streak
+
+`same checkpoint no-progress streak` 的主键继续沿用 §0.4.1：`checkpoint_id + unresolved_outcome_family + durable_identity`。本节只补齐计数、升级和 reset contract。
+
+| `unresolved_outcome_family` | `counts_toward_streak` | `soft_warning_action` | `fuse_blown_action` | 默认升级边界 |
+| --- | --- | --- | --- | --- |
+| `inspect_required` | `true` | `repeat_with_explicit_rephrase_hint` | `constrained_choice_required` | 第 2 次进入 soft warning，第 3 次熔断 |
+| `fail_closed` | `true` | `repeat_with_escape_hatch_hint` | `hard_block_until_choice` | 第 2 次重复恢复提示，第 3 次熔断 |
+| `status_progressed` | `false` | `none` | `none` | 不计入 streak |
+
+补充冻结：
+
+1. `durable_identity` 必须来自当前 checkpoint 的保留身份锚点，例如 `decision_id / reserved_plan_id / plan_id`；不得退化成“最近一次消息”。
+2. `soft_warning_action` 只能升级交互强度，不得改变 `fallback_action` 的安全等级。
+3. `fuse_blown_action` 只允许把同一恢复语义升级为更强约束交互，例如从 `free_text_hint` 升级为 `constrained_choice_required` 或 `hard_block_until_choice`。
+4. `status-only` 成功完成、显式结构化选择提交、状态推进、checkpoint 切换、`required_host_action` 切换、`escape_hatch` 成功执行、truth 从不稳定恢复为稳定，统一视为可回放的 reset 事件。
+
+#### 2.1.5 无进展熔断的硬边界
+
+1. 同一 `streak_key` 下连续出现 `inspect / invalid / ambiguous / fail_closed` 时，不允许无限重复弱提示；达到熔断阈值后必须切到受限选择或硬阻断。
+2. 熔断不会降低 fail-close 等级。若基础恢复行为是 `stay_blocked / enter_blocking_recovery_branch / block_side_effect_and_retry_when_safe`，熔断后只能保持或增强阻断。
+3. 熔断只影响宿主交互形态，不允许绕过 gate、跳过 checkpoint、隐式提交 decision、隐式物化 plan，或直接进入 develop。
+4. `counts_toward_streak=false` 的成功 inspect/status 路径不得误伤下一个 checkpoint；reset 后必须重新从 0 计数。
+
+#### 2.1.6 legacy pending state 的侦测与 quarantine 进入条件
+
+`legacy pending state` 的判断标准不是“文件还在不在”，而是“该 carrier 是否还能证明自己属于当前活跃链”。凡是不能证明、但又可能干扰当前恢复路径的 carrier，都必须先 quarantine，再决定是否提升为 `state_missing / state_conflicted`。
+
+| 侦测类别 | 进入 quarantine 条件 | 代表 `reason_code` | promotion 结果 |
+| --- | --- | --- | --- |
+| schema 不兼容 | payload 不是 object、缺关键字段、phase/status 不在受支持集合 | `recovery.legacy_pending_state.quarantined.schema_unknown` | 默认 `state_missing` 候选 |
+| durable identity 断链 | pending carrier 的 `checkpoint_id / decision_id / reserved_plan_id / plan_id` 无法与当前 `run/handoff` 互证 | `recovery.legacy_pending_state.quarantined.orphaned_identity` | 默认 `state_missing` |
+| session truth 遮蔽旧全局 carrier | session-scope `gate + snapshot + handoff` 已证明当前入口，但 global 仍残留旧 pending carrier | `recovery.legacy_pending_state.quarantined.shadowed_by_session_truth` | 保持 annotation，不自动晋升冲突 |
+| 同层竞争 | 两个 carrier 同时声称当前活跃 checkpoint，且 durable identity / `required_host_action` 互斥 | `recovery.legacy_pending_state.quarantined.competing_pending` | 晋升 `state_conflicted` |
+
+补充冻结：
+
+1. quarantine 是 carrier-scoped 注解，不是新的顶层状态树。
+2. 只有 `active_chain_relevance=true` 的 quarantined item 才允许晋升为 `state_missing / state_conflicted`；非活跃残留只记录审计，不阻断当前稳定链。
+3. 已被结构化 submission 消费的旧 decision/proposal 不能因为残留文件重新打开 checkpoint。
+
+#### 2.1.7 quarantine escape hatch、清理边界与恢复语义
+
+v1 的标准逃生动作默认冻结为自然语言 `取消` / `强制取消`；若未来增加命令别名，也必须编译到同一 `cancel / force_cancel` 结构化动作，不得新增第二套语义。
+
+清理与恢复规则：
+
+1. `取消` 只清理当前阻塞恢复所必需放弃的 pending negotiation carrier，优先作用于当前 scope；不得顺手删除 `plan/`、`history/`、blueprint 或已稳定的 `current_plan`。
+2. `强制取消` 只在普通 `取消` 无法解除 `state_conflicted / quarantine blocking` 时使用；可额外清理同一 `durable_identity` 下互斥的 `current_decision / current_clarification / current_plan_proposal / current_handoff / current_run`，但仍不得清理方案资产本体。
+3. 每次 escape hatch 都必须写入审计事件，最小字段冻结为：`event_kind`、`reason_code`、`cleared_state_kinds`、`preserved_assets`、`resume_target_kind`、`resolution_id`。
+4. escape hatch 完成后必须重新解析 snapshot，并按 §0.4 `best_proven_resume_target` 顺序恢复：`checkpoint -> plan_review -> workflow_safe_start`。
+5. 恢复后的“安全起点”只允许回到 machine contract 已证明的 checkpoint/review 入口；不得 transcript-based resume，不得直接跳到 develop 或隐式 confirm。
+6. 被 quarantine 并已清理的 legacy carrier，在同一恢复回合中不得再次充当恢复证明来源。
+
+#### 2.1.8 本节非目标
+
+1. 不在执行包-3 直接落 `runtime/contracts/*.yaml` 新行或渲染代码；当前只冻结 contract。
+2. 不引入新的顶层 `truth_status`、`required_host_action`、escape hatch 命令族或恢复状态机。
+3. 不把 quarantine 清理扩成“自动修复所有历史状态目录”；v1 只处理阻断当前活跃链的 legacy pending state。
 
 ### 3. 结果副作用映射表 (Side-Effect Mapping Table)
 

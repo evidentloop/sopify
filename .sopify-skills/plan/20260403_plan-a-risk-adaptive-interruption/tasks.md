@@ -17,10 +17,12 @@ plan_status: design_active
 
 ## 当前状态
 
-- 本 plan 当前只用于设计收敛，不进入代码实施。
-- `ExecutionGate` 当前保持 `blocked / missing_info` 是预期行为，因为本 plan 仍在收口实施边界。
+- 本 plan 仍以设计收敛为主，不进入大范围代码实施；当前允许的代码类动作只限于 P0 受控 spike 的资产化、验证与账本对齐。
+- 当前 session-scope handoff 已恢复为 `review_or_execute_plan`，并给出 `run_stage=ready_for_execution`；这是 runtime 当前轮的 plan review / execution confirm 入口，不等同于本清单中的里程碑 `Ready-for-V1-Execution`。
+- 全局 `current_run / current_handoff / current_decision` 仍保留旧的 `decision_pending / auth_boundary` carrier；该现象应视为 `6.4~6.6 / 19.x` 的 legacy/quarantine debt，而不是重新打开认证边界拍板。
+- P0 底座已扩展并已验证：`decision_tables + signal_priority_table + embedded failure_recovery_table + side_effect_mapping_table + host_message_templates + schema + A-1~A-8 case matrix + unittest/CI/preflight` 已资产化收口；剩余缺口收敛为 `streak runtime wiring / quarantine escape hatch runtime wiring / sample invariant gate`。
 - 后续允许持续迭代 `background.md / design.md / tasks.md`，直到进入真正开工窗口。
-- 在进入正式 implementation 之前，允许先做一笔文档 freeze patch 与一笔 `feature/context-boundary-core` 受控 spike；该 spike 身份固定为 `tracked spike / non-checkpoint-credit / no runtime wiring`，不计入任何 Checkpoint 完成。
+- 在进入正式 implementation 之前，允许先做文档 freeze/账本对齐 patch 与 `feature/context-boundary-core` 受控 spike；该 spike 身份固定为 `tracked spike / non-checkpoint-credit / no runtime wiring`，不计入任何 Checkpoint 完成。
 
 **导航：** Checkpoint A 前的颗粒度补齐范围，以 design.md §分支拆分、分批合并与 Checkpoint 卡点 和各 Checkpoint 必填决策为准；本任务清单各条任务是执行真相源。
 
@@ -52,9 +54,9 @@ plan_status: design_active
 
 ### 1. carry-over recall debt
 
-- [ ] 1.1 把总纲中的 A-1 ~ A-8 重新分组为语义类簇，而不是逐 case 平铺
-- [ ] 1.2 为每个语义类簇补齐“为何属于本方案，而不是既有 correctness hotfix 主线 / 既有对外 contract 主线”的边界说明
-- [ ] 1.3 把 `analysis-only / no-write / no-package` 统一冻结成 brake signal 语义，而不是散落样本描述
+- [x] 1.1 把总纲中的 A-1 ~ A-8 重新分组为语义类簇，而不是逐 case 平铺
+- [x] 1.2 为每个语义类簇补齐“为何属于本方案，而不是既有 correctness hotfix 主线 / 既有对外 contract 主线”的边界说明
+- [x] 1.3 把 `analysis-only / no-write / no-package` 统一冻结成 brake signal 语义，而不是散落样本描述
 
 验收标准：
 
@@ -63,7 +65,7 @@ plan_status: design_active
 
 ### 2. non-goals 与行为边界
 
-- [ ] 2.1 显式补齐本子 plan 的 non-goals 清单
+- [x] 2.1 显式补齐本子 plan 的 non-goals 清单
 - [x] 2.2 已拍板：`plan_proposal_pending + command prefix` 保持显式 fail-close，不视为自动继续；并与 parser 收口任务解耦
 - [x] 2.3 已拍板：`analysis-only / no-write / no-package` 在各类 pending checkpoint 下默认出口为 `consult_readonly`（只分析，不执行）
 - [x] 2.4 已拍板：宿主侧动作只能沿 machine contract 已显式收敛出的 `required_host_action` 继续；machine truth 不允许时，必须继续停留在当前 checkpoint 链并保持 fail-close，不得自动推进
@@ -173,13 +175,13 @@ plan_status: design_active
 规范来源：见 `design.md` §0 `P0 Freeze | 分层联动矩阵（最小冻结）`。本组与 §10 / §19 共享该节冻结口径。
 补充口径：`9.x` 的完成定义显式绑定 `18.x`；仅提交 YAML/loader 原型不构成 `9.x` 完成。
 
-- [ ] 9.1 盘点各 `required_host_action` 在未知输入下的默认动作，找出所有不一致项
-- [ ] 9.2 为 `confirm_plan_package / confirm_execute / confirm_decision / answer_questions` 定义统一的 fail-close 入口与禁止隐式推进规则
-- [ ] 9.3 冻结 `signal_group / target_kind / target_slot / evidence_tier / mutually_exclusive_with / fallback_on_conflict` 的最小裁决字段，并明确未知输入何时直接落入 fail-close
-- [ ] 9.4 冻结 `signal_origin / allowed_origins / origin_evidence_cap / origin_precedence / evidence_rank` 的最小接线字段与固定裁决顺序，明确“规则信号永远压制 classifier 信号”的实现口径
-- [ ] 9.5 将 Signal/Failure/Side-Effect 三张真理表外置为声明式资产（`runtime/contracts/decision_tables.yaml`）
-- [ ] 9.6 为三张表定义统一、独立版本化 Schema，并冻结版本；runtime 侧只允许使用 stdlib strict validator 消费，不引入非 stdlib 运行时依赖
-- [ ] 9.7 在 CI / preflight 增加表资产结构校验，禁止运行时隐式容错加载
+- [x] 9.1 盘点各 `required_host_action` 在未知输入下的默认动作，找出所有不一致项
+- [x] 9.2 为 `confirm_plan_package / confirm_execute / confirm_decision / answer_questions` 定义统一的 fail-close 入口与禁止隐式推进规则
+- [x] 9.3 冻结 `signal_group / target_kind / target_slot / evidence_tier / mutually_exclusive_with / fallback_on_conflict` 的最小裁决字段，并明确未知输入何时直接落入 fail-close
+- [x] 9.4 冻结 `signal_origin / allowed_origins / origin_evidence_cap / origin_precedence / evidence_rank` 的最小接线字段与固定裁决顺序，明确“规则信号永远压制 classifier 信号”的实现口径
+- [x] 9.5 将 Signal/Failure/Side-Effect 三张真理表外置为声明式资产（`runtime/contracts/decision_tables.yaml`）
+- [x] 9.6 为三张表定义统一、独立版本化 Schema，并冻结版本；runtime 侧只允许使用 stdlib strict validator 消费，不引入非 stdlib 运行时依赖
+- [x] 9.7 在 CI / preflight 增加表资产结构校验，禁止运行时隐式容错加载
 
 验收标准：
 
@@ -193,12 +195,12 @@ plan_status: design_active
 
 规范来源：见 `design.md` §0 `P0 Freeze | 分层联动矩阵（最小冻结）`。失败 family、主裁决优先级与 `secondary_reason_codes` 以该节为准。
 
-- [ ] 10.1 冻结 `resolution_failure / effect_contract_invalid` 的最小 family 集；其中 `resolution_failure` 至少覆盖 `no_match / ambiguous / malformed_input / semantic_unavailable / context_budget_exceeded`
-- [ ] 10.2 为每类失败 family 定义 `fallback_action / prompt_mode / retry_policy / reason_code` 的跨 checkpoint 降级映射，并明确 `primary_failure_type / secondary_reason_codes` 的归并口径
-- [ ] 10.3 明确 parser-first v1 与 vNext classifier 共享同一失败语义层，而不是各自定义一套 fallback
-- [ ] 10.4 建立 `reason_code -> host_facing_message_template` 映射表，补齐 fail-close 后的可执行引导语
-- [ ] 10.5 增加模板插值安全校验：模板中的 `{variable}` 必须存在于 `ActionProjection/ContextSnapshot` 允许变量集合
-- [ ] 10.6 定义模板渲染失败兜底：回退安全文案并记录 `message_template_render_failed`，不得引发主链异常
+- [x] 10.1 冻结 `resolution_failure / effect_contract_invalid` 的最小 family 集；其中 `resolution_failure` 至少覆盖 `no_match / ambiguous / malformed_input / semantic_unavailable / context_budget_exceeded`
+- [x] 10.2 为每类失败 family 定义 `fallback_action / prompt_mode / retry_policy / reason_code` 的跨 checkpoint 降级映射，并明确 `primary_failure_type / secondary_reason_codes` 的归并口径
+- [x] 10.3 明确 parser-first v1 与 vNext classifier 共享同一失败语义层，而不是各自定义一套 fallback
+- [x] 10.4 建立 `reason_code -> host_facing_message_template` 映射表，补齐 fail-close 后的可执行引导语
+- [x] 10.5 增加模板插值安全校验：模板中的 `{variable}` 必须存在于 `ActionProjection/ContextSnapshot` 允许变量集合
+- [x] 10.6 定义模板渲染失败兜底：回退安全文案并记录 `message_template_render_failed`，不得引发主链异常
 
 验收标准：
 
@@ -210,9 +212,9 @@ plan_status: design_active
 
 ### 11. 同 checkpoint 无进展熔断
 
-- [ ] 11.1 定义 `checkpoint_id + unresolved_outcome_family + durable_identity` 级别的 no-progress streak 统计口径
-- [ ] 11.2 明确 `counts_toward_streak / soft_warning_action / fuse_blown_action / reset_streak_when` 的最小字段与升级边界
-- [ ] 11.3 断言连续 `inspect / invalid / ambiguous / fail_closed` 不会形成无限循环，且熔断不会降低 fail-close 等级
+- [x] 11.1 定义 `checkpoint_id + unresolved_outcome_family + durable_identity` 级别的 no-progress streak 统计口径
+- [x] 11.2 明确 `counts_toward_streak / soft_warning_action / fuse_blown_action / reset_streak_when` 的最小字段与升级边界
+- [x] 11.3 断言连续 `inspect / invalid / ambiguous / fail_closed` 不会形成无限循环，且熔断不会降低 fail-close 等级
 
 验收标准：
 
@@ -259,6 +261,44 @@ plan_status: design_active
 7. 当 Checkpoint A/B/C 均通过，进入 `Ready-for-V1-Execution`（阻断 V1 的正式执行门）。
 8. 最后完成 `feature/context-vnext-gate`（4.4 + G-12 + G-13），并通过 Checkpoint D。
 9. 当 Checkpoint D 通过且具备 v1 rollout 证据后，进入 `Ready-for-V2-Trial`（仅阻断 V2，不阻断 V1）。
+
+### H.1 下次开工入口（2026-04-07 收口）
+
+当前可执行基线（同分支最近提交，P3 已全部收口）：
+
+- `318442c`：fail-close contract 资产、loader、fixture、CI/preflight 接入（spike 主体）
+- `a958e85`：P3-1/2（pytest entry 懒加载；`runner=pytest` 去掉重复 native 评估）
+- `f74422c`：P3-3（`test_contract_consistency` 改用 `runtime_test_support` 统一导入，移除手写 sys.path）
+
+2026-04-08 账本对齐补充：
+
+- 以上基线已经在仓库中落地，且可通过 `tests.test_runtime_decision_tables / tests.test_runtime_failure_recovery / tests.test_contract_consistency` 验证。
+- `9.x / 10.x / 11.x / 18.x / 19.x` 当前保持未勾选，表示“完整分支定义尚未闭环”，不表示“仓库内尚无 P0 资产或离线校验能力”。
+- 本 plan 当前真正缺的不是再补一轮底座文件，而是把执行包-1/2 的设计口径与执行包-3 的恢复层边界收口成可继续开发的单一账本。
+
+下次进入本 plan 时，默认按以下执行包顺序推进，不再重新做优先级讨论：
+
+1. `执行包-1（设计收敛，不写代码）`：`1.1 ~ 1.3 + 2.1`
+2. `执行包-2（裁决层设计）`：`9.1 ~ 9.4`
+3. `执行包-3（恢复/熔断/遗留隔离）`：`10.4 ~ 10.6 + 11.1 ~ 11.3 + 19.1 ~ 19.4`
+
+每个执行包的完成定义（DoD）：
+
+1. 只允许更新 `design.md / tasks.md`（执行包-1、执行包-2）；执行包-3 才允许进入代码实现。
+2. 每包必须写明：输入边界、字段定义、冲突优先级、失败回退语义、非目标。
+3. 每包结束必须在本节追加一句“收口结论 + 下一包入口”，避免上下文丢失。
+
+执行停点（防止超范围）：
+
+1. 执行包-1 未完成前，不得开始 `9.5+` 新资产化实现。
+2. 执行包-2 未完成前，不得开始 `10.4+ / 11.x / 19.x` 的代码落地。
+3. 任一包若遇到拍板分歧，优先在本节记录“待决项 + 推荐选项”，再暂停实施。
+
+收口结论（2026-04-08）：执行包-1 已完成，A-1~A-8 已按语义类簇收口，brake signal 与 non-goals 已冻结；下一包入口固定为执行包-2（`9.1 ~ 9.4`），当前无需新增产品拍板。
+收口结论（2026-04-08，执行包-2）：各 `required_host_action` 的未知输入默认动作、统一 fail-close 入口、最小裁决字段与 origin 接线顺序已冻结；下一包入口固定为执行包-3（`10.4 ~ 10.6 + 11.1 ~ 11.3 + 19.1 ~ 19.4`），当前无需新增产品拍板。
+收口结论（2026-04-08，执行包-3）：`reason_code -> host_facing_message_template`、插值 allowlist、render fallback、same-checkpoint streak 与 legacy quarantine/escape hatch/resume 边界已冻结；下一包入口转为代码实现准备（优先 `9.5 ~ 9.7 + 18.1 ~ 18.6`，并把 `19.5` 作为 Checkpoint A 绑定项一并落地），当前无需新增产品拍板。
+收口结论（2026-04-08，代码实现准备包）：统一真理表资产、独立版本化 schema、stdlib strict loader、模板安全渲染与 preflight/CI 离线校验已落地；`18.6 + 19.5` 已显式绑定 Checkpoint A，下一步转为 `17.x + 3.x/4.x + 5.x/6.x` 的 guard-rails 与样本不变量实现。
+收口结论（2026-04-08，failure family 前置冻结）：`10.1 ~ 10.3` 已按当前统一资产实现口径补齐，`resolution_failure / effect_contract_invalid` 的 family 集、跨 checkpoint 降级映射与 parser-first v1 / vNext classifier 共享失败语义层已收成单一账本；下一步无需再为 failure family 重开设计分支。
 
 ## I. 分支矩阵与合并顺序
 
@@ -336,12 +376,12 @@ plan_status: design_active
 
 ### 18. 表资产化与插值安全校验
 
-- [ ] 18.1 冻结三张真理表的物理载体路径：`runtime/contracts/decision_tables.yaml`
-- [ ] 18.2 定义三张表的独立版本化 Schema 契约，并在 CI 执行结构校验；runtime 侧固定采用 stdlib strict validator 消费
-- [ ] 18.3 新增 `reason_code -> host_facing_message_template` 映射表，统一用户可见解释出口
-- [ ] 18.4 新增模板插值安全校验：模板中的 `{variable}` 必须存在于 `ActionProjection/ContextSnapshot` 允许变量集合
-- [ ] 18.5 约束模板渲染失败时 fail-open 到安全兜底文案，不允许因 `KeyError` 中断主流程
-- [ ] 18.6 将 `18.2~18.5` 纳入 Checkpoint A 的必过项
+- [x] 18.1 冻结三张真理表的物理载体路径：`runtime/contracts/decision_tables.yaml`
+- [x] 18.2 定义三张表的独立版本化 Schema 契约，并在 CI 执行结构校验；runtime 侧固定采用 stdlib strict validator 消费
+- [x] 18.3 新增 `reason_code -> host_facing_message_template` 映射表，统一用户可见解释出口
+- [x] 18.4 新增模板插值安全校验：模板中的 `{variable}` 必须存在于 `ActionProjection/ContextSnapshot` 允许变量集合
+- [x] 18.5 约束模板渲染失败时 fail-open 到安全兜底文案，不允许因 `KeyError` 中断主流程
+- [x] 18.6 将 `18.2~18.5` 纳入 Checkpoint A 的必过项
 
 验收标准：
 
@@ -355,11 +395,11 @@ plan_status: design_active
 
 规范来源：见 `design.md` §0 `P0 Freeze | 分层联动矩阵（最小冻结）`。`quarantine_annotation`、promotion 规则与 `best_proven_resume_target` 证明顺序以该节为准。
 
-- [ ] 19.1 定义 legacy pending state 的侦测规则与 quarantine 进入条件
-- [ ] 19.2 定义 quarantine 下的标准逃生动作（命令或自然语言重置），不得要求用户手动清理状态目录
-- [ ] 19.3 定义 quarantine 清理边界（清理哪些状态、保留哪些资产）与审计事件
-- [ ] 19.4 定义 quarantine 恢复后的 resume 语义：回到可继续 checkpoint 的安全起点
-- [ ] 19.5 将 `19.1~19.4` 纳入 Checkpoint A 的必过项
+- [x] 19.1 定义 legacy pending state 的侦测规则与 quarantine 进入条件
+- [x] 19.2 定义 quarantine 下的标准逃生动作（命令或自然语言重置），不得要求用户手动清理状态目录
+- [x] 19.3 定义 quarantine 清理边界（清理哪些状态、保留哪些资产）与审计事件
+- [x] 19.4 定义 quarantine 恢复后的 resume 语义：回到可继续 checkpoint 的安全起点
+- [x] 19.5 将 `19.1~19.4` 纳入 Checkpoint A 的必过项
 
 验收标准：
 
