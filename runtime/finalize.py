@@ -144,13 +144,7 @@ def finalize_plan(
 
     archived_metadata_path = archive_dir / managed_plan.metadata_path.name
     archived_text = _render_document(
-        _replace_front_matter_fields(
-            managed_plan.front_matter,
-            {
-                "lifecycle_state": "archived",
-                "archive_ready": "true",
-            },
-        ),
+        _normalize_archived_front_matter(managed_plan.front_matter),
         managed_plan.body,
     )
     archived_metadata_path.write_text(archived_text, encoding="utf-8")
@@ -257,20 +251,67 @@ def _parse_bool(value: str) -> bool:
     return value.strip().lower() == "true"
 
 
-def _replace_front_matter_fields(front_matter: str, updates: Mapping[str, str]) -> str:
-    lines = front_matter.splitlines()
-    remaining = dict(updates)
-    for index, line in enumerate(lines):
-        if not line or line.startswith(" ") or ":" not in line:
+def _normalize_archived_front_matter(front_matter: str) -> str:
+    normalized = front_matter
+    normalized = _upsert_front_matter_scalar(normalized, "lifecycle_state", "archived")
+    normalized = _upsert_front_matter_mapping(
+        normalized,
+        "knowledge_sync",
+        {key: "skip" for key in KNOWLEDGE_SYNC_KEYS},
+    )
+    normalized = _delete_front_matter_key(normalized, "blueprint_obligation")
+    normalized = _upsert_front_matter_scalar(normalized, "archive_ready", "true")
+    normalized = _upsert_front_matter_scalar(normalized, "plan_status", "completed")
+    return normalized
+
+
+def _upsert_front_matter_scalar(front_matter: str, key: str, value: str) -> str:
+    return _upsert_front_matter_entry(front_matter, key, [f"{key}: {value}"])
+
+
+def _upsert_front_matter_mapping(front_matter: str, key: str, values: Mapping[str, str]) -> str:
+    lines = [f"{key}:", *(f"  {nested_key}: {nested_value}" for nested_key, nested_value in values.items())]
+    return _upsert_front_matter_entry(front_matter, key, lines)
+
+
+def _upsert_front_matter_entry(front_matter: str, key: str, replacement: list[str]) -> str:
+    entries = _split_front_matter_entries(front_matter)
+    for index, entry in enumerate(entries):
+        if _front_matter_entry_key(entry) == key:
+            entries[index] = replacement
+            break
+    else:
+        entries.append(replacement)
+    return "\n".join(line for entry in entries for line in entry)
+
+
+def _delete_front_matter_key(front_matter: str, key: str) -> str:
+    entries = [
+        entry
+        for entry in _split_front_matter_entries(front_matter)
+        if _front_matter_entry_key(entry) != key
+    ]
+    return "\n".join(line for entry in entries for line in entry)
+
+
+def _split_front_matter_entries(front_matter: str) -> list[list[str]]:
+    entries: list[list[str]] = []
+    current: list[str] = []
+    for line in front_matter.splitlines():
+        if current and line and not line.startswith(" "):
+            entries.append(current)
+            current = [line]
             continue
-        key, _, _ = line.partition(":")
-        key = key.strip()
-        if key in remaining:
-            lines[index] = f"{key}: {remaining.pop(key)}"
-    if remaining:
-        missing = ", ".join(sorted(remaining))
-        raise ValueError(f"Missing expected metadata keys while updating front matter: {missing}")
-    return "\n".join(lines)
+        current.append(line)
+    if current:
+        entries.append(current)
+    return entries
+
+
+def _front_matter_entry_key(entry: list[str]) -> str:
+    head = entry[0] if entry else ""
+    key, _, _ = head.partition(":")
+    return key.strip()
 
 
 def _render_document(front_matter: str, body: str) -> str:

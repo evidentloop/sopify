@@ -6,6 +6,53 @@ This changelog is maintained manually (not auto-generated).
 
 ## [Unreleased]
 
+## [2026-04-12.230144] - 2026-04-12
+
+### Docs
+
+- Refined public documentation:
+  - `README.md`
+  - `README.zh-CN.md`
+
+### Runtime
+
+- Updated runtime internals:
+  - `runtime/finalize.py`
+  - `runtime/handoff.py`
+
+### Skills
+
+- Synced prompt-layer skills:
+  - `Claude/Skills/CN/CLAUDE.md`
+  - `Claude/Skills/EN/CLAUDE.md`
+  - `Codex/Skills/CN/AGENTS.md`
+  - `Codex/Skills/EN/AGENTS.md`
+
+### Tests
+
+- Updated automated coverage:
+  - `tests/test_context_v1_scope.py`
+  - `tests/test_runtime_engine.py`
+
+### Changed
+
+- Updated project files:
+  - `CHANGELOG.md`
+
+## [2026-04-12.225832] - 2026-04-12
+
+### Runtime
+
+- Updated runtime internals:
+  - `runtime/finalize.py`
+  - `runtime/handoff.py`
+
+### Tests
+
+- Updated automated coverage:
+  - `tests/test_context_v1_scope.py`
+  - `tests/test_runtime_engine.py`
+
 ## [2026-04-10.104951] - 2026-04-10
 
 ### Runtime

@@ -785,6 +785,7 @@ class GuardrailIntegrationTests(unittest.TestCase):
             planner = result.handoff.artifacts["resolution_planner"]
             boundary = result.handoff.artifacts["sidecar_classifier_boundary"]
             phase_boundary = result.handoff.artifacts["vnext_phase_boundary"]
+            v1_stats = result.handoff.observability["v1_stats"]
             self.assertEqual(guard["resume_target_kind"], "plan_review")
             self.assertEqual(projection["required_host_action"], "review_or_execute_plan")
             self.assertEqual(projection["plan_path"], result.plan_artifact.path)
@@ -794,6 +795,10 @@ class GuardrailIntegrationTests(unittest.TestCase):
             self.assertIn("retopic_current_subject", boundary["eligible_signal_ids"])
             self.assertEqual(phase_boundary["active_phase"], "parser_first_v1")
             self.assertFalse(phase_boundary["vnext_enabled"])
+            self.assertEqual(v1_stats["reason_code"], "guard.plan_review.stable.review_or_execute_plan")
+            self.assertEqual(v1_stats["outcome"], "ready")
+            self.assertEqual(v1_stats["fallback_path"], "repeat_current_checkpoint")
+            self.assertEqual(v1_stats["checkpoint_kind"], "review_or_execute_plan")
 
     def test_execution_confirm_handoff_exposes_guard_and_projection_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -807,6 +812,7 @@ class GuardrailIntegrationTests(unittest.TestCase):
             planner = result.handoff.artifacts["resolution_planner"]
             boundary = result.handoff.artifacts["sidecar_classifier_boundary"]
             phase_boundary = result.handoff.artifacts["vnext_phase_boundary"]
+            v1_stats = result.handoff.observability["v1_stats"]
             self.assertEqual(guard["checkpoint_kind"], "confirm_execute")
             self.assertEqual(guard["allowed_response_mode"], CHECKPOINT_ONLY)
             self.assertEqual(projection["plan_path"], result.recovered_context.current_plan.path)
@@ -825,6 +831,10 @@ class GuardrailIntegrationTests(unittest.TestCase):
                 phase_boundary["readiness_gates"][1]["gate_name"],
                 "Ready-for-V2-Trial",
             )
+            self.assertEqual(v1_stats["reason_code"], "guard.checkpoint.stable.confirm_execute")
+            self.assertEqual(v1_stats["outcome"], "ready")
+            self.assertEqual(v1_stats["fallback_path"], "repeat_current_checkpoint")
+            self.assertEqual(v1_stats["checkpoint_kind"], "confirm_execute")
 
     def test_vnext_phase_boundary_survives_resolution_planner_failure(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

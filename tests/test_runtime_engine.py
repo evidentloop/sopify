@@ -6,6 +6,20 @@ from tests.runtime_test_support import *
 from runtime.engine import _advance_planning_route, _handle_execution_confirm, _handle_plan_proposal_pending
 
 
+_FRONT_MATTER_RE = re.compile(r"\A---\n(?P<front>.*?)\n---\n", re.DOTALL)
+
+
+def _load_markdown_front_matter(path: Path) -> dict[str, object]:
+    text = path.read_text(encoding="utf-8")
+    match = _FRONT_MATTER_RE.match(text)
+    if match is None:
+        raise AssertionError(f"Missing front matter: {path}")
+    metadata = load_yaml(match.group("front"))
+    if not isinstance(metadata, dict):
+        raise AssertionError(f"Invalid front matter payload: {path}")
+    return metadata
+
+
 class EngineIntegrationTests(unittest.TestCase):
     def test_session_review_state_is_isolated_between_sessions(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -716,10 +730,15 @@ class EngineIntegrationTests(unittest.TestCase):
             self.assertEqual(result.recovered_context.current_run.stage, "execution_confirm_pending")
             self.assertEqual(result.handoff.required_host_action, "confirm_execute")
             summary = result.handoff.artifacts["execution_summary"]
+            v1_stats = result.handoff.observability["v1_stats"]
             self.assertEqual(summary["plan_path"], result.recovered_context.current_plan.path)
             self.assertEqual(summary["task_count"], 5)
             self.assertIn("执行前确认", summary["key_risk"])
             self.assertIn("execution_confirm_pending", summary["mitigation"])
+            self.assertEqual(v1_stats["reason_code"], "guard.checkpoint.stable.confirm_execute")
+            self.assertEqual(v1_stats["outcome"], "ready")
+            self.assertEqual(v1_stats["fallback_path"], "repeat_current_checkpoint")
+            self.assertEqual(v1_stats["checkpoint_kind"], "confirm_execute")
             rendered = render_runtime_output(
                 result,
                 brand="demo-ai",
@@ -2190,11 +2209,56 @@ class EngineIntegrationTests(unittest.TestCase):
             self.assertIn(first.plan_artifact.plan_id, history_index)
             self.assertNotIn("当前暂无已归档方案。", history_index)
 
+            archived_metadata = _load_markdown_front_matter(workspace / result.plan_artifact.path / "tasks.md")
+            self.assertEqual(archived_metadata["lifecycle_state"], "archived")
+            self.assertEqual(
+                archived_metadata["knowledge_sync"],
+                {
+                    "project": "skip",
+                    "background": "skip",
+                    "design": "skip",
+                    "tasks": "skip",
+                },
+            )
+            self.assertTrue(archived_metadata["archive_ready"])
+            self.assertEqual(archived_metadata["plan_status"], "completed")
+            self.assertNotIn("blueprint_obligation", archived_metadata)
+
             blueprint_readme = (workspace / ".sopify-skills" / "blueprint" / "README.md").read_text(encoding="utf-8")
             self.assertIn("状态: L3 history-ready", blueprint_readme)
             self.assertIn("../history/index.md", blueprint_readme)
             self.assertIn("最近归档", blueprint_readme)
             self.assertIn("当前活动 plan：暂无", blueprint_readme)
+
+    def test_finalize_normalizes_legacy_archive_front_matter_projection(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+
+            first = run_runtime("~go plan 补 runtime 骨架", workspace_root=workspace, user_home=workspace / "home")
+            self.assertIsNotNone(first.plan_artifact)
+
+            tasks_path = workspace / first.plan_artifact.path / "tasks.md"
+            tasks_text = tasks_path.read_text(encoding="utf-8")
+            tasks_text = tasks_text.replace(
+                "archive_ready: false\n",
+                "blueprint_obligation: review_required\narchive_ready: false\nplan_status: design_active\n",
+            )
+            tasks_path.write_text(tasks_text, encoding="utf-8")
+
+            result = run_runtime("~go finalize", workspace_root=workspace, user_home=workspace / "home")
+
+            archived_metadata = _load_markdown_front_matter(workspace / result.plan_artifact.path / "tasks.md")
+            self.assertEqual(
+                archived_metadata["knowledge_sync"],
+                {
+                    "project": "skip",
+                    "background": "skip",
+                    "design": "skip",
+                    "tasks": "skip",
+                },
+            )
+            self.assertEqual(archived_metadata["plan_status"], "completed")
+            self.assertNotIn("blueprint_obligation", archived_metadata)
 
     def test_finalize_blocks_full_plan_without_deep_blueprint_update(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -2507,7 +2571,11 @@ class EngineIntegrationTests(unittest.TestCase):
             self.assertEqual(resumed.plan_artifact.path, plan_artifact.path)
             self.assertEqual(resumed.recovered_context.current_run.stage, "ready_for_execution")
             self.assertEqual(resumed.recovered_context.current_run.execution_gate.gate_status, "ready")
-            self.assertEqual(resumed.handoff.required_host_action, "review_or_execute_plan")
+            self.assertEqual(resumed.handoff.required_host_action, "confirm_execute")
+            self.assertEqual(
+                resumed.handoff.artifacts["checkpoint_request"]["checkpoint_kind"],
+                "execution_confirm",
+            )
             self.assertFalse((workspace / ".sopify-skills" / "state" / "current_decision.json").exists())
 
     def test_engine_handoff_contracts_cover_compare_and_replay(self) -> None:

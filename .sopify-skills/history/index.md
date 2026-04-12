@@ -4,6 +4,7 @@
 
 ## 索引
 
+- `2026-04-12` [`20260403_plan-a-risk-adaptive-interruption`](2026-04/20260403_plan-a-risk-adaptive-interruption/) - standard - Plan A 子计划：风险自适应打断与局部语义收敛
 - `2026-03-28` [`20260327_hotfix`](2026-03/20260327_hotfix/) - standard - 状态机 Hotfix（B1 前置门禁）
 - `2026-03-26` [`20260326_planning-materialization-decoupling`](2026-03/20260326_planning-materialization-decoupling/) - standard - 规划流程与方案包物化解耦
 - `2026-03-26` [`20260325_one-liner-distribution`](2026-03/20260325_one-liner-distribution/) - standard - 任务清单: one-liner-distribution
