@@ -141,6 +141,21 @@ def build_runtime_handoff(
         if note not in normalized_notes:
             normalized_notes = (*normalized_notes, note)
 
+    observability = {
+        "source": "runtime_handoff",
+        "generated_at": _iso_now(),
+        "request_excerpt": _summarize_request_text(decision.request_text),
+        "request_sha1": _stable_request_sha1(decision.request_text),
+        "decision_reason": decision.reason,
+        "required_host_action": required_host_action,
+    }
+    v1_stats = _build_v1_observability_stats(
+        required_host_action=required_host_action,
+        artifacts=artifacts,
+    )
+    if v1_stats is not None:
+        observability["v1_stats"] = v1_stats
+
     return RuntimeHandoff(
         schema_version=HANDOFF_SCHEMA_VERSION,
         route_name=decision.route_name,
@@ -152,14 +167,7 @@ def build_runtime_handoff(
         recommended_skill_ids=tuple(decision.candidate_skill_ids),
         artifacts=artifacts,
         notes=normalized_notes,
-        observability={
-            "source": "runtime_handoff",
-            "generated_at": _iso_now(),
-            "request_excerpt": _summarize_request_text(decision.request_text),
-            "request_sha1": _stable_request_sha1(decision.request_text),
-            "decision_reason": decision.reason,
-            "required_host_action": required_host_action,
-        },
+        observability=observability,
     )
 
 
@@ -212,6 +220,8 @@ def _required_host_action(
 ) -> str:
     route_name = decision.route_name
     if route_name == "plan_only":
+        if _should_use_execution_confirm_handoff(current_run):
+            return "confirm_execute"
         return "review_or_execute_plan"
     if route_name == "plan_proposal_pending":
         return "confirm_plan_package"
@@ -246,6 +256,12 @@ def _required_host_action(
     if route_name == "consult":
         return "continue_host_consult"
     return "continue_host_workflow"
+
+
+def _should_use_execution_confirm_handoff(current_run: RunState | None) -> bool:
+    if current_run is None:
+        return False
+    return str(current_run.stage or "").strip() in {"ready_for_execution", "execution_confirm_pending"}
 
 
 def _collect_handoff_artifacts(
@@ -414,7 +430,7 @@ def _collect_handoff_artifacts(
             resume_context=getattr(current_decision, "resume_context", None),
             phase=getattr(current_decision, "phase", None),
         )
-    elif decision.route_name == "execution_confirm_pending" and current_plan is not None and execution_summary_payload is not None:
+    elif required_host_action == "confirm_execute" and current_plan is not None and execution_summary_payload is not None:
         artifacts["checkpoint_request"] = checkpoint_request_from_execution_confirm(
             config=config,
             decision=decision,
@@ -557,6 +573,40 @@ def _attach_v1_guardrail_artifacts(
         artifacts["vnext_phase_boundary_error"] = str(exc)
         return
     artifacts["vnext_phase_boundary"] = phase_boundary.to_dict()
+
+
+def _build_v1_observability_stats(
+    *,
+    required_host_action: str,
+    artifacts: Mapping[str, Any],
+) -> Mapping[str, str] | None:
+    guard = artifacts.get("deterministic_guard")
+    if not isinstance(guard, Mapping):
+        return None
+
+    checkpoint_kind = str(guard.get("checkpoint_kind") or "").strip() or str(
+        required_host_action or ""
+    ).strip()
+    truth_status = str(guard.get("truth_status") or "").strip()
+    unresolved_outcome_family = str(guard.get("unresolved_outcome_family") or "").strip()
+    fallback_path = ""
+    outcome = "ready"
+    if truth_status != "stable":
+        outcome = unresolved_outcome_family or "fail_closed"
+        fallback_path = str(guard.get("fallback_action") or "").strip()
+    else:
+        resolution_planner = artifacts.get("resolution_planner")
+        if isinstance(resolution_planner, Mapping):
+            default_no_candidate = resolution_planner.get("default_no_candidate_recovery")
+            if isinstance(default_no_candidate, Mapping):
+                fallback_path = str(default_no_candidate.get("fallback_action") or "").strip()
+
+    return {
+        "reason_code": str(guard.get("reason_code") or "").strip(),
+        "outcome": outcome,
+        "fallback_path": fallback_path or "none",
+        "checkpoint_kind": checkpoint_kind or "unknown",
+    }
 
 
 def _should_emit_handoff(*, decision: RouteDecision, current_run: RunState | None, current_plan: PlanArtifact | None) -> bool:

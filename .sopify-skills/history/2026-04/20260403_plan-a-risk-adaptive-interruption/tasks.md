@@ -2,15 +2,14 @@
 plan_id: 20260403_plan-a-risk-adaptive-interruption
 feature_key: plan-a-risk-adaptive-interruption
 level: standard
-lifecycle_state: active
+lifecycle_state: archived
 knowledge_sync:
-  project: review
-  background: review
-  design: review
-  tasks: review
-blueprint_obligation: review_required
-archive_ready: false
-plan_status: design_active
+  project: skip
+  background: skip
+  design: skip
+  tasks: skip
+archive_ready: true
+plan_status: completed
 ---
 
 # 任务清单: 局部语义收口方案 | 风险自适应打断与局部语义分类收敛
@@ -18,13 +17,94 @@ plan_status: design_active
 ## 当前状态
 
 - 本 plan 的 A/B/C 治理闭环已收口，已达到 `Ready-for-V1-Execution`；后续允许按 v1 file map / allowlist 进入受控 implementation，不再把 V1 阻断项停留在纯设计收敛。
-- 当前 session-scope handoff 已恢复为 `review_or_execute_plan`，并给出 `run_stage=ready_for_execution`；这是 runtime 当前轮的 plan review / execution confirm 入口，不等同于本清单中的里程碑 `Ready-for-V1-Execution`。
-- front matter 中的 `plan_status: design_active` 继续表示该方案包尚未 finalize / archive，且仍承载 deferred 账本；它不否定 `Ready-for-V1-Execution` 已达成。
-- 全局 `current_run / current_handoff / current_decision` 仍保留旧的 `decision_pending / auth_boundary` carrier；该现象应视为 `6.4~6.6 / 19.x` 的 legacy/quarantine debt，而不是重新打开认证边界拍板。
+- 归档前最后一份 active truth 已收敛为 execution-confirm checkpoint：`current_run.stage=execution_confirm_pending`、`current_handoff.required_host_action=confirm_execute`、`checkpoint_request.checkpoint_kind=execution_confirm`；这表示 runtime 在 finalize 前已经进入执行前确认入口，不等同于本清单中的里程碑 `Ready-for-V1-Execution`。
+- `~go finalize` 已执行完成；plan 已迁移至 `history/`，blueprint / history 索引已对齐，活动 state 已清空。
+- archived front matter 已收敛为 `knowledge_sync=skip`、`plan_status=completed`、`archive_ready=true`，本 plan 不再保留“设计中/待评审”语义。
+- 此前全局 `current_run / current_handoff / current_decision` 的旧 `decision_pending / auth_boundary` carrier 已通过 quarantine escape hatch 从 active truth 中移除；`6.4~6.6 / 19.x` 保留为审计/回放口径，不再作为当前阻断。
 - P0 底座已扩展并已验证：`decision_tables + signal_priority_table + embedded failure_recovery_table + side_effect_mapping_table + host_message_templates + schema + A-1~A-8 case matrix + unittest/CI/preflight` 已资产化收口；A/B/C 对应的 PR 模板、commit trailer 与 CI/preflight 强检也已接通。
 - `12.x / 13.2~13.4 / 14.6 / 15.7` 继续归入 `Ready-for-V2-Trial`；`14.1 / 14.2 / 14.7` 保留为分支治理账本项，不再阻断本次 v1 patch release 口径。
 - 后续文档更新以实施期账本维护为主，不再阻断 v1 implementation 启动。
 - `feature/context-boundary-core` 的历史 spike 身份仍保留为 `tracked spike / non-checkpoint-credit / no runtime wiring`；但其资产已通过 A/B/C 治理门并并入当前单一账本。
+
+## V1 收尾 Checklist（2026-04-11 对齐）
+
+> 说明：本节用于区分 `Ready-for-V1-Execution`、`Implementation-Closed`、`State-Clean`、`Finalized` 四层口径。
+> 其中 `Ready-for-V1-Execution` 只表示允许进入受控 implementation，不等同于 V1 已真实收尾。
+
+### 1. V1-Execution-Ready
+
+硬门槛：
+
+- Checkpoint A/B/C 已通过，满足 `Ready-for-V1-Execution` 的 Acceptance Gate。
+- runtime 当前活动真相显示 `gate_status=ready`、`next_required_action=confirm_execute`、`run_stage=ready_for_execution`。
+
+软门槛：
+
+- handoff 对外摘要与 execution gate 主结论一致，且不会把遗留 checkpoint carrier 误读为新的执行阻断。
+
+当前状态：
+
+- 硬门槛已达成。
+- 软门槛已达成；active handoff 与 execution gate 已对齐到同一 `confirm_execute` 真相。
+
+### 2. V1-Implementation-Closed
+
+硬门槛：
+
+- 实现仅落在 v1 allowlist：`runtime/action_projection.py`、`runtime/context_builder.py`、`runtime/context_v1_scope.py`、`runtime/deterministic_guard.py`、`runtime/handoff.py`、`runtime/resolution_planner.py`，以及配套测试 `tests/test_context_v1_scope.py`、`tests/test_runtime_engine.py`。
+- observe-only surfaces 保持只读，不越界修改。
+- scope guard / runtime 回归测试通过。
+- `13.1` 的 v1 基础统计口径（`reason_code / outcome / fallback_path / checkpoint_kind`）完成收口。
+
+软门槛：
+
+- rollout / rollback 说明可回放，可说明“本轮改了什么 / 没改什么”。
+
+当前状态：
+
+- 已达成。
+- allowlist、observe-only 边界、`13.1` 基础统计口径与回归验证均已完成。
+
+### 3. V1-State-Clean
+
+硬门槛：
+
+- `current_run / current_handoff / current_decision` 对外只表达一套活跃事实。
+- 不再出现一边显示 `confirm_execute`，另一边仍保留旧 `decision_pending / auth_boundary` 阻断 carrier 的情况。
+- legacy/quarantine debt 已迁移为非活跃债务载体，或被明确清理。
+
+软门槛：
+
+- 重复进入 gate 时，无需依赖人工解释“这是旧 carrier”，系统可稳定返回同一执行真相。
+
+当前状态：
+
+- 已达成。
+- 当前 active `current_run / current_handoff / current_decision` 已对齐为单一 execution-confirm 真相；重复进入 gate 可稳定返回 `confirm_execute`，无需再依赖人工解释旧 carrier。
+
+### 4. V1-Finalized
+
+硬门槛：
+
+- `knowledge_sync` 不再为 `review`。
+- `plan_status` 不再为 `design_active`。
+- `archive_ready=true`。
+- blueprint / history / finalize 流程完成，plan 从“设计中/待评审”切换为“已收口/可归档真相”。
+
+软门槛：
+
+- 后续读者无需再读取 session state 才能理解 V1 的收口结论、遗留债与进入 v2 的前提。
+
+当前状态：
+
+- 已达成。
+- archived front matter、history 索引与 blueprint README 已收敛到同一份 finalized 真相；后续读者无需再回读旧 session state 才能理解 V1 收口结论。
+
+### 建议先后顺序
+
+1. 固化 `V1-Execution-Ready / V1-Implementation-Closed / V1-State-Clean` 为已完成前提，不再重复回退讨论。
+2. `V1-Finalized` 已完成；若继续推进，只进入 `Ready-for-V2-Trial` 债务，不再回滚到 V1 finalize 口径。
+3. `13.2~13.4 / 14.6 / 15.7` 继续留在 `Ready-for-V2-Trial`，不回灌到本轮 V1 收口。
 
 **导航：** Checkpoint A 前的颗粒度补齐范围，以 design.md §分支拆分、分批合并与 Checkpoint 卡点 和各 Checkpoint 必填决策为准；本任务清单各条任务是执行真相源。
 
@@ -244,7 +324,7 @@ plan_status: design_active
 
 ### 13. 可观测性拆分
 
-- [ ] 13.1 v1 先定义 `reason_code / outcome / fallback_path / checkpoint_kind` 的基础统计口径
+- [x] 13.1 v1 先定义 `reason_code / outcome / fallback_path / checkpoint_kind` 的基础统计口径
 - [ ] 13.2 vNext 再补 `tokens / latency / cost / stage1_vs_stage2` 的预算与 rollout 观察项
 - [ ] 13.3 明确 `signal.* / recovery.* / effect.*` 三层 `reason_code` 如何支持 rollout / rollback 与回归对比
 - [ ] 13.4 冻结 post-classification 观测指标：`classifier_no_value_rate / projection_reject_after_classifier_rate / effect_reject_after_classifier_rate`
