@@ -962,6 +962,7 @@ if artifacts.get("finalize_status") == "completed":
         artifacts["blueprint_enhancer_refresh"] = {
             "recommended": True,
             "reason": "plan_finalized",
+            "trigger": "enabled_enhancer_config_present",
             "command": "python3 scripts/blueprint_enhance.py",
         }
 ```
@@ -977,6 +978,7 @@ if artifacts.get("finalize_status") == "completed":
     "blueprint_enhancer_refresh": {
       "recommended": true,
       "reason": "plan_finalized",
+      "trigger": "enabled_enhancer_config_present",
       "command": "python3 scripts/blueprint_enhance.py"
     }
   }
@@ -988,6 +990,10 @@ if artifacts.get("finalize_status") == "completed":
 > - engine.py 传递结果 + 条件化人类提示
 > - handoff.py 暴露机器可读的 stale signal
 > - 宿主/CI 自行决定是否触发（本期不自动执行）
+
+> **`trigger` 字段约定**：`reason` 是生命周期事件（plan_finalized / staleness_check），
+> `trigger` 是判定原因（enabled_enhancer_config_present / enhancer_output_stale）。
+> 宿主按 `trigger` 分支处理，不依赖 artifact 键的有无推断语义。
 
 #### 演进路径
 

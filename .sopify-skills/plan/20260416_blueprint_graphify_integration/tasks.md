@@ -188,9 +188,9 @@ archive_ready: false
     - 不 import enhancer registry，不碰 graphify availability
   - handoff.py：`_collect_handoff_artifacts()` 在 finalize_status == "completed" 后补 artifact
     ```json
-    {"blueprint_enhancer_refresh": {"recommended": true, "reason": "plan_finalized", "command": "..."}}
+    {"blueprint_enhancer_refresh": {"recommended": true, "reason": "plan_finalized", "trigger": "enabled_enhancer_config_present", "command": "..."}}
     ```
-  - notes 给人看，artifacts 给机器读
+  - notes 给人看，artifacts 给机器读（宿主按 `trigger` 字段分支处理）
   - runtime 不自动执行 enhancer（设计原则 6）
 
 - [ ] 3.3 端到端验证
