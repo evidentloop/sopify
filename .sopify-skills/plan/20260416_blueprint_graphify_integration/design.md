@@ -24,6 +24,11 @@
    但配置错误（未注册的 enhancer 名、私有键类型不合法）直接 raise（fail-closed），
    不让拼写错误静默通过。
 
+6. **信号暴露，不自动执行**
+   runtime 不自动执行 enhancer 编排脚本。finalize 等生命周期事件只通过
+   handoff artifact 暴露 stale/recommended-refresh 信号，由宿主/CI 决定是否触发。
+   这保持 runtime 不依赖 enhancer 第三方库的边界。
+
 ## 配置形态
 
 ### 用户面
@@ -917,15 +922,82 @@ if cluster_backend == "louvain" and strict_mode:
 | Plan Modified | mtime 变化 → 重提取 | 下次手动 run |
 | Plan Finalized | plan/ → history/ → L2 节点消失、L3 节点出现 | finalize 后提示 |
 
-### Finalize 提示
+### Finalize 触发机制（A + C-lite）
 
-```
-Plan finalized. Run 'python3 scripts/blueprint_enhance.py' to update the blueprint.
-```
-仅存在已启用增强器时显示。不自动触发。
+**方案选择**：runtime 不自动执行 enhancer（见设计原则 6），采用双通道信号：
 
-> 本期仅可见性提示，不提供结构化 stale/freshness gate。
-> 后续可在 state/ 或 .meta.json 中记录 enhancer freshness。
+- **notes（人看）**：engine.py finalize_active 分支末尾，条件化追加提示
+- **artifacts（机器读）**：handoff.py `_collect_handoff_artifacts()` 补结构化标记
+
+#### engine.py 条件化 note
+
+```python
+# engine.py — finalize_active 分支末尾（L722 之后）
+if finalized.archived_plan is not None:
+    has_enabled = any(
+        isinstance(cfg, Mapping) and cfg.get("enabled", False)
+        for cfg in config.blueprint_enhancers.values()
+    )
+    if has_enabled:
+        notes.append(
+            "Plan finalized. Run 'python3 scripts/blueprint_enhance.py' "
+            "to update the blueprint."
+        )
+```
+
+> 只读 `config.blueprint_enhancers`（已在 RuntimeConfig），不 import enhancer registry，
+> 不碰 graphify availability。判断口径：有已启用 enhancer 配置 = 推荐刷新。
+
+#### handoff.py 结构化 artifact
+
+```python
+# handoff.py — _collect_handoff_artifacts() 
+# 在 finalize_status == "completed" 分支之后（L348 之后）
+if artifacts.get("finalize_status") == "completed":
+    has_enabled = any(
+        isinstance(cfg, Mapping) and cfg.get("enabled", False)
+        for cfg in config.blueprint_enhancers.values()
+    )
+    if has_enabled:
+        artifacts["blueprint_enhancer_refresh"] = {
+            "recommended": True,
+            "reason": "plan_finalized",
+            "command": "python3 scripts/blueprint_enhance.py",
+        }
+```
+
+宿主收到的 handoff：
+
+```json
+{
+  "required_host_action": "finalize_completed",
+  "artifacts": {
+    "finalize_status": "completed",
+    "archived_plan_path": "history/2026-04/plan_id",
+    "blueprint_enhancer_refresh": {
+      "recommended": true,
+      "reason": "plan_finalized",
+      "command": "python3 scripts/blueprint_enhance.py"
+    }
+  }
+}
+```
+
+> **职责分层**：
+> - `finalize_plan()` 纯 finalize，不知道 enhancer
+> - engine.py 传递结果 + 条件化人类提示
+> - handoff.py 暴露机器可读的 stale signal
+> - 宿主/CI 自行决定是否触发（本期不自动执行）
+
+#### 演进路径
+
+| 阶段 | 能力 | 位置 |
+|---|---|---|
+| 当前（Phase 3.2） | finalize 后 notes + artifact 标记 | engine.py + handoff.py |
+| Phase 4.4 | freshness gate：enhancer 产物 stale 时 state/ 记录 | runtime/gate.py |
+| Phase 4+ | 宿主/CI 根据 stale signal 自动排队执行 | 宿主侧 |
+
+> 不在 runtime 内核实现"自动执行外部可选工具"。
 
 ## 版本兼容策略
 

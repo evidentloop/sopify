@@ -182,10 +182,16 @@ archive_ready: false
 
 - [ ] 3.1 验证 plan/history .md 入图（L2/L3 层级正确）
 
-- [ ] 3.2 finalize 可见性提示（仅提示，无 stale gate）
-  ```
-  Plan finalized. Run 'python3 scripts/blueprint_enhance.py' to update the blueprint.
-  ```
+- [ ] 3.2 finalize 触发机制（A + C-lite）
+  - engine.py：finalize_active 分支末尾，条件化 `notes.append("...")`
+    - 判断口径：`config.blueprint_enhancers` 中有 `enabled: true` 的 enhancer
+    - 不 import enhancer registry，不碰 graphify availability
+  - handoff.py：`_collect_handoff_artifacts()` 在 finalize_status == "completed" 后补 artifact
+    ```json
+    {"blueprint_enhancer_refresh": {"recommended": true, "reason": "plan_finalized", "command": "..."}}
+    ```
+  - notes 给人看，artifacts 给机器读
+  - runtime 不自动执行 enhancer（设计原则 6）
 
 - [ ] 3.3 端到端验证
   - 创建 plan → run → L2 节点入图
