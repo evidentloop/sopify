@@ -29,7 +29,7 @@ Sopify 当前的核心价值已经比较清晰：它把 AI 编程从一次性对
 - review 输入应是任务、证据、diff、测试结果，而不是整段历史自我解释；
 - 审查结论需要结构化，才能进入后续 gate / checkpoint / replay / policy。
 
-因此，本次要设计的不是 `~compare` 的又一个变体，而是一个以 **`sopify-cross-review`** 为产品名、以 **cross-review** 为能力名、以 **verification loop** 为内核语义的独立验证产品，并允许：
+因此，本次要设计的不是 `~compare` 的又一个变体，而是一个以 **`CrossReview`** 为产品品牌名、以 **cross-review** 为能力名、以 **verification loop** 为内核语义的独立验证产品，并允许：
 
 1. 作为独立产品或独立 skill 使用；
 2. 被 Sopify 在 analyze / design / develop 阶段按 policy 集成；
@@ -109,46 +109,29 @@ Sopify 当前的核心价值已经比较清晰：它把 AI 编程从一次性对
 4. 如何在正确率与成本之间建立可配置 policy，而不是默认全量开启。
 5. 如何把评审结果沉淀为 plan / history 中可审计的正式资产，而不是只留在 state 或会话里。
 
-## 命名候选与判断
+## 命名决策（已拍板）
 
-当前可选命名有两个主方向：
+> **状态：已拍板，不再是候选。**
 
-### 方案 A: `cross-review`
+本方案采用三层命名体系，各层职责已明确：
 
-优点：
-- 更贴近用户心智，容易理解为“独立复核 / 交叉审查”。
-- 能自然表达“同模型新 session”与“双模型交叉看”这两种模式。
-- 与代码、方案、回答、设计都兼容，不局限于 develop。
+| 层 | 名字 | 说明 |
+|---|---|---|
+| 品牌名 / repo | `CrossReview` / `cross-review` | 宿主中立，不带 sopify- 前缀 |
+| 用户面能力名 | `cross-review` | 命令名、README 主标题、文档标题 |
+| 架构内核概念 | `verification loop` | 设计文档用语，类比 Claude 的 query loop，不作为用户面命令名 |
+| config key | `cross_review` | snake_case，与 `multi_model` 并列 |
 
-缺点：
-- 名字偏交互层，内核感稍弱。
-- 如果未来扩展到自动 gate / policy / arbitration，语义略显轻。
+**拍板理由**：
 
-### 方案 B: `verification-loop`
+- 产品的核心差异化是方法本身（交叉 / 独立验证），用方法命名品牌语义准确
+- `CrossReview` 宿主中立，不带 `sopify-` 前缀，避免宿主绑定感
+- `verification loop` 作为架构概念名保留，描述"如何运作"，不暴露给用户
+- repo 命名 `cross-review`（kebab-case），品牌显示名 `CrossReview`（PascalCase），是同一产品的不同格式表达
+- 仓库先放个人 GitHub 孵化，core schema 稳定后再评估迁移 org
 
-优点：
-- 更像一个系统能力，强调“验证闭环”。
-- 和 policy、retry、checkpoint、resume 的关系更自然。
+**不再使用**：`sopify-cross-review` 作为产品名或 repo 名。
 
-缺点：
-- 对用户不够直观，第一眼不如 `cross-review` 易懂。
-- 容易让人误解为只是测试或只和 develop 相关。
-
-### 当前倾向
-
-本方案倾向采用**三层命名**：
-
-- **产品名**：`sopify-cross-review`
-- **用户面能力名**：`cross-review`
-- **内核层描述 / 架构语义**：`verification loop`
-
-也就是：
-
-- 对外产品线名称使用 `sopify-cross-review`；
-- 对外能力描述使用“交叉审查 / cross-review”；
-- 对内把它实现成一个“验证闭环引擎”。
-
-这样既保留了用户心智上的直观性，也让内部架构命名足够系统化。
 
 ## `cross-review`、`code-review` 与 Sopify 的关系判断
 
@@ -173,7 +156,7 @@ Sopify 当前的核心价值已经比较清晰：它把 AI 编程从一次性对
 
 因此，本方案当前建议：
 
-- `sopify-cross-review`：独立产品 / 总能力承载体
+- `CrossReview`：独立产品 / 总能力承载体
 - `cross-review`：产品中的通用 review 能力名
 - `sopify-code-review`：基于 `cross-review` 的代码工件 review 垂直产品
 - Sopify：集成 `cross-review`，并在 design / develop / finalize 阶段分别触发对应 review 模式
@@ -182,29 +165,22 @@ Sopify 当前的核心价值已经比较清晰：它把 AI 编程从一次性对
 
 如果要把 review 正式纳入 plan 生命周期，建议不要只追加零散报告，而是显式定义 review 资产层。
 
-当前建议结构：
+MVP 已拍板资产结构（Q5）：
 
 ```text
 .sopify-skills/plan/YYYYMMDD_feature/
 ├── background.md
 ├── design.md
 ├── tasks.md
-├── review.md                  # review 总索引 / 状态总览 / 决策摘要
-└── reviews/
-    ├── design-review.md       # 设计评审
-    ├── final-audit.md         # 最终审计
-    └── tasks/
-        ├── T1-review.md
-        ├── T2-review.md
-        └── ...
+└── review.md   # 懒加载；首次 review 运行时创建，随 plan 一起进入 history
 ```
 
 设计理由：
 
-1. `review.md` 作为一等 plan 文件，地位与 `background/design/tasks` 平级，负责总览与审计入口。
-2. 详细评审报告放到 `reviews/`，避免单文件膨胀。
-3. `history/` 归档时保留整个 review 目录，形成后验可追踪链。
-4. 运行态 state 仍保留机器事实，但 tracked review 文档承载“交付后仍需可读、可审计”的资产。
+1. `review.md` 单文件，与 `background/design/tasks` 平级，兼顾人类可读与审计可追溯。
+2. 不引入 `reviews/` 子目录（Phase 1 不做，避免过度设计）。
+3. `review.md` 在 finalize 时包含 **finding snapshot**，确保 history 有可审计证据（详见 design.md）。
+4. 运行态 state 只承载机器事实，finalize 后清理；持久证据全部在 `review.md`。
 
 ## 本轮目标
 
@@ -212,71 +188,20 @@ Sopify 当前的核心价值已经比较清晰：它把 AI 编程从一次性对
 2. 明确它和 `~compare`、`develop_quality`、runtime skill、policy gate 的关系。
 3. 明确它是“独立产品内核 + Sopify adapter”而不是 compare 的 prompt 增强。
 4. 明确 `cross-review` 与 `code-review` 的层级关系，以及它们如何进入 Sopify。
-5. 明确 `sopify-cross-review / sopify-code-review / Sopify` 三者的产品层关系。
+5. 明确 `CrossReview / sopify-code-review / Sopify` 三者的产品层关系。
 6. 给出一个便于持续迭代的方案包结构，后续可围绕命名、artifact、schema、集成方式逐步优化。
-
-## 当前收口状态
-
-本方案当前处于**方向已形成、关键命名与 contract 仍待用户拍板**的状态。
-
-### 已形成方向，但尚未视为最终定案
-
-以下内容当前在方案中采用“推荐方向”描述，用于帮助后续讨论，但**不视为最终定案**：
-
-1. 产品层主线倾向为：
-   - `sopify-cross-review` 作为总产品
-   - `cross-review` 作为能力名
-   - `verification loop` 作为内核语义
-
-2. 产品层关系倾向为：
-   - `sopify-cross-review` 为总产品 / 总能力承载体
-   - `sopify-code-review` 为代码工件 vertical
-   - Sopify 集成 `cross-review` 能力，而不是先直接绑定 `sopify-code-review`
-
-3. plan 资产层倾向为：
-   - plan 内新增 `review.md + reviews/`
-   - design / task / final audit 报告都进入 tracked plan asset
-
-4. 仓库形态倾向为：
-   - `sopify-cross-review` 最终适合作为独立仓库演进
-   - 但当前阶段先把 contract、资产层、core / adapter 边界说清楚
-   - 不提前钉死当前就必须分仓
-
-5. 产品尺度倾向为：
-   - `sopify-cross-review` 应明显比 `Sopify` 更小、更集中
-   - 它不是新的 workflow host，而是独立验证内核
-   - 若范围膨胀到 plan lifecycle / gate / handoff / history 主流程，就会与 `Sopify` 边界重叠
-
-6. 集成顺序倾向为：
-   - 第一版优先考虑 `design + develop`
-   - 后续再考虑 `finalize + analyze`
-
-### 必须由用户后续决策的事项
-
-以下事项在你明确确认前，都只允许停留在方案阶段：
-
-1. 是否正式采用 `sopify-cross-review` 作为产品名
-2. 是否固定 `cross-review` 为能力名、`verification loop` 为内核语义名
-3. 是否采用 `cross_review` 作为正式顶层配置键
-4. 是否采用 `sopify-cross-review > sopify-code-review` 的产品层级关系
-5. plan 是否正式新增 `review.md + reviews/` 作为资产层
-6. `sopify-cross-review` 是否最终采用独立仓库形态，以及何时分仓
-7. 第一版 MVP 是否限定为 `plan_package + task_result/code_diff`
-8. 第一版是否先接 `design + develop`
-
-在这些问题未拍板前，本方案中的所有“建议 / 倾向 / 推荐组合”都应视为**可修改假设**，不能直接转为实现约束。
 
 ## 产品尺度定位
 
 当前方案还需要一个明确约束：  
-`sopify-cross-review` 不应该长成另一个 `Sopify`。
+`CrossReview` 不应该长成另一个 `Sopify`。
 
 更准确地说：
 
 - `Sopify` 是工作流宿主，负责完整开发链路的组织与恢复
-- `sopify-cross-review` 是验证内核，负责独立审查、finding、verdict、policy 与审计表达
+- `CrossReview` 是验证内核，负责独立审查、finding、verdict、policy 与审计表达
 
-这意味着 `sopify-cross-review` 的产品尺度应当：
+这意味着 `CrossReview` 的产品尺度应当：
 
 1. **比 Sopify 小**
    - 不承担完整 workflow orchestration
@@ -293,12 +218,12 @@ Sopify 当前的核心价值已经比较清晰：它把 AI 编程从一次性对
 也就是它在产品层应处于中间位置：
 
 ```text
-Sopify > sopify-cross-review > sopify-code-review
+Sopify > CrossReview > sopify-code-review
 ```
 
 这个尺度关系很重要，因为它直接决定：
 
-- 什么能力属于 `sopify-cross-review core`
+- 什么能力属于 `CrossReview core`
 - 什么能力应留在 `Sopify adapter`
 - 什么能力只应该作为 vertical profile 存在
 
@@ -309,7 +234,7 @@ Sopify > sopify-cross-review > sopify-code-review
 当前建议把“独立产品边界”和“当前开发位置”拆开描述：
 
 1. **目标形态**
-   - `sopify-cross-review` 从产品边界上看，最终拥有独立仓库是合理方向
+   - `CrossReview` 从产品边界上看，最终拥有独立仓库是合理方向
 
 2. **当前阶段**
    - 先在现有方案中把命名、contract、资产层、adapter 边界讲清楚
