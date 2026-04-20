@@ -79,7 +79,7 @@
 
 本轮明确不做以下内容：
 
-- 不替代 [default_host_bridge_install](/Users/weixin.li/Desktop/vs-code-extension/sopify-skills/.sopify-skills/plan/20260320_default_host_bridge_install/background.md)
+- 不替代 `default_host_bridge_install`（已弃置，2026-04）
 - 不宣称 prompt-level gate 已达到宿主硬入口级别的严格性
 - 不重写现有 runtime manifest / handoff / checkpoint schema
 - 不在本轮引入新的宿主安装器或插件分发逻辑
