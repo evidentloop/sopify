@@ -117,36 +117,37 @@ Sopify 是 AI 编程工作流的 **control plane**，不是通用 LLM orchestrat
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Host Layer — 宿主执行环境                                     │
-│  Claude Code ✅ │ Codex ✅ │ QCoder 📋 │ Copilot 📋            │
-│  只负责 LLM 执行 + 工具调用                                    │
+│  Host Layer — 宿主执行环境                                      │
+│  Claude Code ✅ │ Codex ✅ │ QCoder 📋 │ Copilot 📋             │
+│  只负责 LLM 执行 + 工具调用                                     │
 │  Convention 模式下只需"会读写 .sopify-skills/ 文件"             │
 ├─────────────────────────────────────────────────────────────────┤
 │  Plugin Layer — 策展集成的外部能力                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐           │
 │  │ CrossReview   │  │ Graphify     │  │ future       │          │
 │  │ 质量验证管线  │  │ 项目图谱     │  │ plugins      │          │
 │  │ advisory /    │  │ advisory     │  │              │          │
 │  │ runtime(冻结) │  │              │  │              │          │
-│  └──────────────┘  └──────────────┘  └──────────────┘          │
-│  接口: skill.yaml manifest + SKILL.md 编排 + 产物归档约定      │
-│  准入: §1.3 三层吸收 + Core/Plugin 准入 4 问                   │
+│  └──────────────┘  └──────────────┘  └──────────────┘           │
+│  接口: skill.yaml manifest + SKILL.md 编排 + 产物归档约定       │
+│  准入: §1.3 三层吸收 + Core/Plugin 准入 4 问                    │
 ├─────────────────────────────────────────────────────────────────┤
 │  Runtime Layer — 可选增强 / 参考实现          ~28K 行 · 可替代  │
-│  gate → router → engine → handoff → checkpoint 状态机          │
-│  提供: 确定性状态门控、审计链、中断恢复、权限边界              │
+│  gate → router → engine → handoff → checkpoint 状态机           │
+│  提供: 确定性状态门控、审计链、中断恢复、权限边界               │
 │  Convention 模式下此层可完全不存在                              │
-├═════════════════════════════════════════════════════════════════╡  ← 此线以下为不可替代稳定内核
-│  Validator Layer — 最小可执行内核              ~2K 行 · 独立交付 │
-│  check (schema 校验) · doctor (状态修复) · archive (归档迁移)  │
-│  只读优先 · 原子写入 · diagnostics                             │
-│  scripts/*.py — 22 个确定性辅助工具，SKILL.md 直接调用        │
+├═════════════════════════════════════════════════════════════════╡
+                                      ↑ 此线以下为不可替代稳定内核
+│  Validator Layer — 最小可执行内核              ~2K 行 · 独立交付│
+│  check (schema 校验) · doctor (状态修复) · archive (归档迁移)   │
+│  只读优先 · 原子写入 · diagnostics                              │
+│  scripts/*.py — 22 个确定性辅助工具，SKILL.md 直接调用          │
 ├─────────────────────────────────────────────────────────────────┤
 │  Protocol Layer — 不可替代的核心               纯文档 · 不可替代│
-│  .sopify-skills/ 目录约定                                      │
-│  plan / state / history / checkpoint schema                    │
-│  SKILL.md 表单式编排标准                                       │
-│  lifecycle 约定 (plan → history → blueprint)                   │
+│  .sopify-skills/ 目录约定                                       │
+│  plan / state / history / checkpoint schema                     │
+│  SKILL.md 表单式编排标准                                        │
+│  lifecycle 约定 (plan → history → blueprint)                    │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -512,7 +513,7 @@ host_support: ["*"]
 │  宿主无关层 (engine / skill / contract / state)      │
 │  · runtime/*.py + .sopify-skills/                    │
 ├──────────────────────────────────────────────────────┤
-│  宿主适配层 (仅此层允许宿主特化)                    │
+│  宿主适配层 (仅此层允许宿主特化)                     │
 │  · installer/hosts/*.py                              │
 │  · 三层抽象: HostAdapter + HostCapability +          │
 │    HostRegistration                                  │
