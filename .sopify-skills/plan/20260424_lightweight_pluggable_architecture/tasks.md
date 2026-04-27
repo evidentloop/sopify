@@ -26,6 +26,7 @@
 
 > **核心原则**：先验证价值，再决定建多少基础设施。
 > **战略方向 (2026-04-26)**：Protocol-first / Runtime-optional。Protocol 提取不与任何 Phase 冲突，Protocol Step 1 为 P1（不抢 P0）。Phase 4a 兼做 Convention 模式首次验证。详见 design.md §1.2。
+> **产品架构方向 (2026-04-27, ADR-020)**：Sopify = 轻量内核 + 可外部化组件生态。Core 只保留协议/状态/权限层；具有独立用户价值的分析/推理能力设计为可外部化组件，CrossReview 是已实现的参考范本。详见 D16。
 
 ### 三阶段总览
 
@@ -314,3 +315,4 @@ P0 任务必须增强至少一项核心能力：adaptive route/workflow、state 
 | D13 | 遗留 surface 退出路径 | ADR-018：改造时必须声明退出路径；frozen surface 不计入 release gate；Trae CN 归档后不作为新宿主示例 |
 | D14 | 分发架构：thin-stub + 集中管理 | ADR-019：项目本地零拷贝，全局 payload 单点管理版本与更新；后续 ADR 接入不得引入本地冷拷贝 |
 | D15 | Phase 0.2-B/C 不触及 V2 classifier | 修正范围锁定 `_is_consultation()` 和 `_estimate_complexity()`；新增 `_STRONG_INTERROGATIVE_PREFIXES` 子集替代宽泛前缀覆盖动作词逻辑；`_SHORT_REQUEST_THRESHOLD = 80`；不改 engine.py、V2 classifier、handoff 契约 |
+| D16 | Sopify 轻量内核 + 可外部化组件生态 | ADR-020：Sopify Core 锁定为协议/状态/权限层（checkpoint 生命周期、handoff 契约、plan/state/history 协议、plugin manifest 接入规则、blueprint 资产链）；分析/推理能力按"可外部化组件"模式设计，不塞进 Core。参考范本：CrossReview（独立 CLI + PyPI + eval，Sopify 只定义调用时机和 verdict→checkpoint 映射）。**外部化判定条件（三者同时满足）**：① ≥2 个非 Sopify 独立消费方；② 稳定 JSON contract（顶层字段只用通用业务概念，Sopify 内部状态只作 `context` 附加字段）；③ 可独立 eval（无需 Sopify 运行时）。**当前组件候选状态**：CrossReview ✅ 已外部化；Action Proposal Engine / Graphify / evaluator / trace-observability 为"设计时预留外部化接口，未外部化"——不提前建项目，等第一个非 Sopify 消费方出现后再立项。|
