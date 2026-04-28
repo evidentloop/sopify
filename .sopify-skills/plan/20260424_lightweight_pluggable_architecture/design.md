@@ -313,12 +313,12 @@ knowledge/ (P2/P3) ─────────│ graph.json (项目图谱)│
 
 | 飞轮环节 | Sopify 架构映射 | 关键 ADR / Phase | 当前状态 |
 |---------|----------------|-----------------|---------|
-| 生产 → 验证 | develop 完成 → SKILL.md 触发 CR CLI | Phase 4a, ADR-004 | 🔶 待 CR release gate |
+| 生产 → 验证 | develop 完成 → SKILL.md 触发 CR CLI | Phase 4a, ADR-004 | 🔶 草拟已完成，待 E2E + 3 项目 dogfood |
 | 验证 → 沉淀 | review-result.json → history/ 归档 | ADR-011 (verdict 映射) | ADR 已定义 |
 | 沉淀 → 知识 | history/ + review-result → knowledge/rules/ | 知识工程 P2 | ⏸️ 延后 |
 | 知识 → 回注 | knowledge/ → design/develop Skill 上下文注入 | 知识工程 P3 | ⏸️ 延后 |
 
-**当前飞轮成熟度：** 生产环 ✅ 运行中 → 验证环 🔶 待闭合 → 知识环 ⏸️ P2/P3 延后（不阻塞前两环）。飞轮的启动策略是**先闭合生产→验证环**，用真实 review-result 数据驱动知识环的优先级决策。
+**当前飞轮成熟度：** 生产环 ✅ 运行中 → 验证环 🔶 Phase 4a 草拟完成、待 dogfood 闭合 → 知识环 ⏸️ P2/P3 延后（不阻塞前两环）。飞轮的启动策略是**先闭合生产→验证环**，用真实 review-result 数据驱动知识环的优先级决策。
 
 #### 1.4.5 ADR 战略拓扑
 
@@ -436,6 +436,7 @@ Sopify 采用 **thin-stub + 集中管理** 分发架构（ADR-019）。项目本
 
 **草拟前置：** CrossReview v0 CLI 可用 (`pip install crossreview`)
 **E2E/dogfood 前置：** CR v0 release gate 通过 + PyPI 可安装 + host-integrated CLI 可用（`pack` / `render-prompt` / `ingest --format human`）；`verify --diff --format human` 仅作为 standalone fallback 校验
+**当前状态 (2026-04-28)：** 草拟前置与 E2E/dogfood 前置均已满足；`.agents/skills/cross-review/` 宿主消费副本与 develop-rules `post_develop` advisory 步骤已落地。剩余工作是端到端验证与 3 项目 dogfood 数据采集。
 **不依赖：** Phase 3 (runtime hook/bridge 接口)，可与 Phase 0-3 并行
 
 **战略双重定位：**

@@ -32,8 +32,8 @@
 
 | 阶段 | 内容 | 时间窗口 |
 |------|------|---------|
-| **阶段 1 — 验证就绪** | Sopify 0.2-B/C + CR v0 → release gate → PyPI | 当前 |
-| **阶段 2 — 价值验证** | Phase 4a advisory + 3 项目 dogfood | CR gate 通过后 |
+| **阶段 1 — 验证就绪** | Sopify 0.2-B/C + CR v0 → release gate → PyPI | CR `0.1.0a1` 已发布并 smoke 通过；Sopify 0.2-B/C 未完成 |
+| **阶段 2 — 价值验证** | Phase 4a advisory + 3 项目 dogfood | 当前下一步 |
 | **阶段 3 — 数据驱动** | advisory 够用 → 继续；不够用 → Phase 1-3 | dogfood 数据后 |
 
 ### 轻量化执行链（已确认）
@@ -81,13 +81,13 @@
 - 若事件早于 Protocol Step 3，最小审核标准为：① 不以扩用户话术白名单为主方案；② 必须评估 action/side_effect/tool input/diff/plan task 至少一类机器事实；③ 缺机器事实、缺 side_effect 或状态不匹配时 fail-close
 - 详见子任务包 `20260417_risk_engine_upgrade/`
 
-**Phase 4a: CrossReview Advisory Plugin + Convention 模式验证** `可先草拟；E2E 待 CR release gate 通过`
-- [ ] T4a.1 创建 `.agents/skills/cross-review/` 目录 (SKILL.md + skill.yaml)
-- [ ] T4a.2 编写 SKILL.md：触发时机 (develop 完成后) + CLI 调用步骤 (默认 `pack -> render-prompt -> 宿主隔离审查 -> ingest --format human`，`verify --diff --format human` 仅为 standalone fallback) + 4 种 verdict 处理
-- [ ] T4a.3 编写 skill.yaml：advisory mode, triggers=["review","cross-review"], host_support=["*"]
+**Phase 4a: CrossReview Advisory Plugin + Convention 模式验证** `草拟已完成；E2E + 3 项目 dogfood 待执行`
+- [x] T4a.1 创建 `.agents/skills/cross-review/` 目录 (SKILL.md + skill.yaml)
+- [x] T4a.2 编写 SKILL.md：触发时机 (develop 完成后) + CLI 调用步骤 (默认 `pack -> render-prompt -> 宿主隔离审查 -> ingest --format human`，`verify --diff --format human` 仅为 standalone fallback) + 4 种 verdict 处理
+- [x] T4a.3 编写 skill.yaml：advisory mode, triggers=["review","cross-review","verify","post_develop"], host_support=["*"]
 - [ ] T4a.4 端到端验证 + 3 项目 dogfood
-- 草拟门槛：CR v0 CLI 可用即可起草 SKILL.md / skill.yaml
-- E2E/dogfood 门槛：CR v0 release gate 通过 + PyPI 可安装 + host-integrated CLI (`pack` / `render-prompt` / `ingest --format human`) 可用；`verify --diff --format human` 仅作为 standalone fallback 校验
+- 草拟门槛：已满足，CR v0 CLI 可用，Sopify 宿主消费副本已落地。
+- E2E/dogfood 门槛：已满足，CR v0 release gate 通过，PyPI `crossreview==0.1.0a1` 可安装，host-integrated CLI (`pack` / `render-prompt` / `ingest --format human`) smoke 通过；`verify --diff --format human` 仅作为 standalone fallback 校验
 - 验证：LLM 读 SKILL.md 后自主调用 CLI；至少 3 个真实项目、至少 2 个 valid issue；误报不阻塞主流程
 
 **Protocol Step 2: Protocol validator CLI** `待需求信号确认`
