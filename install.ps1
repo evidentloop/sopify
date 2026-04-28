@@ -1,7 +1,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$RepoOwner = "sopify-ai"
+$RepoOwner = "evidentloop"
 $RepoName = "sopify"
 $AssetName = "install.ps1"
 $SourceChannel = "dev"

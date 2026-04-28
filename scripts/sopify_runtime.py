@@ -102,7 +102,7 @@ def _render_direct_entry_block(
     print(
         render_runtime_error(
             message,
-            brand=config.brand if config is not None else "sopify-ai",
+            brand=config.brand if config is not None else "evidentloop",
             language=config.language if config is not None else "zh-CN",
             title_color=config.title_color if config is not None else "none",
             use_color=not no_color,

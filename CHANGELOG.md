@@ -6,6 +6,71 @@ This changelog is maintained manually (not auto-generated).
 
 ## [Unreleased]
 
+## [2026-04-28.143230] - 2026-04-28
+
+### Docs
+
+- Refined public documentation:
+  - `CONTRIBUTING.md`
+  - `CONTRIBUTING_CN.md`
+  - `README.md`
+  - `README.zh-CN.md`
+  - `docs/dev/release-process.md`
+
+### Runtime
+
+- Updated runtime internals:
+  - `runtime/cli.py`
+
+### Scripts
+
+- Adjusted maintenance scripts:
+  - `scripts/go_plan_runtime.py`
+  - `scripts/sopify_runtime.py`
+
+### Skills
+
+- Synced prompt-layer skills:
+  - `Claude/Skills/CN/CLAUDE.md`
+  - `Claude/Skills/EN/CLAUDE.md`
+  - `Codex/Skills/CN/AGENTS.md`
+  - `Codex/Skills/EN/AGENTS.md`
+
+### Changed
+
+- Updated project files:
+  - `CHANGELOG.md`
+  - `install.ps1`
+  - `install.sh`
+
+## [2026-04-28.142643] - 2026-04-28
+
+### Docs
+
+- Refined public documentation:
+  - `CONTRIBUTING.md`
+  - `CONTRIBUTING_CN.md`
+  - `README.md`
+  - `README.zh-CN.md`
+  - `docs/dev/release-process.md`
+
+### Runtime
+
+- Updated runtime internals:
+  - `runtime/cli.py`
+
+### Scripts
+
+- Adjusted maintenance scripts:
+  - `scripts/go_plan_runtime.py`
+  - `scripts/sopify_runtime.py`
+
+### Changed
+
+- Updated project files:
+  - `install.ps1`
+  - `install.sh`
+
 ## [2026-04-28.134325] - 2026-04-28
 
 ### Skills

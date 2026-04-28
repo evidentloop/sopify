@@ -66,14 +66,14 @@ python3 scripts/install_sopify.py --target claude:en-US
 - dev / maintainer 远程入口（`raw/main`，不进 README 首屏）：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/sopify-ai/sopify/main/install.sh | \
+curl -fsSL https://raw.githubusercontent.com/evidentloop/sopify/main/install.sh | \
   bash -s -- --target codex:zh-CN
 ```
 
 - public stable 入口（只有在公开 GitHub Release 存在后才启用）：
 
 ```bash
-curl -fsSL https://github.com/sopify-ai/sopify/releases/latest/download/install.sh | \
+curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | \
   bash -s -- --target codex:zh-CN
 ```
 

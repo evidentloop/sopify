@@ -63,14 +63,14 @@ python3 scripts/install_sopify.py --target claude:en-US --workspace /path/to/pro
 - Dev / maintainer remote entry (`raw/main`, not for README first screen):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/sopify-ai/sopify/main/install.sh | \
+curl -fsSL https://raw.githubusercontent.com/evidentloop/sopify/main/install.sh | \
   bash -s -- --target codex:zh-CN
 ```
 
 - Public stable entry (only after a public GitHub Release exists):
 
 ```bash
-curl -fsSL https://github.com/sopify-ai/sopify/releases/latest/download/install.sh | \
+curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | \
   bash -s -- --target codex:zh-CN
 ```
 

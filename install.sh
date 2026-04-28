@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_OWNER="sopify-ai"
+REPO_OWNER="evidentloop"
 REPO_NAME="sopify"
 ASSET_NAME="install.sh"
 SOURCE_CHANNEL="dev"

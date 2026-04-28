@@ -8,7 +8,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
 [![Docs](https://img.shields.io/badge/docs-CC%20BY%204.0-green.svg)](./LICENSE-docs)
-[![Version](https://img.shields.io/badge/version-2026--04--28.134325-orange.svg)](#version-history)
+[![Version](https://img.shields.io/badge/version-2026--04--28.143230-orange.svg)](#version-history)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
 English · [简体中文](./README.zh-CN.md) · [Quick Start](#quick-start) · [Configuration](#configuration) · [Contributors](./CONTRIBUTORS.md)
@@ -50,10 +50,10 @@ This guide focuses on install visibility, verification, and stable first use; re
 
 ```bash
 # Recommended: official stable one-liner
-curl -fsSL https://github.com/sopify-ai/sopify/releases/latest/download/install.sh | bash -s -- --target codex:en-US
+curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | bash -s -- --target codex:en-US
 
 # Two-step install: download first, review, then run
-curl -fsSL -o sopify-install.sh https://github.com/sopify-ai/sopify/releases/latest/download/install.sh
+curl -fsSL -o sopify-install.sh https://github.com/evidentloop/sopify/releases/latest/download/install.sh
 sed -n '1,40p' sopify-install.sh
 bash sopify-install.sh --target codex:en-US
 ```
@@ -61,7 +61,7 @@ bash sopify-install.sh --target codex:en-US
 Windows PowerShell can download the same stable asset and run it locally:
 
 ```powershell
-iwr https://github.com/sopify-ai/sopify/releases/latest/download/install.ps1 -OutFile sopify-install.ps1
+iwr https://github.com/evidentloop/sopify/releases/latest/download/install.ps1 -OutFile sopify-install.ps1
 Get-Content sopify-install.ps1 -TotalCount 40
 .\sopify-install.ps1 --target codex:en-US
 ```

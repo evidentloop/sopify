@@ -106,7 +106,7 @@ grep "SourceChannel\|SourceRef" "$OUT_DIR/install.ps1"
 
 ### 4. 创建 GitHub Release
 
-前往 `https://github.com/sopify-ai/sopify/releases/new`：
+前往 `https://github.com/evidentloop/sopify/releases/new`：
 
 1. Tag：填入 `$TAG`，目标分支选 `main`
 2. Title：`$TAG`（或加可读描述）
@@ -122,7 +122,7 @@ grep "SourceChannel\|SourceRef" "$OUT_DIR/install.ps1"
 ```bash
 # 快速验证（推荐）
 HOME="$(mktemp -d)" bash -c \
-  'curl -fsSL https://github.com/sopify-ai/sopify/releases/latest/download/install.sh | bash -s -- --target codex:zh-CN'
+  'curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | bash -s -- --target codex:zh-CN'
 ```
 
 或用 smoke 脚本：
@@ -191,6 +191,6 @@ python3 scripts/render-release-installers.py --release-tag "$TAG" --output-dir "
 
 # 5. smoke
 HOME="$(mktemp -d)" bash -c \
-  'curl -fsSL https://github.com/sopify-ai/sopify/releases/latest/download/install.sh | bash -s -- --target codex:zh-CN'
+  'curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | bash -s -- --target codex:zh-CN'
 # 确认：source channel: stable，resolved source ref: $TAG
 ```
