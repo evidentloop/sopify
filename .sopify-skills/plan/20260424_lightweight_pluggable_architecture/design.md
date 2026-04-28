@@ -106,6 +106,17 @@ Sopify 是 AI 编程工作流的 **control plane**，不是通用 LLM orchestrat
 
 **CrossReview 边界：** CrossReview 是质量验证管线，不是 Sopify 子模块。Sopify 只吸收调用时机、review-result 资产约定、verdict→checkpoint 映射和归档方式；模型、prompt、eval、发布、Action、MCP 留在 CrossReview 边界内。
 
+**内置 skill 产品化边界：** `runtime/builtin_skill_packages/` 暂不整体拆分为独立产品。短期内它仍是 Sopify 官方 builtin workflow pack，用于提供开箱即用的 analyze / design / develop / kb / templates / model-compare / workflow-learning 能力。未来形态允许部分 builtin skill "毕业"为独立产品或独立协议包，但必须走 §1.3 Plugin 准入与 D16 外部化判定：至少 2 个非 Sopify 消费方、稳定通用 JSON contract、可独立 eval。默认分层如下：
+
+| 类别 | 当前处理 | 未来形态 |
+|------|----------|----------|
+| analyze / design / develop | 保持 Sopify-owned builtin workflow pack | 可提取为官方 Protocol workflow pack，但 canonical ownership 留在 Sopify |
+| kb / templates | 保持 Sopify Protocol 支撑资产 | 可随 Protocol / Validator 分发，不单独产品化 |
+| model-compare | 保持 builtin runtime skill | 有外部需求后可毕业为模型对比 / eval harness plugin |
+| workflow-learning | 保持 builtin workflow skill | 有稳定事件 schema 后可毕业为 trace / replay / decision explanation plugin |
+
+**不影响当前优先级：** 该边界只记录未来产品形态，不新增 Phase、不新增 P0/P1 任务、不改变当前链路。近期仍按既有顺序推进：CrossReview release/Phase 4a、Protocol Step 1、数据驱动决定 Validator/Runtime。
+
 **Inspiration 记录：** 记录于 background.md "外部参考与吸收登记"章节（产品、可借鉴 insight、归类、吸收方式、为什么不进 core / 边界）。
 
 ### 1.4 设计全景图
