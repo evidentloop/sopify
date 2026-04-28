@@ -7,8 +7,8 @@
 ## 总流程
 
 1. 读取任务清单。
-2. 对每个任务按固定质量循环执行：实现修改 -> 发现验证 -> 执行验证 -> 必要时一次重试 -> 两阶段复审。
-3. 仅在质量结果满足最小 contract 后更新状态。
+2. 对每个任务按固定质量循环执行：实现修改 -> 发现验证 -> 执行验证 -> 必要时一次重试 -> 两阶段复审。仅在质量结果满足最小 contract 后更新任务状态。
+3. 若工作区存在 `post_develop` advisory skill 且前置条件满足，执行一次 post-develop advisory review。
 4. 按 `knowledge_sync` 同步知识库与偏好信息。
 5. 迁移方案包到 `history/`。
 6. 输出执行结果摘要。
@@ -142,7 +142,23 @@ Stage B `code_quality` 至少检查：
 - 不破坏既有功能。
 - 保持项目代码风格一致。
 
-## 步骤 3：知识库同步
+## 步骤 3：Post-develop advisory review
+
+开发任务完成、验证与两阶段复审通过后，若工作区 `.agents/skills/` 下存在 triggers 包含 `post_develop` 且 mode 为 `advisory` 的技能，可按其 SKILL.md 执行一次 post-develop advisory review。当前仅 CrossReview Phase 4a 纳入此路径。
+
+触发条件：
+
+1. 所有任务已通过质量循环（Step 2 完成）。
+2. 工作区存在未评审的代码变更（未提交的 diff 非空，或已提交的 review range 非空）。
+3. 对应 advisory skill 的前置条件满足（如 CLI 已安装）。
+
+执行约束：
+
+- 执行失败或结果 `inconclusive` 不阻断主流程。
+- `concerns` / `needs_human_triage` 只展示并等待用户决定，不自动写 checkpoint、不自动改代码。
+- 若前置条件不满足（如 CLI 未安装），跳过并记录原因，不阻断。
+
+## 步骤 4：知识库同步
 
 同步时机：
 
@@ -176,7 +192,7 @@ Stage B `code_quality` 至少检查：
 - 上下文不完整的猜测。
 - 与任务无关的泛化结论。
 
-## 步骤 4：方案迁移
+## 步骤 5：方案迁移
 
 迁移路径：
 

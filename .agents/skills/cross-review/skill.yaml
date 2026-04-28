@@ -1,0 +1,22 @@
+schema_version: "1"
+id: cross-review
+mode: advisory
+names:
+  zh-CN: 交叉评审
+  en-US: cross-review
+descriptions:
+  zh-CN: >-
+    使用上下文隔离的方式自动审查 AI 生成代码变更。
+    审查者在独立 LLM 会话中运行，不继承开发上下文，发现偏差和盲点。
+  en-US: >-
+    Automated cross-review for AI-generated code using context isolation.
+    Reviewer runs in a fresh LLM session with no access to the author's
+    reasoning, catching blind spots and drift.
+triggers:
+  - review
+  - cross-review
+  - verify
+  - post_develop
+host_support:
+  - "*"
+permission_mode: default
