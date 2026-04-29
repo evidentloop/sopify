@@ -13,7 +13,9 @@
 ## 当前焦点
 
 <!-- sopify:auto:focus:start -->
-- 当前活动 plan：暂无。
+- 已完成：`20260428_action_proposal_boundary`（ActionProposal P0 thin slice — dogfood 通过，652 tests passed）
+- 待启动：`20260429_legacy_feature_cleanup`（explain_only_override 删除 + ~compare 移除）
+- 待启动：`20260429_host_prompt_governance`（prompt 瘦身 510→350-400 行 + 准入脚本）
 - history 归档：已可用；最近归档为 `../history/2026-03/20260324_task`。
 <!-- sopify:auto:focus:end -->
 

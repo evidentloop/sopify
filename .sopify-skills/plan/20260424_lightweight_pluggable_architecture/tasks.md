@@ -8,7 +8,9 @@
 | `20260417_ux_perception_tuning` | Phase 0.2 | 活跃 (B/C) | `plan/20260417_ux_perception_tuning/` |
 | `20260418_cross_review_engine` | Phase 4 前置 | 已确认 | `plan/20260418_cross_review_engine/` |
 | `20260416_blueprint_graphify_integration` | Phase 5 基础 | 基础集成活跃；Plugin 封装延后 | `plan/20260416_blueprint_graphify_integration/` |
-| `20260428_action_proposal_boundary` | ADR-017 P0 thin slice | 新建 | `plan/20260428_action_proposal_boundary/` |
+| `20260428_action_proposal_boundary` | ADR-017 P0 thin slice | ✅ P0 完成（dogfood 通过） | `plan/20260428_action_proposal_boundary/` |
+| `20260429_legacy_feature_cleanup` | Legacy 清理 | 新建 | `plan/20260429_legacy_feature_cleanup/` |
+| `20260429_host_prompt_governance` | Prompt 治理 | 新建 | `plan/20260429_host_prompt_governance/` |
 | archived legacy host adapter | 多宿主扩展 | Sunset (ADR-018) | `history/2026-04/` |
 
 ## 旧总纲吸收记录
