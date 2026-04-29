@@ -441,7 +441,6 @@ def bootstrap_workspace(
 
 
 _BLOCKED_BOOTSTRAP_COMMAND_PATTERNS = (
-    re.compile(r"^~compare(?:\s|$)", re.IGNORECASE),
     re.compile(r"^~go\s+finalize(?:\s|$)", re.IGNORECASE),
     re.compile(r"^~go\s+exec(?:\s|$)", re.IGNORECASE),
     re.compile(r"^~summary(?:\s|$)", re.IGNORECASE),

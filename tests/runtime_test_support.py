@@ -31,7 +31,6 @@ from runtime.clarification_bridge import (
     load_clarification_bridge_context,
     prompt_cli_clarification_submission,
 )
-from runtime.compare_decision import build_compare_decision_contract
 from runtime.develop_checkpoint import DevelopCheckpointError, inspect_develop_checkpoint_context, submit_develop_checkpoint
 from runtime.develop_checkpoint import submit_develop_quality_report
 from runtime.develop_quality import build_develop_quality_contract
@@ -114,7 +113,6 @@ from runtime.models import (
     SummarySourceRefs,
     SummarySourceWindow,
 )
-from scripts.model_compare_runtime import make_default_candidate
 
 DEFAULT_RUNTIME_WORKFLOW_TEST_FILE = "tests/test_runtime_engine.py"
 _FOOTER_TIME_LABELS = ("Generated At:", "生成时间:")

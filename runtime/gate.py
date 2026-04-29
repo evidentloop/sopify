@@ -770,7 +770,7 @@ def _finalize_gate_contract(
     return contract
 
 
-_COMMAND_PREFIX_RE = re.compile(r"^~(?:go|compare)(?:\s|$)", re.IGNORECASE)
+_COMMAND_PREFIX_RE = re.compile(r"^~go(?:\s|$)", re.IGNORECASE)
 
 
 def _is_command_prefix_request(request: str) -> bool:

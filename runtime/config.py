@@ -36,13 +36,6 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "level": "auto",
         "directory": ".sopify-skills",
     },
-    "multi_model": {
-        "enabled": False,
-        "trigger": "manual",
-        "timeout_sec": 25,
-        "max_parallel": 3,
-        "include_default_model": True,
-    },
     "advanced": {
         "ehrb_level": "normal",
         "kb_init": "progressive",
@@ -50,11 +43,10 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
 }
 
-_ALLOWED_TOP_LEVEL = {"brand", "language", "output_style", "title_color", "workflow", "plan", "multi_model", "advanced"}
+_ALLOWED_TOP_LEVEL = {"brand", "language", "output_style", "title_color", "workflow", "plan", "advanced"}
 _ALLOWED_WORKFLOW = {"mode", "require_score", "auto_decide", "learning"}
 _ALLOWED_LEARNING = {"auto_capture"}
 _ALLOWED_PLAN = {"level", "directory"}
-_ALLOWED_MULTI_MODEL = {"enabled", "trigger", "timeout_sec", "max_parallel", "include_default_model", "context_bridge", "candidates"}
 _ALLOWED_ADVANCED = {"ehrb_level", "kb_init", "cache_project"}
 
 _ALLOWED_LANGUAGES = {"zh-CN", "en-US"}
@@ -63,7 +55,6 @@ _ALLOWED_TITLE_COLORS = {"green", "blue", "yellow", "cyan", "none"}
 _ALLOWED_WORKFLOW_MODES = {"strict", "adaptive", "minimal"}
 _ALLOWED_CAPTURE_MODES = {"always", "by_requirement", "manual", "off"}
 _ALLOWED_PLAN_LEVELS = {"auto", "light", "standard", "full"}
-_ALLOWED_MULTI_MODEL_TRIGGER = {"manual"}
 _ALLOWED_EHRB_LEVELS = {"strict", "normal", "relaxed"}
 _ALLOWED_KB_INIT = {"full", "progressive"}
 
@@ -115,11 +106,6 @@ def load_runtime_config(
         workflow_learning_auto_capture=str(merged["workflow"]["learning"]["auto_capture"]),
         plan_level=str(merged["plan"]["level"]),
         plan_directory=str(merged["plan"]["directory"]),
-        multi_model_enabled=bool(merged["multi_model"]["enabled"]),
-        multi_model_trigger=str(merged["multi_model"]["trigger"]),
-        multi_model_timeout_sec=int(merged["multi_model"]["timeout_sec"]),
-        multi_model_max_parallel=int(merged["multi_model"]["max_parallel"]),
-        multi_model_include_default_model=bool(merged["multi_model"]["include_default_model"]),
         ehrb_level=str(merged["advanced"]["ehrb_level"]),
         kb_init=str(merged["advanced"]["kb_init"]),
         cache_project=bool(merged["advanced"]["cache_project"]),
@@ -189,19 +175,6 @@ def _validate_config(config: Mapping[str, Any], *, source_paths: tuple[Optional[
         raise ConfigError(f"Unsupported plan.level: {plan['level']}")
     if not isinstance(plan["directory"], str) or not plan["directory"].strip():
         raise ConfigError("plan.directory must be a non-empty string")
-
-    multi_model = _expect_mapping(config.get("multi_model"), path="multi_model")
-    _assert_allowed_keys(multi_model, _ALLOWED_MULTI_MODEL, path="multi_model")
-    if not isinstance(multi_model["enabled"], bool):
-        raise ConfigError("multi_model.enabled must be boolean")
-    if multi_model["trigger"] not in _ALLOWED_MULTI_MODEL_TRIGGER:
-        raise ConfigError(f"Unsupported multi_model.trigger: {multi_model['trigger']}")
-    if not isinstance(multi_model["timeout_sec"], int) or multi_model["timeout_sec"] <= 0:
-        raise ConfigError("multi_model.timeout_sec must be a positive integer")
-    if not isinstance(multi_model["max_parallel"], int) or multi_model["max_parallel"] <= 0:
-        raise ConfigError("multi_model.max_parallel must be a positive integer")
-    if not isinstance(multi_model["include_default_model"], bool):
-        raise ConfigError("multi_model.include_default_model must be boolean")
 
     advanced = _expect_mapping(config.get("advanced"), path="advanced")
     _assert_allowed_keys(advanced, _ALLOWED_ADVANCED, path="advanced")

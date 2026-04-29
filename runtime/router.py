@@ -23,7 +23,6 @@ _COMMAND_PATTERNS = (
     (re.compile(r"^~go\s+plan(?:\s+(?P<body>.+))?$", re.IGNORECASE), "~go plan"),
     (re.compile(r"^~go\s+exec(?:\s+(?P<body>.+))?$", re.IGNORECASE), "~go exec"),
     (re.compile(r"^~go(?:\s+(?P<body>.+))?$", re.IGNORECASE), "~go"),
-    (re.compile(r"^~compare(?:\s+(?P<body>.+))?$", re.IGNORECASE), "~compare"),
 )
 SUPPORTED_ROUTE_NAMES = (
     "plan_only",
@@ -42,7 +41,6 @@ SUPPORTED_ROUTE_NAMES = (
     "decision_resume",
     "state_conflict",
     "summary",
-    "compare",
     "replay",
     "consult",
 )
@@ -183,23 +181,6 @@ _PLAN_MATERIALIZATION_META_DEBUG_PATTERNS = (
     re.compile(r"(为什么|为何|why).*(生成|创建|create).*(plan|方案)", re.IGNORECASE),
     re.compile(r"(不要|别再|不要再|stop|don't).*(生成|创建|create).*(plan|方案)", re.IGNORECASE),
     re.compile(r"(分析下|解释下|看看|review).*(命中|hit).*(guard|plan|方案)", re.IGNORECASE),
-)
-CONSULT_EXPLAIN_ONLY_OVERRIDE_REASON_CODE = "consult_explain_only_override"
-_EXPLAIN_ONLY_NO_CHANGE_PATTERNS = (
-    re.compile(r"(不要改|先别改|别改|不改代码|不改)", re.IGNORECASE),
-    re.compile(r"(do not|don't|no need to)\s+(change|edit|modify|fix|patch)", re.IGNORECASE),
-)
-_EXPLAIN_ONLY_SIGNAL_PATTERNS = (
-    re.compile(r"(说下原因|解释下|解释一下|说明一下|分析下原因|看看原因)", re.IGNORECASE),
-    re.compile(r"(为什么|为何|原因|解释|说明|analy[sz]e|explain|why)", re.IGNORECASE),
-)
-_EXPLAIN_ONLY_REFERENTIAL_PATTERNS = (
-    re.compile(r"(你之前说|这次又|又被|为什么这么判|怎么会这样|为什么会这样)", re.IGNORECASE),
-)
-_EXPLAIN_ONLY_META_DEBUG_PATTERNS = (
-    re.compile(r"(误路由|路由成|proposal|plan_proposal_pending)", re.IGNORECASE),
-    re.compile(r"(runtime\s*gate|gate|router|guard|contract|checkpoint|handoff)", re.IGNORECASE),
-    re.compile(r"(clarification_pending|decision_pending|execution_confirm_pending)", re.IGNORECASE),
 )
 _EXPLICIT_PLAN_PACKAGE_PATTERNS = (
     re.compile(r"(写到|写入|落到).*(background\.md|design\.md|tasks\.md)", re.IGNORECASE),
@@ -391,45 +372,12 @@ class Router:
                 )
             )
 
-        compare_intent = text.startswith("对比分析：") or text.lower().startswith("compare:")
-        if compare_intent:
-            body = text.split("：", 1)[1] if "：" in text else text.split(":", 1)[1]
-            return RouteDecision(
-                route_name="compare",
-                request_text=body.strip(),
-                reason="Matched explicit compare-analysis prefix",
-                candidate_skill_ids=_candidate_skills("compare", skills, "model-compare"),
-                should_recover_context=False,
-                runtime_skill_id=_runtime_skill("compare", skills, "model-compare"),
-            )
-
         plan_meta_debug_route = _classify_plan_materialization_meta_debug(
             text,
             skills=skills,
         )
         if plan_meta_debug_route is not None:
             return self._with_capture(plan_meta_debug_route)
-
-        explain_only_override = detect_explain_only_consult_override(
-            text,
-            command=command_decision.command if command_decision is not None else None,
-            current_run=execution_active_run,
-            current_plan=current_plan,
-            current_plan_proposal=current_plan_proposal,
-            last_route=current_last_route,
-        )
-        if explain_only_override is not None:
-            return self._with_capture(
-                RouteDecision(
-                    route_name="consult",
-                    request_text=text,
-                    reason=explain_only_override["reason"],
-                    complexity="simple",
-                    should_recover_context=current_plan is not None or current_plan_proposal is not None,
-                    candidate_skill_ids=_candidate_skills("consult", skills, "analyze"),
-                    artifacts=explain_only_override["artifacts"],
-                )
-            )
 
         runtime_first_guard = match_runtime_first_guard(text)
         if runtime_first_guard is not None:
@@ -578,15 +526,6 @@ def _classify_command(text: str, *, skills: Iterable[SkillMeta], config: Runtime
                 plan_level="standard",
                 plan_package_policy=_plan_package_policy_for_route("workflow", request_text, config=config),
                 candidate_skill_ids=_candidate_skills("workflow", skills, "analyze", "design", "develop"),
-            )
-        if command == "~compare":
-            return RouteDecision(
-                route_name="compare",
-                request_text=request_text,
-                reason="Matched explicit compare command",
-                command=command,
-                candidate_skill_ids=_candidate_skills("compare", skills, "model-compare"),
-                runtime_skill_id=_runtime_skill("compare", skills, "model-compare"),
             )
     return None
 
@@ -941,45 +880,6 @@ def _classify_plan_materialization_meta_debug(
         should_recover_context=False,
         candidate_skill_ids=_candidate_skills("consult", skills, "analyze"),
     )
-
-
-def detect_explain_only_consult_override(
-    text: str,
-    *,
-    command: str | None = None,
-    current_run=None,
-    current_plan=None,
-    current_plan_proposal=None,
-    last_route: RouteDecision | None = None,
-) -> dict[str, object] | None:
-    normalized = text.strip()
-    if not normalized or command is not None:
-        return None
-    lowered = normalized.lower()
-    if any(keyword.lower() in lowered for keyword in _ACTION_KEYWORDS):
-        return None
-
-    has_no_change = any(pattern.search(normalized) is not None for pattern in _EXPLAIN_ONLY_NO_CHANGE_PATTERNS)
-    has_explain_signal = any(pattern.search(normalized) is not None for pattern in _EXPLAIN_ONLY_SIGNAL_PATTERNS)
-    if not (has_no_change and has_explain_signal):
-        return None
-
-    has_meta_debug_context = any(pattern.search(normalized) is not None for pattern in _EXPLAIN_ONLY_META_DEBUG_PATTERNS)
-    has_referential_signal = any(pattern.search(normalized) is not None for pattern in _EXPLAIN_ONLY_REFERENTIAL_PATTERNS)
-    has_recent_runtime_context = any(
-        value is not None
-        for value in (current_run, current_plan, current_plan_proposal, last_route)
-    )
-    if not has_meta_debug_context and not (has_referential_signal and has_recent_runtime_context):
-        return None
-
-    return {
-        "reason": "Matched explain-only override and bypassed planning materialization",
-        "artifacts": {
-            "consult_mode": "explain_only_override",
-            "consult_override_reason_code": CONSULT_EXPLAIN_ONLY_OVERRIDE_REASON_CODE,
-        },
-    }
 
 
 def _is_consultation(text: str) -> bool:

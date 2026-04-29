@@ -71,22 +71,6 @@
       "target_skill": "design"
     },
     {
-      "id": "explicit_compare_command",
-      "request": "~compare 方案对比",
-      "expected_route": "compare",
-      "expected_candidate_skills": ["model-compare"],
-      "expectation": "positive",
-      "target_skill": "model-compare"
-    },
-    {
-      "id": "compare_prefix_intent",
-      "request": "对比分析：adapter vs direct host coupling",
-      "expected_route": "compare",
-      "expected_candidate_skills": ["model-compare"],
-      "expectation": "positive",
-      "target_skill": "model-compare"
-    },
-    {
       "id": "consult_question_cn",
       "request": "这个方案为什么要这样拆？",
       "expected_route": "consult",
@@ -181,64 +165,6 @@
         "source": "workspace",
         "runtime_entry_required": false
       }
-    }
-  ],
-  "cross_model_cases": [
-    {
-      "id": "default_plus_two_external_candidates",
-      "question": "对比 adapter 与 direct host coupling",
-      "config": {
-        "enabled": true,
-        "timeout_sec": 10,
-        "max_parallel": 3,
-        "include_default_model": true,
-        "context_bridge": false,
-        "candidates": [
-          {
-            "id": "ext-a",
-            "provider": "openai_compatible",
-            "model": "model-a",
-            "enabled": true,
-            "api_key_env": "TEST_KEY_A"
-          },
-          {
-            "id": "ext-b",
-            "provider": "openai_compatible",
-            "model": "model-b",
-            "enabled": true,
-            "api_key_env": "TEST_KEY_B"
-          }
-        ]
-      },
-      "env": {
-        "TEST_KEY_A": "key-a",
-        "TEST_KEY_B": "key-b"
-      },
-      "answers": {
-        "session_default": "Prefer adapter boundary.",
-        "ext-a": "Prefer adapter boundary.",
-        "ext-b": "Direct host coupling is acceptable."
-      },
-      "min_results": 3,
-      "required_reason_codes": ["CONTEXT_BRIDGE_BYPASSED"]
-    },
-    {
-      "id": "feature_disabled_single_model_fallback",
-      "question": "对比 runtime 策略",
-      "config": {
-        "enabled": false,
-        "timeout_sec": 10,
-        "max_parallel": 3,
-        "include_default_model": true,
-        "context_bridge": false,
-        "candidates": []
-      },
-      "env": {},
-      "answers": {
-        "session_default": "Use deterministic default path."
-      },
-      "min_results": 1,
-      "required_reason_codes": ["FEATURE_DISABLED", "INSUFFICIENT_USABLE_MODELS"]
     }
   ]
 }

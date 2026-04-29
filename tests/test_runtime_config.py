@@ -10,7 +10,6 @@ class RuntimeConfigTests(unittest.TestCase):
             self.assertEqual(config.language, "zh-CN")
             self.assertEqual(config.workflow_mode, "adaptive")
             self.assertEqual(config.plan_directory, ".sopify-skills")
-            self.assertFalse(config.multi_model_enabled)
             self.assertTrue(config.brand.endswith("-ai"))
 
     def test_project_config_overrides_global(self) -> None:
@@ -49,5 +48,5 @@ class RuntimeConfigTests(unittest.TestCase):
 
 class YamlLoaderTests(unittest.TestCase):
     def test_quoted_list_item_with_colon_is_parsed_as_string(self) -> None:
-        payload = load_yaml('triggers:\n  - "~compare"\n  - "compare:"\n')
-        self.assertEqual(payload["triggers"], ["~compare", "compare:"])
+        payload = load_yaml('triggers:\n  - "~go"\n  - "status:"\n')
+        self.assertEqual(payload["triggers"], ["~go", "status:"])

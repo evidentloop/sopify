@@ -8,7 +8,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
 [![Docs](https://img.shields.io/badge/docs-CC%20BY%204.0-green.svg)](./LICENSE-docs)
-[![Version](https://img.shields.io/badge/version-2026--04--29.150302-orange.svg)](#version-history)
+[![Version](https://img.shields.io/badge/version-2026--04--29.182018-orange.svg)](#version-history)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
 English · [简体中文](./README.zh-CN.md) · [Quick Start](#quick-start) · [Configuration](#configuration) · [Contributors](./CONTRIBUTORS.md)
@@ -137,9 +137,6 @@ After install, open your selected host inside a repository and paste one of the 
 
 # Replay / retrospective
 "Replay the latest implementation and explain why this approach was chosen"
-
-# Multi-model comparison
-"~compare Compare options for this refactor"
 ```
 
 ### What It Looks Like (Illustrative)
@@ -167,7 +164,7 @@ For runtime gate, checkpoints, and plan lifecycle details, see [How Sopify Works
 ◆ Runtime Gate
 │
 ◇ Routing Decision
-├── ▸ Q&A / compare / replay ─────────→ Direct output
+├── ▸ Q&A / replay ───────────────────→ Direct output
 └── ▸ Code task
     │
     ◇ Complexity Decision
@@ -216,19 +213,12 @@ workflow:
 
 plan:
   directory: .sopify-skills
-
-multi_model:
-  enabled: false
-  include_default_model: true
 ```
 
 Notes:
 
 - `workflow.mode` supports `strict / adaptive / minimal`
 - `plan.directory` only affects newly created knowledge and plan directories
-- `multi_model.enabled` is the global switch; candidates can still be toggled individually
-- `multi_model` is off by default; enable it after model candidates and API keys are configured
-- `multi_model.include_default_model` and `context_bridge` apply by default even when omitted
 
 ## Command Reference
 
@@ -238,34 +228,11 @@ Notes:
 | `~go plan` | Plan only |
 | `~go exec` | Advanced restore/debug entry, not the default user path |
 | `~go finalize` | Close out the current metadata-managed plan |
-| `~compare` | Run multi-model comparison for the same question |
 
-Most users only need `~go`, `~go plan`, and `~compare`; maintainer validation commands live in [CONTRIBUTING.md](./CONTRIBUTING.md).
-
-## Multi-Model Compare
-
-There are only two supported triggers:
-
-- `~compare <question>`
-- `对比分析：<question>` (Chinese-session trigger; same behavior as `~compare`)
-
-Minimum environment variable example:
-
-```bash
-export GLM_API_KEY="your_glm_key"
-export DASHSCOPE_API_KEY="your_qwen_key"
-```
-
-Additional notes:
-
-- Parallel compare requires at least two usable models, otherwise it degrades to single-model mode
-- The current session model is included by default
-- Execution details are defined by `scripts/model_compare_runtime.py` and the sub-skill docs
+Most users only need `~go` and `~go plan`; maintainer validation commands live in [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Sub-skills
 
-- `model-compare`: multi-model parallel comparison
-  Docs: [CN](./Codex/Skills/CN/skills/sopify/model-compare/SKILL.md) / [EN](./Codex/Skills/EN/skills/sopify/model-compare/SKILL.md)
 - `workflow-learning`: replay, retrospective, and step-by-step explanation
   Docs: [CN](./Codex/Skills/CN/skills/sopify/workflow-learning/SKILL.md) / [EN](./Codex/Skills/EN/skills/sopify/workflow-learning/SKILL.md)
 

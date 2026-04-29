@@ -14,7 +14,6 @@ if str(REPO_ROOT) not in sys.path:
 from runtime.config import load_runtime_config
 from runtime.engine import run_runtime
 from runtime.gate import enter_runtime_gate
-from scripts.model_compare_runtime import make_default_candidate
 
 
 SMOKE_REQUEST = "~go plan 重构数据库层"
@@ -83,9 +82,3 @@ class BundleSmokeTests(unittest.TestCase):
 
             self.assertEqual(config.plan_directory, ".runtime")
             self.assertEqual(config.runtime_root, workspace.resolve() / ".runtime")
-
-    def test_helper_available(self) -> None:
-        candidate = make_default_candidate(model="gpt-5")
-
-        self.assertEqual(candidate.id, "session_default")
-        self.assertEqual(candidate.model, "gpt-5")

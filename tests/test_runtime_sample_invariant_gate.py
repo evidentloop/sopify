@@ -78,7 +78,6 @@ class SampleInvariantAssetTests(unittest.TestCase):
         self.assertEqual(
             matrix["v1_gate_cases"],
             [
-                "A-1_explain_only",
                 "A-3_existing_plan_referent",
                 "A-4_cancel_checkpoint",
                 "A-5_mixed_clause_after_comma",
@@ -103,7 +102,6 @@ class SampleInvariantAssetTests(unittest.TestCase):
         )
 
         replay_required = {
-            "A-1_explain_only",
             "A-3_existing_plan_referent",
             "A-4_cancel_checkpoint",
             "A-5_mixed_clause_after_comma",
@@ -144,40 +142,6 @@ class SampleInvariantAssetTests(unittest.TestCase):
 
 
 class SampleInvariantReplayTests(unittest.TestCase):
-    def test_a1_explain_only_examples_hold_no_write_invariant(self) -> None:
-        case = _cases_by_id()["A-1_explain_only"]
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            workspace = Path(temp_dir)
-            router = _router_for_workspace(workspace)
-            skills = _skills_for_workspace(workspace)
-            route = router.classify(case["positive_examples"][0]["utterance"], skills=skills)
-            self.assertEqual(route.route_name, "consult")
-            self.assertEqual(route.artifacts.get("consult_override_reason_code"), "consult_explain_only_override")
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            workspace = Path(temp_dir)
-            result = run_runtime(
-                case["positive_examples"][1]["utterance"],
-                workspace_root=workspace,
-                user_home=workspace / "home",
-            )
-            self.assertEqual(result.route.route_name, "consult")
-            self.assertEqual(result.handoff.required_host_action, "continue_host_consult")
-            self.assertEqual(result.handoff.artifacts.get("consult_override_reason_code"), "consult_explain_only_override")
-            self.assertIsNone(result.recovered_context.current_plan_proposal)
-            self.assertFalse((workspace / ".sopify-skills" / "state" / "current_plan_proposal.json").exists())
-            self.assertEqual(_plan_dir_count(workspace), 0)
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            workspace = Path(temp_dir)
-            router = _router_for_workspace(workspace)
-            skills = _skills_for_workspace(workspace)
-            negative = router.classify(case["negative_examples"][0]["utterance"], skills=skills)
-            boundary = router.classify(case["boundary_examples"][0]["utterance"], skills=skills)
-            self.assertNotEqual(negative.route_name, "consult")
-            self.assertNotEqual(boundary.route_name, "consult")
-
     def test_a3_existing_plan_referent_examples_preserve_checkpoint_identity(self) -> None:
         case = _cases_by_id()["A-3_existing_plan_referent"]
 

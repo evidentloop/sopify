@@ -1,7 +1,6 @@
 schema_version: sample_invariant_gate.v1
 asset_version: 2026-04-09-a1-a8-v1
 v1_gate_cases:
-  - A-1_explain_only
   - A-3_existing_plan_referent
   - A-4_cancel_checkpoint
   - A-5_mixed_clause_after_comma
@@ -13,22 +12,22 @@ backlog_cases:
   - A-2_decision_selection_with_suffix_text
 cases:
   - case_id: A-1_explain_only
-    frozen_role: v1_gate
+    frozen_role: retired_legacy
     contract_ref:
       fail_close_case_id: A-1_explain_only_consult_guard
       required_host_action: answer_questions
       allowed_response_mode: checkpoint_only
     positive_examples:
       - utterance: "解释 runtime gate 为什么这么判，不要改"
-        scenario: router_explain_only_override
+        scenario: retired_explain_only_override
       - utterance: "你之前说：这次又被误路由成 proposal 了。说下原因，不要改。"
-        scenario: runtime_explain_only_consult
+        scenario: retired_explain_only_override
     negative_examples:
       - utterance: "解释原因并修复 router 的这个误判"
-        scenario: router_explain_only_override
+        scenario: retired_explain_only_override
     boundary_examples:
       - utterance: "~go 解释 runtime gate 为什么这么判，不要改"
-        scenario: router_explain_only_override
+        scenario: retired_explain_only_override
     forbidden_side_effects:
       - create_plan_proposal
       - materialize_plan
@@ -212,7 +211,7 @@ cases:
         scenario: active_plan_followup_edit_router
     boundary_examples:
       - utterance: "解释 runtime gate 为什么这么判，不要改"
-        scenario: router_explain_only_override
+        scenario: retired_explain_only_override
     forbidden_side_effects:
       - checkpoint_submission
       - plan_materialization

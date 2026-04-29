@@ -391,9 +391,9 @@ class GateActionProposalTests(unittest.TestCase):
         from runtime.gate import _is_command_prefix_request
         self.assertTrue(_is_command_prefix_request("~go plan 补一下"))
 
-    def test_is_command_prefix_compare(self) -> None:
+    def test_is_not_command_prefix_compare_removed(self) -> None:
         from runtime.gate import _is_command_prefix_request
-        self.assertTrue(_is_command_prefix_request("~compare 对比 A 和 B"))
+        self.assertFalse(_is_command_prefix_request("~compare 对比 A 和 B"))
 
     def test_is_not_command_prefix_normal_request(self) -> None:
         from runtime.gate import _is_command_prefix_request

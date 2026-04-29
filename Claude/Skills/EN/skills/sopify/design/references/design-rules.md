@@ -78,7 +78,6 @@ When the repo contains `scripts/sopify_runtime.py` and the input is the raw requ
 1. Prefer the default runtime entry; do not rewrite it manually into `~go plan`.
 2. When the intent is explicitly `~go plan`, prefer `scripts/go_plan_runtime.py`.
 3. `go_plan_runtime.py` is plan-only and not a generic default entry.
-4. `~compare` still depends on a host-side bridge.
 
 Generate plan files manually only when the runtime helpers are absent.
 

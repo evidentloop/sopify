@@ -1,58 +1,55 @@
 # Design: Legacy Feature Cleanup
 
-> **定位**：`20260424_lightweight_pluggable_architecture` 总纲的独立清理包。
-> **前置**：`20260428_action_proposal_boundary` P0 thin slice 已完成，ActionProposal validator 作为正式保护层替代了 legacy keyword classifier。
-> **目标**：清除被 ActionProposal 替代的 legacy 代码路径和已废弃的 `~compare` 功能模块，降低维护面。
+> **定位**：`20260424_lightweight_pluggable_architecture` 总纲下的独立清理包。
+> **前置**：`20260428_action_proposal_boundary` P0 thin slice 已完成，ActionProposal validator 已成为正式保护层。
+> **结果**：清除被 ActionProposal 替代的 legacy consult override 路径，并移除已废弃的 model compare 功能面。
 
 ---
 
-## 范围
+## 执行结果
 
-### 1. `explain_only_override` 删除
+### 1. Legacy consult override 清理
 
-**现状**：
-- 两个 callsite：
-  - `router.py` classify chain（`_classify_explain_only_override`）
-  - `engine.py` plan materialization bypass（`plan_package_policy == "confirm"` 时跳过物化）
-- 5 个测试：3 in `test_runtime_router.py`、2 in `test_runtime_sample_invariant_gate.py`
-- ActionProposal pre-route interceptor 在 `explain_only_override` 之前就已拦截 `consult_readonly` 请求，使其成为 dead code（对新 host）
+已删除内容：
 
-**删除策略**：
-1. 删除 `router.py` 中 `_classify_explain_only_override` 函数及其在 classify chain 的调用
-2. 删除 `engine.py` 中对应的 plan materialization bypass 分支
-3. 删除 5 个关联测试
-4. 确认不影响 `analysis_only_no_write_brake`（保留，作为信号层）
+- `runtime/router.py` 中的 explain-only override classifier 与 classify chain callsite
+- `runtime/engine.py` 中只服务该 legacy route 的 plan materialization bypass
+- 关联的 router / sample invariant / engine 测试断言
 
-**风险**：中等。engine.py callsite 有独立刹车逻辑（`plan_package_policy == "confirm"`），删除前需确认该分支仅服务于 explain_only_override 路由。
+保留内容：
 
-### 2. `~compare` 模块移除
+- `analysis_only_no_write_brake` 继续作为信号层保留
+- `_is_consultation()` 与其他共享 helper 不在本包调整
+- legacy host 迁移风险不再额外补安全网；当前线上使用方已升级 ActionProposal path
 
-**现状**：
-- `scripts/model_compare_runtime.py`：~1015 行
-- `runtime/compare_decision.py`：~179 行
-- router.py 中 13 处引用、engine.py 中 10 处引用、gate.py 1 处引用
-- 提示层（Codex/SKILL.md 等）中的 `~compare` 命令定义
-- cross-review 已作为独立验证/对比方案替代 `~compare` 的核心场景
+### 2. Model compare 功能面移除
 
-**删除策略**：
-1. 删除 `scripts/model_compare_runtime.py` 和 `runtime/compare_decision.py`
-2. 清理 router.py / engine.py / gate.py 中所有 `~compare` 路由和引用
-3. 清理提示层中 `~compare` 命令定义和文档
-4. 清理 `sopify.config.yaml` 模板中 `multi_model.*` 配置项
-5. 删除关联测试
+已删除内容：
 
-**风险**：低-中。删除面广（~1200 行 + 引用），但都是独立模块，无共享依赖。
+- `scripts/model_compare_runtime.py`
+- `runtime/compare_decision.py`
+- `runtime/builtin_skill_packages/model-compare/skill.yaml`
+- Codex / Claude 双语 `model-compare` 子 Skill 文档
+
+已清理引用：
+
+- router / engine / gate / handoff / output / replay / manifest / builtin catalog
+- runtime config 中的 `multi_model` 字段、默认值与校验
+- README、Codex / Claude host prompt、design-rules 中的命令与配置说明
+- eval gate、SLO、baseline 与同步脚本中的 compare 专项入口
+- 对应测试改为验证功能已移除或删除旧行为断言
 
 ---
 
-## 执行顺序
+## 当前行为
 
-1. `explain_only_override` 先行（blast radius 更小，验证删除流程）
-2. `~compare` 后续（文件量大但逻辑独立）
-3. 每步后跑全量测试确认无回归
+- `~go`、`~go plan`、`~go exec`、`~go finalize` 仍是命令前缀入口。
+- `~compare` 不再是命令前缀；输入会按普通文本进入现有路由。
+- `multi_model.*` 不再是 runtime config 字段。
+- 内置 Skill manifest 不再包含 `model-compare`。
 
 ## 不做
 
-- 不删除 `analysis_only_no_write_brake`（保留作为信号层）
-- 不动 `_is_consultation()` 或其他共享 helper
-- 不做 prompt governance（独立方案包）
+- 不引入 CrossReview 替代口径。
+- 不做 prompt governance；该议题已放入独立 follow-up。
+- 不归档本方案包；本次只完成清理与文档收口，归档可在最终确认后处理。

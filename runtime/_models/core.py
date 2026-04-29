@@ -30,11 +30,6 @@ class RuntimeConfig:
     workflow_learning_auto_capture: str
     plan_level: str
     plan_directory: str
-    multi_model_enabled: bool
-    multi_model_trigger: str
-    multi_model_timeout_sec: int
-    multi_model_max_parallel: int
-    multi_model_include_default_model: bool
     ehrb_level: str
     kb_init: str
     cache_project: bool

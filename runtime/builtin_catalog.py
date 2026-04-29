@@ -89,26 +89,6 @@ _BUILTIN_SPECS: tuple[_BuiltinSkillSpec, ...] = (
         handoff_kind="template",
     ),
     _BuiltinSkillSpec(
-        skill_id="model-compare",
-        names={"zh-CN": "model-compare", "en-US": "model-compare"},
-        descriptions={
-            "zh-CN": "多模型并发对比子技能；由 runtime 负责 compare 路由执行。",
-            "en-US": "Multi-model comparison sub-skill executed by the runtime compare route.",
-        },
-        mode="runtime",
-        runtime_entry="scripts/model_compare_runtime.py",
-        entry_kind="python",
-        handoff_kind="compare",
-        supports_routes=("compare",),
-        triggers=("~compare", "对比分析：", "compare:"),
-        tools=("read", "exec", "network"),
-        disallowed_tools=("write",),
-        allowed_paths=(".",),
-        requires_network=True,
-        host_support=("codex", "claude"),
-        permission_mode="dual",
-    ),
-    _BuiltinSkillSpec(
         skill_id="workflow-learning",
         names={"zh-CN": "workflow-learning", "en-US": "workflow-learning"},
         descriptions={

@@ -18,7 +18,6 @@ from runtime.config import load_runtime_config
 from runtime.router import Router
 from runtime.skill_registry import SkillRegistry
 from runtime.state import StateStore
-from scripts.model_compare_runtime import make_default_candidate, run_model_compare_runtime
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -314,87 +313,6 @@ def _evaluate_navigation(cases: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     }
 
 
-def _reason_code_set(reasons: Sequence[str]) -> set[str]:
-    codes: set[str] = set()
-    for reason in reasons:
-        head = reason.split(":", 1)[0].strip()
-        if head:
-            codes.add(head)
-    return codes
-
-
-def _evaluate_cross_model(cases: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    case_results: list[dict[str, Any]] = []
-    total_results = 0
-    total_success = 0
-    drift_numerator = 0
-    drift_denominator = 0
-
-    for case in cases:
-        case_id = str(case.get("id") or "unknown_cross_model_case")
-        question = str(case.get("question") or "compare baseline")
-        config = dict(case.get("config") or {})
-        env_map = {str(key): str(value) for key, value in dict(case.get("env") or {}).items()}
-        answers = {str(key): str(value) for key, value in dict(case.get("answers") or {}).items()}
-        min_results = int(case.get("min_results") or 1)
-        required_reason_codes = {str(item) for item in (case.get("required_reason_codes") or ()) if str(item)}
-        default_id = str(case.get("default_candidate_id") or "session_default")
-        default_model = str(case.get("default_model") or "session-default")
-
-        def model_caller(candidate: Any, payload: Mapping[str, Any], timeout_sec: int) -> str:
-            _ = payload
-            _ = timeout_sec
-            return answers.get(candidate.id, f"fallback-answer:{candidate.id}")
-
-        output = run_model_compare_runtime(
-            question=question,
-            multi_model_config=config,
-            model_caller=model_caller,
-            workspace_root=REPO_ROOT,
-            default_candidate=make_default_candidate(candidate_id=default_id, model=default_model),
-            env=env_map,
-        )
-
-        successful = [result for result in output.results if result.status == "success"]
-        total_results += len(output.results)
-        total_success += len(successful)
-
-        default_result = next((result for result in successful if result.candidate_id == default_id), None)
-        non_default_success = [result for result in successful if result.candidate_id != default_id]
-        if default_result is not None and non_default_success:
-            mismatch = sum(
-                1
-                for result in non_default_success
-                if result.answer.strip() != default_result.answer.strip()
-            )
-            drift_numerator += mismatch
-            drift_denominator += len(non_default_success)
-
-        reason_codes = _reason_code_set(output.fallback_reasons)
-        missing_reasons = sorted(required_reason_codes - reason_codes)
-        case_passed = (len(output.results) >= min_results) and (not missing_reasons)
-
-        case_results.append(
-            {
-                "id": case_id,
-                "passed": case_passed,
-                "results": [result.to_dict() for result in output.results],
-                "fallback_reasons": list(output.fallback_reasons),
-                "required_reason_codes": sorted(required_reason_codes),
-                "missing_reason_codes": missing_reasons,
-            }
-        )
-
-    success_rate = (total_success / total_results) if total_results else 0.0
-    drift_rate = (drift_numerator / drift_denominator) if drift_denominator else 0.0
-    return {
-        "cases_total": len(case_results),
-        "success_rate": success_rate,
-        "drift_rate": drift_rate,
-        "cases": case_results,
-    }
-
-
 def _apply_quality_gate(
     *,
     report: Mapping[str, Any],
@@ -405,12 +323,10 @@ def _apply_quality_gate(
     discovery_metrics = dict(report.get("discovery") or {})
     selection_metrics = dict(report.get("selection") or {})
     navigation_metrics = dict(report.get("navigation") or {})
-    cross_model_metrics = dict(report.get("cross_model") or {})
 
     discovery_slo = dict(slo.get("discovery") or {})
     selection_slo = dict(slo.get("selection") or {})
     navigation_slo = dict(slo.get("navigation") or {})
-    cross_model_slo = dict(slo.get("cross_model") or {})
 
     def check_min(metric_name: str, value: float, required: float) -> None:
         if value < required:
@@ -438,19 +354,6 @@ def _apply_quality_gate(
         )
     if "min_pass_rate" in navigation_slo:
         check_min("navigation.pass_rate", float(navigation_metrics.get("pass_rate", 0.0)), float(navigation_slo["min_pass_rate"]))
-    if "min_success_rate" in cross_model_slo:
-        check_min(
-            "cross_model.success_rate",
-            float(cross_model_metrics.get("success_rate", 0.0)),
-            float(cross_model_slo["min_success_rate"]),
-        )
-    if "max_drift_rate" in cross_model_slo:
-        check_max(
-            "cross_model.drift_rate",
-            float(cross_model_metrics.get("drift_rate", 0.0)),
-            float(cross_model_slo["max_drift_rate"]),
-        )
-
     return violations
 
 
@@ -458,7 +361,6 @@ def _render_summary(report: Mapping[str, Any], violations: Sequence[str]) -> str
     discovery = dict(report.get("discovery") or {})
     selection = dict(report.get("selection") or {})
     navigation = dict(report.get("navigation") or {})
-    cross_model = dict(report.get("cross_model") or {})
 
     lines = [
         "Skill eval gate report:",
@@ -467,8 +369,6 @@ def _render_summary(report: Mapping[str, Any], violations: Sequence[str]) -> str
         f"  selection.false_trigger_rate: {float(selection.get('false_trigger_rate', 0.0)):.4f}",
         f"  selection.miss_trigger_rate: {float(selection.get('miss_trigger_rate', 0.0)):.4f}",
         f"  navigation.pass_rate: {float(navigation.get('pass_rate', 0.0)):.4f}",
-        f"  cross_model.success_rate: {float(cross_model.get('success_rate', 0.0)):.4f}",
-        f"  cross_model.drift_rate: {float(cross_model.get('drift_rate', 0.0)):.4f}",
     ]
     if violations:
         lines.append("  gate: FAILED")
@@ -509,7 +409,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         "discovery": _evaluate_discovery(tuple(baseline.get("discovery_cases") or ())),
         "selection": _evaluate_selection(tuple(baseline.get("selection_cases") or ())),
         "navigation": _evaluate_navigation(tuple(baseline.get("navigation_cases") or ())),
-        "cross_model": _evaluate_cross_model(tuple(baseline.get("cross_model_cases") or ())),
     }
     violations = _apply_quality_gate(report=report, slo=slo)
     report["violations"] = list(violations)

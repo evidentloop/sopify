@@ -6,6 +6,78 @@ This changelog is maintained manually (not auto-generated).
 
 ## [Unreleased]
 
+## [2026-04-29.182018] - 2026-04-29
+
+### Docs
+
+- Refined public documentation:
+  - `README.md`
+  - `README.zh-CN.md`
+
+### Runtime
+
+- Updated runtime internals:
+  - `runtime/_models/core.py`
+  - `runtime/builtin_catalog.generated.json`
+  - `runtime/builtin_catalog.py`
+  - `runtime/builtin_skill_packages/model-compare/skill.yaml`
+  - `runtime/checkpoint_request.py`
+  - `runtime/compare_decision.py`
+  - `runtime/config.py`
+  - `runtime/engine.py`
+  - `runtime/gate.py`
+  - `runtime/handoff.py`
+  - `runtime/manifest.py`
+  - `runtime/output.py`
+  - `runtime/replay.py`
+  - `runtime/router.py`
+
+### Scripts
+
+- Adjusted maintenance scripts:
+  - `scripts/check-skill-eval-gate.py`
+  - `scripts/model_compare_runtime.py`
+  - `scripts/sync-runtime-assets.sh`
+
+### Skills
+
+- Synced prompt-layer skills:
+  - `Claude/Skills/CN/CLAUDE.md`
+  - `Claude/Skills/CN/skills/sopify/design/references/design-rules.md`
+  - `Claude/Skills/CN/skills/sopify/model-compare/SKILL.md`
+  - `Claude/Skills/EN/CLAUDE.md`
+  - `Claude/Skills/EN/skills/sopify/design/references/design-rules.md`
+  - `Claude/Skills/EN/skills/sopify/model-compare/SKILL.md`
+  - `Codex/Skills/CN/AGENTS.md`
+  - `Codex/Skills/CN/skills/sopify/design/references/design-rules.md`
+  - `Codex/Skills/CN/skills/sopify/model-compare/SKILL.md`
+  - `Codex/Skills/EN/AGENTS.md`
+  - `Codex/Skills/EN/skills/sopify/design/references/design-rules.md`
+  - `Codex/Skills/EN/skills/sopify/model-compare/SKILL.md`
+
+### Tests
+
+- Updated automated coverage:
+  - `tests/fixtures/sample_invariant_gate_matrix.yaml`
+  - `tests/runtime_test_support.py`
+  - `tests/test_action_intent.py`
+  - `tests/test_bundle_smoke.py`
+  - `tests/test_runtime_config.py`
+  - `tests/test_runtime_decision.py`
+  - `tests/test_runtime_engine.py`
+  - `tests/test_runtime_gate.py`
+  - `tests/test_runtime_router.py`
+  - `tests/test_runtime_sample_invariant_gate.py`
+  - `tests/test_runtime_skill_registry.py`
+
+### Changed
+
+- Updated project files:
+  - `evals/skill_eval_baseline.json`
+  - `evals/skill_eval_slo.json`
+  - `examples/sopify.config.yaml`
+  - `installer/bootstrap_workspace.py`
+
 ## [2026-04-29.150302] - 2026-04-29
 
 ### Docs

@@ -8,7 +8,7 @@
 
 [![许可证](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
 [![文档](https://img.shields.io/badge/docs-CC%20BY%204.0-green.svg)](./LICENSE-docs)
-[![版本](https://img.shields.io/badge/version-2026--04--29.150302-orange.svg)](#版本历史)
+[![版本](https://img.shields.io/badge/version-2026--04--29.182018-orange.svg)](#版本历史)
 [![欢迎PR](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING_CN.md)
 
 [English](./README.md) · 简体中文 · [快速开始](#快速开始) · [配置说明](#配置说明) · [贡献者](./CONTRIBUTORS.md)
@@ -137,9 +137,6 @@ python3 scripts/sopify_doctor.py --format text
 
 # 回放 / 复盘
 "回放最近一次实现，重点讲为什么这么做"
-
-# 多模型对比
-"~compare 给这个重构方案做对比分析"
 ```
 
 ### 你会看到什么（示意）
@@ -167,7 +164,7 @@ Next: 回复“继续”进入开发实施
 ◆ Runtime Gate
 │
 ◇ 路由判定
-├── ▸ 咨询 / 对比 / 回放 ───────────→ 直接输出
+├── ▸ 咨询 / 回放 ─────────────────→ 直接输出
 └── ▸ 代码任务
     │
     ◇ 复杂度判定
@@ -216,19 +213,12 @@ workflow:
 
 plan:
   directory: .sopify-skills
-
-multi_model:
-  enabled: false
-  include_default_model: true
 ```
 
 说明：
 
 - `workflow.mode` 支持 `strict / adaptive / minimal`
 - `plan.directory` 只影响后续新生成的知识库与方案目录
-- `multi_model.enabled` 是总开关；候选模型可在配置中逐个启停
-- `multi_model` 默认关闭；配置好模型候选与 API key 后再开启更稳
-- `multi_model.include_default_model` 与 `context_bridge` 默认都生效，即使未显式写入
 
 ## 命令参考
 
@@ -238,34 +228,11 @@ multi_model:
 | `~go plan` | 只规划不执行 |
 | `~go exec` | 高级恢复/调试入口，不是普通主链路默认下一步 |
 | `~go finalize` | 收口当前 metadata-managed plan |
-| `~compare` | 对同一问题做多模型并发对比 |
 
-普通用户只需要记住 `~go / ~go plan / ~compare`；维护者验证命令放在 [贡献指南](./CONTRIBUTING_CN.md)。
-
-## 多模型对比
-
-触发方式只有两种：
-
-- `~compare <问题>`
-- `对比分析：<问题>`
-
-最小环境变量示例：
-
-```bash
-export GLM_API_KEY="your_glm_key"
-export DASHSCOPE_API_KEY="your_qwen_key"
-```
-
-补充说明：
-
-- 至少 2 个可用模型时才进入并发对比，否则自动降级为单模型
-- 默认会纳入当前会话模型
-- 执行细节以 `scripts/model_compare_runtime.py` 与子 Skill 文档为准
+普通用户只需要记住 `~go / ~go plan`；维护者验证命令放在 [贡献指南](./CONTRIBUTING_CN.md)。
 
 ## 子 Skills
 
-- `model-compare`：多模型并发对比
-  文档：[中文](./Codex/Skills/CN/skills/sopify/model-compare/SKILL.md) / [English](./Codex/Skills/EN/skills/sopify/model-compare/SKILL.md)
 - `workflow-learning`：回放、复盘与逐步讲解
   文档：[中文](./Codex/Skills/CN/skills/sopify/workflow-learning/SKILL.md) / [English](./Codex/Skills/EN/skills/sopify/workflow-learning/SKILL.md)
 

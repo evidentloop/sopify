@@ -10,9 +10,5 @@
   },
   "navigation": {
     "min_pass_rate": 1.0
-  },
-  "cross_model": {
-    "min_success_rate": 1.0,
-    "max_drift_rate": 0.55
   }
 }

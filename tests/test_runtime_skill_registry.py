@@ -33,19 +33,7 @@ class SkillRegistryTests(unittest.TestCase):
             skills = SkillRegistry(config, user_home=workspace / "home").discover()
             skill_ids = {skill.skill_id for skill in skills}
             self.assertIn("analyze", skill_ids)
-            self.assertIn("model-compare", skill_ids)
             self.assertIn("local-demo", skill_ids)
-            model_compare = next(skill for skill in skills if skill.skill_id == "model-compare")
-            self.assertEqual(model_compare.mode, "runtime")
-            self.assertIsNotNone(model_compare.runtime_entry)
-            self.assertEqual(model_compare.entry_kind, "python")
-            self.assertEqual(model_compare.handoff_kind, "compare")
-            self.assertEqual(model_compare.supports_routes, ("compare",))
-            self.assertEqual(model_compare.permission_mode, "dual")
-            self.assertTrue(model_compare.requires_network)
-            self.assertIn("codex", model_compare.host_support)
-            self.assertIn("read", model_compare.tools)
-            self.assertIn("network", model_compare.tools)
 
     def test_skill_registry_builtin_catalog_does_not_require_builtin_skill_dirs(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -71,12 +59,7 @@ class SkillRegistryTests(unittest.TestCase):
 
             self.assertIn("analyze", skill_ids)
             self.assertIn("workflow-learning", skill_ids)
-            self.assertIn("model-compare", skill_ids)
-
-            model_compare = next(skill for skill in skills if skill.skill_id == "model-compare")
-            self.assertEqual(model_compare.source, "builtin")
-            self.assertEqual(model_compare.runtime_entry, (bundle_root / "scripts" / "model_compare_runtime.py").resolve())
-            self.assertEqual(model_compare.path, (bundle_root / "runtime" / "builtin_catalog.py").resolve())
+            self.assertNotIn("model-compare", skill_ids)
 
     def test_skill_registry_prefers_generated_builtin_catalog_artifact(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

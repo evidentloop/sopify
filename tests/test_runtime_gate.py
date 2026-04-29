@@ -904,25 +904,6 @@ class RuntimeGateTests(unittest.TestCase):
             )
             self.assertEqual(result["state"]["state_root"], ".sopify-skills/state/sessions/session-fallback")
 
-    def test_gate_preflight_does_not_bootstrap_for_compare_command(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp_root = Path(temp_dir)
-            workspace = temp_root / "workspace"
-            workspace.mkdir(parents=True, exist_ok=True)
-            payload_manifest_path = _install_payload_manifest_for_gate(home_root=temp_root / "home")
-
-            result = enter_runtime_gate(
-                "~compare 方案对比",
-                workspace_root=workspace,
-                payload_manifest_path=payload_manifest_path,
-                user_home=temp_root / "home",
-                session_id="session-compare",
-            )
-
-            self.assertEqual(result["status"], "error")
-            self.assertEqual(result["preflight"]["action"], "skipped")
-            self.assertEqual(result["preflight"]["reason_code"], "COMMAND_NOT_BOOTSTRAP_AUTHORIZED")
-            self.assertFalse((workspace / ".sopify-runtime" / "manifest.json").exists())
             self.assertFalse((workspace / ".sopify-skills" / "state" / "sessions" / "session-compare").exists())
 
     def test_gate_preflight_explicit_payload_manifest_path_fail_closes_when_missing(self) -> None:
@@ -1764,23 +1745,6 @@ class RuntimeGateTests(unittest.TestCase):
             self.assertEqual(result["handoff"]["required_host_action"], "answer_questions")
             self.assertEqual(result["allowed_response_mode"], CHECKPOINT_ONLY)
             self.assertTrue(result["handoff"]["pending_fail_closed"])
-
-    def test_gate_surfaces_consult_explain_only_override_reason_code(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            workspace = Path(temp_dir)
-
-            result = enter_runtime_gate(
-                "解释 runtime gate 为什么这么判，不要改",
-                workspace_root=workspace,
-                user_home=workspace / "home",
-            )
-
-            self.assertEqual(result["status"], "ready")
-            self.assertEqual(result["runtime"]["route_name"], "consult")
-            self.assertEqual(result["allowed_response_mode"], NORMAL_RUNTIME_FOLLOWUP)
-            self.assertEqual(result["handoff"]["required_host_action"], "continue_host_consult")
-            self.assertEqual(result["handoff"]["consult_override_reason_code"], "consult_explain_only_override")
-            self.assertEqual(result["trigger_evidence"]["consult_override_reason_code"], "consult_explain_only_override")
 
     def test_gate_maps_decision_pending_to_checkpoint_only(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

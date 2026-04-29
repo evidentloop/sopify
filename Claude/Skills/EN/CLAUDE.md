@@ -1,5 +1,5 @@
 <!-- bootstrap: lang=en-US; encoding=UTF-8 -->
-<!-- SOPIFY_VERSION: 2026-04-29.150302 -->
+<!-- SOPIFY_VERSION: 2026-04-29.182018 -->
 <!-- ARCHITECTURE: Adaptive Workflow + Layered Rules -->
 
 # Sopify - Adaptive AI Programming Assistant
@@ -44,21 +44,11 @@ workflow.require_score: 7
 workflow.learning.auto_capture: by_requirement
 plan.level: auto
 plan.directory: .sopify-skills
-multi_model.enabled: false
-multi_model.trigger: manual
-multi_model.timeout_sec: 25
-multi_model.max_parallel: 3
-multi_model.include_default_model: true
-multi_model.context_bridge: true
 ```
 
 Note: Changing `plan.directory` only affects newly generated knowledge base/plan files. Existing data in the old directory will not be migrated automatically.
 Note: `title_color` applies only to lightweight styling of the output title line. If color is unsupported, automatically fallback to plain text.
 Note: `workflow.learning.auto_capture` controls proactive logging only. Replay/review/why intent recognition remains always enabled.
-Note: `multi_model.enabled` is the feature-level gate, while `multi_model.candidates[*].enabled` is the per-candidate participation gate; both apply together.
-Note: `multi_model.include_default_model` defaults to `true` (works even when omitted) and includes the current session default model as a candidate.
-Note: `multi_model.context_bridge` defaults to `true`; set it to `false` only as an emergency bypass (question-only input). Execution-level details and budgets are centralized in `scripts/model_compare_runtime.py`.
-Note: parallel compare requires at least 2 usable models; below that, fallback to single-model with normalized reason codes.
 
 ### C2 | Output Format
 
@@ -92,8 +82,7 @@ Next: {Next step hint}
 **Phase Names:**
 - Requirements Analysis, Solution Design, Development
 - Quick Fix, Light Iteration
-- Model Compare
-- Command Complete (command-prefixed flows only, e.g., `~go/~go plan/~go exec/~compare`)
+- Command Complete (command-prefixed flows only, e.g., `~go/~go plan/~go exec`)
 - Q&A (non-command questions/clarifications)
 
 **Output Principles:**
@@ -137,7 +126,6 @@ Complex Task (full 3 phases):
 | `~go plan` | Plan only, no execution |
 | `~go exec` | Advanced recovery/debug entry; use only when an active plan or recovery state already exists |
 | `~go finalize` | Close out the current metadata-managed plan |
-| `~compare` | Multi-model parallel comparison (includes session default model by default; falls back with reasons when usable model count is below 2) |
 
 Note: once Sopify is triggered, the host's first step must be the runtime gate instead of calling the default runtime entry directly. In repo-local development mode, call `scripts/runtime_gate.py enter --workspace-root <cwd> --request "<raw user request>"`; when the runtime is vendored into another repository, the workspace `.sopify-runtime/manifest.json` is now only a thin stub that records the selected `bundle_version / locator_mode / ignore_mode`, and hosts must no longer expect helper discovery from stub-level `limits.*`. The host should combine that stub with `~/.claude/sopify/payload-manifest.json`, resolve the selected global bundle, and then consume `runtime_gate_entry` from the selected bundle contract or an equivalent workspace-preflight contract before executing the gate; repo-local development mode may still fall back to `scripts/runtime_gate.py`. The gate owns workspace preflight / preload / default runtime dispatch / handoff normalization; `go_plan_runtime.py` remains a repo-local CLI/debug helper, not the first host hop.
 Note: when Sopify is triggered inside a project workspace and the workspace does not yet have a compatible `.sopify-runtime/manifest.json`, the host must read `~/.claude/sopify/payload-manifest.json` and call `~/.claude/sopify/helpers/bootstrap_workspace.py --workspace-root <cwd>` first; once bootstrap succeeds, continue through the selected global bundle / workspace-preflight contract instead of assuming the workspace stub carries executable helper paths.
@@ -284,18 +272,16 @@ progressive: Create files as needed (default)
 ```
 User Input
     ↓
-Check command prefix (~go, ~go plan, ~go exec, ~go finalize, ~compare)
+Check command prefix (~go, ~go plan, ~go exec, ~go finalize)
     ↓
 ├─ ~go finalize → Close out the active plan (refresh blueprint index, archive into history, clear active state)
 ├─ ~go exec → Enter the advanced recovery/debug path (only when an active plan or recovery state already exists)
 ├─ ~go plan → Plan mode (Analysis → Design; prefer scripts/sopify_runtime.py or .sopify-runtime/scripts/sopify_runtime.py for raw input, and use the matching go_plan_runtime.py only for the plan-only slice)
 ├─ ~go → Full workflow mode
-├─ ~compare → Model compare (wired to scripts/model_compare_runtime.py runtime)
 └─ No prefix → Semantic analysis
     ↓
 Semantic analysis routing:
 ├─ Q&A → gate → consult handoff → host answers
-├─ Compare analysis (starts with "对比分析：") → Model compare
 ├─ Replay/Review/Why this choice → Workflow learning
 ├─ Simple change → Quick fix
 ├─ Medium task → Light iteration
@@ -307,7 +293,6 @@ Semantic analysis routing:
 | Route | Condition | Behavior |
 |-------|-----------|----------|
 | Q&A | Pure question, no code changes | Run gate first, then answer through consult handoff in the host session |
-| Model Compare | `~compare <question>` or `对比分析：<question>` | Call model-compare, wired to `scripts/model_compare_runtime.py::run_model_compare_runtime`; include session default model by default, run parallel compare only when usable model count reaches 2, otherwise fallback with normalized reason codes |
 | Workflow Learning | Mentions replay/review/why this choice (intent recognition is always enabled) | Call workflow-learning for trace capture and explanation |
 | Quick Fix | ≤2 files, clear modification | Direct execution |
 | Light Iteration | 3-5 files, clear requirements | Light plan + execution |
@@ -454,7 +439,6 @@ Next: Please verify the functionality
 | `develop` | Enter development | Code execution, KB sync |
 | `kb` | Knowledge base operations | Init, update strategies |
 | `templates` | Create documents | All template definitions |
-| `model-compare` | User triggers `~compare` or `对比分析：` | Calls `scripts/model_compare_runtime.py::run_model_compare_runtime`; keeps two-layer switches + session-default inclusion; falls back below 2 usable models with normalized reason codes |
 | `workflow-learning` | User asks replay/review/why, or `auto_capture` proactively applies | Full trace logging, replay, step-by-step explanation |
 
 **Loading:** On-demand, loaded when entering corresponding phase.
@@ -469,7 +453,6 @@ Next: Please verify the functionality
 ~go plan         # Plan only, no execution
 ~go exec         # Advanced recovery/debug entry, not the default next step in the main flow
 ~go finalize     # Explicitly close out the current metadata-managed plan
-~compare         # Compare one prompt across models (fallbacks below 2 usable models with explicit reasons)
 ```
 
 **Runtime helpers:**
@@ -486,7 +469,6 @@ scripts/runtime_gate.py                      # prompt-level runtime gate helper,
 .sopify-runtime/scripts/runtime_gate.py      # vendored runtime gate helper; the first hop after Sopify triggers
 scripts/preferences_preload_runtime.py       # long-term preference preload helper for hosts, with inspect
 .sopify-runtime/scripts/preferences_preload_runtime.py # vendored preferences preload helper, without changing the default runtime entry
-scripts/model_compare_runtime.py             # runtime implementation for ~compare, not the default generic entry
 scripts/check-install-payload-bundle-smoke.py # maintainer smoke; verifies install-once + trigger-time bootstrap + unchanged default entry
 ~/.claude/sopify/payload-manifest.json        # host global payload metadata used during workspace preflight
 ~/.claude/sopify/helpers/bootstrap_workspace.py # host global helper used to bootstrap `.sopify-runtime/` into a workspace
@@ -498,7 +480,7 @@ scripts/check-install-payload-bundle-smoke.py # maintainer smoke; verifies insta
 .sopify-skills/state/current_plan_proposal.json # plan-proposal fallback state; read when handoff requests confirm_plan_package and lacks the full proposal
 ```
 
-Note: the default entry is still `scripts/sopify_runtime.py`, but once Sopify is triggered the first host hop must execute `scripts/runtime_gate.py enter`; when vendored, the workspace `.sopify-runtime/manifest.json` is only a thin stub, so the host must combine it with `~/.claude/sopify/payload-manifest.json`, resolve the selected global bundle, and then read `runtime_gate_entry / limits.runtime_gate_contract_version / limits.runtime_gate_allowed_response_modes` from the selected bundle contract or workspace-preflight contract. If the workspace bundle is missing or incompatible, the host must preflight through `~/.claude/sopify/payload-manifest.json` and call `~/.claude/sopify/helpers/bootstrap_workspace.py` first; `go_plan_runtime.py` is now only for repo-local plan-only / debug flows, and `~go finalize` still routes through the default runtime entry. The runtime gate internally performs preload through `preferences_preload_entry / limits.preferences_preload_contract_version / limits.preferences_preload_statuses` exposed by the selected global bundle contract or an equivalent preflight contract, and emits a unified `status / gate_passed / allowed_response_mode / preferences / handoff / evidence` contract; continue into normal stages only when `status=ready`, `gate_passed=true`, `evidence.handoff_found=true`, and `evidence.strict_runtime_entry=true`; `checkpoint_only` may only drive checkpoint responses, `error_visible_retry` may only surface visible retry/error output, and `action_proposal_retry` requires the host to generate an ActionProposal per schema and retry. If first activation initially returns `ROOT_CONFIRM_REQUIRED`, the host must stop for root selection: recommend the current directory, offer the repository root, allow manual `activation_root`, then rerun the same request with that explicit root. This outcome is a pre-runtime checkpoint, so `allowed_response_mode` must be `checkpoint_only`. `~go init` must not bypass this step. After execution the host must read `.sopify-skills/state/current_handoff.json` before trusting `Next:`; if `required_host_action=answer_questions`, continue into `.sopify-skills/state/current_clarification.json`; if `required_host_action=confirm_decision`, first consume `current_handoff.json.artifacts.decision_checkpoint / decision_submission_state` and only fall back to `.sopify-skills/state/current_decision.json`; if `required_host_action=confirm_plan_package`, first consume `current_handoff.json.artifacts.proposal / checkpoint_request`, only fall back to `.sopify-skills/state/current_plan_proposal.json` when needed, and remain in package-confirmation mode until the user confirms; if `required_host_action=continue_host_develop` and implementation hits another user-facing branch, the host must route through `scripts/develop_checkpoint_runtime.py inspect|submit` (vendored: `.sopify-runtime/scripts/develop_checkpoint_runtime.py`) instead of ad-hoc questioning; the helper path, host hints, and minimum resume contract are exposed through the selected global bundle contract's `limits.develop_checkpoint_entry / limits.develop_checkpoint_hosts / limits.develop_resume_context_required_fields / limits.develop_resume_after_actions`; in the current documented scope, hosts may call `scripts/decision_bridge_runtime.py inspect` (vendored: `.sopify-runtime/scripts/decision_bridge_runtime.py`) and then write the normalized submission through `submit` or `prompt`; `~compare` still depends on a host-side dedicated bridge. Maintainers can recheck the three hard constraints with `python3 scripts/check-install-payload-bundle-smoke.py`.
+Note: the default entry is still `scripts/sopify_runtime.py`, but once Sopify is triggered the first host hop must execute `scripts/runtime_gate.py enter`; when vendored, the workspace `.sopify-runtime/manifest.json` is only a thin stub, so the host must combine it with `~/.claude/sopify/payload-manifest.json`, resolve the selected global bundle, and then read `runtime_gate_entry / limits.runtime_gate_contract_version / limits.runtime_gate_allowed_response_modes` from the selected bundle contract or workspace-preflight contract. If the workspace bundle is missing or incompatible, the host must preflight through `~/.claude/sopify/payload-manifest.json` and call `~/.claude/sopify/helpers/bootstrap_workspace.py` first; `go_plan_runtime.py` is now only for repo-local plan-only / debug flows, and `~go finalize` still routes through the default runtime entry. The runtime gate internally performs preload through `preferences_preload_entry / limits.preferences_preload_contract_version / limits.preferences_preload_statuses` exposed by the selected global bundle contract or an equivalent preflight contract, and emits a unified `status / gate_passed / allowed_response_mode / preferences / handoff / evidence` contract; continue into normal stages only when `status=ready`, `gate_passed=true`, `evidence.handoff_found=true`, and `evidence.strict_runtime_entry=true`; `checkpoint_only` may only drive checkpoint responses, `error_visible_retry` may only surface visible retry/error output, and `action_proposal_retry` requires the host to generate an ActionProposal per schema and retry. If first activation initially returns `ROOT_CONFIRM_REQUIRED`, the host must stop for root selection: recommend the current directory, offer the repository root, allow manual `activation_root`, then rerun the same request with that explicit root. This outcome is a pre-runtime checkpoint, so `allowed_response_mode` must be `checkpoint_only`. `~go init` must not bypass this step. After execution the host must read `.sopify-skills/state/current_handoff.json` before trusting `Next:`; if `required_host_action=answer_questions`, continue into `.sopify-skills/state/current_clarification.json`; if `required_host_action=confirm_decision`, first consume `current_handoff.json.artifacts.decision_checkpoint / decision_submission_state` and only fall back to `.sopify-skills/state/current_decision.json`; if `required_host_action=confirm_plan_package`, first consume `current_handoff.json.artifacts.proposal / checkpoint_request`, only fall back to `.sopify-skills/state/current_plan_proposal.json` when needed, and remain in package-confirmation mode until the user confirms; if `required_host_action=continue_host_develop` and implementation hits another user-facing branch, the host must route through `scripts/develop_checkpoint_runtime.py inspect|submit` (vendored: `.sopify-runtime/scripts/develop_checkpoint_runtime.py`) instead of ad-hoc questioning; the helper path, host hints, and minimum resume contract are exposed through the selected global bundle contract's `limits.develop_checkpoint_entry / limits.develop_checkpoint_hosts / limits.develop_resume_context_required_fields / limits.develop_resume_after_actions`; in the current documented scope, hosts may call `scripts/decision_bridge_runtime.py inspect` (vendored: `.sopify-runtime/scripts/decision_bridge_runtime.py`) and then write the normalized submission through `submit` or `prompt`. Maintainers can recheck the three hard constraints with `python3 scripts/check-install-payload-bundle-smoke.py`.
 
 **Configuration File:** `sopify.config.yaml` (project root)
 

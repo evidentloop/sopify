@@ -186,7 +186,6 @@ def build_bundle_manifest(
                 "exec_plan",
                 "decision_pending",
                 "decision_resume",
-                "compare",
                 "replay",
                 "consult",
             ],
@@ -194,7 +193,6 @@ def build_bundle_manifest(
                 "develop": "required",
                 "develop_checkpoint": "required",
                 "execution_confirm": "required",
-                "compare": "required",
                 "replay": "required",
             },
             "entry_guard": {
@@ -206,7 +204,7 @@ def build_bundle_manifest(
                 "reason_codes": dict(ENTRY_GUARD_REASON_CODES),
                 "develop_checkpoint_callback_reason_code": ENTRY_GUARD_DEVELOP_CALLBACK_REASON_CODE,
             },
-            "runtime_payload_required_skill_ids": ["model-compare"],
+            "runtime_payload_required_skill_ids": [],
             "session_state": {
                 "review_scope": "session",
                 "execution_scope": "global",

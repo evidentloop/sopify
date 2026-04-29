@@ -191,18 +191,12 @@ class EngineIntegrationTests(unittest.TestCase):
                     self.assertEqual(updated.checkpoint_id, original.checkpoint_id)
                     self.assertEqual(updated.proposed_path, original.proposed_path)
 
-    def test_proposal_pending_keeps_finalize_and_compare_at_confirmation_checkpoint(self) -> None:
+    def test_proposal_pending_keeps_finalize_at_confirmation_checkpoint(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
 
             proposal = run_runtime("实现 runtime plugin bridge", workspace_root=workspace, user_home=workspace / "home")
             checkpoint_id = proposal.recovered_context.current_plan_proposal.checkpoint_id
-
-            compare = run_runtime("~compare 方案对比", workspace_root=workspace, user_home=workspace / "home")
-            self.assertEqual(compare.route.route_name, "plan_proposal_pending")
-            self.assertIsNone(compare.plan_artifact)
-            self.assertEqual(compare.handoff.required_host_action, "confirm_plan_package")
-            self.assertEqual(compare.recovered_context.current_plan_proposal.checkpoint_id, checkpoint_id)
 
             finalize = run_runtime("~go finalize", workspace_root=workspace, user_home=workspace / "home")
             self.assertEqual(finalize.route.route_name, "plan_proposal_pending")
@@ -517,131 +511,6 @@ class EngineIntegrationTests(unittest.TestCase):
             self.assertEqual(plan_artifact.plan_id, resolved_proposal.reserved_plan_id)
             self.assertIsNone(store.get_current_plan_proposal())
             self.assertTrue(any("after proposal confirmation" in note for note in notes))
-
-    def test_explain_only_request_routes_to_consult_without_creating_plan_proposal(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            workspace = Path(temp_dir)
-
-            result = run_runtime(
-                "你之前说：这次又被误路由成 proposal 了。说下原因，不要改。",
-                workspace_root=workspace,
-                user_home=workspace / "home",
-            )
-
-            self.assertEqual(result.route.route_name, "consult")
-            self.assertIsNone(result.plan_artifact)
-            self.assertIsNone(result.recovered_context.current_plan_proposal)
-            self.assertFalse((workspace / ".sopify-skills" / "state" / "current_plan_proposal.json").exists())
-            self.assertEqual(result.handoff.required_host_action, "continue_host_consult")
-            self.assertEqual(result.handoff.artifacts.get("consult_mode"), "explain_only_override")
-            self.assertEqual(result.handoff.artifacts.get("consult_override_reason_code"), "consult_explain_only_override")
-
-    def test_engine_proposal_fuse_blocks_explain_only_route_even_when_router_missed(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            workspace = Path(temp_dir)
-            config = load_runtime_config(workspace)
-            store = StateStore(config)
-            store.ensure()
-
-            routed, plan_artifact, notes, _ = _advance_planning_route(
-                RouteDecision(
-                    route_name="light_iterate",
-                    request_text="你之前说：这次又被误路由成 proposal 了。说下原因，不要改。",
-                    reason="forced test path",
-                    complexity="medium",
-                    plan_level="light",
-                    plan_package_policy="confirm",
-                ),
-                state_store=store,
-                config=config,
-                kb_artifact=None,
-            )
-
-            self.assertEqual(routed.route_name, "consult")
-            self.assertIsNone(plan_artifact)
-            self.assertIsNone(store.get_current_plan_proposal())
-            self.assertTrue(any("Bypassed plan proposal materialization" in note for note in notes))
-
-    def test_engine_proposal_fuse_consumes_matching_confirmed_decision_on_explain_only_return(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            workspace = Path(temp_dir)
-            pending = run_runtime(
-                "~go plan payload 放 host root 还是 workspace/.sopify-runtime",
-                workspace_root=workspace,
-                user_home=workspace / "home",
-            )
-
-            config = load_runtime_config(workspace)
-            store = StateStore(config)
-            confirmed = confirm_decision(
-                pending.recovered_context.current_decision,
-                option_id="option_1",
-                source="text",
-                raw_input="1",
-            )
-            store.set_current_decision(confirmed)
-
-            routed, plan_artifact, notes, _ = _advance_planning_route(
-                RouteDecision(
-                    route_name="light_iterate",
-                    request_text="你之前说：这次又被误路由成 proposal 了。说下原因，不要改。",
-                    reason="forced test path",
-                    complexity="medium",
-                    plan_level="light",
-                    plan_package_policy="confirm",
-                ),
-                state_store=store,
-                config=config,
-                kb_artifact=None,
-                confirmed_decision=confirmed,
-            )
-
-            self.assertEqual(routed.route_name, "consult")
-            self.assertIsNone(plan_artifact)
-            self.assertIsNone(store.get_current_decision())
-            self.assertTrue(any(f"Decision consumed: {confirmed.decision_id}" in note for note in notes))
-
-    def test_engine_proposal_fuse_keeps_nonmatching_confirmed_decision_state_on_explain_only_return(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            workspace = Path(temp_dir)
-            pending = run_runtime(
-                "~go plan payload 放 host root 还是 workspace/.sopify-runtime",
-                workspace_root=workspace,
-                user_home=workspace / "home",
-            )
-
-            config = load_runtime_config(workspace)
-            store = StateStore(config)
-            confirmed = confirm_decision(
-                pending.recovered_context.current_decision,
-                option_id="option_1",
-                source="text",
-                raw_input="1",
-            )
-            mismatched_current = replace(confirmed, decision_id="decision-mismatch")
-            store.set_current_decision(mismatched_current)
-
-            routed, plan_artifact, notes, _ = _advance_planning_route(
-                RouteDecision(
-                    route_name="light_iterate",
-                    request_text="你之前说：这次又被误路由成 proposal 了。说下原因，不要改。",
-                    reason="forced test path",
-                    complexity="medium",
-                    plan_level="light",
-                    plan_package_policy="confirm",
-                ),
-                state_store=store,
-                config=config,
-                kb_artifact=None,
-                confirmed_decision=confirmed,
-            )
-
-            self.assertEqual(routed.route_name, "consult")
-            self.assertIsNone(plan_artifact)
-            current_decision = store.get_current_decision()
-            self.assertIsNotNone(current_decision)
-            self.assertEqual(current_decision.decision_id, "decision-mismatch")
-            self.assertFalse(any(f"Decision consumed: {confirmed.decision_id}" in note for note in notes))
 
     def test_advance_planning_route_fail_closed_when_workflow_policy_is_missing(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -2578,61 +2447,14 @@ class EngineIntegrationTests(unittest.TestCase):
             )
             self.assertFalse((workspace / ".sopify-skills" / "state" / "current_decision.json").exists())
 
-    def test_engine_handoff_contracts_cover_compare_and_replay(self) -> None:
+    def test_engine_handoff_contracts_cover_replay(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
-
-            compare = run_runtime("~compare 方案对比", workspace_root=workspace, user_home=workspace / "home")
-            self.assertIsNotNone(compare.handoff)
-            self.assertEqual(compare.handoff.handoff_kind, "compare")
-            self.assertEqual(compare.handoff.required_host_action, "host_compare_bridge_required")
 
             replay = run_runtime("回放最近一次实现", workspace_root=workspace, user_home=workspace / "home")
             self.assertIsNotNone(replay.handoff)
             self.assertEqual(replay.handoff.handoff_kind, "replay")
             self.assertEqual(replay.handoff.required_host_action, "host_replay_bridge_required")
-
-    def test_compare_handoff_attaches_decision_facade_when_runtime_returns_results(self) -> None:
-        def model_caller(candidate, payload, timeout_sec):
-            return {"answer": f"{candidate.id} suggests using an adapter boundary for {payload['question']}"}
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            workspace = Path(temp_dir)
-            compare = run_runtime(
-                "~compare adapter boundary vs direct host coupling",
-                workspace_root=workspace,
-                user_home=workspace / "home",
-                runtime_payloads={
-                    "model-compare": {
-                        "question": "adapter boundary vs direct host coupling",
-                        "multi_model_config": {
-                            "enabled": True,
-                            "include_default_model": True,
-                            "context_bridge": False,
-                            "candidates": [
-                                {
-                                    "id": "external_a",
-                                    "provider": "openai_compatible",
-                                    "model": "demo-a",
-                                    "enabled": True,
-                                    "api_key_env": "TEST_COMPARE_KEY",
-                                }
-                            ],
-                        },
-                        "model_caller": model_caller,
-                        "default_candidate": make_default_candidate(),
-                        "env": {"TEST_COMPARE_KEY": "sk-demo"},
-                    }
-                },
-            )
-
-            self.assertIsNotNone(compare.handoff)
-            self.assertEqual(compare.handoff.required_host_action, "review_compare_results")
-            contract = compare.handoff.artifacts.get("compare_decision_contract")
-            self.assertIsInstance(contract, dict)
-            self.assertEqual(contract["decision_type"], "compare_result_choice")
-            self.assertIn("checkpoint", contract)
-            self.assertEqual(contract["recommended_option_id"], "session_default")
 
     def test_rendered_plan_output_and_repo_local_helper(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -3224,7 +3046,7 @@ class EngineIntegrationTests(unittest.TestCase):
             self.assertEqual(manifest["limits"]["session_state"]["followup_session_id"], "required_for_review_followups")
             self.assertEqual(manifest["limits"]["session_state"]["cleanup_days"], 7)
             self.assertIn("finalize_active", manifest["supported_routes"])
-            self.assertIn("compare", manifest["supported_routes"])
+            self.assertNotIn("compare", manifest["supported_routes"])
             self.assertIn("exec_plan", manifest["limits"]["host_required_routes"])
             self.assertEqual(manifest["limits"]["clarification_file"], ".sopify-skills/state/current_clarification.json")
             self.assertEqual(manifest["limits"]["clarification_bridge_entry"], "scripts/clarification_bridge_runtime.py")
@@ -3303,16 +3125,9 @@ class EngineIntegrationTests(unittest.TestCase):
                 manifest["limits"]["runtime_gate_allowed_response_modes"],
                 ["normal_runtime_followup", "checkpoint_only", "error_visible_retry", "action_proposal_retry"],
             )
-            self.assertIn("model-compare", manifest["limits"]["runtime_payload_required_skill_ids"])
-            self.assertEqual(len(manifest["builtin_skills"]), 7)
-            model_compare = next(skill for skill in manifest["builtin_skills"] if skill["skill_id"] == "model-compare")
-            self.assertEqual(model_compare["runtime_entry"], "scripts/model_compare_runtime.py")
-            self.assertEqual(model_compare["entry_kind"], "python")
-            self.assertEqual(model_compare["supports_routes"], ["compare"])
-            self.assertEqual(model_compare["permission_mode"], "dual")
-            self.assertTrue(model_compare["requires_network"])
-            self.assertIn("codex", model_compare["host_support"])
-            self.assertIn("network", model_compare["tools"])
+            self.assertEqual(manifest["limits"]["runtime_payload_required_skill_ids"], [])
+            self.assertEqual(len(manifest["builtin_skills"]), 6)
+            self.assertNotIn("model-compare", {skill["skill_id"] for skill in manifest["builtin_skills"]})
 
             runtime_script = bundle_root / "scripts" / "sopify_runtime.py"
             completed = subprocess.run(

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-24T14:07:30.902936+00:00",
+  "generated_at": "2026-04-29T07:40:54.235706+00:00",
   "schema_version": "1",
   "skills": [
     {
@@ -144,50 +144,6 @@
         "write"
       ],
       "triggers": []
-    },
-    {
-      "allowed_paths": [
-        ".",
-        "scripts",
-        "evals"
-      ],
-      "contract_version": "1",
-      "descriptions": {
-        "en-US": "Multi-model comparison sub-skill executed by the runtime compare route.",
-        "zh-CN": "多模型并发对比子技能；由 runtime 负责 compare 路由执行。"
-      },
-      "disallowed_tools": [
-        "write"
-      ],
-      "entry_kind": "python",
-      "handoff_kind": "compare",
-      "host_support": [
-        "codex",
-        "claude"
-      ],
-      "id": "model-compare",
-      "metadata": {},
-      "mode": "runtime",
-      "names": {
-        "en-US": "model-compare",
-        "zh-CN": "model-compare"
-      },
-      "permission_mode": "dual",
-      "requires_network": true,
-      "runtime_entry": "scripts/model_compare_runtime.py",
-      "supports_routes": [
-        "compare"
-      ],
-      "tools": [
-        "read",
-        "exec",
-        "network"
-      ],
-      "triggers": [
-        "~compare",
-        "对比分析：",
-        "compare:"
-      ]
     },
     {
       "allowed_paths": [

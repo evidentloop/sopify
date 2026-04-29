@@ -12,7 +12,6 @@ from uuid import uuid4
 from .checkpoint_materializer import materialize_checkpoint_request
 from .checkpoint_request import checkpoint_request_from_clarification_state, checkpoint_request_from_decision_state
 from .clarification import build_clarification_state, has_submitted_clarification, merge_clarification_request, parse_clarification_response, stale_clarification
-from .compare_decision import build_compare_decision_contract
 from .config import load_runtime_config
 from .context_snapshot import ContextResolvedSnapshot, resolve_context_snapshot
 from .context_recovery import recover_context
@@ -57,11 +56,8 @@ from .plan_proposal import (
     merge_plan_proposal_request,
     refresh_plan_proposal_state,
 )
-from .replay import ReplayWriter, build_compare_replay_event, build_decision_replay_event
-from .router import (
-    Router,
-    detect_explain_only_consult_override,
-)
+from .replay import ReplayWriter, build_decision_replay_event
+from .router import Router
 from .action_intent import (
     ActionProposal,
     ActionValidator,
@@ -1051,21 +1047,6 @@ def run_runtime(
                     action="confirmed",
                 )
             )
-        if effective_route.route_name == "compare" and skill_result:
-            compare_contract = build_compare_decision_contract(
-                question=effective_route.request_text,
-                skill_result=skill_result,
-                language=config.language,
-            )
-            if compare_contract is not None:
-                replay_events.append(
-                    build_compare_replay_event(
-                        ts=iso_now(),
-                        question=effective_route.request_text,
-                        contract=compare_contract,
-                        language=config.language,
-                    )
-                )
         session_dir = writer.append_event(run_id, replay_event)
         for extra_event in replay_events[1:]:
             writer.append_event(run_id, extra_event)
@@ -1385,8 +1366,6 @@ def _phase_for_route(decision: RouteDecision) -> str:
         return "design"
     if decision.route_name in {"execution_confirm_pending", "resume_active", "exec_plan", "quick_fix"}:
         return "develop"
-    if decision.route_name == "compare":
-        return "analysis"
     return "analysis"
 
 
@@ -1421,8 +1400,6 @@ def _activation_target(
     current_clarification: ClarificationState | None,
     current_decision: DecisionState | None,
 ) -> tuple[str, str]:
-    if decision.runtime_skill_id == "model-compare" or decision.route_name == "compare":
-        return ("model-compare", "模型对比")
     if decision.runtime_skill_id == "workflow-learning" or decision.route_name == "replay":
         return ("workflow-learning", "复盘学习")
     if decision.route_name == "summary":
@@ -2510,37 +2487,6 @@ def _advance_planning_route(
         )
         notes.extend(gate_notes)
         return (routed_decision, plan_artifact, notes, kb_artifact)
-
-    explain_only_override = detect_explain_only_consult_override(
-        decision.request_text,
-        command=decision.command,
-        current_run=context.current_run,
-        current_plan=context.current_plan,
-        current_plan_proposal=context.current_plan_proposal,
-        last_route=context.last_route,
-    )
-    if explain_only_override is not None and plan_package_policy == "confirm":
-        notes.append("Bypassed plan proposal materialization for explain-only request")
-        if _consume_current_decision_if_confirmed_match(
-            state_store,
-            confirmed_decision,
-            current_decision=context.current_decision,
-        ):
-            notes.append(f"Decision consumed: {confirmed_decision.decision_id}")
-        return (
-            RouteDecision(
-                route_name="consult",
-                request_text=decision.request_text,
-                reason=str(explain_only_override["reason"]),
-                complexity="simple",
-                should_recover_context=True,
-                candidate_skill_ids=("analyze",),
-                artifacts=dict(explain_only_override["artifacts"]),
-            ),
-            None,
-            notes,
-            kb_artifact,
-        )
 
     if plan_package_policy == "confirm":
         topic_key, reserved_plan_id, proposed_path = reserve_plan_identity(

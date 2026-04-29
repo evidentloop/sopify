@@ -19,7 +19,6 @@ from .checkpoint_request import (
 )
 from .action_projection import ActionProjectionError, build_action_projection, supports_action_projection
 from .clarification import CURRENT_CLARIFICATION_RELATIVE_PATH, build_scope_clarification_form, clarification_submission_state_payload
-from .compare_decision import build_compare_decision_contract
 from .deterministic_guard import (
     evaluate_deterministic_guard,
     expected_allowed_response_mode,
@@ -67,7 +66,6 @@ _ROUTE_HANDOFF_KIND = {
     "decision_pending": "decision",
     "decision_resume": "decision",
     "state_conflict": "state_conflict",
-    "compare": "compare",
     "replay": "replay",
     "consult": "consult",
 }
@@ -249,8 +247,6 @@ def _required_host_action(
             if resume_action:
                 return resume_action
         return "continue_host_workflow"
-    if route_name == "compare":
-        return "review_compare_results" if skill_result_present else "host_compare_bridge_required"
     if route_name == "replay":
         return "host_replay_bridge_required"
     if route_name == "consult":
@@ -356,14 +352,6 @@ def _collect_handoff_artifacts(
         artifacts["replay_session_dir"] = replay_session_dir
     if skill_result:
         artifacts["skill_result_keys"] = sorted(skill_result.keys())
-        if decision.route_name == "compare":
-            compare_contract = build_compare_decision_contract(
-                question=decision.request_text,
-                skill_result=skill_result,
-                language=config.language,
-            )
-            if compare_contract is not None:
-                artifacts["compare_decision_contract"] = compare_contract
         tradeoff_signal = has_tradeoff_checkpoint_signal(skill_result)
         raw_checkpoint_request = skill_result.get("checkpoint_request")
         if isinstance(raw_checkpoint_request, Mapping):

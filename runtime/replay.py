@@ -199,45 +199,6 @@ def build_decision_replay_event(
     )
 
 
-def build_compare_replay_event(
-    *,
-    ts: str,
-    question: str,
-    contract: Mapping[str, Any],
-    language: str,
-) -> ReplayEvent:
-    """Build a replay event summarizing compare-result convergence."""
-    checkpoint_payload = contract.get("checkpoint")
-    checkpoint = DecisionCheckpoint.from_dict(checkpoint_payload) if isinstance(checkpoint_payload, Mapping) else None
-    recommendation = checkpoint.recommendation if checkpoint is not None else None
-    recommended_option = None
-    alternatives: tuple[str, ...] = ()
-    if checkpoint is not None:
-        primary_field = next((field for field in checkpoint.fields if field.field_id == checkpoint.primary_field_id), checkpoint.fields[0] if checkpoint.fields else None)
-        if primary_field is not None:
-            recommended_option = _option_by_id(primary_field.options, contract.get("recommended_option_id"))
-            alternatives = tuple(_option_label(option) for option in primary_field.options)
-    recommendation_reason = str(contract.get("recommendation_reason") or contract.get("summary") or "")
-    highlights = [
-        _compare_text(language, "result_count").format(count=int(contract.get("result_count") or 0)),
-    ]
-    if recommended_option is not None:
-        highlights.append(_compare_text(language, "recommended").format(option=_option_label(recommended_option)))
-    if recommendation_reason:
-        highlights.append(_compare_text(language, "recommendation_reason").format(reason=recommendation_reason))
-    return ReplayEvent(
-        ts=ts,
-        phase="analysis",
-        intent=question,
-        action="compare:decision_facade",
-        key_output=str(contract.get("summary") or ""),
-        decision_reason=recommendation_reason or str(contract.get("summary") or ""),
-        result="ready",
-        alternatives=alternatives,
-        highlights=tuple(highlights),
-    )
-
-
 def build_develop_quality_replay_event(
     *,
     ts: str,
@@ -447,23 +408,6 @@ def _decision_text(language: str, key: str) -> str:
             "structured_answer": "{label}: {value}",
             "yes": "yes",
             "no": "no",
-        },
-    }
-    return messages[locale][key]
-
-
-def _compare_text(language: str, key: str) -> str:
-    locale = "en-US" if language == "en-US" else "zh-CN"
-    messages = {
-        "zh-CN": {
-            "result_count": "compare 成功结果数：{count}",
-            "recommended": "compare 推荐结果：{option}",
-            "recommendation_reason": "compare 推荐依据：{reason}",
-        },
-        "en-US": {
-            "result_count": "Successful compare results: {count}",
-            "recommended": "Recommended compare result: {option}",
-            "recommendation_reason": "Compare recommendation reason: {reason}",
         },
     }
     return messages[locale][key]

@@ -78,7 +78,6 @@
 1. 优先交给默认 runtime 入口，不手工强制改写为 `~go plan`。
 2. 明确是 `~go plan` 路径时，优先调用 `scripts/go_plan_runtime.py`。
 3. `go_plan_runtime.py` 仅用于 plan-only slice。
-4. `~compare` 仍依赖宿主侧专用桥接。
 
 入口缺失时，才按本技能模板手工生成方案文件。
 

@@ -306,30 +306,6 @@ class DecisionContractTests(unittest.TestCase):
         self.assertEqual(rendered.checkpoint.fields[1].when[0].value, CUSTOM_OPTION_ID)
         self.assertEqual(rendered.checkpoint.fields[2].field_type, "input")
 
-    def test_compare_decision_contract_shortlists_successful_results(self) -> None:
-        contract = build_compare_decision_contract(
-            question="比较支付模块重构方案",
-            language="zh-CN",
-            skill_result={
-                "results": [
-                    {"candidate_id": "session_default", "status": "ok", "answer": "建议先做渐进拆分。", "latency_ms": 120},
-                    {"candidate_id": "external_a", "status": "ok", "answer": "建议整体重写，但要补迁移预案。", "latency_ms": 220},
-                    {"candidate_id": "external_b", "status": "error", "error": "boom", "latency_ms": 10},
-                    {"candidate_id": "external_c", "status": "ok", "answer": "建议先统一接口，再逐步迁移数据。", "latency_ms": 180},
-                ]
-            },
-        )
-
-        self.assertIsNotNone(contract)
-        self.assertEqual(contract["decision_type"], "compare_result_choice")
-        self.assertEqual(contract["recommended_option_id"], "session_default")
-        self.assertEqual(contract["result_count"], 3)
-        self.assertEqual(contract["shortlisted_result_count"], 3)
-        checkpoint = contract["checkpoint"]
-        self.assertEqual(checkpoint["primary_field_id"], PRIMARY_OPTION_FIELD_ID)
-        self.assertEqual(checkpoint["recommendation"]["option_id"], "session_default")
-        self.assertIn("session_default", [item["id"] for item in checkpoint["fields"][0]["options"]])
-
     def test_cli_decision_bridge_exposes_interactive_contract_and_text_fallback(self) -> None:
         rendered = build_strategy_pick_template(
             checkpoint_id="decision_template_cli",

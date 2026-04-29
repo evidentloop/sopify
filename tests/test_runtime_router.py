@@ -121,7 +121,6 @@ class RouterTests(unittest.TestCase):
             resume_route = router.classify("继续", skills=skills)
             cancel_route = router.classify("取消", skills=skills)
             replay_route = router.classify("回放最近一次实现", skills=skills)
-            compare_route = router.classify("~compare 方案对比", skills=skills)
             summary_route = router.classify("~summary", skills=skills)
             consult_route = router.classify("这个方案为什么要这样拆？", skills=skills)
 
@@ -129,7 +128,6 @@ class RouterTests(unittest.TestCase):
             self.assertTrue(resume_route.should_recover_context)
             self.assertEqual(cancel_route.route_name, "cancel_active")
             self.assertEqual(replay_route.route_name, "replay")
-            self.assertEqual(compare_route.route_name, "compare")
             self.assertEqual(summary_route.route_name, "summary")
             self.assertEqual(summary_route.capture_mode, "off")
             self.assertEqual(consult_route.route_name, "consult")
@@ -335,50 +333,7 @@ class RouterTests(unittest.TestCase):
             self.assertEqual(route.route_name, "light_iterate")
             self.assertNotIn("meta-debug", route.reason)
 
-    def test_explain_only_override_prefers_consult_before_runtime_first_guard(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            workspace = Path(temp_dir)
-            config = load_runtime_config(workspace)
-            store = StateStore(config)
-            store.ensure()
-            router = Router(config, state_store=store)
-            skills = SkillRegistry(config, user_home=workspace / "home").discover()
-
-            route = router.classify("解释 runtime gate 为什么这么判，不要改", skills=skills)
-
-            self.assertEqual(route.route_name, "consult")
-            self.assertEqual(route.artifacts.get("consult_mode"), "explain_only_override")
-            self.assertEqual(route.artifacts.get("consult_override_reason_code"), "consult_explain_only_override")
-
-    def test_explain_only_override_does_not_hijack_explicit_change_request(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            workspace = Path(temp_dir)
-            config = load_runtime_config(workspace)
-            store = StateStore(config)
-            store.ensure()
-            router = Router(config, state_store=store)
-            skills = SkillRegistry(config, user_home=workspace / "home").discover()
-
-            route = router.classify("解释原因并修复 router 的这个误判", skills=skills)
-
-            self.assertNotEqual(route.route_name, "consult")
-            self.assertNotEqual(route.artifacts.get("consult_override_reason_code"), "consult_explain_only_override")
-
-    def test_explain_only_override_does_not_override_explicit_workflow_command(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            workspace = Path(temp_dir)
-            config = load_runtime_config(workspace)
-            store = StateStore(config)
-            store.ensure()
-            router = Router(config, state_store=store)
-            skills = SkillRegistry(config, user_home=workspace / "home").discover()
-
-            route = router.classify("~go 解释 runtime gate 为什么这么判，不要改", skills=skills)
-
-            self.assertEqual(route.route_name, "workflow")
-            self.assertEqual(route.command, "~go")
-
-    def test_pending_plan_proposal_blocks_compare_and_finalize_as_inspect(self) -> None:
+    def test_pending_plan_proposal_blocks_finalize_as_inspect(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
             config = load_runtime_config(workspace)
@@ -389,13 +344,8 @@ class RouterTests(unittest.TestCase):
 
             run_runtime("实现 runtime plugin bridge", workspace_root=workspace, user_home=workspace / "home")
 
-            compare_route = router.classify("~compare 方案对比", skills=skills)
             finalize_route = router.classify("~go finalize", skills=skills)
 
-            self.assertEqual(compare_route.route_name, "plan_proposal_pending")
-            self.assertEqual(compare_route.command, "~compare")
-            self.assertEqual(compare_route.active_run_action, "inspect_plan_proposal")
-            self.assertIn("before compare can continue", compare_route.reason)
             self.assertEqual(finalize_route.route_name, "plan_proposal_pending")
             self.assertEqual(finalize_route.command, "~go finalize")
             self.assertEqual(finalize_route.active_run_action, "inspect_plan_proposal")
@@ -937,18 +887,18 @@ class RouterTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
             user_home = workspace / "home"
-            custom_skill = workspace / ".agents" / "skills" / "custom-compare"
+            custom_skill = workspace / ".agents" / "skills" / "custom-replay"
             custom_skill.mkdir(parents=True)
             (custom_skill / "SKILL.md").write_text(
-                "---\nname: custom-compare\ndescription: custom compare helper\n---\n\n# custom-compare\n",
+                "---\nname: custom-replay\ndescription: custom replay helper\n---\n\n# custom-replay\n",
                 encoding="utf-8",
             )
             (custom_skill / "skill.yaml").write_text(
-                "id: custom-compare\n"
+                "id: custom-replay\n"
                 "mode: runtime\n"
                 "runtime_entry: custom_runtime.py\n"
                 "supports_routes:\n"
-                "  - compare\n"
+                "  - replay\n"
                 "host_support:\n"
                 "  - codex\n"
                 "permission_mode: dual\n"
@@ -967,11 +917,11 @@ class RouterTests(unittest.TestCase):
             router = Router(config, state_store=store)
             skills = SkillRegistry(config, user_home=user_home).discover()
 
-            decision = router.classify("~compare 对比 runtime 策略", skills=skills)
+            decision = router.classify("回放最近一次实现", skills=skills)
 
-            self.assertEqual(decision.route_name, "compare")
-            self.assertEqual(decision.candidate_skill_ids, ("custom-compare", "model-compare"))
-            self.assertEqual(decision.runtime_skill_id, "custom-compare")
+            self.assertEqual(decision.route_name, "replay")
+            self.assertEqual(decision.candidate_skill_ids, ("custom-replay", "workflow-learning"))
+            self.assertEqual(decision.runtime_skill_id, "custom-replay")
 
     def test_runtime_handoff_preserves_direct_edit_runtime_required_reason_code(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

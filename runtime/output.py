@@ -29,7 +29,6 @@ _PHASE_LABELS = {
         "decision_pending": "方案设计",
         "decision_resume": "方案设计",
         "summary": "今日详细摘要",
-        "compare": "模型对比",
         "replay": "咨询问答",
         "consult": "咨询问答",
         "state_conflict": "状态冲突",
@@ -51,7 +50,6 @@ _PHASE_LABELS = {
         "decision_pending": "Solution Design",
         "decision_resume": "Solution Design",
         "summary": "Daily Summary",
-        "compare": "Model Compare",
         "replay": "Q&A",
         "consult": "Q&A",
         "state_conflict": "State Conflict",
@@ -94,8 +92,6 @@ _LABELS = {
         "light_handoff": "已生成 light 方案，后续改动仍需宿主继续",
         "quick_fix_handoff": "已准备进入快速修复，请在宿主会话中继续完成代码修改",
         "consult_handoff": "已进入咨询问答，请在宿主会话中继续回答",
-        "compare_handoff": "已识别 compare 路由，当前通用入口未构造 compare runtime payload",
-        "compare_ready": "compare runtime 已返回结构化结果",
         "replay_handoff": "已识别 replay 路由，当前仍需 workflow-learning 专用链路",
         "resume_handoff": "已恢复当前流程，当前 repo-local runtime 未执行 develop bridge",
         "exec_handoff": "已进入 ~go exec 高级恢复入口，当前仅用于检查或恢复已有 plan，不作为普通开发主链路",
@@ -118,8 +114,6 @@ _LABELS = {
         "next_cancel": "如需继续，重新发起 ~go plan 或 ~go",
         "next_finalize_success": "请验证 blueprint 索引与 history 归档结果",
         "next_finalize_retry": "补齐 blueprint 更新或切换到 metadata-managed plan 后重试",
-        "next_compare": "人工选择候选结果并继续",
-        "next_compare_bridge": "继续使用宿主侧 ~compare 专用桥接",
         "next_summary": "可再次运行 ~summary 刷新，或继续当前开发流",
         "next_replay": "继续使用 workflow-learning 回放链路",
         "next_quick_fix": "在宿主会话中继续执行快速修复",
@@ -133,8 +127,6 @@ _LABELS = {
         "handoff_continue_host_develop": "已写入 develop handoff，后续开发需宿主继续",
         "handoff_continue_host_quick_fix": "已准备进入快速修复，请在宿主会话中继续完成代码修改",
         "handoff_confirm_decision": "已写入 decision handoff，宿主应先确认当前设计分叉",
-        "handoff_host_compare_bridge_required": "已写入 compare handoff，当前仍需宿主侧 compare bridge",
-        "handoff_review_compare_results": "已写入 compare handoff，可在宿主侧继续选择结果",
         "handoff_host_replay_bridge_required": "已写入 replay handoff，当前仍需 workflow-learning 专用链路",
         "handoff_continue_host_consult": "已进入咨询问答，请在宿主会话中继续回答",
         "handoff_resolve_state_conflict": "已检测到运行态冲突，当前需先放弃当前协商再继续",
@@ -177,8 +169,6 @@ _LABELS = {
         "light_handoff": "Light plan generated; downstream changes still need the host flow",
         "quick_fix_handoff": "Ready for quick fix; continue the code change in the host session",
         "consult_handoff": "Consult mode is ready; continue the answer in the host session",
-        "compare_handoff": "compare route recognized; the generic entry did not construct compare runtime payloads",
-        "compare_ready": "compare runtime returned structured results",
         "replay_handoff": "replay route recognized; workflow-learning still needs its dedicated bridge",
         "resume_handoff": "Active flow restored; the repo-local runtime has not executed the develop bridge",
         "exec_handoff": "~go exec entered the advanced recovery entry; it is only used to inspect or recover an existing plan, not as the default implementation path",
@@ -201,8 +191,6 @@ _LABELS = {
         "next_cancel": "Start a new ~go plan or ~go flow when ready",
         "next_finalize_success": "Review the blueprint index refresh and the history archive",
         "next_finalize_retry": "Update the blueprint or switch to a metadata-managed plan and retry",
-        "next_compare": "Review the candidate outputs and continue",
-        "next_compare_bridge": "Use the host-side ~compare bridge for compare execution",
         "next_summary": "Run ~summary again to refresh, or continue the active development flow",
         "next_replay": "Use the workflow-learning replay flow",
         "next_quick_fix": "Continue the quick-fix flow in the host session",
@@ -216,8 +204,6 @@ _LABELS = {
         "handoff_continue_host_develop": "develop handoff written; downstream implementation still needs the host flow",
         "handoff_continue_host_quick_fix": "Ready for quick fix; continue the code change in the host session",
         "handoff_confirm_decision": "decision handoff written; the host should confirm the current design split first",
-        "handoff_host_compare_bridge_required": "compare handoff written; the host-side compare bridge is still required",
-        "handoff_review_compare_results": "compare handoff written; candidate results are ready for host-side review",
         "handoff_host_replay_bridge_required": "replay handoff written; workflow-learning still needs its dedicated bridge",
         "handoff_continue_host_consult": "Consult mode is ready; continue the answer in the host session",
         "handoff_resolve_state_conflict": "A runtime state conflict was detected; abandon the current negotiation before continuing",
@@ -525,9 +511,7 @@ def _status_symbol(result: RuntimeResult) -> str:
         return "✓"
     if route_name == "summary":
         return "✓" if result.skill_result else "!"
-    if route_name == "compare" and result.skill_result:
-        return "✓"
-    if route_name in {"workflow", "light_iterate", "quick_fix", "consult", "replay", "resume_active", "exec_plan", "compare"}:
+    if route_name in {"workflow", "light_iterate", "quick_fix", "consult", "replay", "resume_active", "exec_plan"}:
         return "!"
     if result.notes:
         return "!"
@@ -567,8 +551,6 @@ def _status_message(result: RuntimeResult, language: str) -> str:
         return labels["quick_fix_handoff"]
     if route_name == "consult":
         return labels["consult_handoff"]
-    if route_name == "compare":
-        return labels["compare_ready"] if result.skill_result else labels["compare_handoff"]
     if route_name == "summary":
         return labels["next_summary"]
     if route_name == "replay":
@@ -614,10 +596,6 @@ def _handoff_next_hint(result: RuntimeResult, language: str) -> str:
         return labels["next_quick_fix"]
     if required_host_action == "confirm_decision":
         return labels["next_decision"]
-    if required_host_action == "review_compare_results":
-        return labels["next_compare"]
-    if required_host_action == "host_compare_bridge_required":
-        return labels["next_compare_bridge"]
     if required_host_action == "host_replay_bridge_required":
         return labels["next_replay"]
     if required_host_action == "continue_host_consult":
@@ -638,8 +616,6 @@ def _handoff_next_hint(result: RuntimeResult, language: str) -> str:
         return labels["next_quick_fix"]
     if handoff.handoff_kind == "decision":
         return labels["next_decision"]
-    if handoff.handoff_kind == "compare":
-        return labels["next_compare"] if handoff.required_host_action == "review_compare_results" else labels["next_compare_bridge"]
     if handoff.handoff_kind == "replay":
         return labels["next_replay"]
     if handoff.handoff_kind == "consult":

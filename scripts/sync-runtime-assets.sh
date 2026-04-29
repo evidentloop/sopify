@@ -60,7 +60,6 @@ required_paths=(
   "$SCRIPTS_SRC/decision_bridge_runtime.py"
   "$SCRIPTS_SRC/plan_registry_runtime.py"
   "$SCRIPTS_SRC/preferences_preload_runtime.py"
-  "$SCRIPTS_SRC/model_compare_runtime.py"
   "$SCRIPTS_SRC/check-runtime-smoke.sh"
   "$SCRIPTS_SRC/sync-runtime-assets.sh"
   "$TESTS_SRC/test_bundle_smoke.py"
@@ -87,7 +86,6 @@ rsync -a --delete --prune-empty-dirs \
   --include='decision_bridge_runtime.py' \
   --include='plan_registry_runtime.py' \
   --include='preferences_preload_runtime.py' \
-  --include='model_compare_runtime.py' \
   --include='check-runtime-smoke.sh' \
   --include='sync-runtime-assets.sh' \
   --exclude='*' \
@@ -115,7 +113,6 @@ chmod +x \
   "$BUNDLE_DIR/scripts/decision_bridge_runtime.py" \
   "$BUNDLE_DIR/scripts/plan_registry_runtime.py" \
   "$BUNDLE_DIR/scripts/preferences_preload_runtime.py" \
-  "$BUNDLE_DIR/scripts/model_compare_runtime.py" \
   "$BUNDLE_DIR/scripts/check-runtime-smoke.sh" \
   "$BUNDLE_DIR/scripts/sync-runtime-assets.sh"
 
