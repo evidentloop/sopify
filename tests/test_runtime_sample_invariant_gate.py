@@ -314,21 +314,6 @@ class SampleInvariantReplayTests(unittest.TestCase):
             self.assertEqual(cancelled.route.route_name, "cancel_active")
             self.assertFalse((workspace / ".sopify-skills" / "state" / "current_decision.json").exists())
 
-    def test_a8_analysis_only_process_semantic_routes_to_consult_without_write(self) -> None:
-        case = _cases_by_id()["A-8_analysis_only_no_write_process_semantic"]
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            workspace = Path(temp_dir)
-            router = _router_for_workspace(workspace, active_plan=True)
-            skills = _skills_for_workspace(workspace)
-            positive = router.classify(case["positive_examples"][0]["utterance"], skills=skills)
-            negative = router.classify(case["negative_examples"][0]["utterance"], skills=skills)
-
-            self.assertEqual(positive.route_name, "consult")
-            self.assertTrue(positive.should_recover_context)
-            self.assertFalse(positive.should_create_plan)
-            self.assertNotEqual(negative.route_name, "consult")
-
 
 class SampleInvariantStateGateTests(unittest.TestCase):
     def test_confirm_path_materializes_plan_without_drifting_checkpoint_state(self) -> None:

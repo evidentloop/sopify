@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Mapping
@@ -11,6 +12,13 @@ from uuid import uuid4
 from .config import ConfigError, load_runtime_config
 from .engine import run_runtime
 from .entry_guard import ENTRY_GUARD_PENDING_ACTIONS
+from .action_intent import (
+    ACTION_TYPES,
+    CONFIDENCE_LEVELS,
+    SIDE_EFFECTS,
+    ActionProposal,
+    resolve_action_proposal,
+)
 from .preferences import PreferencesPreloadResult, preload_preferences
 from .state import StateStore, cleanup_expired_session_state, iso_now, normalize_session_id, stable_request_sha1, summarize_request_text
 from .workspace_preflight import WorkspacePreflightError, preflight_workspace_runtime
@@ -50,6 +58,8 @@ def enter_runtime_gate(
     session_id: str | None = None,
     user_home: Path | None = None,
     write_receipt: bool = True,
+    action_proposal_json: str | None = None,
+    action_proposal_capability: bool = False,
 ) -> dict[str, Any]:
     """Run the prompt-level gate and return the compact host-facing contract."""
 
@@ -57,6 +67,22 @@ def enter_runtime_gate(
     contract = _base_contract(workspace)
     config = None
     request = str(raw_request or "").strip()
+
+    # Parse ActionProposal from host JSON (if provided).
+    proposal: ActionProposal | None = None
+    proposal_parse_error: str | None = None
+    if action_proposal_json is not None:
+        # Providing --action-proposal-json implies new-host capability.
+        action_proposal_capability = True
+        try:
+            raw = json.loads(action_proposal_json)
+            proposal = resolve_action_proposal(raw)
+            if proposal is None:
+                proposal_parse_error = "resolve_action_proposal returned None (invalid schema)"
+        except json.JSONDecodeError as exc:
+            proposal_parse_error = f"invalid JSON: {exc}"
+        except TypeError as exc:
+            proposal_parse_error = f"unexpected type: {exc}"
 
     try:
         if not request:
@@ -130,12 +156,31 @@ def enter_runtime_gate(
         if cleaned_session_dirs:
             pass
 
+        # ActionProposal gate: new host (capability declared) without valid
+        # proposal on a non-command-prefix request → return retry contract
+        # with schema so host can fill in and retry.
+        is_command_prefix = _is_command_prefix_request(request)
+        if action_proposal_capability and proposal is None and not is_command_prefix:
+            retry_contract = _build_action_proposal_retry_contract(config, resolved_session_id, workspace, request=request)
+            if proposal_parse_error:
+                retry_contract["action_proposal_parse_error"] = proposal_parse_error
+            contract.update(retry_contract)
+            return _finalize_gate_contract(
+                contract=contract,
+                workspace=workspace,
+                request=request,
+                runtime_route_name="action_proposal_retry",
+                config=config,
+                write_receipt=write_receipt,
+            )
+
         runtime_result = run_runtime(
             request,
             workspace_root=workspace,
             global_config_path=global_config_path,
             session_id=resolved_session_id,
             user_home=user_home,
+            action_proposal=proposal,
         )
         contract["runtime"] = {
             "route_name": runtime_result.route.route_name,
@@ -723,6 +768,75 @@ def _finalize_gate_contract(
         except OSError as exc:
             contract["receipt_write_error"] = str(exc)
     return contract
+
+
+_COMMAND_PREFIX_RE = re.compile(r"^~(?:go|compare)(?:\s|$)", re.IGNORECASE)
+
+
+def _is_command_prefix_request(request: str) -> bool:
+    """Command-prefix requests are deterministic routes; they bypass ActionProposal."""
+    return bool(_COMMAND_PREFIX_RE.match(request.strip()))
+
+
+def _build_action_proposal_schema() -> dict[str, Any]:
+    """Return the ActionProposal schema for the gate retry contract."""
+    return {
+        "action_type": {"enum": list(ACTION_TYPES), "required": True},
+        "side_effect": {"enum": list(SIDE_EFFECTS), "default": "none"},
+        "confidence": {"enum": list(CONFIDENCE_LEVELS), "default": "high"},
+        "evidence": {"type": "list[str]", "default": []},
+    }
+
+
+def _build_action_proposal_retry_contract(
+    config: Any,
+    session_id: str,
+    workspace: Path,
+    request: str = "",
+) -> dict[str, Any]:
+    """Build the gate retry response for a new host that omitted the proposal."""
+    # Use config-aware state paths when config is available.
+    if config is not None:
+        from .state import StateStore
+        store = StateStore(config, session_id=session_id)
+        store.ensure()
+        state_contract = _build_state_contract(store=store)
+    else:
+        state_contract = _fallback_state_contract(workspace=workspace, session_id=session_id)
+    return {
+        "status": "action_proposal_retry",
+        "gate_passed": False,
+        "allowed_response_mode": "action_proposal_retry",
+        "action_proposal_schema": _build_action_proposal_schema(),
+        "message": (
+            "Host provided --action-proposal-json or --action-proposal-capability "
+            "but no valid ActionProposal was resolved. Fill in the ActionProposal "
+            "per the schema and retry the gate."
+        ),
+        "evidence": {
+            "manifest_found": (workspace / ".sopify-runtime" / "manifest.json").is_file(),
+            "handoff_found": False,
+            "strict_runtime_entry": False,
+            "handoff_source_kind": "action_proposal_retry",
+            "current_request_produced_handoff": False,
+            "persisted_handoff_matches_current_request": False,
+        },
+        "runtime": {
+            "route_name": "action_proposal_retry",
+            "reason": "Host must provide ActionProposal before runtime can proceed",
+        },
+        "observability": _build_gate_observability(
+            request=request,
+            runtime_route="action_proposal_retry",
+            persisted_handoff=None,
+            runtime_handoff=None,
+            current_run=None,
+            ingress_mode="runtime_gate_enter",
+            session_id=session_id,
+            cleaned_session_dirs=(),
+        ),
+        "state": state_contract,
+    }
 
 
 __all__ = [

@@ -78,6 +78,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Skip writing .sopify-skills/state/current_gate_receipt.json.",
     )
     enter.add_argument(
+        "--action-proposal-json",
+        default=None,
+        help="JSON-encoded ActionProposal from the host LLM.",
+    )
+    enter.add_argument(
+        "--action-proposal-capability",
+        action="store_true",
+        help="Declare that this host supports ActionProposal. "
+             "Without this flag, gate treats the host as legacy and skips proposal layer.",
+    )
+    enter.add_argument(
         "--format",
         choices=("json", "text"),
         default="json",
@@ -104,6 +115,8 @@ def main(argv: list[str] | None = None) -> int:
         requested_root=args.requested_root,
         session_id=args.session_id,
         write_receipt=not args.no_receipt,
+        action_proposal_json=args.action_proposal_json,
+        action_proposal_capability=args.action_proposal_capability,
     )
     if args.format == "text":
         print(render_gate_text(payload))

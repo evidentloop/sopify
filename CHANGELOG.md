@@ -6,6 +6,97 @@ This changelog is maintained manually (not auto-generated).
 
 ## [Unreleased]
 
+## [2026-04-29.150302] - 2026-04-29
+
+### Docs
+
+- Refined public documentation:
+  - `README.md`
+  - `README.zh-CN.md`
+
+### Runtime
+
+- Updated runtime internals:
+  - `runtime/action_intent.py`
+  - `runtime/contracts/decision_tables.yaml`
+  - `runtime/contracts/failure_recovery_table.schema.json`
+  - `runtime/decision_tables.py`
+  - `runtime/engine.py`
+  - `runtime/gate.py`
+  - `runtime/manifest.py`
+  - `runtime/router.py`
+
+### Scripts
+
+- Adjusted maintenance scripts:
+  - `scripts/runtime_gate.py`
+
+### Skills
+
+- Synced prompt-layer skills:
+  - `Claude/Skills/CN/CLAUDE.md`
+  - `Claude/Skills/EN/CLAUDE.md`
+  - `Codex/Skills/CN/AGENTS.md`
+  - `Codex/Skills/EN/AGENTS.md`
+
+### Tests
+
+- Updated automated coverage:
+  - `tests/test_action_intent.py`
+  - `tests/test_runtime_engine.py`
+  - `tests/test_runtime_plan_reuse.py`
+  - `tests/test_runtime_router.py`
+  - `tests/test_runtime_sample_invariant_gate.py`
+
+### Changed
+
+- Updated project files:
+  - `.agents/skills/cross-review/SKILL.md`
+  - `.agents/skills/cross-review/skill.yaml`
+  - `CHANGELOG.md`
+
+## [2026-04-29.145842] - 2026-04-29
+
+### Runtime
+
+- Updated runtime internals:
+  - `runtime/action_intent.py`
+  - `runtime/contracts/decision_tables.yaml`
+  - `runtime/contracts/failure_recovery_table.schema.json`
+  - `runtime/decision_tables.py`
+  - `runtime/engine.py`
+  - `runtime/gate.py`
+  - `runtime/manifest.py`
+  - `runtime/router.py`
+
+### Scripts
+
+- Adjusted maintenance scripts:
+  - `scripts/runtime_gate.py`
+
+### Skills
+
+- Synced prompt-layer skills:
+  - `Claude/Skills/CN/CLAUDE.md`
+  - `Claude/Skills/EN/CLAUDE.md`
+  - `Codex/Skills/CN/AGENTS.md`
+  - `Codex/Skills/EN/AGENTS.md`
+
+### Tests
+
+- Updated automated coverage:
+  - `tests/test_action_intent.py`
+  - `tests/test_runtime_engine.py`
+  - `tests/test_runtime_plan_reuse.py`
+  - `tests/test_runtime_router.py`
+  - `tests/test_runtime_sample_invariant_gate.py`
+
+### Changed
+
+- Updated project files:
+  - `.agents/skills/cross-review/SKILL.md`
+  - `.agents/skills/cross-review/skill.yaml`
+
 ## [2026-04-28.143230] - 2026-04-28
 
 ### Docs

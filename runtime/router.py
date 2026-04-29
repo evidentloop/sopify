@@ -141,27 +141,6 @@ _LONG_TERM_CONTRACT_HINTS = (
     "slo",
     "长期",
 )
-_PLAN_META_REVIEW_PATTERNS = (
-    re.compile(r"(分析下|评估下|解释下|看看|review|critique|score|评分|打分|风险|risk|优化点|还需要我.*决策|还有什么.*决策)", re.IGNORECASE),
-    re.compile(r"(当前状态|现在状态|状态如何|有什么问题|还有什么问题)", re.IGNORECASE),
-)
-_PLAN_META_REVIEW_ANCHORS = (
-    re.compile(r"(这个|当前|该)\s*(方案|plan)", re.IGNORECASE),
-    re.compile(r"\bplan\b", re.IGNORECASE),
-    re.compile(r"方案", re.IGNORECASE),
-)
-_ACTIVE_PLAN_META_REVIEW_ANCHORS = (
-    *_PLAN_META_REVIEW_ANCHORS,
-    re.compile(r"\bcurrent\s+plan\b", re.IGNORECASE),
-    re.compile(r"\bplan\s*(id|path|title)\b", re.IGNORECASE),
-    re.compile(r"\b(?:current\s+plan|plan)\b.*\b(?:tasks?|background|design)\b", re.IGNORECASE),
-    re.compile(r"\b(?:tasks?|background|design)\b.*\b(?:current\s+plan|plan)\b", re.IGNORECASE),
-    re.compile(r"(?:当前方案|这个方案|该方案|方案).*(?:任务|背景|设计)", re.IGNORECASE),
-    re.compile(r"(?:任务|背景|设计).*(?:当前方案|这个方案|该方案|方案)", re.IGNORECASE),
-)
-_PLAN_META_REVIEW_EDIT_PATTERNS = (
-    re.compile(r"(整理|更新|同步|写入|落地|修改|实现|修复|补充|重写|合并|merge|edit|change|update)", re.IGNORECASE),
-)
 _ACTIVE_PLAN_META_REVIEW_CUES = (
     "review",
     "分析下",
@@ -226,33 +205,6 @@ _EXPLICIT_PLAN_PACKAGE_PATTERNS = (
     re.compile(r"(写到|写入|落到).*(background\.md|design\.md|tasks\.md)", re.IGNORECASE),
     re.compile(r"(写到|写入|落到).*(\.sopify-skills/plan/)", re.IGNORECASE),
     re.compile(r"(create|write).*(plan package|background\.md|design\.md|tasks\.md)", re.IGNORECASE),
-)
-_ANALYZE_CHALLENGE_A1_PATTERNS = (
-    re.compile(r"(优化|统一).*(体验|职责)", re.IGNORECASE),
-    re.compile(r"(更顺一点|更顺滑|避免用户看不懂|让用户更容易理解)", re.IGNORECASE),
-)
-_ANALYZE_CHALLENGE_A2_PATTERNS = (
-    re.compile(r"(直接|只要|就|省掉|去掉|绕过|不用).*(就行|即可|可以了|好了)", re.IGNORECASE),
-    re.compile(r"(去掉|省掉|绕过).*(gate|runtime gate|execution confirm|执行确认)", re.IGNORECASE),
-)
-_ANALYZE_CHALLENGE_A3_PATTERNS = (
-    re.compile(r"(更轻|更小|最小改法|最小方案|值不值得|有没有更轻的改法|有没有更小的改法)", re.IGNORECASE),
-    re.compile(r"(重复建设|更低成本|更便宜|先不做大改)", re.IGNORECASE),
-)
-_ANALYZE_CHALLENGE_A4_PATTERNS = (
-    re.compile(r"(统一入口|唯一机器事实源|唯一事实源|收敛成一个|收敛为一个)", re.IGNORECASE),
-    re.compile(r"(runtime gate|execution gate|topic_key|current_handoff|current_run|manifest|handoff|consult 路由|consult route)", re.IGNORECASE),
-    re.compile(r"(自动复用|长期契约|host contract|宿主契约|正文回答)", re.IGNORECASE),
-)
-_ANALYZE_CHALLENGE_A4_DECISION_PATTERNS = (
-    re.compile(r"(要不要|是否|应不应该|有没有必要|是不是|而不是|直接|收敛|统一|唯一|参与)", re.IGNORECASE),
-    re.compile(r"(怎么处理|如何处理|怎么收口|如何收口)", re.IGNORECASE),
-)
-_ANALYZE_CHALLENGE_TRIGGER_PATTERNS = (
-    ("A2", _ANALYZE_CHALLENGE_A2_PATTERNS),
-    ("A3", _ANALYZE_CHALLENGE_A3_PATTERNS),
-    ("A4", _ANALYZE_CHALLENGE_A4_PATTERNS),
-    ("A1", _ANALYZE_CHALLENGE_A1_PATTERNS),
 )
 _EXECUTION_CONFIRM_PLAN_FEEDBACK_PATTERNS = (
     re.compile(r"(这个|当前|该)\s*(plan|方案)", re.IGNORECASE),
@@ -450,22 +402,6 @@ class Router:
                 should_recover_context=False,
                 runtime_skill_id=_runtime_skill("compare", skills, "model-compare"),
             )
-
-        meta_review_route = _classify_plan_meta_review(
-            text,
-            current_plan=current_plan,
-            skills=skills,
-        )
-        if meta_review_route is not None:
-            return self._with_capture(meta_review_route)
-
-        analyze_challenge_route = _classify_analyze_challenge(
-            text,
-            current_plan=current_plan,
-            skills=skills,
-        )
-        if analyze_challenge_route is not None:
-            return self._with_capture(analyze_challenge_route)
 
         plan_meta_debug_route = _classify_plan_materialization_meta_debug(
             text,
@@ -989,46 +925,6 @@ def _estimate_complexity(text: str) -> _ComplexitySignal:
     return _ComplexitySignal("medium", "Defaulted to medium because the request is action-oriented but underspecified", "light")
 
 
-def _classify_plan_meta_review(
-    text: str,
-    *,
-    current_plan,
-    skills: Iterable[SkillMeta],
-) -> RouteDecision | None:
-    if not _looks_like_plan_meta_review(text, current_plan=current_plan):
-        return None
-    return RouteDecision(
-        route_name="consult",
-        request_text=text,
-        reason="Matched plan meta-review intent and bypassed new-plan scaffold creation",
-        complexity="simple",
-        should_recover_context=current_plan is not None,
-        candidate_skill_ids=_candidate_skills("consult", skills, "analyze"),
-    )
-
-
-def _classify_analyze_challenge(
-    text: str,
-    *,
-    current_plan,
-    skills: Iterable[SkillMeta],
-) -> RouteDecision | None:
-    trigger_label = _match_analyze_challenge_label(text)
-    if trigger_label is None:
-        return None
-    return RouteDecision(
-        route_name="consult",
-        request_text=text,
-        reason=f"Matched first-principles analyze challenge signal {trigger_label}",
-        complexity="simple",
-        should_recover_context=current_plan is not None,
-        candidate_skill_ids=_candidate_skills("consult", skills, "analyze"),
-        artifacts={
-            "consult_mode": "analyze_challenge",
-            "trigger_label": trigger_label,
-        },
-    )
-
 
 def _classify_plan_materialization_meta_debug(
     text: str,
@@ -1154,21 +1050,6 @@ def _has_tradeoff_or_contract_split(text: str) -> bool:
     return any(token in lowered for token in _LONG_TERM_CONTRACT_HINTS)
 
 
-def _looks_like_plan_meta_review(text: str, *, current_plan) -> bool:
-    if not text.strip():
-        return False
-    if not any(pattern.search(text) is not None for pattern in _PLAN_META_REVIEW_PATTERNS):
-        return False
-    if any(pattern.search(text) is not None for pattern in _PLAN_META_REVIEW_EDIT_PATTERNS):
-        return False
-    if current_plan is not None:
-        if _active_plan_meta_review_has_followup_edit(text):
-            return False
-        return any(pattern.search(text) is not None for pattern in _ACTIVE_PLAN_META_REVIEW_ANCHORS)
-    if _is_protected_plan_asset_request(text):
-        return True
-    return any(pattern.search(text) is not None for pattern in _PLAN_META_REVIEW_ANCHORS)
-
 
 def _active_plan_meta_review_has_followup_edit(text: str) -> bool:
     fragments = _split_active_plan_review_fragments(text)
@@ -1209,18 +1090,6 @@ def _split_active_plan_review_fragments(text: str) -> tuple[str, ...]:
         fragments.append(fragment)
     return tuple(fragments)
 
-
-def _match_analyze_challenge_label(text: str) -> str | None:
-    normalized = text.strip()
-    if not normalized:
-        return None
-    for label, patterns in _ANALYZE_CHALLENGE_TRIGGER_PATTERNS:
-        if not any(pattern.search(normalized) is not None for pattern in patterns):
-            continue
-        if label == "A4" and not any(pattern.search(normalized) is not None for pattern in _ANALYZE_CHALLENGE_A4_DECISION_PATTERNS):
-            continue
-        return label
-    return None
 
 
 def _looks_like_execution_confirm_feedback(text: str, *, current_plan) -> bool:

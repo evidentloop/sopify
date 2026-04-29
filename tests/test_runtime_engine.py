@@ -3301,7 +3301,7 @@ class EngineIntegrationTests(unittest.TestCase):
             self.assertEqual(manifest["limits"]["runtime_gate_contract_version"], "1")
             self.assertEqual(
                 manifest["limits"]["runtime_gate_allowed_response_modes"],
-                ["normal_runtime_followup", "checkpoint_only", "error_visible_retry"],
+                ["normal_runtime_followup", "checkpoint_only", "error_visible_retry", "action_proposal_retry"],
             )
             self.assertIn("model-compare", manifest["limits"]["runtime_payload_required_skill_ids"])
             self.assertEqual(len(manifest["builtin_skills"]), 7)

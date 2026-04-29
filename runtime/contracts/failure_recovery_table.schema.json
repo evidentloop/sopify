@@ -40,7 +40,8 @@
   "allowed_response_modes": [
     "normal_runtime_followup",
     "checkpoint_only",
-    "error_visible_retry"
+    "error_visible_retry",
+    "action_proposal_retry"
   ],
   "retry_policies": [
     "manual_recovery_only",

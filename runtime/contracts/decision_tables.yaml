@@ -472,6 +472,32 @@ side_effect_mapping_table:
       terminality: checkpoint_terminal
       reason_code: effect.checkpoint.revise_preserve_identity
     - resolved_action: switch_to_consult_readonly
+      checkpoint_kind: confirm_plan_package
+      state_mutators:
+        preserve:
+          - current_plan_proposal
+          - current_run
+        clear: []
+        update: []
+        write: []
+      forbidden_state_effects:
+        - materialize_new_plan_package
+        - advance_to_develop
+        - clear_current_plan_proposal
+      preserved_identity:
+        - checkpoint_id
+        - reserved_plan_id
+        - topic_key
+      handoff_protocol:
+        required_host_action: continue_host_consult
+        artifact_keys:
+          - checkpoint_request
+          - proposal
+        resume_route: plan_proposal_pending
+        output_mode: consult_answer
+      terminality: route_terminal
+      reason_code: effect.hard_constraint.analysis_only_consult_readonly
+    - resolved_action: switch_to_consult_readonly
       checkpoint_kind: confirm_decision
       state_mutators:
         preserve:

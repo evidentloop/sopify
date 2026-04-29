@@ -62,6 +62,11 @@ from .router import (
     Router,
     detect_explain_only_consult_override,
 )
+from .action_intent import (
+    ActionProposal,
+    ActionValidator,
+    ValidationContext,
+)
 from .skill_registry import SkillRegistry
 from .skill_runner import SkillExecutionError, run_runtime_skill
 from .state import (
@@ -608,6 +613,7 @@ def run_runtime(
     session_id: str | None = None,
     user_home: Path | None = None,
     runtime_payloads: Optional[Mapping[str, Mapping[str, Any]]] = None,
+    action_proposal: ActionProposal | None = None,
 ) -> RuntimeResult:
     """Run the Sopify runtime pipeline for a single input.
 
@@ -617,6 +623,9 @@ def run_runtime(
         global_config_path: Optional global config override.
         user_home: Optional home override for tests.
         runtime_payloads: Optional runtime-skill payload map keyed by skill id.
+        action_proposal: Optional ActionProposal from the host LLM. When
+            provided the pre-route validator may override or constrain
+            the route before the Router runs.
 
     Returns:
         Standardized runtime result.
@@ -635,7 +644,33 @@ def run_runtime(
         review_store=review_store,
         global_store=global_store,
     )
-    classified_route = router.classify(user_input, skills=skills, snapshot=snapshot)
+
+    # --- P0: ActionProposal pre-route interceptor ---
+    # When the host provides a validated ActionProposal, run it through the
+    # ActionValidator *before* the Router.  If the validator returns an
+    # authoritative route_override (e.g. "consult"), construct a synthetic
+    # RouteDecision and skip Router classification entirely.
+    proposal_override_route: RouteDecision | None = None
+    if action_proposal is not None:
+        validator = ActionValidator()
+        _run = snapshot.current_run
+        _handoff = snapshot.current_handoff
+        ctx = ValidationContext(
+            stage=getattr(_run, "stage", "") or "" if _run else "",
+            required_host_action=getattr(_handoff, "required_host_action", "") or "" if _handoff else "",
+        )
+        decision = validator.validate(action_proposal, ctx)
+        if decision.route_override:
+            proposal_override_route = RouteDecision(
+                route_name=decision.route_override,
+                request_text=user_input,
+                reason=f"action_proposal_validator: {decision.reason_code}",
+            )
+
+    if proposal_override_route is not None:
+        classified_route = proposal_override_route
+    else:
+        classified_route = router.classify(user_input, skills=skills, snapshot=snapshot)
     recovered = recover_context(
         classified_route,
         config=config,

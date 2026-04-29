@@ -318,6 +318,7 @@ def build_bundle_manifest(
                 "normal_runtime_followup",
                 "checkpoint_only",
                 "error_visible_retry",
+                "action_proposal_retry",
             ],
         },
     )

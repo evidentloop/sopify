@@ -133,25 +133,27 @@ P0 只走三条路径：
 Gate 区分两种无 proposal 场景：
 
 1. **New host（支持 ActionProposal capability）**：无 proposal → gate 返回 retry contract + schema，host 填充后重试。不进入 runtime。
-2. **Legacy host（不支持 ActionProposal）**：无 proposal → 跳过 proposal 层，直接进入现有 Router。现有 keyword classifier 继续运行，不中断。
+2. **Legacy host（不支持 ActionProposal）**：无 proposal → 跳过 proposal 层，直接进入现有 Router。保证 gate 正常返回、runtime 正常路由，但不承诺 read-only 意图精确保护。
 
-Legacy fallback 意味着 P0 不会让旧宿主 break，只有理解 ActionProposal schema 的新宿主才获得"不误建包"的改善。
+Legacy fallback 保证旧宿主不崩溃，但不保证不误建包。只有理解 ActionProposal schema 的新宿主才获得 read-only 意图保护。当前 host 可控且已升级，该风险接受。
 
 Gate 判定 host 是否支持 ActionProposal 的方式：gate 入口参数是否携带 `--action-proposal-json` 或 `--action-proposal-capability` 标志。首次调用不带标志 → legacy path。
 
 ### Legacy Compatibility Paths
 
-以下现有 classifier 在 P0 中标为 legacy compatibility path，不删除：
-- `analysis_only_no_write_brake`（signal_priority_table）
-- `plan_meta_review`（router.py `_classify_plan_meta_review`）
-- `analyze_challenge`（router.py `_classify_analyze_challenge`）
-- `explain_only_override`（router.py `_classify_explain_only_override`）
+以下现有 classifier 在 P0-H (low-risk) 中已删除：
+- ~~`plan_meta_review`（`_classify_plan_meta_review`）~~ — 已删除
+- ~~`analyze_challenge`（`_classify_analyze_challenge`）~~ — 已删除
 
-Legacy fallback 是开发期安全网，不是长期等价路径；host prompt 更新（P0-F）后 legacy path 即为死代码。
+以下保留（非 router classifier 或有独立调用者）：
+- `analysis_only_no_write_brake` — 是 decision_tables.yaml 信号，非 router classifier
+- `explain_only_override`（`_classify_explain_only_override`） — 有 engine.py 交互，后续单独处理
+
+Legacy fallback 保证旧 host 不崩溃（gate 正常返回、runtime 正常路由），但**不承诺 read-only 意图保护**。未声明 `--action-proposal-capability` 的 host 可能将分析类请求误判为 `light_iterate`。该风险接受：当前 host 可控且已升级，ActionProposal 是正式保护层。
 
 ### Post-validation Cleanup
 
-P0-G 测试通过 + 1 轮 dogfood 后，删除上述 4 条 legacy classifier path 及其测试。同步更新总纲 ADR-017 section（移除 legacy compatibility 段落）、host prompt（移除 legacy fallback 相关描述）。按 ADR-018 sunset → removed 流程执行。
+P0-H low-risk cleanup 已完成：删除 `plan_meta_review` 和 `analyze_challenge` 两条 legacy classifier 及其专属常量和测试。`explain_only_override` deferred。完整 legacy sunset 另行处理，不在本方案包范围内。
 
 ---
 

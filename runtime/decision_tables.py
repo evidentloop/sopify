@@ -1195,14 +1195,15 @@ def _validate_side_effect_mapping_table(
     rows = mapping.get("rows")
     if not isinstance(rows, list) or not rows:
         raise DecisionTableError("side_effect_mapping_table.rows must be a non-empty list")
-    if len(rows) != len(schema["ordered_resolved_actions"]):
-        raise DecisionTableError(
-            "side_effect_mapping_table.rows must contain "
-            f"{len(schema['ordered_resolved_actions'])} rows; got {len(rows)}"
-        )
 
+    ordered_actions = list(schema["ordered_resolved_actions"])
+    # Rows must follow the frozen action ordering; multiple rows per
+    # resolved_action are allowed (different checkpoint_kind).
+    # (resolved_action, checkpoint_kind) must be unique across all rows.
     normalized_rows: list[dict[str, Any]] = []
-    for index, resolved_action in enumerate(schema["ordered_resolved_actions"]):
+    seen_pairs: set[tuple[str, str]] = set()
+    prev_action_rank = -1
+    for index in range(len(rows)):
         row = _expect_mapping(rows[index], path=f"side_effect_mapping_table.rows[{index}]")
         _assert_exact_keys(
             row,
@@ -1213,16 +1214,31 @@ def _validate_side_effect_mapping_table(
             row.get("resolved_action"),
             path=f"side_effect_mapping_table.rows[{index}].resolved_action",
         )
-        if actual_resolved_action != resolved_action:
+        if actual_resolved_action not in ordered_actions:
+            raise DecisionTableError(
+                f"side_effect_mapping_table.rows[{index}].resolved_action "
+                f"'{actual_resolved_action}' is not in ordered_resolved_actions"
+            )
+        action_rank = ordered_actions.index(actual_resolved_action)
+        if action_rank < prev_action_rank:
             raise DecisionTableError(
                 "side_effect_mapping_table.rows must follow frozen order "
-                f"{resolved_action} at index {index}; got {actual_resolved_action}"
+                f"of ordered_resolved_actions; row {index} '{actual_resolved_action}' "
+                f"violates ordering"
             )
+        prev_action_rank = action_rank
         checkpoint_kind = _expect_enum(
             row.get("checkpoint_kind"),
             schema["checkpoint_kinds"],
             path=f"side_effect_mapping_table.rows[{index}].checkpoint_kind",
         )
+        pair = (actual_resolved_action, checkpoint_kind)
+        if pair in seen_pairs:
+            raise DecisionTableError(
+                f"side_effect_mapping_table.rows[{index}] duplicate "
+                f"(resolved_action={actual_resolved_action}, checkpoint_kind={checkpoint_kind})"
+            )
+        seen_pairs.add(pair)
         state_mutators = _validate_state_mutators(
             row.get("state_mutators"),
             schema=schema["state_mutators"],

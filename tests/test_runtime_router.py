@@ -168,24 +168,6 @@ class RouterTests(unittest.TestCase):
             self.assertEqual(route.plan_package_policy, "confirm")
             self.assertFalse(route.should_create_plan)
 
-    def test_plan_meta_review_for_protected_plan_assets_prefers_consult(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            workspace = Path(temp_dir)
-            config = load_runtime_config(workspace)
-            store = StateStore(config)
-            store.ensure()
-            router = Router(config, state_store=store)
-            skills = SkillRegistry(config, user_home=workspace / "home").discover()
-
-            route = router.classify(
-                "你能解释下 .sopify-skills/plan/20260319_skill_standards_refactor/tasks.md 的当前状态吗？",
-                skills=skills,
-            )
-
-            self.assertEqual(route.route_name, "consult")
-            self.assertFalse(route.should_create_plan)
-            self.assertIn("meta-review", route.reason)
-
     def test_consult_guard_falls_back_when_tradeoff_or_long_term_split_detected(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
@@ -203,23 +185,6 @@ class RouterTests(unittest.TestCase):
                 route.artifacts.get("entry_guard_reason_code"),
                 DIRECT_EDIT_BLOCKED_RUNTIME_REQUIRED_REASON_CODE,
             )
-
-    def test_active_plan_meta_review_bypasses_runtime_first_guard(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            workspace = Path(temp_dir)
-            config = load_runtime_config(workspace)
-            store = StateStore(config)
-            store.ensure()
-            plan_artifact = create_plan_scaffold("第一性原理协作规则分层落地", config=config, level="standard")
-            store.set_current_plan(plan_artifact)
-            router = Router(config, state_store=store)
-            skills = SkillRegistry(config, user_home=workspace / "home").discover()
-
-            route = router.classify("分析下这个方案的评分、风险和还有什么需要我决策", skills=skills)
-
-            self.assertEqual(route.route_name, "consult")
-            self.assertTrue(route.should_recover_context)
-            self.assertFalse(route.should_create_plan)
 
     def test_active_plan_meta_review_with_followup_edit_does_not_route_to_consult(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -675,24 +640,6 @@ class RouterTests(unittest.TestCase):
             self.assertIsNone(quick_fix_route.active_run_action)
             self.assertEqual(consult_route.route_name, "consult")
             self.assertIsNone(consult_route.active_run_action)
-
-    def test_question_form_a4_prefers_analyze_challenge_consult(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            workspace = Path(temp_dir)
-            config, store, _ = _prepare_ready_plan_state(workspace)
-            router = Router(config, state_store=store)
-            skills = SkillRegistry(config, user_home=workspace / "home").discover()
-
-            route = router.classify(
-                "current_handoff.json 和 current_run.json 里都有 execution gate，是否应该收敛成一个唯一机器事实源？",
-                skills=skills,
-            )
-
-            self.assertEqual(route.route_name, "consult")
-            self.assertEqual(route.artifacts.get("consult_mode"), "analyze_challenge")
-            self.assertEqual(route.artifacts.get("trigger_label"), "A4")
-            self.assertIn("analyze", route.candidate_skill_ids)
-            self.assertTrue(route.should_recover_context)
 
     def test_pending_clarification_intercepts_exec_and_accepts_answers(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
