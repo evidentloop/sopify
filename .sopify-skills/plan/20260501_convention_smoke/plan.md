@@ -8,6 +8,7 @@ approach: Host A 产出 light plan + 完成 1 个 task → Host B 读取 bluepri
 
 - [x] task-1: 在 blueprint/ 下建立最小上下文（project.md + background.md + design.md + protocol.md）— Host A 已完成，文件已存在且已 commit
 - [x] task-2: Host B 读取 project.md 和 blueprint/，正确识别项目名和定位，然后继续本 task — 将本 task 标为 done 并在下方记录消费证据
+- [x] task-3: 真实第二宿主验证 — 读取 project.md + blueprint/，确认 Convention 模式可消费
 
 ## Host B 消费指引
 
@@ -28,3 +29,13 @@ Host B（任意宿主/模型/脚本），请按以下步骤操作：
 - `project_name`: sopify-skills
 - `sopify_positioning`: Sopify 是跨宿主 AI 工作流的证据与授权层，将外部生产、验证、知识工具的结果收敛成可恢复、可审计、可授权的机器事实。
 - `state_dependency`: no
+
+## Host C 消费证据
+
+- `host_identity`: Codex / GPT-5
+- `project_name`: sopify-skills
+- `sopify_positioning`: Sopify 是跨宿主 AI 工作流的证据与授权层，将外部生产、验证、知识工具的结果收敛成可恢复、可审计、可授权的机器事实。
+- `protocol_version`: Protocol v0
+- `state_dependency`: no
+- `files_read`: .sopify-skills/project.md, .sopify-skills/blueprint/background.md, .sopify-skills/blueprint/protocol.md, .sopify-skills/plan/20260501_convention_smoke/plan.md
+- `files_not_read`: state/*, replay/*
