@@ -6,6 +6,14 @@ This changelog is maintained manually (not auto-generated).
 
 ## [Unreleased]
 
+## [2026-05-03.203432] - 2026-05-03
+
+### Skills
+
+- Synced prompt-layer skills:
+  - `Codex/Skills/CN/AGENTS.md`
+  - `Codex/Skills/EN/AGENTS.md`
+
 ## [2026-05-03.201958] - 2026-05-03
 
 ### Docs
