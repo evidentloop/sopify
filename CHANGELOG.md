@@ -6,6 +6,20 @@ Format: Summary → Plan Packages → File Details (collapsible).
 
 ## [Unreleased]
 
+## [2026-05-04.221601] - 2026-05-04
+
+### Summary
+
+- Changes across: Runtime.
+
+<details>
+<summary>File details</summary>
+
+**Runtime** — Updated runtime internals:
+  - `runtime/gate.py`
+
+</details>
+
 ## [2026-05-04.201238] - 2026-05-04
 
 ### Summary
