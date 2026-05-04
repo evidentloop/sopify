@@ -2,11 +2,29 @@
 
 All notable changes to Sopify are documented in this file.
 
-This changelog is maintained manually (not auto-generated).
+Format: Summary → Plan Packages → File Details (collapsible).
 
 ## [Unreleased]
 
+## [2026-05-04.194714] - 2026-05-04
+
+### Summary
+
+- Changes across: Scripts, Tests.
+
+<details>
+<summary>File details</summary>
+
+**Scripts** — Adjusted maintenance scripts:
+  - `scripts/release-draft-changelog.py`
+
+**Tests** — Updated automated coverage:
+  - `tests/test_release_hooks.py`
+
+</details>
+
 ## [2026-05-03.203432] - 2026-05-03
+<!-- Legacy format: entries below this line use the old file-list-only format -->
 
 ### Skills
 
