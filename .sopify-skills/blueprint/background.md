@@ -26,6 +26,8 @@ Sopify 官方在 core 之上提供一个轻量、可插拔、收敛式的 bluepr
 
 **外插原则**：谁负责"把事做好"（生产、验证、知识处理），谁外插；谁负责"把结果变成可验证事实"（证据规范、授权判定、收据生成），谁进 Sopify core。
 
+**产品形态锚点**：Protocol 是新宿主的唯一硬依赖（Convention 模式下无需 runtime 即可合规工作）；Validator 是宿主吸收执行编排后 Sopify 最后保留的面（durable core 的生存底线）；Runtime 是确定性加固线，不是接入前提（新接入方不应被要求先跑完整 runtime）；一切外部验证与生产能力通过 integration contract 外插，不进 core（边界判定原则）。
+
 ## 核心架构模式
 
 Sopify 的一切交互遵循一条管线：
