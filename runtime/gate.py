@@ -102,6 +102,14 @@ def enter_runtime_gate(
                 user_home=user_home,
             )
         )
+        # Root normalization: when preflight resolves activation_root to an
+        # ancestor (e.g. git root), all downstream state writes must use that
+        # root, not the originally requested subdirectory.
+        _preflight_activation = str(contract["preflight"].get("activation_root") or "").strip()
+        if _preflight_activation:
+            _resolved_activation = Path(_preflight_activation).resolve()
+            if _resolved_activation != workspace and _resolved_activation.is_dir():
+                workspace = _resolved_activation
         if _preflight_blocks_runtime(contract["preflight"]):
             preflight_mode = _preflight_allowed_response_mode(contract["preflight"])
             resolved_session_id = _resolve_session_id(session_id)
@@ -840,6 +848,14 @@ def _build_action_proposal_schema() -> dict[str, Any]:
                 "ref_value": {"type": "string", "default": ""},
                 "source": {"enum": ["host_explicit", "current_plan"], "required": True},
                 "allow_current_plan_fallback": {"type": "bool", "default": False},
+            },
+        },
+        "plan_subject": {
+            "type": "object",
+            "required_for": ["execute_existing_plan"],
+            "fields": {
+                "subject_ref": {"type": "string", "required": True, "description": "workspace-relative plan directory path"},
+                "revision_digest": {"type": "string", "required": True, "description": "SHA-256 hex of plan.md content"},
             },
         },
     }
