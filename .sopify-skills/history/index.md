@@ -4,6 +4,8 @@
 
 ## 索引
 
+- `2026-05-06` [`20260505_p15_plan_materialization_auth`](2026-05/20260505_p15_plan_materialization_auth/) - standard - P1.5-C Plan Materialization Authorization Boundary: plan_package_policy authorized_only + consult 误判止血 + confirm 删除
+- `2026-05-06` [`20260505_p15_advance_slices`](2026-05/20260505_p15_advance_slices/) - standard - P1.5 先行切片: Convention 入口兑现 + Protocol Compliance Suite Phase 1 + ~summary surface 全链路删除
 - `2026-05-04` [`20260504_subject_identity_binding`](2026-05/20260504_subject_identity_binding/) - standard - P1 Subject Identity & Existing Plan Binding: protocol §7 升格 + validator admission + engine reject + workspace root normalization
 - `2026-05-04` ~~`20260416_blueprint_graphify_integration`~~ - deleted - Blueprint 可插拔增强架构 + Graphify（未实现，方向与主线相反，直接删除，git history 留底）
 - `2026-05-04` [`20260326_phase1-2-3-plan`](2026-03/20260326_phase1-2-3-plan/) - archived - Phase 1-2-3 旧总纲（B1/B2/B3 语义，已被 P0→P4 蓝图取代）
