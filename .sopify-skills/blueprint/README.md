@@ -13,7 +13,7 @@
 ## 当前焦点
 
 <!-- sopify:auto:focus:start -->
-- 当前活动 plan：暂无（`20260418_cross_review_engine` 处于 deferred；P1.5 全部归档；下一里程碑 P2 待开）。
+- 当前活动 plan：`20260506_p2_local_action_contracts`（P2 Local Action Contracts on Bound Subjects，Slice A 执行中）；`20260418_cross_review_engine` 处于 deferred。
 - history 归档：已可用；最近归档为 `../history/2026-05/20260506_p15_verifier_normative_slice`。
 <!-- sopify:auto:focus:end -->
 

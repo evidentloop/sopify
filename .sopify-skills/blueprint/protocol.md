@@ -241,13 +241,13 @@ ExecutionAuthorizationReceipt 是 execute_existing_plan 授权通过后生成的
 
 ## 7. Subject Identity & Review Wire Contract
 
-> **升格状态**：本节中 Subject Identity 的通用字段与核心语义（subject_type / subject_ref / revision_digest / 取证优先级）为 **normative**（其中 `subject_type` 仅 `"plan"` 为 normative，其余值域保留 draft）。execute_existing_plan 场景的 Subject Binding 为 **normative**（P1 升格）。Review Wire Contract 部分仍为 informative/draft，待后续里程碑联动升格。
+> **升格状态**：本节中 Subject Identity 的通用字段与核心语义（subject_type / subject_ref / revision_digest / 取证优先级）为 **normative**（其中 `subject_type` 仅 `"plan"` 为 normative，其余值域保留 draft）。Bound-subject local actions 的 Subject Binding 为 **normative**（P1 升格 execute_existing_plan；P2 扩展到 modify_files / checkpoint_response / cancel_flow 条件性）。Review Wire Contract 部分仍为 informative/draft，待后续里程碑联动升格。
 >
-> 本节定义跨宿主协作中"操作的是谁"的最小 machine contract（wire level）。适用于 review、execute_existing_plan、revise、archive 等所有需要绑定主体的场景。收敛策略性规则（轮数上限、severity 判定、冲突解决）归 `design.md` Default Workflow 策略。
+> 本节定义跨宿主协作中"操作的是谁"的最小 machine contract（wire level）。适用于 review、execute_existing_plan、modify_files、checkpoint_response、cancel_flow、archive 等所有需要绑定主体的场景。收敛策略性规则（轮数上限、severity 判定、冲突解决）归 `design.md` Default Workflow 策略。
 
 ### Subject Identity（跨场景通用）
 
-每个 side-effecting action 必须携带明确的主体身份，以保证跨宿主可追溯、可验证。Subject identity 是 protocol 层契约，validator 和 runtime 都是消费方。
+每个 bound-subject side-effecting action 必须携带明确的主体身份，以保证跨宿主可追溯、可验证。Subject identity 是 protocol 层契约，validator 和 runtime 都是消费方。Subject-free actions（`consult_readonly`、`propose_plan`）不要求主体；`archive_plan` 使用独立的 `archive_subject`（见 §5）。
 
 | 字段 | 说明 |
 |------|------|
@@ -269,9 +269,19 @@ ExecutionAuthorizationReceipt 是 execute_existing_plan 授权通过后生成的
 
 **Runtime 消费边界**：runtime 作为参考实现消费 protocol 定义的 subject identity contract，MUST NOT 自行定义主体解析语义。
 
-### execute_existing_plan 场景的 Subject Binding — *normative*
+### Bound-Subject Local Actions 的 Subject Binding — *normative*
 
-execute_existing_plan 是 subject identity 最关键的消费场景。宿主 MUST 在 ActionProposal 中通过 `plan_subject` 字段块携带以下信息：
+以下 action_type 为 **bound-subject actions**，MUST 在 ActionProposal 中通过 `plan_subject` 字段块携带主体身份：
+
+- `execute_existing_plan` — 执行已有 plan（P1 升格）
+- `modify_files` — 在已绑定 plan 上下文中修改代码文件（P2 升格）
+- `checkpoint_response` — 回应已绑定 plan 的 pending checkpoint（P2 升格）
+
+**条件性 bound-subject action**：
+
+- `cancel_flow` — 当取消目标是已绑定 plan 的活动流时 MUST 携带 `plan_subject`；其他取消场景不强制。Validator 在 `plan_subject` 存在时做全套 admission check，缺失时不 REJECT（P2 升格）
+
+宿主 MUST 在 ActionProposal 中通过 `plan_subject` 字段块携带以下信息：
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
@@ -283,7 +293,9 @@ execute_existing_plan 是 subject identity 最关键的消费场景。宿主 MUS
 - 跨 session 接力时，新 session MUST 通过 handoff 或 plan 文件重新建立 subject binding，MUST NOT 隐式继承前 session 的绑定
 - plan 内容变更（revision_digest 不匹配）后，已有 ExecutionAuthorizationReceipt 自动失效
 - Validator 在 admission 阶段 MUST 校验 `subject_ref` 存在性 + `revision_digest` 一致性
-- 缺少 `plan_subject`、`subject_ref` 指向不存在的 plan、或 `revision_digest` 与文件实际内容不匹配时，Validator MUST 返回 DECISION_REJECT（不降级 consult）
+- `subject_ref` MUST 是 workspace-relative 路径，MUST 以 `.sopify-skills/plan/` 开头，MUST NOT 包含 `..` 或绝对路径
+- 对 bound-subject actions：缺少 `plan_subject`、`subject_ref` 指向不存在的 plan、或 `revision_digest` 与文件实际内容不匹配时，Validator MUST 返回 DECISION_REJECT（不降级 consult）
+- 对 `cancel_flow`：上述检查在 `plan_subject` 存在时适用；缺失 `plan_subject` 时不触发 REJECT
 
 > **Legacy mapping 注释**（informative）：
 >
@@ -296,6 +308,29 @@ execute_existing_plan 是 subject identity 最关键的消费场景。宿主 MUS
 > | `review_or_execute_plan`（action_projection） | legacy composite，计划 P3a 收口（见 `design.md` sunset 表） |
 >
 > 以上映射为 informative 注释，不构成规范性要求。现役路径的 canonical 化属于 P3a contract-aligned cleanup 范围。
+
+### Action Applicability Matrix — *normative*
+
+以下矩阵定义每个 action_type 与 subject / delta 字段的适用关系。Parser 和 Validator 以此为准入依据。
+
+| action_type | plan_subject | archive_subject | side_effect_delta | 分类 |
+|---|---|---|---|---|
+| `consult_readonly` | 禁止 | 禁止 | 禁止 | subject-free |
+| `propose_plan` | 禁止 | 禁止 | 禁止 | subject-free |
+| `execute_existing_plan` | MUST | 禁止 | 禁止 (P2) | bound-subject |
+| `modify_files` | MUST | 禁止 | SHOULD (`write_files` 时) | bound-subject |
+| `checkpoint_response` | MUST | 禁止 | 禁止 | bound-subject |
+| `cancel_flow` | 条件性 | 禁止 | 禁止 | 条件性 bound-subject |
+| `archive_plan` | 禁止 | MUST | 禁止 | 独立主体 |
+
+**字段语义**：
+
+- **MUST**：宿主 MUST 携带，缺失时 Validator 返回 REJECT
+- **SHOULD**：宿主 SHOULD 携带，缺失时 Validator 不 REJECT（delta 为可选变更清单）
+- **条件性**：取消 bound plan flow 时 MUST 携带；其他场景不强制
+- **禁止**：宿主 MUST NOT 携带，Parser 在解析阶段拒绝
+
+> **side_effect_delta 的首个 runtime acceptance scope（P2）**：仅 `modify_files` 消费 `side_effect_delta`。`execute_existing_plan` 的 delta 支持为 future hook（蓝图留口，P2 不进 runtime acceptance）。详细 schema 见 `design.md` P2 side_effect_delta 段落。
 
 ### Review Subject Identity — *informative/draft*
 
