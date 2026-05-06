@@ -146,7 +146,7 @@
 
 ## 6. Integration Contract（外部能力接入契约）— *informative / draft*
 
-> 本节是方向性参考，尚未稳定为规范。具体字段定义待 Validator/Receipt 接口稳定后正式化。当前用于说明外部能力如何接入 Sopify 的收敛链。
+> 本节整体是方向性参考，尚未稳定为规范。当前仅 `### Verifier` 子段已升格为 normative（P1.5-D）；其余子段仍为 informative/draft。当前用于说明外部能力如何接入 Sopify 的收敛链。
 
 Sopify 不做生产/验证/知识处理节点本身，但拥有证据规范、授权判定、收据生成这几个控制节点。外部能力通过以下契约接入 Sopify 的收敛链。
 
@@ -165,16 +165,26 @@ Sopify 接收后由 Validator 授权，不由生产器自行决定执行。
 
 ### Verifier（外部验证器）
 
+> **升格状态**：本子段从 informative 升格为 **normative**（P1.5-D 升格）。字段约束使用 RFC 2119 表述。消费路径为 normative 声明。evidence attachment wire format 为 deferred。
+
 外部验证器（cross-review、测试框架、lint 等）回传给 Sopify 的是 **verdict + evidence**：
 
-| 字段 | 说明 |
-|------|------|
-| `verdict` | passed / failed / warning / info |
-| `evidence` | 支撑判定的具体事实（文件路径、行号、代码片段等） |
-| `source` | 验证器标识（如 `cross-review:v1`、`unittest`） |
-| `scope` | 验证范围（全量 / 增量 / 特定文件） |
+| 字段 | RFC 2119 | 说明 |
+|------|----------|------|
+| `verdict` | **MUST** | 可被 Validator 消费的判定标识。具体值域可由 Verifier 实现细化；canonical verdict 值域与完整 mapping 待后续里程碑正式化 |
+| `evidence` | **MUST** | 可 machine-readably 消费的证据（如文件路径、行号、代码片段等） |
+| `source` | **MUST** | 验证器来源标识（如 `cross-review:v1`、`unittest`），供 Validator 和宿主解释 evidence provenance |
+| `scope` | **SHOULD** | 验证范围（全量 / 增量 / 特定文件）。缺失不阻断 contract 成立，但会降低证据解释力 |
 
-验证结果进入 handoff / receipt，作为后续授权和归档的证据。**注意**：Verifier 输出的是 **evidence 输入**，不是授权输出；只有 Validator 有权授权。Verifier 的 verdict 作为 Validator 授权判定的风险因子之一。
+**注意**：Verifier 输出的是 **evidence 输入**，不是授权输出；只有 Validator 有权授权。
+
+#### Verifier 消费路径
+
+**verdict**：Validator **MUST** 将 Verifier verdict 视为授权风险因子。Verifier **MAY** 使用实现特定的更细粒度枚举；Validator 与宿主 **SHOULD** 能将其归一化到稳定语义层。canonical verdict 值域与完整 normalization mapping 待后续里程碑正式化；在此之前，verdict **MUST NOT** 被当作自授权信号，而只能作为风险/证据输入。
+
+**evidence**：Verifier evidence **MUST** 进入 Sopify 的后续证据链。当存在结构化 handoff 承载位点时，**SHOULD** 挂载到 handoff。receipt / history / plan metadata 的具体 attachment 位置与 wire format 继续 **deferred**。
+
+**source**：**MUST** 标识验证器来源，供 Validator 和宿主解释 evidence provenance。是否基于 source 做差异化处理不在当前 normative scope。
 
 ### Knowledge Provider（外部知识工具）
 
@@ -304,7 +314,7 @@ execute_existing_plan 是 subject identity 最关键的消费场景。宿主 MUS
 
 ### 存储位置
 
-审查记录作为 evidence 进入 handoff 或 plan metadata，归档时纳入 receipt 的 verification_evidence。具体字段与路径待 Validator/Receipt 接口稳定后正式化。
+审查记录作为 evidence 进入 handoff 或 plan metadata，归档时纳入 receipt 的 verification_evidence。evidence 挂载的 normative 消费规则见 §6 Verifier 消费路径。evidence attachment 的 wire format（字段 schema、路径约定）为 deferred，不属于当前 normative scope。
 
 ## 非目标
 
