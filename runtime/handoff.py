@@ -287,6 +287,8 @@ def _collect_handoff_artifacts(
         artifacts["run_stage"] = current_run.stage
         if current_run.execution_gate is not None:
             artifacts["execution_gate"] = current_run.execution_gate.to_dict()
+        if current_run.execution_authorization_receipt is not None:
+            artifacts["execution_authorization_receipt"] = dict(current_run.execution_authorization_receipt)
     if current_plan is not None and _should_attach_execution_summary(decision=decision, current_run=current_run):
         execution_summary_payload = build_execution_summary(
             plan_artifact=current_plan,
