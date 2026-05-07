@@ -4,6 +4,7 @@
 
 ## 索引
 
+- `2026-05-07` [`20260506_p2_local_action_contracts`](2026-05/20260506_p2_local_action_contracts/) - standard - P2 Local Action Contracts: subject binding 泛化 + side_effect_delta schema + action-effect canonical pairing（admission contract 闭合）
 - `2026-05-06` [`20260506_p15_verifier_normative_slice`](2026-05/20260506_p15_verifier_normative_slice/) - standard - P1.5-D Verifier Minimum Normative Slice: protocol §6 升格 normative（verdict/evidence/source MUST）+ 消费路径 contract + design.md 引用修正
 - `2026-05-06` [`20260506_p15_authorization_contract_spec`](2026-05/20260506_p15_authorization_contract_spec/) - standard - P1.5-B Authorization Contract Spec: ExecutionAuthorizationReceipt 8-field normative + generate_proposal_id + stale detection fail-closed
 - `2026-05-06` [`20260506_p15_reject_surface`](2026-05/20260506_p15_reject_surface/) - standard - P1.5-A DECISION_REJECT Surface 收口: reject 从 consult 伪装剥离为独立 non-family surface proposal_rejected
