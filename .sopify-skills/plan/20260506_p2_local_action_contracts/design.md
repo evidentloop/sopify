@@ -2,7 +2,7 @@
 
 ## 核心策略
 
-以 plan_subject 复用为基础，把 modify_files / checkpoint_response 从上下文推导收敛为 machine contract，cancel_flow 收敛为条件性 bound contract。同时引入 side_effect_delta 作为结构化变更清单。不新增 action_type、route family、host action、checkpoint type、state file。
+以 plan_subject 复用为基础，把 modify_files / checkpoint_response 从上下文推导收敛为 machine contract，cancel_flow 收敛为条件性 bound contract。同时引入 side_effect_delta 作为结构化变更清单，action-effect canonical pairing 作为 admission 闭合。不新增 action_type、route family、host action、checkpoint type、state file。P2 scope 为 admission contract；execution routing 收敛属于 P3a。
 
 ## Plan Intake Checklist
 
@@ -117,6 +117,30 @@ Bound-subject actions 复用 `PlanSubjectProposal`（`action_intent.py:67`），
    - 保持 `.sopify-skills/plan/` 前缀约束
 
 3. **protocol.md** 新增 Action Applicability Matrix 引用（见 A1）
+
+### A5: Action-Effect Canonical Pairing
+
+每个 action_type 有且仅有一个合法 side_effect。Validator 在 subject/delta check 之后、evidence check 之前做 pairing 校验，不匹配 → DECISION_REJECT（fail-close，不 downgrade）。
+
+| action_type | canonical side_effect |
+|---|---|
+| `consult_readonly` | `none` |
+| `propose_plan` | `write_plan_package` |
+| `execute_existing_plan` | `write_files` |
+| `modify_files` | `write_files` |
+| `checkpoint_response` | `write_runtime_state` |
+| `cancel_flow` | `none` |
+| `archive_plan` | `write_files` |
+
+**设计理据**：
+
+- action_type 表达意图语义，side_effect 表达权限层级。1:1 pairing 防止 action_type 退化为标签
+- 不引入新常量类型或 schema 字段 — 只是一个 dict 常量 + validator 函数
+- 线上无用户，hard reject 窗口最佳
+
+### A6: side_effect_delta 空列表归一化（显式声明）
+
+`side_effect_delta = []`（空列表）在 parser 层归一化为 `None`，语义等同于"未提供 delta"。这是有意的设计选择：空列表不表达"声明不改任何文件"的语义。如后续需区分"未提供"与"显式声明为空"，须引入新的 sentinel 值。
 
 ---
 

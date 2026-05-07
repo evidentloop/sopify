@@ -311,17 +311,17 @@ ExecutionAuthorizationReceipt 是 execute_existing_plan 授权通过后生成的
 
 ### Action Applicability Matrix — *normative*
 
-以下矩阵定义每个 action_type 与 subject / delta 字段的适用关系。Parser 和 Validator 以此为准入依据。
+以下矩阵定义每个 action_type 与 subject / delta / side_effect 字段的适用关系。Parser 和 Validator 以此为准入依据。
 
-| action_type | plan_subject | archive_subject | side_effect_delta | 分类 |
-|---|---|---|---|---|
-| `consult_readonly` | 禁止 | 禁止 | 禁止 | subject-free |
-| `propose_plan` | 禁止 | 禁止 | 禁止 | subject-free |
-| `execute_existing_plan` | MUST | 禁止 | 禁止 (P2) | bound-subject |
-| `modify_files` | MUST | 禁止 | SHOULD (`write_files` 时) | bound-subject |
-| `checkpoint_response` | MUST | 禁止 | 禁止 | bound-subject |
-| `cancel_flow` | 条件性 | 禁止 | 禁止 | 条件性 bound-subject |
-| `archive_plan` | 禁止 | MUST | 禁止 | 独立主体 |
+| action_type | plan_subject | archive_subject | side_effect_delta | canonical side_effect | 分类 |
+|---|---|---|---|---|---|
+| `consult_readonly` | 禁止 | 禁止 | 禁止 | `none` | subject-free |
+| `propose_plan` | 禁止 | 禁止 | 禁止 | `write_plan_package` | subject-free |
+| `execute_existing_plan` | MUST | 禁止 | 禁止 (P2) | `write_files` | bound-subject |
+| `modify_files` | MUST | 禁止 | SHOULD (`write_files` 时) | `write_files` | bound-subject |
+| `checkpoint_response` | MUST | 禁止 | 禁止 | `write_runtime_state` | bound-subject |
+| `cancel_flow` | 条件性 | 禁止 | 禁止 | `none` | 条件性 bound-subject |
+| `archive_plan` | 禁止 | MUST | 禁止 | `write_files` | 独立主体 |
 
 **字段语义**：
 
@@ -329,6 +329,7 @@ ExecutionAuthorizationReceipt 是 execute_existing_plan 授权通过后生成的
 - **SHOULD**：宿主 SHOULD 携带，缺失时 Validator 不 REJECT（delta 为可选变更清单）
 - **条件性**：取消 bound plan flow 时 MUST 携带；其他场景不强制
 - **禁止**：宿主 MUST NOT 携带，Parser 在解析阶段拒绝
+- **canonical side_effect**：该 action_type 唯一合法的 side_effect 值，不匹配时 Validator 返回 REJECT（P2 pairing 闭合）
 
 > **side_effect_delta 的首个 runtime acceptance scope（P2）**：仅 `modify_files` 消费 `side_effect_delta`。`execute_existing_plan` 的 delta 支持为 future hook（蓝图留口，P2 不进 runtime acceptance）。详细 schema 见 `design.md` P2 side_effect_delta 段落。
 

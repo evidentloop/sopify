@@ -14,7 +14,10 @@ from .engine import run_runtime
 from .entry_guard import ENTRY_GUARD_PENDING_ACTIONS
 from .action_intent import (
     ACTION_TYPES,
+    BOUND_SUBJECT_ACTIONS,
     CONFIDENCE_LEVELS,
+    DELTA_CAPABLE_ACTIONS,
+    SIDE_EFFECT_DELTA_CHANGE_TYPES,
     SIDE_EFFECTS,
     ActionProposal,
     ArchiveSubjectProposal,
@@ -852,10 +855,20 @@ def _build_action_proposal_schema() -> dict[str, Any]:
         },
         "plan_subject": {
             "type": "object",
-            "required_for": ["execute_existing_plan"],
+            "required_for": sorted(BOUND_SUBJECT_ACTIONS),
+            "optional_for": ["cancel_flow"],
             "fields": {
                 "subject_ref": {"type": "string", "required": True, "description": "workspace-relative plan directory path"},
                 "revision_digest": {"type": "string", "required": True, "description": "SHA-256 hex of plan.md content"},
+            },
+        },
+        "side_effect_delta": {
+            "type": "list[object]",
+            "optional_for": sorted(DELTA_CAPABLE_ACTIONS),
+            "description": "Structured file-level change manifest",
+            "item_fields": {
+                "path": {"type": "string", "required": True, "description": "workspace-relative file path"},
+                "change_type": {"enum": list(SIDE_EFFECT_DELTA_CHANGE_TYPES), "required": True},
             },
         },
     }

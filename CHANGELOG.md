@@ -6,6 +6,33 @@ Format: Summary → Plan Packages → File Details (collapsible).
 
 ## [Unreleased]
 
+## [2026-05-07.100219] - 2026-05-07
+
+### Summary
+
+- Updated 1 active plan package(s); Changes across: Runtime, Tests.
+
+### Plan Packages
+
+- `20260506_p2_local_action_contracts` (active)
+
+<details>
+<summary>File details</summary>
+
+**Runtime** — Updated runtime internals:
+  - `runtime/action_intent.py`
+  - `runtime/gate.py`
+
+**Tests** — Updated automated coverage:
+  - `tests/test_action_intent.py`
+
+**Plan package files**:
+  - `.sopify-skills/plan/20260506_p2_local_action_contracts/background.md`
+  - `.sopify-skills/plan/20260506_p2_local_action_contracts/design.md`
+  - `.sopify-skills/plan/20260506_p2_local_action_contracts/tasks.md`
+
+</details>
+
 ## [2026-05-06.181908] - 2026-05-06
 
 ### Summary

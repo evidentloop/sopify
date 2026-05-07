@@ -37,6 +37,9 @@ P1 建立了 Subject Identity 和 execute_existing_plan 的 plan_subject binding
 | D6 | protocol.md 随 P2 修正 | P2 contract 的前提修正，不是附带优化 |
 | D7 | plan_subject 不扩字段，保持 subject_ref + revision_digest | plan_id 可从 subject_ref 派生；workspace_path 冗余 |
 | D8 | _validate_plan_subject 的 `.sopify-skills/plan/` 前缀约束保持 | bound subject = 活跃 plan；归档主体不接受 modify/checkpoint/cancel |
+| D9 | action-effect 1:1 canonical pairing，不匹配 → REJECT | 防止 action_type 退化为标签；线上无用户，hard reject 窗口最佳 |
+| D10 | side_effect_delta 空列表归一化为 None | 空列表不表达"声明不改任何文件"；如需区分须引入 sentinel |
+| D11 | P2 scope = admission contract；execution routing 收敛 = P3a | 避免方案包口径与蓝图 tasks.md 产生歧义 |
 
 ## 触发事件
 

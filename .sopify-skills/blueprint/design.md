@@ -204,6 +204,14 @@ ActionProposal 的标量 `side_effect` 字段表达粗粒度权限层级（`none
 
 **设计影响来源**：OpenSpec ADDED/MODIFIED/REMOVED delta 语义（T1 Adoption，准入 delta 枚举，不准入 specs/changes 工作区模型）。
 
+### Action-Effect Canonical Pairing（admission 闭合）
+
+每个 action_type 有且仅有一个合法的 side_effect。Validator 在 subject/delta check 之后、evidence check 之前做 pairing 校验，不匹配 → DECISION_REJECT（fail-close，不 downgrade consult）。完整 pairing 表见 `protocol.md` §7 Action Applicability Matrix 的 `canonical side_effect` 列。
+
+**设计理据**：action_type 表达意图语义，side_effect 表达权限层级。1:1 pairing 防止 action_type 退化成标签而真正权限语义漂在 side_effect 上。不引入新常量类型或 schema 字段——只是一个 dict 常量 + validator 函数。
+
+**P2 scope 边界**：P2 做的是 admission contract 闭合（哪些 action+effect 组合合法）。Execution routing 收敛（Validator 授权后直接走确定性执行，不再经 Router）属于 P3a。
+
 ## Runtime 五层架构（参考实现）
 
 > 以下五层是当前 Python runtime 的参考实现架构。Protocol 本体（目录约定、schema、Validator 契约）不依赖此五层也成立。宿主可通过 Convention 模式直接消费 Protocol + Validator，不必实现完整 runtime。
