@@ -55,13 +55,15 @@
 
 ### P2: Local Action Contracts on Bound Subjects
 
-在主体已绑定（P1）、授权脊柱已规划（P1.5）的前提下，收敛局部动作 contract。
+在主体已绑定（P1）、授权脊柱已规划（P1.5）的前提下，收敛局部动作 admission contract。
 
 - 收敛 continue / revise / cancel / inspect 的局部动作 contract
 - 动作层只消费已绑定主体，不再承接主体歧义
 - 每个动作的 ActionProposal 必须携带 subject identity，validator 基于此做 admission
 - 不回头吸收主体歧义问题——如果主体不清，回到 P1 的 subject resolution 链路
 - **side_effect delta 语义（file-level 第一版）**：ActionProposal `side_effect` 当前是自由文本，无法被 Validator 结构化消费。引入 file-level delta 标注：`[{path, change_type: added|modified|removed}]`。不要求 module/function 级 scope（对单人维护太细），不引入 OpenSpec 的 specs/changes 工作区模型——只吸收"变更语义化描述"的标准。外部启发：OpenSpec ADDED/MODIFIED/REMOVED delta 语义，准入 T1 Adoption
+- **action-effect canonical pairing（admission 闭合）**：每个 action_type 有且仅有一个合法 side_effect，不匹配 → REJECT。防止 action_type 退化为标签
+- **P2 scope 边界**：P2 做 admission contract 闭合（subject binding + delta schema + action-effect pairing）。Execution routing 收敛（Validator 授权后直接走确定性执行，不再经 Router）属于 P3a
 
 ### P3a: Contract-Aligned Surface Cleanup
 
@@ -69,6 +71,7 @@
 
 - 执行 `design.md` sunset 表中标注为 P3a 的 legacy surface 最终清理与复核
 - 清理旧 route/alias 到 canonical route family 的迁移残留
+- **Execution routing 收敛**：P2 已闭合 admission contract（subject + delta + pairing），但授权后仍经 old Router；P3a 收敛为 validator-authorized → deterministic execution，不再经 Router 做意图分类
 - 清理 failure recovery / deterministic guard / decision tables 中基于旧 contract 的分支
 - 清理 state 文件中超出 canonical budget 的遗留面
 - 不新增 checkpoint type、不扩 ActionProposal schema、不重做 gate 架构

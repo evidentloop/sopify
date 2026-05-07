@@ -49,6 +49,34 @@ ARCHIVE_BLOCKING_HOST_ACTIONS = frozenset(
     }
 )
 
+# -- P2: Bound-subject action sets (protocol.md §7 Applicability Matrix) -----
+
+# Actions that MUST carry plan_subject — validator REJECT on missing.
+BOUND_SUBJECT_ACTIONS = frozenset(
+    {"execute_existing_plan", "modify_files", "checkpoint_response"}
+)
+
+# Actions that CAN carry plan_subject — parser allows, validator validates
+# if present. cancel_flow is conditional: no REJECT on missing.
+SUBJECT_CAPABLE_ACTIONS = BOUND_SUBJECT_ACTIONS | {"cancel_flow"}
+
+# Actions that can carry side_effect_delta (P2: modify_files only).
+DELTA_CAPABLE_ACTIONS = frozenset({"modify_files"})
+
+SIDE_EFFECT_DELTA_CHANGE_TYPES = ("added", "modified", "removed")
+
+# P2: Canonical action–effect pairings.  Each action_type has exactly one
+# legal side_effect.  Mismatch → DECISION_REJECT (fail-close, no downgrade).
+_CANONICAL_ACTION_EFFECT: dict[str, str] = {
+    "consult_readonly": "none",
+    "propose_plan": "write_plan_package",
+    "execute_existing_plan": "write_files",
+    "modify_files": "write_files",
+    "checkpoint_response": "write_runtime_state",
+    "cancel_flow": "none",
+    "archive_plan": "write_files",
+}
+
 # Side effects that require positive evidence proof to authorize.
 _SIDE_EFFECTING = frozenset(SIDE_EFFECTS) - {"none"}
 
@@ -65,7 +93,8 @@ DECISION_FALLBACK_ROUTER = "fallback_router"
 
 @dataclass(frozen=True)
 class PlanSubjectProposal:
-    """Action-specific subject payload for execute_existing_plan.
+    """Subject payload for bound-subject actions (P2: execute_existing_plan,
+    modify_files, checkpoint_response; cancel_flow conditional).
 
     Minimal field block: workspace-relative plan directory path + content digest.
     Follows the same pattern as ArchiveSubjectProposal — scene-specific, not generic.
@@ -154,6 +183,7 @@ class ActionProposal:
     evidence: tuple[str, ...] = ()
     archive_subject: ArchiveSubjectProposal | None = None
     plan_subject: PlanSubjectProposal | None = None
+    side_effect_delta: tuple[dict[str, str], ...] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         payload = {
@@ -166,6 +196,8 @@ class ActionProposal:
             payload["archive_subject"] = self.archive_subject.to_dict()
         if self.plan_subject is not None:
             payload["plan_subject"] = self.plan_subject.to_dict()
+        if self.side_effect_delta is not None:
+            payload["side_effect_delta"] = list(self.side_effect_delta)
         return payload
 
     @classmethod
@@ -207,16 +239,54 @@ class ActionProposal:
         elif raw_archive_subject is not None:
             raise ValueError("archive_subject is only valid for archive_plan")
 
-        # plan_subject: optional for execute_existing_plan, rejected at validator if missing.
-        # Parse-layer allows None — validator does the fail-closed check.
+        # plan_subject: allowed for subject-capable actions.
+        # Parse-layer allows None — validator does the fail-closed check for
+        # BOUND_SUBJECT_ACTIONS; cancel_flow allows missing without reject.
         raw_plan_subject = data.get("plan_subject")
         plan_subject: PlanSubjectProposal | None = None
         if raw_plan_subject is not None:
-            if action_type != "execute_existing_plan":
-                raise ValueError("plan_subject is only valid for execute_existing_plan")
+            if action_type not in SUBJECT_CAPABLE_ACTIONS:
+                raise ValueError(
+                    f"plan_subject is only valid for subject-capable actions: "
+                    f"{sorted(SUBJECT_CAPABLE_ACTIONS)}"
+                )
             if not isinstance(raw_plan_subject, dict):
                 raise ValueError("plan_subject must be an object")
             plan_subject = PlanSubjectProposal.from_dict(raw_plan_subject)
+
+        # side_effect_delta: structured file-level change manifest (P2).
+        # Parser validates shape + enum only; workspace scoping is validator.
+        raw_delta = data.get("side_effect_delta")
+        side_effect_delta: tuple[dict[str, str], ...] | None = None
+        if raw_delta is not None:
+            if action_type not in DELTA_CAPABLE_ACTIONS:
+                raise ValueError(
+                    f"side_effect_delta is only valid for delta-capable actions: "
+                    f"{sorted(DELTA_CAPABLE_ACTIONS)}"
+                )
+            if not isinstance(raw_delta, list):
+                raise ValueError(
+                    f"side_effect_delta must be a list, got {type(raw_delta).__name__}"
+                )
+            parsed_delta: list[dict[str, str]] = []
+            for i, entry in enumerate(raw_delta):
+                if not isinstance(entry, dict):
+                    raise ValueError(
+                        f"side_effect_delta[{i}] must be an object"
+                    )
+                path = entry.get("path")
+                change_type = entry.get("change_type")
+                if not isinstance(path, str) or not path.strip():
+                    raise ValueError(
+                        f"side_effect_delta[{i}].path must be a non-empty string"
+                    )
+                if change_type not in SIDE_EFFECT_DELTA_CHANGE_TYPES:
+                    raise ValueError(
+                        f"side_effect_delta[{i}].change_type must be one of "
+                        f"{SIDE_EFFECT_DELTA_CHANGE_TYPES}, got {change_type!r}"
+                    )
+                parsed_delta.append({"path": path.strip(), "change_type": change_type})
+            side_effect_delta = tuple(parsed_delta) if parsed_delta else None
 
         # proposal_id: engine-generated only, host MUST NOT supply.
         if data.get("proposal_id") is not None:
@@ -229,6 +299,7 @@ class ActionProposal:
             evidence=evidence,
             archive_subject=archive_subject,
             plan_subject=plan_subject,
+            side_effect_delta=side_effect_delta,
         )
 
 
@@ -455,8 +526,26 @@ class ActionValidator:
                 reason_code="validator.consult_readonly_authorized",
             )
 
-        # consult_readonly with unexpected side_effect → treat as side-effecting.
-        # (Host claimed readonly but declared write — evidence must prove it.)
+        # consult_readonly with unexpected side_effect will be caught by
+        # _validate_action_effect_pairing below (P2 canonical pairing).
+
+        # P2: Bound-subject admission — applies to all subject-capable actions
+        # regardless of side_effect. Must run before evidence check.
+        if proposal.action_type in SUBJECT_CAPABLE_ACTIONS:
+            subject_decision = _validate_plan_subject(proposal, context)
+            if subject_decision is not None:
+                return subject_decision
+
+        # P2: Delta workspace scoping — only for DELTA_CAPABLE_ACTIONS.
+        if proposal.action_type in DELTA_CAPABLE_ACTIONS:
+            delta_decision = _validate_side_effect_delta(proposal)
+            if delta_decision is not None:
+                return delta_decision
+
+        # P2: Action-effect canonical pairing — reject mismatched combos.
+        pairing_decision = _validate_action_effect_pairing(proposal)
+        if pairing_decision is not None:
+            return pairing_decision
 
         # Side-effecting actions: require confidence + evidence proof.
         if proposal.side_effect in _SIDE_EFFECTING:
@@ -513,11 +602,8 @@ class ActionValidator:
                     },
                 )
             if proposal.action_type == "execute_existing_plan":
-                decision = _validate_plan_subject(proposal, context)
-                if decision is not None:
-                    return decision
-                # P1.5-B stale receipt detection: if state has an existing receipt,
-                # compare its fields against current facts. Reject if stale.
+                # Subject already validated above (P2 generalized).
+                # P1.5-B stale receipt detection.
                 stale_decision = _check_stale_receipt(proposal, context)
                 if stale_decision is not None:
                     return stale_decision
@@ -558,74 +644,145 @@ def _validate_plan_subject(
     proposal: ActionProposal,
     context: ValidationContext,
 ) -> ValidationDecision | None:
-    """P1 subject admission for execute_existing_plan.
+    """Bound-subject admission for plan_subject (P1→P2 generalized).
 
-    Returns a DECISION_REJECT if plan_subject is missing/invalid, or None to
-    continue with normal authorization flow.
+    For BOUND_SUBJECT_ACTIONS: returns DECISION_REJECT if plan_subject is
+    missing or invalid. For cancel_flow (conditional): skips missing check
+    but validates if present. Returns None to continue normal auth flow.
     """
+    action = proposal.action_type
     plan_subject = proposal.plan_subject
+
+    # Missing subject: REJECT for bound-subject actions, skip for cancel_flow.
     if plan_subject is None:
-        return ValidationDecision(
-            decision=DECISION_REJECT,
-            resolved_action="execute_existing_plan",
-            resolved_side_effect=proposal.side_effect,
-            route_override=None,
-            reason_code="validator.execute_existing_plan_missing_subject",
-        )
+        if action in BOUND_SUBJECT_ACTIONS:
+            return ValidationDecision(
+                decision=DECISION_REJECT,
+                resolved_action=action,
+                resolved_side_effect=proposal.side_effect,
+                route_override=None,
+                reason_code="validator.bound_subject_missing",
+            )
+        # cancel_flow with no subject — allowed (conditional binding).
+        return None
+
     if not context.workspace_root:
         return ValidationDecision(
             decision=DECISION_REJECT,
-            resolved_action="execute_existing_plan",
+            resolved_action=action,
             resolved_side_effect=proposal.side_effect,
             route_override=None,
-            reason_code="validator.execute_existing_plan_no_workspace",
+            reason_code="validator.bound_subject_no_workspace",
         )
     # subject_ref boundary: reject absolute path, traversal, non-plan prefix.
     ref = plan_subject.subject_ref
-    if os.path.isabs(ref):
+    # Normalize backslashes early — defend against Windows-style paths on POSIX.
+    normalized = ref.replace("\\", "/")
+    if os.path.isabs(normalized) or (len(normalized) >= 2 and normalized[1] == ":"):
         return ValidationDecision(
             decision=DECISION_REJECT,
-            resolved_action="execute_existing_plan",
+            resolved_action=action,
             resolved_side_effect=proposal.side_effect,
             route_override=None,
-            reason_code="validator.execute_existing_plan_invalid_subject_ref",
+            reason_code="validator.bound_subject_invalid_ref",
         )
-    if ".." in Path(ref).parts:
+    if ".." in Path(normalized).parts:
         return ValidationDecision(
             decision=DECISION_REJECT,
-            resolved_action="execute_existing_plan",
+            resolved_action=action,
             resolved_side_effect=proposal.side_effect,
             route_override=None,
-            reason_code="validator.execute_existing_plan_invalid_subject_ref",
+            reason_code="validator.bound_subject_invalid_ref",
         )
     _PLAN_PREFIX = ".sopify-skills/plan/"
-    normalized = ref.replace("\\", "/")
     if not normalized.startswith(_PLAN_PREFIX):
         return ValidationDecision(
             decision=DECISION_REJECT,
-            resolved_action="execute_existing_plan",
+            resolved_action=action,
             resolved_side_effect=proposal.side_effect,
             route_override=None,
-            reason_code="validator.execute_existing_plan_invalid_subject_ref",
+            reason_code="validator.bound_subject_invalid_ref",
         )
     plan_dir = Path(context.workspace_root) / plan_subject.subject_ref
     plan_file = plan_dir / "plan.md"
     if not plan_file.is_file():
         return ValidationDecision(
             decision=DECISION_REJECT,
-            resolved_action="execute_existing_plan",
+            resolved_action=action,
             resolved_side_effect=proposal.side_effect,
             route_override=None,
-            reason_code="validator.execute_existing_plan_subject_not_found",
+            reason_code="validator.bound_subject_not_found",
         )
     actual_digest = hashlib.sha256(plan_file.read_bytes()).hexdigest()
     if actual_digest != plan_subject.revision_digest:
         return ValidationDecision(
             decision=DECISION_REJECT,
-            resolved_action="execute_existing_plan",
+            resolved_action=action,
             resolved_side_effect=proposal.side_effect,
             route_override=None,
-            reason_code="validator.execute_existing_plan_digest_mismatch",
+            reason_code="validator.bound_subject_digest_mismatch",
+        )
+    return None
+
+
+def _validate_side_effect_delta(
+    proposal: ActionProposal,
+) -> ValidationDecision | None:
+    """P2 workspace scoping for side_effect_delta.
+
+    Validates delta paths are workspace-relative (no absolute paths, no ..).
+    Only called for DELTA_CAPABLE_ACTIONS. Returns DECISION_REJECT on
+    violation, None to continue.
+    """
+    if proposal.side_effect_delta is None:
+        return None
+
+    action = proposal.action_type
+    for entry in proposal.side_effect_delta:
+        raw_path = entry["path"]
+        # Normalize backslashes before checks — defend against Windows-style
+        # absolute paths (C:\...) and traversals (..\\..) on POSIX hosts.
+        normalized = raw_path.replace("\\", "/")
+        if os.path.isabs(normalized) or (
+            len(normalized) >= 2 and normalized[1] == ":"
+        ):
+            return ValidationDecision(
+                decision=DECISION_REJECT,
+                resolved_action=action,
+                resolved_side_effect=proposal.side_effect,
+                route_override=None,
+                reason_code="validator.delta_absolute_path",
+            )
+        if ".." in Path(normalized).parts:
+            return ValidationDecision(
+                decision=DECISION_REJECT,
+                resolved_action=action,
+                resolved_side_effect=proposal.side_effect,
+                route_override=None,
+                reason_code="validator.delta_path_traversal",
+            )
+    return None
+
+
+def _validate_action_effect_pairing(
+    proposal: ActionProposal,
+) -> ValidationDecision | None:
+    """P2 canonical action–effect pairing.
+
+    Each action_type has exactly one legal side_effect (see _CANONICAL_ACTION_EFFECT).
+    Mismatch → DECISION_REJECT (fail-close, no downgrade).
+    Returns None when pairing is valid.
+    """
+    expected = _CANONICAL_ACTION_EFFECT.get(proposal.action_type)
+    if expected is None:
+        return None  # unknown action handled elsewhere
+    if proposal.side_effect != expected:
+        return ValidationDecision(
+            decision=DECISION_REJECT,
+            resolved_action=proposal.action_type,
+            resolved_side_effect=proposal.side_effect,
+            route_override=None,
+            reason_code="validator.action_effect_pairing_mismatch",
         )
     return None
 

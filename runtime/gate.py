@@ -14,10 +14,14 @@ from .engine import run_runtime
 from .entry_guard import ENTRY_GUARD_PENDING_ACTIONS
 from .action_intent import (
     ACTION_TYPES,
+    BOUND_SUBJECT_ACTIONS,
     CONFIDENCE_LEVELS,
+    DELTA_CAPABLE_ACTIONS,
+    SIDE_EFFECT_DELTA_CHANGE_TYPES,
     SIDE_EFFECTS,
     ActionProposal,
     ArchiveSubjectProposal,
+    _CANONICAL_ACTION_EFFECT,
     resolve_action_proposal,
 )
 from .preferences import PreferencesPreloadResult, preload_preferences
@@ -837,7 +841,11 @@ def _build_action_proposal_schema() -> dict[str, Any]:
     """Return the ActionProposal schema for the gate retry contract."""
     return {
         "action_type": {"enum": list(ACTION_TYPES), "required": True},
-        "side_effect": {"enum": list(SIDE_EFFECTS), "default": "none"},
+        "side_effect": {
+            "enum": list(SIDE_EFFECTS),
+            "canonical_for": dict(_CANONICAL_ACTION_EFFECT),
+            "description": "Each action_type has exactly one legal side_effect (see canonical_for). Mismatch → REJECT.",
+        },
         "confidence": {"enum": list(CONFIDENCE_LEVELS), "default": "high"},
         "evidence": {"type": "list[str]", "default": []},
         "archive_subject": {
@@ -852,10 +860,20 @@ def _build_action_proposal_schema() -> dict[str, Any]:
         },
         "plan_subject": {
             "type": "object",
-            "required_for": ["execute_existing_plan"],
+            "required_for": sorted(BOUND_SUBJECT_ACTIONS),
+            "optional_for": ["cancel_flow"],
             "fields": {
                 "subject_ref": {"type": "string", "required": True, "description": "workspace-relative plan directory path"},
                 "revision_digest": {"type": "string", "required": True, "description": "SHA-256 hex of plan.md content"},
+            },
+        },
+        "side_effect_delta": {
+            "type": "list[object]",
+            "optional_for": sorted(DELTA_CAPABLE_ACTIONS),
+            "description": "Structured file-level change manifest",
+            "item_fields": {
+                "path": {"type": "string", "required": True, "description": "workspace-relative file path"},
+                "change_type": {"enum": list(SIDE_EFFECT_DELTA_CHANGE_TYPES), "required": True},
             },
         },
     }
