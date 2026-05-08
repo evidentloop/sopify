@@ -601,7 +601,6 @@ class DecisionContractTests(unittest.TestCase):
                 resolved_context=RecoveredContext(),
                 current_plan=None,
                 kb_artifact=None,
-                replay_session_dir=None,
                 skill_result={
                     "decision_candidates": [
                         {

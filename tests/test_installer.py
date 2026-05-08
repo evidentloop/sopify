@@ -892,7 +892,6 @@ class WorkspaceBootstrapIgnorePolicyTests(unittest.TestCase):
             self.assertIn("# BEGIN sopify-managed", exclude_content)
             self.assertIn(".sopify-runtime/", exclude_content)
             self.assertIn(".sopify-skills/state/", exclude_content)
-            self.assertIn(".sopify-skills/replay/", exclude_content)
             self.assertFalse((workspace_root / ".gitignore").exists())
 
     def test_installed_helper_keeps_commit_lock_sticky_until_explicit_go_init_switches_back(self) -> None:
@@ -1294,6 +1293,7 @@ class HostPromptContractTests(unittest.TestCase):
             self.assertIn("必须继续遵守对应 checkpoint 的机器契约", prompt)
 
     def test_codex_cn_installed_prompt_assets_keep_footer_contract(self) -> None:
+        # Prompt assets still mention replay until the installed footer copy is updated.
         self._assert_installed_footer_contract(
             adapter=CODEX_ADAPTER,
             language_directory="CN",
@@ -1347,6 +1347,7 @@ class HostPromptContractTests(unittest.TestCase):
             self.assertIn("must still honor the machine contract", prompt)
 
     def test_claude_en_installed_prompt_assets_keep_footer_contract(self) -> None:
+        # Prompt assets still mention replay until the installed footer copy is updated.
         self._assert_installed_footer_contract(
             adapter=CLAUDE_ADAPTER,
             language_directory="EN",

@@ -180,7 +180,7 @@ For runtime gate, checkpoints, and plan lifecycle details, see [How Sopify Works
 ◆ Runtime Gate
 │
 ◇ Routing Decision
-├── ▸ Q&A / replay ───────────────────→ Direct output
+├── ▸ Q&A ────────────────────────────→ Direct output
 └── ▸ Code task
     │
     ◇ Complexity Decision
@@ -246,13 +246,6 @@ Notes:
 | `~go finalize` | Close out the current metadata-managed plan |
 
 Most users only need `~go` and `~go plan`; maintainer validation commands live in [CONTRIBUTING.md](./CONTRIBUTING.md).
-
-## Sub-skills
-
-- `workflow-learning`: replay, retrospective, and step-by-step explanation
-  Docs: [CN](./Codex/Skills/CN/skills/sopify/workflow-learning/SKILL.md) / [EN](./Codex/Skills/EN/skills/sopify/workflow-learning/SKILL.md)
-
-Claude uses the mirrored `Claude/Skills/{CN,EN}/...` layout; the links above use the Codex tree as the canonical doc entry.
 
 ## Directory Structure
 

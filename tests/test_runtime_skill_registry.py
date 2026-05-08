@@ -58,7 +58,6 @@ class SkillRegistryTests(unittest.TestCase):
             skill_ids = {skill.skill_id for skill in skills}
 
             self.assertIn("analyze", skill_ids)
-            self.assertIn("workflow-learning", skill_ids)
             self.assertNotIn("model-compare", skill_ids)
 
     def test_skill_registry_prefers_generated_builtin_catalog_artifact(self) -> None:

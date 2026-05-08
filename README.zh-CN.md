@@ -247,13 +247,6 @@ plan:
 
 普通用户只需要记住 `~go / ~go plan`；维护者验证命令放在 [贡献指南](./CONTRIBUTING_CN.md)。
 
-## 子 Skills
-
-- `workflow-learning`：回放、复盘与逐步讲解
-  文档：[中文](./Codex/Skills/CN/skills/sopify/workflow-learning/SKILL.md) / [English](./Codex/Skills/EN/skills/sopify/workflow-learning/SKILL.md)
-
-Claude 使用镜像结构的 `Claude/Skills/{CN,EN}/...` 路径；上述链接以 Codex 目录作为统一文档入口。
-
 ## 目录结构
 
 ```text
