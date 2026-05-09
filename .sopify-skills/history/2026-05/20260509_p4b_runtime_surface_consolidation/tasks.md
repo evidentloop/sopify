@@ -8,7 +8,7 @@ knowledge_sync:
   background: skip
   design: update
   tasks: update
-archive_ready: false
+archive_ready: true
 plan_status: completed
 ---
 

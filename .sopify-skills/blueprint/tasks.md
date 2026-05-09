@@ -53,9 +53,9 @@
 
 ✅ 已完成。Frozen External Surface keep-list（15 条）+ Output Rendering Audit（20 条字段分类 + 5 个已知热点）。纯文档变更，不写运行代码。归档：`history/2026-05/20260509_p4a_external_surface_freeze/`
 
-### P4b: Runtime Surface Consolidation（已完成，待归档）
+### P4b: Runtime Surface Consolidation（已完成）
 
-✅ 已完成。prove-kept-or-delete 全量扫描证明 runtime 在当前 contract 约束下已接近最小可行体积（24,334 LOC）。<20K 目标在不改 distribution/installer contract 的约束下不可达。交付物：Phase 0 test re-audit（653 hard / 31 soft gate）、Phase 1 CI/preflight 真实降载、Phase 2 全量死代码扫描（15 LOC 删除）。详见 `plan/20260509_p4b_runtime_surface_consolidation/design.md` Phase 2 执行结论。方案包尚在 `plan/`，归档至 `history/` 待后续执行。
+✅ 已完成。prove-kept-or-delete 全量扫描证明 runtime 在当前 contract 约束下已接近最小可行体积（24,334 LOC）。<20K 目标在不改 distribution/installer contract 的约束下不可达。交付物：Phase 0 test re-audit（653 hard / 31 soft gate）、Phase 1 CI/preflight 真实降载、Phase 2 全量死代码扫描（15 LOC 删除）。归档：`history/2026-05/20260509_p4b_runtime_surface_consolidation/`
 
 ### P4b.5: Runtime Optionality & Host Onboarding Audit（待开）
 
