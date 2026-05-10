@@ -82,7 +82,7 @@
 **P4c 可以假设的 invariant**
 
 1. **Forbidden surface 已定义**（design.md F1-F8）：state/sessions/\*、last\_route、route taxonomy、Next:/输出文案、渲染层实现、runtime 内部模块边界均为 forbidden surface，适用所有三级梯度。P4c 的任何实施项不得引入对这些面的新宿主依赖。
-2. **消费矩阵已裁定**（design.md S2 四子表）：convention\_only 和 payload\_capable 的每项 contract 文件归位（required/optional/forbidden）已确定。deep\_verified 列部分项标为"预期 required†"，待 P4c 最终裁定。P4c 直接消费此矩阵，不重新审计层级归位。
+2. **消费矩阵已裁定**（design.md S2 四子表）：convention\_only 和 payload\_capable 的每项 contract 文件归位（required/optional/forbidden）已确定。deep\_verified 列已由 P4c-1 完成最终裁定（7 项全部 required，† 已消除）。P4c 直接消费此矩阵，不重新审计层级归位。
 3. **三级 ladder 不变**（design.md L409-419）：convention\_only / payload\_capable / deep\_verified 的准入定义不因 P4c 改变。payload\_capable 准入仍为"payload 安装 + prompt asset 消费"。
 4. **payload\_capable 对 runtime/ 的 blast radius 为零**（design.md S3 结论 2）：payload\_capable 不需要运行任何 runtime/ 模块。消费冻结 contract 文件不等于依赖生产者模块。
 5. **生产者 vs 消费者边界明确**（design.md S3 语义来源表）：7 个 contract 文件的语义来源已映射，全部经 state.py 统一落盘。P4c 可以改变生产者实现，不能改变 contract 文件 schema（P4a keep-list 保护）。
@@ -94,7 +94,7 @@
 1. **机器可检查投影矩阵**：将消费矩阵中的层级归位翻译为可执行的 FeatureId → 梯度映射规则（design.md L419 已预告此项属 P4c）。
 2. **增强检测机制**：P4c 需定义宿主如何声明/检测已激活的 opt-in 增强组合（接续/交互/审计）。当前无此机制，ladder 只定义准入面。
 3. **Output 渲染层收敛**：消除 forbidden surface F5（Next: 输出文案推导逻辑）和 F6（渲染层实现细节）中被新宿主事实上依赖的泄露。对应 P4c 已有的 Output contract convergence 项。
-4. **deep\_verified "预期 required†" 最终裁定**：消费矩阵中 deep\_verified 列的"预期 required†"项需在 P4c 做最终 required/optional 裁定。P4b.5 只做审计判断，不替代最终裁定。
+4. ~~**deep\_verified "预期 required†" 最终裁定**~~：**已完成**（P4c-1）。7 项全部 required，† 已消除。
 5. **Forbidden surface 执行保障**：P4c 需确保 F1-F8 中的每一项在实现层有对应的防泄露措施（如移除 prompt 中的 route\_name 直接暴露、收敛 Next: 推导逻辑等）。
 
 **P4c 不能做的事（红线）**

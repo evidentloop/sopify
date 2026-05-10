@@ -472,32 +472,32 @@ Deep 层（deep_verified 准入）：
 
 > deep_verified 宿主的 runtime 内部可能事实上读取 F3-F7 中的值（如 route_name 用于渲染），但这属于 runtime 实现细节，不是宿主的 contract 承诺。P4c 收敛 output 时需消除此类 leak。
 
-**消费矩阵（P4b.5 审计）**
+**消费矩阵（P4b.5 审计 → P4c-1 裁定）**
 
-每个主链真相文件和可审计凭证在每级梯度的消费定位。接续锚点、授权凭证、交互 checkpoint 三类面分开归位。
+每个主链真相文件和可审计凭证在每级梯度的消费定位。接续锚点、授权凭证、交互 checkpoint 三类面分开归位。deep_verified 列已由 P4c-1 完成最终裁定（原"预期 required†"全部确认为 required）。
 
 _接续锚点（告诉下一步做什么）_
 
 | surface | 文件 | convention_only | payload_capable | deep_verified | 来源 |
 |---------|------|-----------------|-----------------|---------------|------|
-| Handoff contract | `state/current_handoff.json` | forbidden | optional | 预期 required† | L355, L414 |
-| Plan binding | `state/current_plan.json` | forbidden | optional | 预期 required† | L338 |
-| Run state | `state/current_run.json` | forbidden | optional | 预期 required† | L338 |
+| Handoff contract | `state/current_handoff.json` | forbidden | optional | required | L355, L414 |
+| Plan binding | `state/current_plan.json` | forbidden | optional | required | L338 |
+| Run state | `state/current_run.json` | forbidden | optional | required | L338 |
 
 _授权凭证（证明为什么被授权）_
 
 | surface | 文件/规范 | convention_only | payload_capable | deep_verified | 来源 |
 |---------|----------|-----------------|-----------------|---------------|------|
-| Gate receipt（运行级） | `state/current_gate_receipt.json` | forbidden | optional | 预期 required† | L354, L364 |
-| ExecutionAuthorizationReceipt（协议级） | protocol.md §6 | forbidden | optional | 预期 required† | L351 |
+| Gate receipt（运行级） | `state/current_gate_receipt.json` | forbidden | optional | required | L354, L364 |
+| ExecutionAuthorizationReceipt（协议级） | protocol.md §6 | forbidden | optional | required | L351 |
 | Archive receipt | `state/current_archive_receipt.json` | forbidden | optional | optional | L364 |
 
 _交互 checkpoint（AI 暂停等待）_
 
 | surface | 文件 | convention_only | payload_capable | deep_verified | 来源 |
 |---------|------|-----------------|-----------------|---------------|------|
-| Clarification | `state/current_clarification.json` | forbidden | optional | 预期 required† | L338 |
-| Decision | `state/current_decision.json` | forbidden | optional | 预期 required† | L338 |
+| Clarification | `state/current_clarification.json` | forbidden | optional | required | L338 |
+| Decision | `state/current_decision.json` | forbidden | optional | required | L338 |
 
 _长期知识（所有梯度均可消费）_
 
@@ -507,13 +507,30 @@ _长期知识（所有梯度均可消费）_
 | Protocol | `blueprint/protocol.md` | readable | L350-L353 |
 | Preferences / Feedback | `user/preferences.md`, `user/feedback.jsonl` | readable | L337, L362 |
 
-> † "预期 required"表示按现状判断大概率为 required，但 P4b.5 是审计性质，此结论不替代后续里程碑的最终裁定。
+> **P4c-1 裁定依据**：deep_verified 必须稳定消费这些 canonical contract surface——runtime 完整路径会产出并使用它们。把任何一项降为 optional 会制造"运行了 runtime 但不承诺消费其 contract 产物"的矛盾。
 
 > **convention_only forbidden 理由**：该梯度只承诺消费 protocol + 文件约定，不承诺消费运行态 state 文件或 receipt 实例面。
 
 > **EAR 与 gate_receipt 的关系**：EAR 是 protocol/doc contract（L351），gate_receipt 是一种常见运行态承载（L354），两者不等同。EAR @ convention_only = forbidden 的理由是"该梯度不承诺消费协议级 receipt 实例语义"，不是"无 runtime"。
 
 > **gate_receipt 消费者投影差异**：keep-list 表（L354）将 consumer 写为 `host / external_tool`，persistence red-line 表（L364）写为 `external_tool`。两者不矛盾：keep-list 说明有合法宿主消费场景（如 action_proposal_retry），red-line 表反映常态下的主要消费者。payload_capable 消费 gate_receipt 属于审计增强。
+
+**消费面投影 summary（derived / non-normative）**
+
+> 此表从上方消费矩阵机械派生，不是独立权威源。如有冲突，以上方消费矩阵为准。
+
+| 消费面 ID | convention_only | payload_capable | deep_verified |
+|-----------|:-:|:-:|:-:|
+| handoff_contract | ✗ | ○ | ● |
+| plan_binding | ✗ | ○ | ● |
+| run_state | ✗ | ○ | ● |
+| gate_receipt | ✗ | ○ | ● |
+| ear | ✗ | ○ | ● |
+| archive_receipt | ✗ | ○ | ○ |
+| clarification | ✗ | ○ | ● |
+| decision | ✗ | ○ | ● |
+
+> ✗ = forbidden　○ = optional　● = required
 
 **Opt-in 增强组合（P4b.5 审计）**
 
@@ -636,7 +653,7 @@ P4b.5 的审计结论不是"runtime 已可删除"，而是"新宿主接班所需
 
 **P4b.5 不裁死的边界**
 
-1. 不在 P4b.5 裁定 deep\_verified 的每个面是否最终全部 required，只保留"预期 required†"判断。
+1. ~~不在 P4b.5 裁定 deep\_verified 的每个面是否最终全部 required，只保留"预期 required†"判断。~~ **P4c-1 已裁定：7 项全部 required，† 已消除。**
 2. 不在 P4b.5 重写 ladder 定义，只审计消费边界与 blast radius。
 3. 不在 P4b.5 变更 schema、代码实现或 installer/runtime 结构。
 4. 审计增强内部的长期最小组合（gate\_receipt / EAR / archive\_receipt 哪些是核心、哪些是补强）仍以后续试点 evidence 为准。官方最低接入不含审计增强这一点已在 S2 和 S4 官方接入判定中定下，此条不开放该结论。
