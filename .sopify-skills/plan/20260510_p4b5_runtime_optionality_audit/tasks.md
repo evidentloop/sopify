@@ -50,13 +50,13 @@ S1 → S2 → S3 → S4
 
 ### S4: P4c Boundary Statement
 
-- [ ] 4.1 从 S1-S3 提取 P4c 可假设的 invariant
-- [ ] 4.2 从 S2 的裁定结果推导 P4c 需做的实施项
-- [ ] 4.3 从 forbidden surface 推导 P4c 不能做的事
-- [ ] 4.4 更新 blueprint/tasks.md P4c 段，补充验收前提
+- [x] 4.1 从 S1-S3 提取 P4c 可假设的 invariant
+- [x] 4.2 从 S2 的裁定结果推导 P4c 需做的实施项
+- [x] 4.3 从 forbidden surface 推导 P4c 不能做的事
+- [x] 4.4 更新 blueprint/tasks.md P4c 段，补充验收前提
 
 ### 收尾
 
-- [ ] 5.1 自检：方案包内容是否与 design.md 现有 ladder 一致（不重定义）
-- [ ] 5.2 自检：是否有任何"实现层变更"混入（不改代码/schema）
+- [x] 5.1 自检：方案包内容是否与 design.md 现有 ladder 一致（不重定义）
+- [x] 5.2 自检：是否有任何"实现层变更"混入（不改代码/schema）
 - [ ] 5.3 提交方案包
