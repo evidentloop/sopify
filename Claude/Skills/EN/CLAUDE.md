@@ -133,6 +133,8 @@ Note: After runtime execution, the host must consume `.sopify-skills/state/curre
 
 Note: The host must not self-route before the gate, bypass checkpoint constraints, or write machine truth directly. Routing and state management are owned by the runtime. See `.sopify-skills/blueprint/protocol.md §8.3` for boundaries.
 
+**Host Integration Contract:** See `.sopify-skills/blueprint/protocol.md §8` for the full host runtime integration protocol, including gate entry, handoff consumption, checkpoint handling, runtime helper index, and state file index.
+
 ---
 
 ## Auto Rules
@@ -236,41 +238,6 @@ relaxed: Warn only, don't block
 full: Initialize all template files at once
 progressive: Create files as needed (default)
 ```
-
----
-
-## Routing Decision
-
-**Entry Point Flow:**
-```
-User Input
-    ↓
-Check command prefix (~go, ~go plan, ~go exec, ~go finalize)
-    ↓
-├─ ~go finalize → Close out the active plan (refresh blueprint index, archive into history, clear active state)
-├─ ~go exec → Enter the advanced recovery/debug path (only when an active plan or recovery state already exists)
-├─ ~go plan → Plan mode (Analysis → Design; prefer scripts/sopify_runtime.py or .sopify-runtime/scripts/sopify_runtime.py for raw input, and use the matching go_plan_runtime.py only for the plan-only slice)
-├─ ~go → Full workflow mode
-└─ No prefix → Semantic analysis
-    ↓
-Semantic analysis routing:
-├─ Q&A → gate → consult handoff → host answers
-├─ Replay/Review/Why this choice → Workflow learning
-├─ Simple change → Quick fix
-├─ Medium task → Light iteration
-└─ Complex task → Full development workflow
-```
-
-**Route Types:**
-
-| Route | Condition | Behavior |
-|-------|-----------|----------|
-| Q&A | Pure question, no code changes | Run gate first, then answer through consult handoff in the host session |
-| Quick Fix | ≤2 files, clear modification | Direct execution |
-| Light Iteration | 3-5 files, clear requirements | Light plan + execution |
-| Full Development | >5 files or architectural changes | Full 3-phase workflow |
-
-**Host Integration Contract:** See `.sopify-skills/blueprint/protocol.md §8` for the full host runtime integration protocol, including gate entry, handoff consumption, checkpoint handling, runtime helper index, and state file index.
 
 ---
 
@@ -399,7 +366,5 @@ Next: Please verify the functionality
 **Configuration File:** `sopify.config.yaml` (project root)
 
 **Knowledge Base Directory:** `.sopify-skills/`
-
-**Blueprint Path:** `.sopify-skills/blueprint/`
 
 **Plan Package Path:** `.sopify-skills/plan/YYYYMMDD_feature_name/`

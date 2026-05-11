@@ -133,6 +133,8 @@ Next: {下一步提示}
 
 说明：宿主不得在 gate 前自行路由、绕过 checkpoint 约束、或直接写入 machine truth。路由与状态管理归 runtime 所有。详见 `.sopify-skills/blueprint/protocol.md §8.3`：宿主行为边界。
 
+**宿主接入约定：** 详见 `.sopify-skills/blueprint/protocol.md §8`：完整 gate 入口协议、handoff 消费规则、checkpoint 处理、runtime helper 索引与 state 文件索引。
+
 ---
 
 ## Auto Rules (自动规则)
@@ -236,41 +238,6 @@ relaxed: 仅警告，不阻止
 full: 首次初始化所有模板文件
 progressive: 按需创建文件 (默认)
 ```
-
----
-
-## 路由决策
-
-**入口判定流程：**
-```
-用户输入
-    ↓
-检查命令前缀 (~go, ~go plan, ~go exec, ~go finalize)
-    ↓
-├─ ~go finalize → 收口当前活动 plan（刷新 blueprint 索引、归档 history、清理活动状态）
-├─ ~go exec → 进入高级恢复/调试入口（仅在已有活动 plan 或恢复态存在时可用）
-├─ ~go plan → 规划模式 (需求分析 → 方案设计；若存在 scripts/sopify_runtime.py 或 .sopify-runtime/scripts/sopify_runtime.py，则原始输入优先走默认入口，plan-only 场景再使用对应的 go_plan_runtime.py planning-mode orchestrator；默认会自动消化 clarification / decision，直到到达稳定停点)
-├─ ~go → 全流程模式
-└─ 无前缀 → 语义分析
-    ↓
-语义分析判定路由:
-├─ 咨询问答 → gate → consult handoff → 宿主回答
-├─ 复盘/回放/为什么这么做 → 复盘学习
-├─ 简单修改 → 快速修复
-├─ 中等任务 → 轻量迭代
-└─ 复杂任务 → 完整开发流程
-```
-
-**路由类型：**
-
-| 路由 | 条件 | 行为 |
-|-----|------|-----|
-| 咨询问答 | 纯问题，无代码变更 | 先过 gate，再按 consult handoff 由宿主回答 |
-| 快速修复 | ≤2 文件，明确修改 | 直接执行 |
-| 轻量迭代 | 3-5 文件，清晰需求 | light 方案 + 执行 |
-| 完整开发 | >5 文件或架构变更 | 3 阶段完整流程 |
-
-**宿主接入约定：** 详见 `.sopify-skills/blueprint/protocol.md §8`：完整 gate 入口协议、handoff 消费规则、checkpoint 处理、runtime helper 索引与 state 文件索引。
 
 ---
 
@@ -399,7 +366,5 @@ Next: 请验证功能
 **配置文件：** `sopify.config.yaml` (项目根目录)
 
 **知识库目录：** `.sopify-skills/`
-
-**Blueprint 路径：** `.sopify-skills/blueprint/`
 
 **方案包路径：** `.sopify-skills/plan/YYYYMMDD_feature_name/`
