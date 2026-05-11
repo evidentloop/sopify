@@ -56,7 +56,7 @@
 - [x] 4.1 protocol.md 唯一合规入口：接入文档统一指向 *(scope: 新增 protocol.md §8 Deep Host 运行时集成协议，含 §8.1 Gate-First / §8.2 Post-Run Handoff / §8.3 宿主行为边界 / §8.4 Runtime Helper 索引 / §8.5 State 文件索引；4 prompt files 全部指向 §8)*
 - [x] 4.2 文档披露梯度落地 *(scope: protocol.md 新增文档披露梯度权威映射表——Layer 0 Protocol §1-§3 / Layer 1 Lifecycle §4-§5 / Layer 2 Integration §6-§8+prompt / Layer 3 Reference design.md+ADR；含 tier↔layer 桥接 + KB 分层解耦声明)*
 - [x] 4.3 Builtin skill capability disclosure：AGENTS.md 投影 + builtin_catalog truth source *(scope: 4 prompt files 技能引用段——明确 runtime 管理的工作流技能、按需加载、不支持独立调用、truth source 指向 builtin_catalog.generated.json)*
-- [ ] 4.4 若前述切片稳定，收口时整理 design.md 结构，将 S1-S4 内化为稳定章节（非阻塞）
+- [x] 4.4 design.md 结构整理：Host Capability Governance 从审计增量记录改为稳定主题章节 *(scope: Persistence Surface/Keep-list/Output Audit 提升为独立 ##；HCG 拆为 10 个主题 ### —— 能力梯度/接入判定/禁止消费面/契约消费矩阵/增强组合与声明/官方接入画像/Convention Quickstart/Prompt 镜像/模块依赖审计/长期边界；去除 S1-S4 过程标签和 L-number 引用，provenance 降为括号注释)*
 
 ## P4c-5: Prompt Asset 结构收口（可选收口项）
 
