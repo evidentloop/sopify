@@ -410,7 +410,7 @@ P4b 减重和 P4c 宿主消费治理的接入判定层。定义 canonical 能力
 
 | 梯度 | 含义 | 进入条件（contract 准入） | SupportTier 映射（legacy） |
 |------|------|--------------------------|--------------------------|
-| `convention_only` | 只支持 Convention 协议；无 payload、无 runtime | 能消费 protocol.md §1-§4；有 .sopify-skills/ 目录结构；遵守 repo-local 优先级；能消费宿主侧 skill/prompt disclosure surface（不把未冻结 workspace 路径当作协议前提） | 无直接对应；当前 DOCUMENTED_ONLY 或 EXPERIMENTAL 可作为临时映射 |
+| `convention_only` | 只支持 Convention 协议；无 payload、无 runtime | 能消费 protocol.md §1–§5；有 .sopify-skills/ 目录结构；遵守 repo-local 优先级；能消费宿主侧 skill/prompt disclosure surface（不把未冻结 workspace 路径当作协议前提） | 无直接对应；当前 DOCUMENTED_ONLY 或 EXPERIMENTAL 可作为临时映射 |
 | `payload_capable` | 支持 payload 安装；能消费 prompt asset | convention_only 全部条件 + payload 落点 + prompt asset 消费。workspace bootstrap 和 handoff contract 消费为可选增强项，不阻断进入此级别 | BASELINE_SUPPORTED 可作为临时映射 |
 | `deep_verified` | 完整深适配；installer + runtime + smoke | payload_capable 全部条件 + workspace bootstrap + handoff contract 消费 + host adapter + smoke 验证 | DEEP_VERIFIED（codex, claude） |
 

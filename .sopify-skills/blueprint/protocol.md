@@ -10,7 +10,18 @@
 | **payload_capable** — 已安装 payload bundle，可消费 manifest | §1–§5 + prompt asset |
 | **deep_verified** — 完整 runtime gate / handoff / checkpoint | §1–§5 + §8 + prompt asset |
 
-> **术语解耦**：本文的章节编号（§1–§8）构成文档披露梯度，描述宿主接入者的逐层阅读顺序。KB SKILL 中的 L0/L1/L2/L3 是知识持久化分层（index → stable → active → archive），描述 AI 运行时的上下文消费顺序，两者不是同一套模型。
+> **术语解耦**：本文承载文档披露梯度的入口定义，以 protocol 章节为主轴，后续层级衔接 prompt asset 与架构参考。KB SKILL 中的 L0/L1/L2/L3 是知识持久化分层（index → stable → active → archive），描述 AI 运行时的上下文消费顺序，两者不是同一套模型。
+
+**文档披露梯度：**
+
+| Layer | 名称 | 覆盖 | 定位 |
+|-------|------|------|------|
+| **0** | Protocol | §1–§3 | 协议基础：目录约定、必备文件、宿主义务 |
+| **1** | Lifecycle | §4–§5 | 理解验证：生命周期样例、合规自检 |
+| **2** | Integration | §6–§8 + prompt asset | 集成能力：外部契约、主体身份、deep host runtime |
+| **3** | Reference | design.md · ADR-016 · ADR-017 | 架构参考：不进 prompt，不面向接入者 |
+
+与宿主能力梯度的对应：convention_only 读完 Layer 0–1（§1–§5）；payload_capable 在 Layer 0–1 基础上加 prompt asset；deep_verified 完整读至 Layer 0–2（§1–§8 + prompt）。Prompt asset 是 payload/deep 的能力附加面，不单独改变章节阅读层级。
 
 **权限边界：**
 
