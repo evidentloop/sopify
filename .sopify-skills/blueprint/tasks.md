@@ -69,7 +69,11 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 
 - 前置：P4c ✅
 - 服务主线：P4d（提供首次采用基线数据）
-- 最小交付证据：至少 1 个非作者用户完成首次安装→触发→理解→走通链路的记录（含卡点与解决方式）
+- 前置条件：GitHub Release 可用——install 脚本 `curl` / `iwr` 命令实际可执行（安装链路的物理前提）
+- 最小交付证据：
+  1. 至少 1 个非作者用户完成首次安装→触发→理解→走通链路的记录（含卡点与解决方式）
+  2. `examples/` 包含至少 1 个可独立跟随的端到端 demo（含配置、操作步骤、预期输出）
+  3. README 包含至少 1 个视觉资产（截图或 GIF），展示核心工作流的用户可感知效果（架构图不计入此项）
 
 ### Protocol Compliance Phase 2
 
@@ -113,6 +117,8 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 - [ ] 方案级收敛语义操作化（risk ladder + 验证深度规则 + 多审查者冲突解决）
 - [ ] 轻量化产品指标与 acceptance gate（首次上手步骤数、必需文件数、默认 workflow 必需 contract 数）
 - [ ] 产品层 ↔ 实现层 contract matrix 正式化（ownership / admission / lifecycle responsibilities）
+- [ ] GitHub Release pipeline 建立（首次 release 创建 + tag 规范 + install 脚本端到端验证）
+- [ ] 测试套件健康基线（pass rate ≥ 99%；当前基线 717 tests / 695 passed / 22 failed = 97%）
 
 ## 已关闭 / 已吸收项
 
