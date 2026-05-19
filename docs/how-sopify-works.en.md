@@ -4,43 +4,17 @@
 
 Sopify borrows harness engineering ideas, but does not use them as the repository's homepage identity. This section explains design rationale, not product positioning.
 
-| Harness Principle | Sopify Mapping |
-|-------------------|----------------|
-| Structured Knowledge | Layered knowledge in `.sopify-skills/blueprint/` and `plan/` |
-| Mechanical Constraints | `manifest.json`, runtime gate, and execution gate |
-| Observability | `state/current_handoff.json` and checkpoint contracts |
-| Self-Healing / Continuity | clarification, decision, and develop checkpoint resume |
-
-`Agent Cross-Review` is not a primary Sopify promise today, so it is intentionally omitted from this public workflow guide.
+<div align="center">
+<img src="../assets/sopify-harness.jpg" width="800" alt="Harness Engineering → Sopify Mapping" />
+</div>
 
 Official reference: [`Harness engineering: leveraging Codex in an agent-first world`](https://openai.com/index/harness-engineering/)
 
 ## Main Workflow
 
-```mermaid
-flowchart TD
-    A["User Input"] --> B["Runtime Gate"]
-    B --> C{"Route Decision"}
-    C --> D["Consult / Q&A"]
-    C --> E["Model Compare"]
-    C --> F["Replay / Retrospective"]
-    C --> G["Code Task"]
-    D --> L["Output + handoff"]
-    E --> L
-    F --> L
-    G --> H{"Complexity Decision"}
-    H --> I["Quick Fix"]
-    H --> J["Light Iteration"]
-    H --> K["Full Three-Phase Flow"]
-    subgraph three ["Analysis → Design → Implementation"]
-        K1["Requirements Analysis"] --> K2["Solution Design"] --> K3["Implementation"]
-    end
-    K --> K1
-    I --> L
-    J --> L
-    K3 --> L
-    L --> M[".sopify-skills/state/"]
-```
+<div align="center">
+<img src="../assets/sopify-workflow.jpg" width="800" alt="Sopify Main Workflow" />
+</div>
 
 Workflow notes:
 
@@ -50,21 +24,9 @@ Workflow notes:
 
 ## Checkpoint Pause and Resume
 
-```mermaid
-flowchart TD
-    A["Requirements Analysis"] --> B{"Missing factual input?"}
-    B -->|Yes| C["answer_questions"]
-    C --> C1["Show missing facts / questions"]
-    C1 --> C2["User supplies facts"]
-    C2 --> A
-    B -->|No| D["Solution Design"]
-    D --> E{"Design branch detected?"}
-    E -->|Yes| F["confirm_decision"]
-    F --> F1["Show options + recommendation"]
-    F1 --> F2["User confirms"]
-    F2 --> D
-    E -->|No| I["Implementation"]
-```
+<div align="center">
+<img src="../assets/sopify-checkpoint.jpg" width="800" alt="Sopify Checkpoint Pause and Resume" />
+</div>
 
 Checkpoint rules:
 
@@ -106,15 +68,8 @@ Layer notes:
 
 ## Appendix: Plan Lifecycle
 
-```mermaid
-flowchart LR
-    A["~go / ~go plan"] --> B["plan/YYYYMMDD_feature/"]
-    B --> C["Active execution"]
-    C --> D["~go finalize"]
-    D --> E["Refresh blueprint index"]
-    D --> F["Clean state / active markers"]
-    D --> G["Archive to history/YYYY-MM/"]
-    G --> H["history/index.md"]
-```
+<div align="center">
+<img src="../assets/sopify-plan-lifecycle.jpg" width="800" alt="Sopify Plan Lifecycle" />
+</div>
 
 This appendix is maintainer-oriented; most users only need the main workflow.

@@ -8,11 +8,15 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
 [![Docs](https://img.shields.io/badge/docs-CC%20BY%204.0-green.svg)](./LICENSE-docs)
-[![Version](https://img.shields.io/badge/version-2026--05--13.111757-orange.svg)](#version-history)
+[![Version](https://img.shields.io/badge/version-2026--05--19.183358-orange.svg)](#version-history)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
 English · [简体中文](./README.zh-CN.md) · [Quick Start](#quick-start) · [Contributors](./CONTRIBUTORS.md)
 
+</div>
+
+<div align="center">
+<img src="./assets/sopify-cover.jpg" width="800" alt="Sopify — Resumable, traceable AI coding" />
 </div>
 
 ---
@@ -144,20 +148,13 @@ After install, open your selected host inside a repository and paste one of the 
 "~go plan Refactor the database layer"
 ```
 
-### What It Looks Like (Illustrative)
+### What It Looks Like
 
-```text
-[my-app-ai] Solution Design ✓
+<div align="center">
+<img src="./assets/sopify-workflow.jpg" width="800" alt="Sopify Workflow — Start, Pause, Resume across hosts" />
+</div>
 
-Plan: .sopify-skills/plan/20260323_auth/
-Summary: JWT auth + token refresh + route guards
-Tasks: 5 items
-
----
-Next: Reply "continue" to start implementation
-```
-
-This is only a placeholder example of the pacing and format, not a fixed output contract; simple tasks are shorter, and complex tasks pause at checkpoints for confirmation.
+The workflow follows a start → pause → resume cycle. Sopify stops automatically when facts are missing or a decision needs confirmation, and picks up from the last checkpoint — even if you switch to a different AI host.
 
 For the full workflow, checkpoints, and plan lifecycle details, see [How Sopify Works](./docs/how-sopify-works.en.md).
 

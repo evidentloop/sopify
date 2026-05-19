@@ -32,13 +32,12 @@ MARKDOWN_SUFFIXES = {".md", ".markdown"}
 # Lock public-doc structure so CN/EN drift is caught by CI instead of by readers.
 EXPECTED_LEVEL2_SECTIONS = {
     README_FILES[0]: (
-        "Why Sopify?",
-        "What You Get After Install",
         "Quick Start",
+        "Why Sopify?",
+        "Architecture",
+        "Installation",
         "Configuration",
         "Command Reference",
-        "Multi-Model Compare",
-        "Sub-skills",
         "Directory Structure",
         "FAQ",
         "Version History",
@@ -46,13 +45,12 @@ EXPECTED_LEVEL2_SECTIONS = {
         "Contributing",
     ),
     README_FILES[1]: (
-        "为什么选择 Sopify？",
-        "安装后你会得到什么",
         "快速开始",
+        "为什么选择 Sopify？",
+        "架构",
+        "安装说明",
         "配置说明",
         "命令参考",
-        "多模型对比",
-        "子 Skills",
         "目录结构",
         "常见问题",
         "版本历史",

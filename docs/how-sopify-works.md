@@ -4,43 +4,17 @@
 
 Sopify 借鉴 harness engineering 的设计思路，但不把它作为仓库首页定位。这里说明的是设计来源，不是产品口号。
 
-| Harness 原则 | Sopify 落地 |
-|-------------|-------------|
-| Structured Knowledge | `.sopify-skills/blueprint/` + `plan/` 分层知识库 |
-| Mechanical Constraints | `manifest.json` + runtime gate + execution gate |
-| Observability | `state/current_handoff.json` + checkpoint contract |
-| Self-Healing / Continuity | clarification / decision / develop checkpoint resume |
-
-`Agent Cross-Review` 当前不是 Sopify 的主承诺，因此不纳入这份 public workflow 文档。
+<div align="center">
+<img src="../assets/sopify-harness-cn.jpg" width="800" alt="Harness Engineering → Sopify 映射" />
+</div>
 
 官方参考：[`Harness engineering: leveraging Codex in an agent-first world`](https://openai.com/zh-Hans-CN/index/harness-engineering/)
 
 ## 主工作流
 
-```mermaid
-flowchart TD
-    A["用户输入"] --> B["Runtime Gate"]
-    B --> C{"路由判定"}
-    C --> D["咨询问答"]
-    C --> E["模型对比"]
-    C --> F["回放 / 复盘"]
-    C --> G["代码任务"]
-    D --> L["输出 + handoff"]
-    E --> L
-    F --> L
-    G --> H{"复杂度判定"}
-    H --> I["快速修复"]
-    H --> J["轻量迭代"]
-    H --> K["完整三阶段"]
-    subgraph three ["需求分析 → 方案设计 → 开发实施"]
-        K1["需求分析"] --> K2["方案设计"] --> K3["开发实施"]
-    end
-    K --> K1
-    I --> L
-    J --> L
-    K3 --> L
-    L --> M[".sopify-skills/state/"]
-```
+<div align="center">
+<img src="../assets/sopify-workflow-cn.jpg" width="800" alt="Sopify 主工作流" />
+</div>
 
 工作流要点：
 
@@ -50,21 +24,9 @@ flowchart TD
 
 ## Checkpoint 暂停与恢复
 
-```mermaid
-flowchart TD
-    A["需求分析"] --> B{"缺少事实信息?"}
-    B -->|是| C["answer_questions"]
-    C --> C1["展示 missing facts / questions"]
-    C1 --> C2["用户补充信息"]
-    C2 --> A
-    B -->|否| D["方案设计"]
-    D --> E{"存在设计分叉?"}
-    E -->|是| F["confirm_decision"]
-    F --> F1["展示选项 + 推荐项"]
-    F1 --> F2["用户确认"]
-    F2 --> D
-    E -->|否| I["开发实施"]
-```
+<div align="center">
+<img src="../assets/sopify-checkpoint-cn.jpg" width="800" alt="Sopify Checkpoint 暂停与恢复" />
+</div>
 
 Checkpoint 规则：
 
@@ -106,15 +68,8 @@ Checkpoint 规则：
 
 ## 附录：Plan 生命周期
 
-```mermaid
-flowchart LR
-    A["~go / ~go plan"] --> B["plan/YYYYMMDD_feature/"]
-    B --> C["活动执行"]
-    C --> D["~go finalize"]
-    D --> E["刷新 blueprint 索引"]
-    D --> F["清理 state / 当前活动态"]
-    D --> G["history/YYYY-MM/ 归档"]
-    G --> H["history/index.md"]
-```
+<div align="center">
+<img src="../assets/sopify-plan-lifecycle-cn.jpg" width="800" alt="Sopify Plan 生命周期" />
+</div>
 
 附录只用于说明维护者视角的收口过程；普通用户理解主工作流即可。
