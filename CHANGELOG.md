@@ -19,10 +19,6 @@ Format: Summary → Changed → Plan Packages. File-level details live in `git l
 - **Skills**: Synced prompt-layer skills (4 files)
 - **Changed**: Updated project files (12 files)
 
-### Plan Packages
-
-- `20260519_readme_visual_optimization` (active)
-
 ## [2026-05-19.180220] - 2026-05-19
 
 ### Summary
@@ -45,10 +41,6 @@ Format: Summary → Changed → Plan Packages. File-level details live in `git l
 - **Docs**: Refined public documentation (4 files)
 - **Scripts**: Adjusted maintenance scripts (1 files)
 - **Changed**: Updated project files (12 files)
-
-### Plan Packages
-
-- `20260519_readme_visual_optimization` (active)
 
 ## [2026-05-13.111757] - 2026-05-13
 
