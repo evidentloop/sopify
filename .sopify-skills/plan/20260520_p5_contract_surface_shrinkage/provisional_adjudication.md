@@ -1,7 +1,7 @@
-# P5 S3: Provisional Adjudication Table
+# P5 S3: Adjudication Table (Final — Shadow Writer Applied)
 
-> 基于 S1 全量清点（模块级 + 行级拆分），按 sub-surface 粒度裁定。
-> S2 证据型候选（Shadow Writer / Onboarding Proof）尚未就绪，相关面标为 provisional。
+> 基于 S1 全量清点 + S2.1 Shadow Writer Gap Analysis（结论 B），按 sub-surface 粒度裁定。
+> Shadow Writer 证据已消费，5 个原 pending 面已裁定。Onboarding Proof 3 面仍为 pending。
 >
 > **裁定四分类**（定义见 design.md:64-68）：
 > - **keep-cross-tier**: 所有梯度宿主都需要
@@ -11,7 +11,7 @@
 >
 > **evidence_status** 取值：
 > - **ready**: 无需额外证据，可直接裁定
-> - **pending-shadow-writer**: 依赖 Shadow Writer Gap Analysis 结论
+> - **resolved-shadow-writer**: Shadow Writer 结论 B 已消费，裁定已确定
 > - **pending-onboarding**: 依赖 Copilot Onboarding Proof 结论
 
 ---
@@ -39,17 +39,17 @@
 
 ## 2. Candidate-Kernel Surfaces (keep-candidate-kernel)
 
-> 当前仅 deep host 使用，但如果 P6 需要 extractable kernel，这些是组成候选。P5 只识别形状，不改造。
+> Shadow Writer 结论 B 消费后，candidate-kernel 从 5 面 ~680 LOC 缩减至 **1 面 ~210 LOC**。
+> 4 面因 builder 逻辑深度耦合 engine 内部，降级为 keep-deep-only（见 §3h）。
+> 详见 `shadow_writer_analysis.md`。
 
-| # | surface | current_consumer | evidence_status | provisional_disposition | execution_risk | notes |
-|---|---------|-----------------|----------------|------------------------|---------------|-------|
-| 2.1 | `handoff.py` — build_runtime_handoff + artifact collectors + guardrail | deep-only (写入路径) | **pending-shadow-writer** | **keep-candidate-kernel** | medium | ~230 LOC。Shadow Writer 结论 A/B → 确认 kernel，结论 C → 降为 keep-deep-only |
-| 2.2 | `handoff.py` — write_runtime_handoff | deep-only (写入路径) | **pending-shadow-writer** | **keep-candidate-kernel** | high | ~10 LOC。canonical state 写入点。Shadow Writer 需判断是否允许非 deep host 写入 |
-| 2.3 | `state.py` — StateStore get/set/clear 全系列 | deep-only (读写路径) | **pending-shadow-writer** | **keep-candidate-kernel** | medium | ~210 LOC。canonical 文件读写核心。Shadow Writer 结论直接决定此面命运 |
-| 2.4 | `decision.py` — build_* 构建器 + submission writer + 状态转换 | deep-only (写入路径) | **pending-shadow-writer** | **keep-candidate-kernel** | medium | ~180 LOC。DecisionState 生产逻辑 |
-| 2.5 | `clarification.py` — build_clarification_state + stale transition | deep-only (写入路径) | **pending-shadow-writer** | **keep-candidate-kernel** | low | ~50 LOC。结构简单 |
+| # | surface | current_consumer | evidence_status | disposition | execution_risk | notes |
+|---|---------|-----------------|----------------|------------|---------------|-------|
+| 2.1 | `state.py` — StateStore get/set/clear 全系列 | deep-only (读写路径) | **resolved-shadow-writer** | **keep-candidate-kernel** | medium | ~210 LOC。canonical 文件读写核心。Shadow Writer B = 部分可行：单文件写入可复制，但 paired truth/phase 校验/provenance 不可。P6 extractable kernel 若存在，此面是核心 |
 
-**Candidate-kernel 小计**: ~680 LOC (全部 pending-shadow-writer)
+**Candidate-kernel 小计**: ~210 LOC
+
+> **原 2.1-2.5 中降级的 4 面** → §3h (Shadow Writer 降级面)
 
 ---
 
@@ -153,7 +153,22 @@
 | 3.56 | `scripts/check-install-payload-bundle-smoke.py` — 安装 smoke 测试 | deep-only | ready | **keep-deep-only** | low | ~359 LOC |
 | 3.57 | `scripts/check-*.py` (其他) — 维护/检查脚本 | internal | ready | **keep-deep-only** | low | ~2,000 LOC。内部工具，不对外暴露 |
 
-**Deep-only 小计**: ~20,800 LOC
+**Deep-only 小计**: ~21,270 LOC (含 §3h Shadow Writer 降级 4 面 ~470 LOC)
+
+---
+
+### 3h. Shadow Writer 降级面 (deep-only, 原 candidate-kernel)
+
+> Shadow Writer 结论 B 消费后，以下 4 面从 candidate-kernel 降级为 keep-deep-only。
+> 原因：builder 逻辑深度耦合 engine 内部产物（route resolution, policy matching, 10+ 子系统 artifact 收集），
+> 非 deep host 无法等价重建。详见 `shadow_writer_analysis.md`。
+
+| # | surface | current_consumer | evidence_status | disposition | execution_risk | notes |
+|---|---------|-----------------|----------------|------------|---------------|-------|
+| 3.58 | `handoff.py` — build_runtime_handoff + artifact collectors + guardrail | deep-only | **resolved-shadow-writer** | **keep-deep-only** | low | ~230 LOC。原 §2.1。Builder 需 9 个 engine 参数 + 10 子系统 artifact，不可脱离 engine |
+| 3.59 | `handoff.py` — write_runtime_handoff | deep-only | **resolved-shadow-writer** | **keep-deep-only** | low | ~10 LOC。原 §2.2。IO 可复制但 paired truth coordination 不可 |
+| 3.60 | `decision.py` — build_* 构建器 + submission writer + 状态转换 | deep-only | **resolved-shadow-writer** | **keep-deep-only** | low | ~180 LOC。原 §2.4。3 个 builder 均依赖 engine 产物（route, gate, plan） |
+| 3.61 | `clarification.py` — build_clarification_state + stale transition | deep-only | **resolved-shadow-writer** | **keep-deep-only** | low | ~50 LOC。原 §2.5。技术可行但非 deep host 无创建需求 |
 
 ---
 
@@ -176,8 +191,8 @@
 | disposition | surface 数 | LOC | 占比 | evidence 状态 |
 |-------------|-----------|-----|------|--------------|
 | **keep-cross-tier** | 10 | ~2,500 | ~10% | 全部 ready |
-| **keep-candidate-kernel** | 5 | ~680 | ~2.7% | **全部 pending-shadow-writer** |
-| **keep-deep-only** | 40 | ~20,800 | ~82% | 大部分 ready，3 面 pending-onboarding |
+| **keep-candidate-kernel** | 1 | ~210 | ~0.8% | resolved-shadow-writer |
+| **keep-deep-only** | 44 | ~21,270 | ~84% | 41 ready + 3 pending-onboarding |
 | **delete** | 3 | ~137 | ~0.5% | 全部 ready |
 | **validator-bearing (分析标注)** | — | ~1,000-1,200 | ~4-5% | ready | 
 | **总计** | 58 | ~25,300 | — | — |
@@ -187,21 +202,25 @@
 > **validator-bearing** 不是裁定分类，是分析维度。这些面的裁定是 keep-deep-only (§3c)。
 > LOC 重叠：validator-bearing 的 LOC 已包含在 keep-deep-only 中。
 
+> **Shadow Writer 影响**：candidate-kernel 从 provisional 阶段的 5 面 ~680 LOC 缩减至 1 面 ~210 LOC。4 面降级为 keep-deep-only (§3h)。
+
 ---
 
-## 6. Evidence-Pending 面清单
+## 6. Evidence Status
 
-### 6a. Pending Shadow Writer (5 面, ~680 LOC)
+### 6a. Shadow Writer — ✅ Resolved (结论 B)
 
-| surface | 影响 | Shadow Writer 结论映射 |
-|---------|------|----------------------|
-| 2.1 handoff build_runtime_handoff | kernel 形状 | A/B→保持 kernel, C→降为 deep-only |
-| 2.2 handoff write_runtime_handoff | canonical write 权 | A→允许非 deep 写, B→受限写, C→deep-only |
-| 2.3 state StateStore get/set/clear | state 读写核心 | A→kernel, B→部分 kernel, C→deep-only |
-| 2.4 decision build_* + writer | decision 生产 | A/B→kernel, C→deep-only |
-| 2.5 clarification build + transition | clarification 生产 | A/B→kernel, C→deep-only |
+> S2.1 Shadow Writer Gap Analysis 已完成。详见 `shadow_writer_analysis.md`。
+>
+> **结论 B（部分可行）**: Builder 逻辑 (4 面 ~470 LOC) 不可行 → 降级 keep-deep-only；StateStore IO (1 面 ~210 LOC) 部分可行 → 保持 keep-candidate-kernel。
 
-**如果 Shadow Writer = C（不可行）**：全部降为 keep-deep-only，candidate-kernel 归零。P5 收益 = 清晰化 deep-only boundary + delete ~137 LOC。
+| 原面 | Shadow Writer 结果 | 更新裁定 |
+|------|-------------------|---------|
+| 2.1 build_runtime_handoff (~230) | ❌ 不可行 | → §3.58 keep-deep-only |
+| 2.2 write_runtime_handoff (~10) | ✅ IO 可复制，coordination 不可 | → §3.59 keep-deep-only |
+| 2.3 StateStore get/set/clear (~210) | ⚠️ 部分可行 | → §2.1 keep-candidate-kernel |
+| 2.4 decision build_* (~180) | ❌ 不可行 | → §3.60 keep-deep-only |
+| 2.5 clarification build + stale (~50) | ❌/⚠️ 技术可行无需求 | → §3.61 keep-deep-only |
 
 ### 6b. Pending Onboarding (3 面, ~1,480 LOC)
 
@@ -215,27 +234,32 @@
 
 ## 7. P5 可立即执行的裁定
 
-不依赖任何证据即可推进的项：
+不依赖任何证据即可推进的项（Shadow Writer 已消费）：
 
 | 类别 | 动作 | 面数 | LOC |
 |------|------|------|-----|
 | keep-cross-tier (ready) | 确认 contract 文档覆盖 | 9 | ~2,370 |
-| keep-deep-only (ready) | 标记 deep-only scope | 37 | ~19,320 |
+| keep-deep-only (ready) | 标记 deep-only scope | 41 | ~19,790 |
+| keep-candidate-kernel (resolved) | 标记 candidate kernel，记录进 P6 输入 | 1 | ~210 |
 | delete (ready) | 低风险删除候选 — 确认无引用后删除 | 3 | ~137 |
-| **可执行小计** | | **49** | **~21,827** |
-| **需等证据** | | **8** | **~2,160** |
+| **可执行小计** | | **54** | **~22,507** |
+| **需等证据 (onboarding)** | | **3** | **~1,480** |
 
 ---
 
-## 8. Provisional 架构观察
+## 8. 架构观察
 
-### 8.1 Canonical Writer Authority（正交轴）
+### 8.1 Canonical Writer Authority（正交轴）— ✅ 已回答
 
-当前 4 分类不覆盖"谁有权写 canonical state"。§2 candidate-kernel 的 5 个面全部是 **writer 逻辑**，这不是巧合——kernel 的本质就是写入权限边界。
+> Shadow Writer 结论：当前不需要独立建模 canonical writer authority 为正交轴。
 
-Shadow Writer Gap Analysis 需要回答的核心问题：
-- 非 deep host 需要写 canonical state 吗？（如果不需要 → writer 留在 deep-only 即可）
-- 如果需要 → 谁授权？protocol 声明式规则还是 Validator 校验？
+原假设：4 分类不覆盖"谁有权写 canonical state"，可能需要独立建模。
+
+S2.1 分析后结论：
+- 非 deep host 的核心需求是**读取**（P4d 已验证），不是写入
+- Builder 逻辑深度耦合 engine，写入权限不是"谁被授权写"的问题，而是"需要哪个 engine"的问题
+- 当前 "deep_verified = full read+write, 其他 = read-only" 隐式规则足够，可通过 protocol 声明 + Validator 覆盖
+- P6 如果做 extractable kernel，是 "full engine vs lighter engine" 的选择，不是 writer authority 轴
 
 ### 8.2 Validator 物理分层
 
