@@ -13,7 +13,7 @@
 ## 当前焦点
 
 <!-- sopify:auto:focus:start -->
-- 当前活动 plan：无。P6 设计待开包。
+- 当前活动 plan：`plan/20260520_p6_canonical_writer_cutover/`（P6 Canonical Writer Cutover）
 - history 归档：已可用；最近归档为 `../history/2026-05/20260520_p5_contract_surface_shrinkage`。
 <!-- sopify:auto:focus:end -->
 

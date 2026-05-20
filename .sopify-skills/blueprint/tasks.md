@@ -56,7 +56,7 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 直接切出 lightweight canonical writer，新宿主默认走 Protocol/Convention + canonical writer 组合；runtime 降为 legacy reference implementation / 行为规格，不再承载新增产品能力。
 
 - 前置：P5 ✅
-- 状态：下一主线候选
+- 状态：活跃 — 方案包 `plan/20260520_p6_canonical_writer_cutover/`
 - 升级判断：writer_input 契约定义完成，StateStore 成功切出，新宿主可直接获得 canonical 写能力
 
 ## 证据型候选（为下一主线提供升级证据，不占 P 编号）
