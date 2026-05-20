@@ -91,6 +91,22 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 - 服务主线：P4d（提供外部接入可行性证据）
 - 最小交付证据：Convention quickstart 文档 + compliance check 脚本可独立运行，至少 1 个非 deep 宿主跑通
 
+### Copilot Payload-Only Onboarding Proof
+
+验证任意外部 repo 的 Copilot + Sopify 接入路径：(1) prompt asset 分发机制（不碰 `.github/copilot-instructions.md`）(2) 任意 repo 的 `.sopify-skills/` workspace bootstrap (3) 不涉及 `.sopify-runtime`、不进 installer mainline。P4d 验证了 repo-local 手工接入可行，本项验证面向外部项目的低摩擦 onboarding。
+
+- 前置：P4d ✅
+- 服务主线：P5（提供 payload_capable onboarding 可行性证据）
+- 最小交付证据：至少 1 个非 Sopify repo 完成 Copilot + Sopify workspace 初始化并走通接续消费
+
+### Shadow Writer Gap Analysis
+
+评估 handoff 生产层拆分假设：Convention 模式下宿主是否需要/能够写出 canonical handoff state，还是只能消费 runtime 产出的 frozen contract。P4d S3.5 移交项。
+
+- 前置：P4d ✅
+- 服务主线：P5（决定哪些 handoff 生产面是 deep-only vs 可降级为 convention 自驱）
+- 最小交付证据：Gap 分析报告，覆盖 RuntimeHandoff / RunState / DecisionState 的生产 vs 消费拆分判定
+
 ## 独立产品线
 
 ### CrossReview
