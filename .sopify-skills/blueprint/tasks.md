@@ -48,7 +48,7 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 在 P4d 验证后，按 evidence 逐项删除或降级 deep runtime 专属的 contract surface（bridge capability / manifest entry / installer bundle 项）。此时已知哪些 contract 是新宿主需要 vs 历史包袱。
 
 - 前置：P4d ✅
-- 状态：✅ 已完成 — 方案包 `plan/20260520_p5_contract_surface_shrinkage/`（待归档）
+- 状态：✅ 已完成 — 归档于 `history/2026-05/20260520_p5_contract_surface_shrinkage/`
 - 升级判断：P4d 试点产出 keep / delete / downgrade 裁定表，覆盖所有 deep-only contract 面
 
 ### P6: Canonical Writer Cutover / Runtime Retirement
