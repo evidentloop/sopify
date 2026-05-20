@@ -4,6 +4,7 @@
 
 ## 索引
 
+- `2026-05-20` [`20260520_p5_contract_surface_shrinkage`](2026-05/20260520_p5_contract_surface_shrinkage/) - standard - P5 Contract Surface Shrinkage: 58 sub-surface 裁定（10 cross-tier / 1 candidate-kernel / 46 deep-only / 1 deleted），Shadow Writer Gap Analysis 结论 B（candidate-kernel 680→210 LOC = StateStore only），Runtime 退场路线写入蓝图（三层分离 + 激进版：无用户零迁移），write_runtime_handoff 死代码删除 8 LOC
 - `2026-05-19` [`20260519_p4d_copilot_cli_pilot`](2026-05/20260519_p4d_copilot_cli_pilot/) - standard - P4d Copilot CLI 新宿主试点: payload_capable + CONTINUATION 首个非 deep host 验证通过（S3 三场景 + S4 四入口），repo-local pilot，纯 prompt 资产消费 frozen contract，无 runtime / 无 installer mainline
 - `2026-05-11` [`20260510_p4c_host_consumption_governance`](2026-05/20260510_p4c_host_consumption_governance/) - standard - P4c Host Consumption Governance: 契约投影矩阵 + 增强声明/检测协议 + output/doctor/handoff 渲染收敛 + 首接触/prompt 收敛（-140 行 route taxonomy 删除）+ protocol.md §8 唯一入口 + 文档披露梯度 + design.md 结构整理（P4c-5 显式跳过）
 - `2026-05-10` [`20260510_p4b5_runtime_optionality_audit`](2026-05/20260510_p4b5_runtime_optionality_audit/) - standard - P4b.5 Runtime Optionality & Host Onboarding Audit: Forbidden Surface（F1-F8）+ 消费矩阵 + opt-in 增强组合 + 官方接入画像 + Blast Radius 审计 + 综合裁定 + P4c 前提声明
