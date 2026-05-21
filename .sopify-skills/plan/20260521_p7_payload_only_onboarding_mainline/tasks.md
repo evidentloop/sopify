@@ -58,8 +58,8 @@ lifecycle_state: active
 - [x] `install.sh` / `install.ps1` 增加阶段提示（检查依赖 → 下载 release → 解压 → 安装）
 - [x] `scripts/install_sopify.py` help 文案从维护者口吻改为用户安装说明
 - [x] 外部 repo 首次 bootstrap diagnostics：无宿主 payload 时输出 checked manifest paths + 安装/显式 payload_root hint，保持 warn 非阻断
-- [ ] 错误路径覆盖：未初始化 / 版本不匹配 / payload 缺失
-- [ ] status 命令适配外部 repo 场景
+- [x] 错误路径覆盖：MISSING_BUNDLE 接入 outcome_contract (fail_closed) + gate_output hint；STUB_INVALID hint 改双路径表述
+- [x] status 命令适配外部 repo 场景：CLI 已支持 `--workspace-root`；inspection.py sopify.json 适配 defer 到双写结束后
 - [x] 更新 `tests/test_distribution.py` 渲染断言
 - [x] 约束：S3 不实现 Copilot instruction 分发，不加入 ASCII art，不动 deep installer doctor 逻辑
 
@@ -78,16 +78,14 @@ lifecycle_state: active
 - `git diff --check`
 
 **仍未收口：**
-- 错误路径覆盖：未初始化 / 版本不匹配 / payload 缺失。
-- status 命令适配外部 repo 场景。
-- Copilot instruction 决策 spike。
+- S3 全部任务已完成。进入 S4。
 
 **并行决策 spike（只出结论，不实现）：**
-- [ ] Copilot instruction 决策 spike：验证 `.github/copilot-instructions.md` / `.github/instructions/*.instructions.md` 在目标运行面（VS Code Chat / Cloud Agent / Code Review）是否真的生效
-- [ ] 内容来源与边界：从 `Copilot/Skills/CN/COPILOT.md` seed 提炼，还是从全局 bundle 运行时复制
-- [ ] frontmatter / `applyTo` 策略、源 repo 是否生成 instruction 文件、path-specific fallback 策略
-- [ ] managed block 更新、冲突、覆盖、卸载/回滚策略
-- [ ] 产出验证记录，为 S4 实现提供依据
+- [x] Copilot instruction 决策 spike：验证 `.github/copilot-instructions.md` / `.github/instructions/*.instructions.md` 在目标运行面（VS Code Chat / Cloud Agent / Code Review）是否真的生效
+- [x] 内容来源与边界：从全局 bundle 预分发，不从 seed 运行时解析
+- [x] frontmatter / `applyTo` 策略：`applyTo: "**"` 全匹配；源 repo 不生成（P4d 裁定）；外部 repo 生成
+- [x] managed block 更新、冲突、覆盖、卸载/回滚策略：轻入口用 managed block，重说明用 owned file
+- [x] 产出验证记录：`copilot_instruction_spike.md`
 
 ## S4: Copilot instruction 分发实现
 
