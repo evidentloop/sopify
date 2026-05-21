@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from io import StringIO
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -20,6 +21,8 @@ from installer.distribution import (
     DistributionRequest,
     DistributionSourceMetadata,
     render_distribution_result,
+    render_distribution_user_error,
+    render_distribution_user_result,
     run_distribution_install,
 )
 from installer.hosts.codex import CODEX_ADAPTER
@@ -111,6 +114,17 @@ class DistributionFacadeTests(unittest.TestCase):
             self.assertIn("payload bundle: source_kind=global_active, reason_code=PAYLOAD_BUNDLE_READY", rendered)
             self.assertIn("workspace: will bootstrap on first project trigger", rendered)
             self.assertIn("workspace bundle: skip (WORKSPACE_NOT_REQUESTED)", rendered)
+
+            user_rendered = render_distribution_user_result(report)
+            self.assertIn("Sopify 安装完成。", user_rendered)
+            self.assertIn("宿主：Codex（codex:zh-CN）", user_rendered)
+            self.assertIn(f"版本：{report.install_result.payload_install.version}", user_rendered)
+            self.assertIn("这次没有修改任何项目目录。", user_rendered)
+            self.assertIn("输入：~go", user_rendered)
+            self.assertNotIn("source channel", user_rendered)
+            self.assertNotIn("reason_code", user_rendered)
+            self.assertNotIn("workspace_bundle_healthy", user_rendered)
+            self.assertNotIn("overall status", user_rendered)
 
     def test_distribution_render_surfaces_legacy_payload_fallback_for_on_demand_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as home_dir:
@@ -252,6 +266,12 @@ class DistributionFacadeTests(unittest.TestCase):
             )
 
         self.assertEqual(context.exception.reason_code, "TARGET_REQUIRED")
+        rendered = render_distribution_user_error(context.exception, language="zh-CN")
+        self.assertIn("Sopify 安装失败：", rendered)
+        self.assertIn("Non-interactive installs must provide `--target <host:lang>`.", rendered)
+        self.assertIn("修复方式：", rendered)
+        self.assertIn("reason_code: TARGET_REQUIRED", rendered)
+        self.assertIn("phase: input", rendered)
 
     def test_distribution_install_rejects_workspace_file(self) -> None:
         with tempfile.TemporaryDirectory() as home_dir, tempfile.NamedTemporaryFile() as workspace_file:
@@ -328,13 +348,55 @@ class DistributionFacadeTests(unittest.TestCase):
 
         self.assertEqual(context.exception.reason_code, "REF_OVERRIDE_UNSUPPORTED_FOR_REPO_LOCAL")
 
+    def test_install_cli_defaults_to_user_summary_and_verbose_keeps_diagnostics(self) -> None:
+        with tempfile.TemporaryDirectory() as home_dir:
+            env = dict(os.environ)
+            env["HOME"] = home_dir
+            env.pop("SOPIFY_DEBUG", None)
+            env.pop("SOPIFY_DEBUG", None)
+            default_completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(REPO_ROOT / "scripts" / "install_sopify.py"),
+                    "--target",
+                    "codex:zh-CN",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+                env=env,
+            )
+
+            self.assertEqual(default_completed.returncode, 0, msg=default_completed.stderr)
+            self.assertIn("Sopify 安装完成。", default_completed.stdout)
+            self.assertIn("输入：~go", default_completed.stdout)
+            self.assertNotIn("source channel:", default_completed.stdout)
+
+            verbose_completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(REPO_ROOT / "scripts" / "install_sopify.py"),
+                    "--target",
+                    "codex:zh-CN",
+                    "--verbose",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+                env=env,
+            )
+
+            self.assertEqual(verbose_completed.returncode, 0, msg=verbose_completed.stderr)
+            self.assertIn("source channel: repo-local", verbose_completed.stdout)
+            self.assertIn("reason_code", verbose_completed.stdout)
+
 
 class ReleaseAssetRenderingTests(unittest.TestCase):
     def test_root_install_scripts_keep_internal_workspace_flag_out_of_primary_usage(self) -> None:
         install_sh = (REPO_ROOT / "install.sh").read_text(encoding="utf-8")
         install_ps1 = (REPO_ROOT / "install.ps1").read_text(encoding="utf-8")
 
-        for flag in ("--target", "--ref"):
+        for flag in ("--target", "--ref", "--verbose"):
             self.assertIn(flag, install_sh)
             self.assertIn(flag, install_ps1)
         self.assertIn("--workspace", install_sh)
@@ -345,10 +407,10 @@ class ReleaseAssetRenderingTests(unittest.TestCase):
         self.assertIn("--source-channel", install_ps1)
         self.assertIn("Usage: install.sh [--target <host:lang>] [--ref <tag-or-branch>]", install_sh)
         self.assertIn("Usage: install.ps1 [--target <host:lang>] [--ref <tag-or-branch>]", install_ps1)
-        self.assertIn("Internal-only project prewarm path", install_sh)
-        self.assertIn("Internal-only project prewarm path", install_ps1)
-        self.assertIn("first project trigger", install_sh)
-        self.assertIn("first project trigger", install_ps1)
+        self.assertIn("Advanced: prewarm an existing project path now", install_sh)
+        self.assertIn("Advanced: prewarm an existing project path now", install_ps1)
+        self.assertIn("run `~go` inside a workspace", install_sh)
+        self.assertIn("run `~go` inside a workspace", install_ps1)
 
     def test_powershell_installer_prefers_python3_probe(self) -> None:
         install_ps1 = (REPO_ROOT / "install.ps1").read_text(encoding="utf-8")

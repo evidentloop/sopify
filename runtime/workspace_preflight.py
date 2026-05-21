@@ -194,10 +194,12 @@ except ModuleNotFoundError as exc:
         mapping = {
             "STUB_SELECTED": "stub_selected",
             "STUB_INVALID": "stub_invalid",
+            "MISSING_BUNDLE": "missing_bundle",
             "GLOBAL_BUNDLE_MISSING": "global_bundle_missing",
             "GLOBAL_BUNDLE_INCOMPATIBLE": "global_bundle_incompatible",
             "GLOBAL_INDEX_CORRUPTED": "global_index_corrupted",
             "LEGACY_FALLBACK_SELECTED": "legacy_fallback_selected",
+            "PAYLOAD_MANIFEST_NOT_FOUND": "payload_manifest_not_found",
             "HOST_MISMATCH": "host_mismatch",
             "INGRESS_CONTRACT_INVALID": "ingress_contract_invalid",
             "ROOT_CONFIRM_REQUIRED": "root_confirm_required",
@@ -211,10 +213,12 @@ except ModuleNotFoundError as exc:
         primary_actions = {
             "stub_selected": "continue",
             "stub_invalid": "fail_closed",
+            "missing_bundle": "fail_closed",
             "global_bundle_missing": "fail_closed",
             "global_bundle_incompatible": "fail_closed",
             "global_index_corrupted": "fail_closed",
             "legacy_fallback_selected": "warn",
+            "payload_manifest_not_found": "warn",
             "host_mismatch": "fail_closed",
             "ingress_contract_invalid": "fail_closed",
             "root_confirm_required": "confirm",
@@ -399,10 +403,11 @@ def preflight_workspace_runtime(
             )
         activation_root_path = explicit_activation_root.resolve()
     repo_root = Path(__file__).resolve().parents[1]
-    bundle_root = resolved_workspace_root / ".sopify-runtime"
+    bundle_root = resolved_workspace_root / ".sopify-skills"
+    legacy_bundle_root = resolved_workspace_root / ".sopify-runtime"
     requested_root_path = Path(requested_root).expanduser().resolve() if requested_root is not None else resolved_workspace_root
     root_resolution_source = "cwd"
-    if repo_root == bundle_root:
+    if repo_root in (bundle_root, legacy_bundle_root):
         return annotate_outcome_payload({
             "action": "skipped",
             "reason_code": "RUNNING_FROM_WORKSPACE_BUNDLE",
@@ -428,7 +433,9 @@ def preflight_workspace_runtime(
             "activation_root": str(activation_root_path),
             "requested_root": str(requested_root_path),
             "root_resolution_source": root_resolution_source,
-        }, message_hint="No installed host payload was found; continuing with repo-local entry.")
+            "evidence": _payload_manifest_not_found_evidence(home_root=home_root, requested_host_id=detected_host_id),
+            "recommendation": "Install Sopify for the selected host, or pass payload_root explicitly when running runtime_gate.",
+        }, message_hint="Install Sopify for the selected host, or pass payload_root explicitly when running runtime_gate.")
 
     payload_manifest = payload_resolution["payload_manifest"]
     payload_manifest_file = payload_resolution["payload_manifest_file"]
@@ -440,7 +447,7 @@ def preflight_workspace_runtime(
     helper_entry = str(payload_manifest.get("helper_entry") or "").strip()
     if not helper_entry:
         raise WorkspacePreflightError(f"Payload manifest is missing helper_entry: {payload_manifest_file}")
-    preflight_bundle_version = _workspace_selected_bundle_version(bundle_root)
+    preflight_bundle_version = _workspace_selected_bundle_version(bundle_root) or _workspace_selected_bundle_version(legacy_bundle_root)
     try:
         resolve_payload_bundle_manifest_path(payload_root, payload_manifest, bundle_version=preflight_bundle_version)
     except InstallError as exc:
@@ -491,15 +498,16 @@ def preflight_workspace_runtime(
         payload_root=payload_root,
         payload_manifest=payload_manifest,
         workspace_bundle_root=bundle_root,
+        legacy_workspace_bundle_root=legacy_bundle_root,
     )
     if selected_bundle_manifest_path is not None:
         payload.setdefault("bundle_manifest_path", str(selected_bundle_manifest_path))
         payload.setdefault("global_bundle_root", str(selected_bundle_manifest_path.parent))
         if str(payload.get("reason_code") or "").strip() == "LEGACY_FALLBACK_SELECTED":
-            runtime_gate_entry = _legacy_workspace_entry(bundle_root, _LEGACY_WORKSPACE_RUNTIME_GATE_ENTRY)
+            runtime_gate_entry = _legacy_workspace_entry(legacy_bundle_root, _LEGACY_WORKSPACE_RUNTIME_GATE_ENTRY)
             if runtime_gate_entry is not None:
                 payload.setdefault("runtime_gate_entry", runtime_gate_entry)
-            preferences_preload_entry = _legacy_workspace_entry(bundle_root, _LEGACY_WORKSPACE_PREFERENCES_PRELOAD_ENTRY)
+            preferences_preload_entry = _legacy_workspace_entry(legacy_bundle_root, _LEGACY_WORKSPACE_PREFERENCES_PRELOAD_ENTRY)
             if preferences_preload_entry is not None:
                 payload.setdefault("preferences_preload_entry", preferences_preload_entry)
         else:
@@ -524,6 +532,18 @@ def _infer_host_id_from_manifest_path(path: Path) -> str | None:
     if ".claude" in normalized_parts:
         return "claude"
     return None
+
+
+def _payload_manifest_not_found_evidence(*, home_root: Path, requested_host_id: str | None) -> dict[str, object]:
+    evidence: dict[str, object] = {
+        "checked_manifest_paths": [
+            str(manifest_path)
+            for _host_id, manifest_path in iter_host_payload_manifest_candidates(home_root=home_root)
+        ]
+    }
+    if requested_host_id:
+        evidence["requested_host_id"] = requested_host_id
+    return evidence
 
 
 def _ensure_supported_host_id(*, requested_host_id: str | None, home_root: Path) -> None:
@@ -824,8 +844,11 @@ def _selected_bundle_manifest_path(
     payload_root: Path,
     payload_manifest: Mapping[str, Any],
     workspace_bundle_root: Path,
+    legacy_workspace_bundle_root: Path | None = None,
 ) -> Path | None:
     selected_bundle_version = _workspace_selected_bundle_version(workspace_bundle_root)
+    if selected_bundle_version is None and legacy_workspace_bundle_root is not None:
+        selected_bundle_version = _workspace_selected_bundle_version(legacy_workspace_bundle_root)
     try:
         return resolve_payload_bundle_manifest_path(
             payload_root,

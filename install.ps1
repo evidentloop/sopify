@@ -11,13 +11,17 @@ function Show-Usage {
   @"
 Usage: install.ps1 [--target <host:lang>] [--ref <tag-or-branch>]
 
-Thin Sopify installer entrypoint.
+Install Sopify for a supported AI host.
+
+By default this installs the host prompt and Sopify runtime only. Project files
+are initialized later when you run `~go` inside a workspace.
 
 Options:
-  --target <host:lang>   Install target. Required in non-interactive mode.
-  --ref <tag-or-branch>  Optional source override. Expert / maintainer use only.
-  --workspace <path>     Internal-only project prewarm path. Default user flow bootstraps on first project trigger.
-  -h, --help             Show this help message.
+  --target <host:lang>   Host and language to install, for example codex:zh-CN.
+  --workspace <path>     Advanced: prewarm an existing project path now.
+  --verbose              Show full diagnostic install details.
+  --ref <tag-or-branch>  Advanced: override the source ref.
+  -h, --help             Show this help.
 "@
 }
 
@@ -29,12 +33,20 @@ function Fail-Install {
     [string]$NextStep
   )
 
-  [Console]::Error.WriteLine("Sopify install failed:")
-  [Console]::Error.WriteLine("  phase: $Phase")
+  [Console]::Error.WriteLine("Sopify install failed: $Detail")
+  [Console]::Error.WriteLine("")
+  [Console]::Error.WriteLine("Fix:")
+  [Console]::Error.WriteLine("  $NextStep")
+  [Console]::Error.WriteLine("")
+  [Console]::Error.WriteLine("Diagnostics:")
   [Console]::Error.WriteLine("  reason_code: $ReasonCode")
-  [Console]::Error.WriteLine("  detail: $Detail")
-  [Console]::Error.WriteLine("  next_step: $NextStep")
+  [Console]::Error.WriteLine("  phase: $Phase")
   exit 1
+}
+
+function Write-InstallStep {
+  param([string]$Message)
+  [Console]::Error.WriteLine("Sopify: $Message")
 }
 
 function Resolve-PythonCommand {
@@ -100,6 +112,7 @@ if ([string]::IsNullOrWhiteSpace($resolvedRef)) {
   Fail-Install -Phase "input" -ReasonCode "MISSING_SOURCE_REF" -Detail "No source ref was resolved for the installer." -NextStep "Retry with --ref <tag-or-branch>, or inspect the release asset rendering."
 }
 
+Write-InstallStep -Message "Checking requirements..."
 $pythonCommand = Resolve-PythonCommand
 $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("sopify-install-" + [System.Guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Path $tempRoot | Out-Null
@@ -108,12 +121,14 @@ try {
   $archiveUrl = "https://codeload.github.com/$RepoOwner/$RepoName/zip/$resolvedRef"
   $archivePath = Join-Path $tempRoot "source.zip"
 
+  Write-InstallStep -Message "Downloading Sopify source ($resolvedRef)..."
   try {
     Invoke-WebRequest -Uri $archiveUrl -OutFile $archivePath | Out-Null
   } catch {
     Fail-Install -Phase "download" -ReasonCode "SOURCE_FETCH_FAILED" -Detail "Failed to download source archive: $archiveUrl" -NextStep "Check network access, verify the ref exists, or use the inspect-first path."
   }
 
+  Write-InstallStep -Message "Unpacking installer..."
   try {
     Expand-Archive -Path $archivePath -DestinationPath $tempRoot -Force
   } catch {
@@ -130,6 +145,7 @@ try {
     Fail-Install -Phase "unpack" -ReasonCode "INSTALL_ENTRYPOINT_MISSING" -Detail "Missing install entrypoint inside source archive: $entrypoint" -NextStep "Retry the installer or inspect the downloaded archive locally."
   }
 
+  Write-InstallStep -Message "Running installer..."
   $pythonArgs = @()
   $pythonArgs += $pythonCommand.prefixArgs
   $pythonArgs += @(

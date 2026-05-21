@@ -62,21 +62,23 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 - 状态：✅ 已完成 — 归档于 `history/2026-05/20260520_p6_canonical_writer_cutover/`
 - 升级判断：writer_input 契约定义完成，StateStore 成功切出，新宿主可直接获得 canonical 写能力
 
+### P7: Copilot Payload-Only Onboarding Mainline
+
+把外部 repo 接入做成产品：一条官方默认路（Copilot + payload-only）、一套 bootstrap 动作、版本锚点迁入 `.sopify-skills/`、最小 smoke 验证。吸收 Copilot Payload-Only Onboarding Proof + First-Use Adoption Proof 相关交付物。
+
+- 前置：P6 ✅
+- 状态：活跃 — 方案包 `plan/20260521_p7_payload_only_onboarding_mainline/`
+- 升级判断：至少 1 个非 Sopify repo 走通 Copilot + Sopify 全链路（bootstrap → state write → handoff consume）
+
 ## 证据型候选（为下一主线提供升级证据，不占 P 编号）
 
 > 以下项目服务于主线里程碑的推进判断，不是独立的主航道步骤。其产出（验证报告、试点数据、compliance 结论）是主线决策的输入。
 
 ### First-Use Adoption Proof
 
-验证非作者用户/宿主能安装、触发、理解、走通 Sopify 首次使用链路。覆盖 install/bootstrap 文案压缩、status/doctor 用户语言化验收、scripts 用户面与维护面分离、至少一个非作者首次采用 walkthrough。前提：P4c 已确保默认路径不暴露内部 taxonomy。边界：只做首次采用证明与用户面收口，不重开 protocol/runtime 产品定位，不回头扩 machine contract。
+~~验证非作者用户/宿主能安装、触发、理解、走通 Sopify 首次使用链路。~~
 
-- 前置：P4c ✅
-- 服务主线：P4d（提供首次采用基线数据）
-- 前置条件：GitHub Release 可用——install 脚本 `curl` / `iwr` 命令实际可执行（安装链路的物理前提）
-- 最小交付证据：
-  1. 至少 1 个非作者用户完成首次安装→触发→理解→走通链路的记录（含卡点与解决方式）
-  2. `examples/` 包含至少 1 个可独立跟随的端到端 demo（含配置、操作步骤、预期输出）
-  3. README 包含至少 1 个视觉资产（截图或 GIF），展示核心工作流的用户可感知效果（架构图不计入此项）
+- **已吸收进 P7**：发布链 + examples + 视觉资产部分并入 P7 S4
 
 ### Protocol Compliance Phase 2
 
@@ -96,11 +98,9 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 
 ### Copilot Payload-Only Onboarding Proof
 
-验证任意外部 repo 的 Copilot + Sopify 接入路径：(1) prompt asset 分发机制（不碰 `.github/copilot-instructions.md`）(2) 任意 repo 的 `.sopify-skills/` workspace bootstrap (3) 不涉及 `.sopify-runtime`、不进 installer mainline。P4d 验证了 repo-local 手工接入可行，本项验证面向外部项目的低摩擦 onboarding。
+~~验证任意外部 repo 的 Copilot + Sopify 接入路径。~~
 
-- 前置：P4d ✅
-- 服务主线：P5（提供 payload_capable onboarding 可行性证据）
-- 最小交付证据：至少 1 个非 Sopify repo 完成 Copilot + Sopify workspace 初始化并走通接续消费
+- **已升级为 P7 主线**
 
 ### Shadow Writer Gap Analysis
 

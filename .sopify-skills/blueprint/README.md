@@ -13,7 +13,7 @@
 ## 当前焦点
 
 <!-- sopify:auto:focus:start -->
-- 当前活动 plan：（待选定下一主线）
+- 当前活动 plan：`plan/20260521_p7_payload_only_onboarding_mainline/`（P7 Copilot Payload-Only Onboarding Mainline）
 - history 归档：已可用；最近归档为 `../history/2026-05/20260520_p6_canonical_writer_cutover`。
 <!-- sopify:auto:focus:end -->
 
