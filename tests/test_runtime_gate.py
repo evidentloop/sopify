@@ -324,6 +324,7 @@ class RuntimeGateTests(unittest.TestCase):
         reason_codes = (
             "STUB_SELECTED",
             "STUB_INVALID",
+            "MISSING_BUNDLE",
             "GLOBAL_BUNDLE_MISSING",
             "GLOBAL_BUNDLE_INCOMPATIBLE",
             "GLOBAL_INDEX_CORRUPTED",

@@ -194,6 +194,7 @@ except ModuleNotFoundError as exc:
         mapping = {
             "STUB_SELECTED": "stub_selected",
             "STUB_INVALID": "stub_invalid",
+            "MISSING_BUNDLE": "missing_bundle",
             "GLOBAL_BUNDLE_MISSING": "global_bundle_missing",
             "GLOBAL_BUNDLE_INCOMPATIBLE": "global_bundle_incompatible",
             "GLOBAL_INDEX_CORRUPTED": "global_index_corrupted",
@@ -212,6 +213,7 @@ except ModuleNotFoundError as exc:
         primary_actions = {
             "stub_selected": "continue",
             "stub_invalid": "fail_closed",
+            "missing_bundle": "fail_closed",
             "global_bundle_missing": "fail_closed",
             "global_bundle_incompatible": "fail_closed",
             "global_index_corrupted": "fail_closed",

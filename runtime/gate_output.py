@@ -21,7 +21,8 @@ except ModuleNotFoundError as exc:
 
 _HINTS = {
     "stub_selected": "Selected global bundle is ready for this workspace.",
-    "stub_invalid": "Repair or recreate `.sopify-runtime/manifest.json`, then retry.",
+    "stub_invalid": "Repair or recreate the workspace activation manifest (`.sopify-skills/sopify.json` or legacy `.sopify-runtime/manifest.json`), then retry.",
+    "missing_bundle": "Trigger Sopify in this workspace with `~go` to bootstrap on demand.",
     "global_bundle_missing": "Refresh the installed payload because the selected global bundle is missing.",
     "global_bundle_incompatible": "Refresh the installed payload because the selected global bundle is incomplete or incompatible.",
     "global_index_corrupted": "Refresh the installed payload because the global bundle index is invalid or inconsistent.",
