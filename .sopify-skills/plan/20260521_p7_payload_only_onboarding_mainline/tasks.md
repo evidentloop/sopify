@@ -91,15 +91,24 @@ lifecycle_state: active
 
 **前置：** S3 决策 spike 已完成内容来源、frontmatter/applyTo、源 repo 策略、运行面验证、managed block 策略。
 
-- [ ] repo-local activation adapter：按宿主类型决定是否写本地 instruction 文件
-  - 全局 prompt 型（Codex/Claude）：默认不写 repo-local header
-  - 本地 instruction 文件型（Copilot）：managed block upsert 到 `.github/copilot-instructions.md` / `.github/instructions/sopify.instructions.md`
-  - 若目标运行面不读取 path-specific instructions，重说明内联到轻入口
-- [ ] Copilot 资产重构：从 `Copilot/Skills/CN/COPILOT.md`（P4d seed）提炼 bootstrap 产物
-  - 拆成轻入口 + 重说明两层
-  - 去掉 pilot-only 语气，对齐 sopify.json + bootstrap/install 叙事
-  - 原 COPILOT.md 保留为 source seed / reference
-- [ ] managed block 边界、升级/覆盖策略、冲突处理、卸载/回滚
+**实现方案：** 不注册 HostAdapter（Copilot 无 `~/.copilot/` 全局目录）；用 audit-only allowlist 透传 preflight；payload 预分发资源文件；bootstrap 双路径插桩。
+
+- [x] T0: preflight 透传 — `_AUDIT_ONLY_HOST_IDS` allowlist + 双变量拆分 (`detected_host_id` / `bootstrap_host_id` / `payload_host_id`)
+  - `runtime/workspace_preflight.py`: `_ensure_supported_host_id()` 跳过 audit-only；`_validate_host_id_alignment()` 跳过 audit-only
+  - 结果 contract: `preflight.host_id`=实际 payload 属主, `preflight.bootstrap_host_id`=copilot, `preflight.payload_host_id`=实际 payload 属主
+- [x] T2: 内容 & payload 资源部署
+  - `installer/resources/copilot/lightweight.md` (1128B，< 4K Code Review cap) — 轻入口 managed block 内容
+  - `installer/resources/copilot/full.md` (6199B，含 `applyTo: "**"` frontmatter) — 重说明 owned file 内容
+  - `installer/payload.py`: `_ensure_copilot_instruction_resources()` 绕过 `_payload_is_current` early return
+- [x] T3: managed block 机制 — `_write_managed_instruction_block` / `_remove_managed_instruction_block` / `_sync_copilot_instruction_assets`
+  - `installer/bootstrap_workspace.py`: 7 个新函数，双路径插桩 (READY + MISSING/OUTDATED)
+  - READY 路径：instruction sync 在 `request_authorization_mode` 写入门控内执行
+- [x] T1: 路由 — `host_id == "copilot"` 字符串判断，不进 host registry
+- [x] 测试：8 个新测试 (6 bootstrap + 2 preflight)，全量 723 passed + 51 subtests
+
+**已知限制（S5+ 解决）：**
+- 仓内无生产入口传 `--host-id copilot`。S4 只实现分发机制，Copilot 侧触发入口（如 copilot-setup-steps / custom instruction 引导）属于 S5/S6 范围
+- 资源同步为"只增不减"：payload 侧只 copy 不清理已删除资源，workspace 侧不主动清理旧指令文件。资源改名/回退场景需手动清理或后续加 reconcile 逻辑
 
 ## S5: 发布链 + example
 
