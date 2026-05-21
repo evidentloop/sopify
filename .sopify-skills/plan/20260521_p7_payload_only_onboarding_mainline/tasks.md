@@ -9,23 +9,31 @@ lifecycle_state: active
 
 ## 决策记录
 
-（S1 分析后填充）
+| DR | 决策 | 约束 |
+|----|------|------|
+| DR-1 版本锚点 | `.sopify-skills/sopify.json`（极简，~5 字段） | 版本真值只在此文件，不重复 |
+| DR-2 Prompt 分发 | 完整 prompt 留全局；repo 只放 host header pointer（managed block upsert） | pointer 不含绝对路径，header filename 由 host adapter 决定 |
+| DR-3 Bootstrap 入口 | `python3 -m sopify_bootstrap` canonical，`curl\|bash` convenience | repo 产出 = sopify.json + host header pointer（Copilot 首实现 = AGENTS.md） |
 
-## S1: 接入路径分析 + 版本锚点归宿决策
+**定性：** P7 不是从 0 到 1 的全局化。全局发动机已就位，P7 只替换 repo 内的 legacy 激活物（`.sopify-runtime/manifest.json` → 新两文件模型）。架构层宿主无关，验收层 Copilot-first。
 
-- [x] 当前 bootstrap 路径全链路走读：installer 入口 → payload manifest → `.sopify-runtime/` 落地逻辑
-- [x] `.sopify-runtime/manifest.json` thin stub 字段清单 + 各字段的消费者清单（6 个生产消费者已列出）
-- [x] 版本锚点迁移方案评估：A（.sopify-skills/sopify.json 推荐）/ B（root 单文件）/ C（不迁移）
-- [x] prompt asset 分发方案：A（.sopify-skills/prompts/ 推荐）/ B（root AGENTS.md）
-- [x] 外部 repo 最小结构定义（目标态已出）
-- [ ] 决策拍板（等用户确认 DR-1/2/3 方案选择）
+## S1: 激活物迁移方案分析 + 新 marker/pointer 模型定义
 
-## S2: 接入路径实现
+- [x] 现状全链路走读：全局发动机 + repo thin stub 的消费者全景
+- [x] `.sopify-runtime/manifest.json` thin stub 字段清单 + 6 个生产消费者映射
+- [x] 版本锚点迁移方案评估 → DR-1 APPROVED: `.sopify-skills/sopify.json`
+- [x] prompt 分发模型修订 → DR-2 APPROVED: 全局 prompt + repo 轻量 pointer
+- [x] bootstrap 入口决策 → DR-3 APPROVED: `python3 -m sopify_bootstrap` canonical
+- [x] P7 定性校正：不是 greenfield 全局化，而是 repo 激活物迁移
+- [x] 决策拍板（DR-1/2/3 全部 APPROVED，含约束条件）
 
-- [ ] 版本锚点迁移（按 S1 决策）
+## S2: 激活物迁移实现
+
+- [ ] `.sopify-skills/sopify.json` schema + 读写逻辑
+- [ ] 6 个生产消费者检测路径迁移（`.sopify-runtime/manifest.json` → `sopify.json`）
+- [ ] workspace detection 锚点切换（祖先扫描改为 `sopify.json`）
+- [ ] repo-local host header pointer：managed block upsert（宿主无关机制，Copilot 首实现 = AGENTS.md）
 - [ ] bootstrap 命令适配外部 repo（不依赖 deep installer mainline）
-- [ ] prompt asset 分发机制实现
-- [ ] `.sopify-skills/` workspace 初始化最小脚手架
 - [ ] 接续链路验证：handoff 消费 + state 写入 via canonical_writer
 
 ## S3: 首次体验 + diagnostics
