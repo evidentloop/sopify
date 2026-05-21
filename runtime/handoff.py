@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from hashlib import sha1
 import json
 from pathlib import Path
 import re
 
 from typing import Any, Mapping, Sequence
 
+from canonical_writer._time import iso_now as _iso_now
 from .checkpoint_request import (
     CHECKPOINT_REASON_MISSING_BUT_TRADEOFF_DETECTED,
     checkpoint_request_from_clarification_state,
@@ -17,7 +16,6 @@ from .checkpoint_request import (
     normalize_checkpoint_request,
 )
 from .action_projection import ActionProjectionError, build_action_projection, supports_action_projection
-from canonical_writer.io import read_runtime_handoff  # noqa: F401 — re-exported for backward compat
 from .clarification import CURRENT_CLARIFICATION_RELATIVE_PATH, build_scope_clarification_form, clarification_submission_state_payload
 from .deterministic_guard import (
     evaluate_deterministic_guard,
@@ -166,25 +164,8 @@ def build_runtime_handoff(
     )
 
 
-def _iso_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
-
-def _stable_request_sha1(text: str) -> str:
-    normalized = " ".join(str(text or "").split())
-    if not normalized:
-        return ""
-    return sha1(normalized.encode("utf-8")).hexdigest()[:12]
-
-
-def _summarize_request_text(text: str, *, limit: int = 120) -> str:
-    compact = " ".join(str(text or "").split())
-    if len(compact) <= limit:
-        return compact
-    if limit <= 3:
-        return compact[:limit]
-    return compact[: limit - 3].rstrip() + "..."
-
+from .state import stable_request_sha1 as _stable_request_sha1, summarize_request_text as _summarize_request_text
 
 
 def _required_host_action(

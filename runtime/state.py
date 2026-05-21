@@ -1,7 +1,7 @@
 """Filesystem-backed state storage for Sopify runtime.
 
-StateStore has been extracted to canonical_writer.store.  This module re-exports
-it for backward compatibility and contains runtime-specific helpers.
+Runtime-specific helpers that do not belong in canonical_writer.
+StateStore, iso_now and normalize_session_id live in canonical_writer.
 """
 
 from __future__ import annotations
@@ -13,9 +13,7 @@ from pathlib import Path
 import shutil
 from typing import Any, Optional
 
-# Re-exports from canonical_writer (backward compatibility bridge).
-from canonical_writer.store import StateStore, normalize_session_id, SESSIONS_DIRNAME  # noqa: F401
-from canonical_writer._time import iso_now  # noqa: F401
+from canonical_writer.store import SESSIONS_DIRNAME
 
 from .models import RuntimeConfig
 

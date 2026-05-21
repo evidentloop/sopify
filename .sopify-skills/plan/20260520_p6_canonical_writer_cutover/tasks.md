@@ -78,23 +78,32 @@ lifecycle_state: active
 - [x] tests/test_runtime_gate.py — StateStore/iso_now 从 canonical_writer，stable_request_sha1 留 runtime.state
 - [x] 全量测试通过：721 passed
 
-## S4: 验证 + 清理
+## S4: 代码清理完成，验收待 S5
 
-- [ ] iso_now 重复清理：3 处 runtime 内重复定义统一为从 canonical_writer._time 导入
-  - `runtime/handoff.py:_iso_now` (line 168)
-  - `runtime/decision.py:iso_now` (if present)
-  - `runtime/clarification.py:iso_now` (if present)
-- [ ] 移除临时兼容桥（确认无旧路径引用后删除所有 re-export）：
-  - runtime/models.py（sopify_contracts bridge，S2.1 建立）
-  - runtime/state.py StateStore/iso_now/normalize_session_id re-exports
-  - runtime/state_invariants.py 全量 re-export bridge
-  - runtime/checkpoint_request.py canonical_writer._resume re-imports
-  - runtime/handoff.py read_runtime_handoff bridge
-- [ ] 删除 `runtime/_models/`（已迁出到 sopify_contracts/，S2.1 已完成）
-- [ ] canonical_writer/ import 审计：仅依赖 sopify_contracts + 标准库
-- [ ] sopify_contracts/ import 审计：仅依赖标准库
-- [ ] state.py / state_invariants.py 瘦身确认
-- [ ] 全量测试回归：721+ tests 全过
+### 代码清理
+
+- [x] iso_now 重复清理：runtime/handoff.py 改为 `from canonical_writer._time import iso_now`；decision.py / clarification.py 的本地 iso_now 定义已删除，统一到 canonical_writer._time
+- [x] 删除 `runtime/_models/`：S2.1 git mv 迁出到 sopify_contracts/ 时已删除
+- [x] 删除 `runtime/state_invariants.py`：原为 canonical_writer.invariants 的纯 re-export 桥，所有消费者已直接引用 canonical_writer，桥已无引用
+- [x] runtime/state.py re-export 移除：StateStore / iso_now / normalize_session_id 的 re-export 已删除，仅保留 runtime-specific helpers
+- [x] runtime/checkpoint_request.py re-export 瘦身：仅保留 CheckpointRequestError + validate_develop_resume_context 两项实际依赖
+- [x] runtime/ 全量 import 重接线：engine.py / gate.py / develop_callback.py 等 20 个文件直接 import canonical_writer / sopify_contracts
+- [x] writer observability stamp：canonical_writer/store.py L75/L242 从 `"runtime.state"` 改为 `"canonical_writer"`
+- [x] canonical_writer/ import 审计：仅依赖 sopify_contracts + 标准库
+- [x] sopify_contracts/ import 审计：仅依赖标准库
+
+### 兼容桥降级说明（非临时桥，保留为 runtime 层 API）
+
+原计划"确认无旧路径引用后删除所有 re-export"。实际结论：以下模块不是临时桥，而是 runtime 层自身对外 API 或内部逻辑的宿主，保留合理：
+
+- runtime/models.py — sopify_contracts 的 deprecated re-export facade。仍有 3 处测试消费者（runtime_test_support.py, test_action_intent.py, test_runtime_gate.py）。保留为测试兼容层，标 DEPRECATED
+- runtime/state.py — re-export 已移除；现仅保留 runtime-specific helpers（~130 LOC），是 runtime 自有逻辑而非桥
+- runtime/checkpoint_request.py — 仍拥有 checkpoint 请求的 runtime-side 逻辑（build_scope_clarification_form 等），非纯 re-export 桥
+- runtime/handoff.py — 仍拥有 build_runtime_handoff（engine 耦合逻辑），read_runtime_handoff 已迁至 canonical_writer/io.py
+
+### 待 S5
+
+- [ ] 全量测试回归确认
 - [ ] 蓝图同步：design.md 三层分离表标"已提取"
 
 ## S5: 结论报告

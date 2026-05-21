@@ -23,15 +23,7 @@ from .models import (
     RuntimeConfig,
 )
 
-# Resume validation extracted to canonical_writer._resume; re-imported here
-# so existing consumers of runtime.checkpoint_request are unaffected.
-from canonical_writer._resume import (  # noqa: F401
-    DEVELOP_RESUME_AFTER_ACTIONS,
-    DEVELOP_RESUME_CONTEXT_REQUIRED_FIELDS,
-    CheckpointRequestError,
-    develop_resume_context_issue,
-    validate_develop_resume_context,
-)
+from canonical_writer._resume import CheckpointRequestError, validate_develop_resume_context
 
 CHECKPOINT_REQUEST_SCHEMA_VERSION = "1"
 CHECKPOINT_KINDS = ("clarification", "decision")

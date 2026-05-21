@@ -6,6 +6,40 @@ Format: Summary → Changed → Plan Packages. File-level details live in `git l
 
 ## [Unreleased]
 
+## [2026-05-21.101226] - 2026-05-21
+
+### Summary
+
+- Updated 1 active plan package(s); Changes across: Docs, Runtime, Skills, Tests, Changed.
+
+### Changed
+
+- **Docs**: Refined public documentation (2 files)
+- **Runtime**: Updated runtime internals (21 files)
+- **Skills**: Synced prompt-layer skills (4 files)
+- **Tests**: Updated automated coverage (1 files)
+- **Changed**: Updated project files (1 files)
+
+### Plan Packages
+
+- `20260520_p6_canonical_writer_cutover` (active)
+
+## [2026-05-21.100824] - 2026-05-21
+
+### Summary
+
+- Updated 1 active plan package(s); Changes across: Runtime, Tests, Changed.
+
+### Changed
+
+- **Runtime**: Updated runtime internals (21 files)
+- **Tests**: Updated automated coverage (1 files)
+- **Changed**: Updated project files (1 files)
+
+### Plan Packages
+
+- `20260520_p6_canonical_writer_cutover` (active)
+
 ## [2026-05-20.221259] - 2026-05-20
 
 ### Summary
