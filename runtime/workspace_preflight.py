@@ -198,6 +198,7 @@ except ModuleNotFoundError as exc:
             "GLOBAL_BUNDLE_INCOMPATIBLE": "global_bundle_incompatible",
             "GLOBAL_INDEX_CORRUPTED": "global_index_corrupted",
             "LEGACY_FALLBACK_SELECTED": "legacy_fallback_selected",
+            "PAYLOAD_MANIFEST_NOT_FOUND": "payload_manifest_not_found",
             "HOST_MISMATCH": "host_mismatch",
             "INGRESS_CONTRACT_INVALID": "ingress_contract_invalid",
             "ROOT_CONFIRM_REQUIRED": "root_confirm_required",
@@ -215,6 +216,7 @@ except ModuleNotFoundError as exc:
             "global_bundle_incompatible": "fail_closed",
             "global_index_corrupted": "fail_closed",
             "legacy_fallback_selected": "warn",
+            "payload_manifest_not_found": "warn",
             "host_mismatch": "fail_closed",
             "ingress_contract_invalid": "fail_closed",
             "root_confirm_required": "confirm",
@@ -429,7 +431,9 @@ def preflight_workspace_runtime(
             "activation_root": str(activation_root_path),
             "requested_root": str(requested_root_path),
             "root_resolution_source": root_resolution_source,
-        }, message_hint="No installed host payload was found; continuing with repo-local entry.")
+            "evidence": _payload_manifest_not_found_evidence(home_root=home_root, requested_host_id=detected_host_id),
+            "recommendation": "Install Sopify for the selected host, or pass payload_root explicitly when running runtime_gate.",
+        }, message_hint="Install Sopify for the selected host, or pass payload_root explicitly when running runtime_gate.")
 
     payload_manifest = payload_resolution["payload_manifest"]
     payload_manifest_file = payload_resolution["payload_manifest_file"]
@@ -526,6 +530,18 @@ def _infer_host_id_from_manifest_path(path: Path) -> str | None:
     if ".claude" in normalized_parts:
         return "claude"
     return None
+
+
+def _payload_manifest_not_found_evidence(*, home_root: Path, requested_host_id: str | None) -> dict[str, object]:
+    evidence: dict[str, object] = {
+        "checked_manifest_paths": [
+            str(manifest_path)
+            for _host_id, manifest_path in iter_host_payload_manifest_candidates(home_root=home_root)
+        ]
+    }
+    if requested_host_id:
+        evidence["requested_host_id"] = requested_host_id
+    return evidence
 
 
 def _ensure_supported_host_id(*, requested_host_id: str | None, home_root: Path) -> None:

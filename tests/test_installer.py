@@ -27,7 +27,7 @@ from installer.bootstrap_workspace import (
 from installer.hosts.base import install_host_assets
 from installer.hosts.claude import CLAUDE_ADAPTER
 from installer.hosts.codex import CODEX_ADAPTER
-from installer.models import InstallError, InstallPhaseResult, InstallResult, parse_install_target
+from installer.models import InstallError
 from installer.outcome_contract import annotate_outcome_payload
 from installer.payload import (
     _REQUIRED_BUNDLE_CAPABILITIES,
@@ -44,7 +44,7 @@ from installer.validate import (
 )
 from runtime.engine import run_runtime
 from runtime.output import render_runtime_output
-from scripts.install_sopify import render_result, run_install
+from scripts.install_sopify import run_install
 
 
 def _write_json(path: Path, payload: dict[str, object]) -> None:
@@ -1378,50 +1378,6 @@ class InstallRenderTests(unittest.TestCase):
                 self.assertEqual(actual.get("primary_code"), expected.get("primary_code"))
                 self.assertEqual(actual.get("action_level"), expected.get("action_level"))
                 self.assertEqual(actual.get("message_hint"), expected.get("message_hint"))
-
-    def test_render_result_reports_already_current_for_noop_install(self) -> None:
-        result = _build_install_result(host_action="skipped", payload_action="skipped")
-
-        rendered = render_result(result)
-
-        self.assertTrue(rendered.startswith("Sopify already current:"))
-        self.assertIn("No reinstall needed. Trigger Sopify inside any project workspace to bootstrap `.sopify-runtime/` on demand.", rendered)
-        self.assertNotIn("Installed Sopify successfully:", rendered)
-
-    def test_render_result_keeps_success_title_when_changes_applied(self) -> None:
-        result = _build_install_result(host_action="updated", payload_action="skipped")
-
-        rendered = render_result(result)
-
-        self.assertTrue(rendered.startswith("Installed Sopify successfully:"))
-        self.assertIn("Trigger Sopify inside any project workspace to bootstrap `.sopify-runtime/` on demand.", rendered)
-
-
-def _build_install_result(*, host_action: str, payload_action: str) -> InstallResult:
-    host_root = Path("/tmp/home/.codex")
-    payload_root = host_root / "sopify"
-    return InstallResult(
-        target=parse_install_target("codex:zh-CN"),
-        workspace_root=None,
-        host_root=host_root,
-        payload_root=payload_root,
-        bundle_root=None,
-        host_install=InstallPhaseResult(
-            action=host_action,
-            root=host_root,
-            version="2026-02-13",
-            paths=(host_root / "AGENTS.md",),
-        ),
-        payload_install=InstallPhaseResult(
-            action=payload_action,
-            root=payload_root,
-            version="2026-02-13",
-            paths=(payload_root / "payload-manifest.json",),
-        ),
-        workspace_bootstrap=None,
-        smoke_output="Runtime smoke check passed",
-    )
-
 
 if __name__ == "__main__":
     unittest.main()

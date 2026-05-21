@@ -30,6 +30,7 @@ from runtime.gate import (
     NORMAL_RUNTIME_FOLLOWUP,
     enter_runtime_gate,
 )
+from runtime.gate_output import render_gate_text
 from installer.hosts.claude import CLAUDE_ADAPTER
 from installer.hosts.codex import CODEX_ADAPTER
 from installer.outcome_contract import annotate_outcome_payload, render_outcome_summary
@@ -327,6 +328,7 @@ class RuntimeGateTests(unittest.TestCase):
             "GLOBAL_BUNDLE_INCOMPATIBLE",
             "GLOBAL_INDEX_CORRUPTED",
             "LEGACY_FALLBACK_SELECTED",
+            "PAYLOAD_MANIFEST_NOT_FOUND",
             "HOST_MISMATCH",
             "INGRESS_CONTRACT_INVALID",
             "ROOT_CONFIRM_REQUIRED",
@@ -890,6 +892,16 @@ class RuntimeGateTests(unittest.TestCase):
 
             self.assertEqual(result["status"], "error")
             self.assertEqual(result["error_code"], "config_error")
+            self.assertEqual(result["preflight"]["reason_code"], "PAYLOAD_MANIFEST_NOT_FOUND")
+            self.assertEqual(result["preflight"]["primary_code"], "payload_manifest_not_found")
+            self.assertEqual(result["preflight"]["action_level"], "warn")
+            checked_paths = result["preflight"]["evidence"]["checked_manifest_paths"]
+            self.assertIn(str((temp_root / "home" / ".codex" / "sopify" / "payload-manifest.json").resolve()), checked_paths)
+            self.assertIn(str((temp_root / "home" / ".claude" / "sopify" / "payload-manifest.json").resolve()), checked_paths)
+            rendered = render_gate_text(result)
+            self.assertIn("preflight_outcome: payload_manifest_not_found [warn]", rendered)
+            self.assertIn("checked_manifest_paths:", rendered)
+            self.assertIn("Install Sopify for this host", rendered)
 
     @pytest.mark.implementation_mirror
 

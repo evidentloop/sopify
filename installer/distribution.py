@@ -140,7 +140,7 @@ def run_distribution_install(
 
 
 def render_distribution_result(report: DistributionInstallReport) -> str:
-    """Render a concise install summary for repo-local and remote entrypoints."""
+    """Render the full diagnostic install summary for repo-local and remote entrypoints."""
     install_result = report.install_result
     selected_host = _select_host_status(report.status_payload, install_result.target)
     selected_checks = _select_host_checks(report.doctor_payload, install_result.target)
@@ -204,6 +204,14 @@ def render_distribution_result(report: DistributionInstallReport) -> str:
     return "\n".join(lines)
 
 
+def render_distribution_user_result(report: DistributionInstallReport) -> str:
+    """Render the default user-facing install summary."""
+    install_result = report.install_result
+    if install_result.target.language == "zh-CN":
+        return _render_distribution_user_result_zh(report)
+    return _render_distribution_user_result_en(report)
+
+
 def render_distribution_error(exc: DistributionError) -> str:
     """Render a stable error surface for shell, PowerShell, and repo-local installs."""
     return "\n".join(
@@ -215,6 +223,34 @@ def render_distribution_error(exc: DistributionError) -> str:
             f"  next_step: {exc.next_step}",
         ]
     )
+
+
+def render_distribution_user_error(exc: DistributionError, *, language: str = "en-US") -> str:
+    """Render a human-first install error while preserving diagnostic codes."""
+    if language == "zh-CN":
+        lines = [
+            f"Sopify 安装失败：{exc.detail}",
+            "",
+            "修复方式：",
+            f"  {exc.next_step}",
+            "",
+            "诊断信息：",
+            f"  reason_code: {exc.reason_code}",
+            f"  phase: {exc.phase}",
+        ]
+        return "\n".join(lines)
+
+    lines = [
+        f"Sopify install failed: {exc.detail}",
+        "",
+        "Fix:",
+        f"  {exc.next_step}",
+        "",
+        "Diagnostics:",
+        f"  reason_code: {exc.reason_code}",
+        f"  phase: {exc.phase}",
+    ]
+    return "\n".join(lines)
 
 
 def _resolve_target_value(
@@ -367,6 +403,106 @@ def _build_next_step(target: InstallTarget, workspace_root: Path | None) -> str:
     return f"Open {target.host} in {workspace_root} and trigger Sopify."
 
 
+def _render_distribution_user_result_en(report: DistributionInstallReport) -> str:
+    install_result = report.install_result
+    title = "Sopify is already current." if _is_noop_install(install_result) else "Sopify installed successfully."
+    host_name = _host_display_name(install_result.target.host)
+    lines = [
+        title,
+        "",
+        "Installed:",
+        f"  Host: {host_name} ({install_result.target.value})",
+        f"  Language: {_language_display_name(install_result.target.language, 'en-US')}",
+        f"  Host prompt: {_action_label(install_result.host_install.action, 'en-US')}",
+        f"  Runtime: {install_result.payload_root}",
+        f"  Version: {install_result.payload_install.version or 'unknown'}",
+        f"  Runtime action: {_action_label(install_result.payload_install.action, 'en-US')}",
+        "",
+        "Project:",
+    ]
+    if install_result.workspace_root is None:
+        lines.extend(
+            [
+                "  No project directory was changed.",
+                "  Sopify will initialize project files the first time you run `~go` in a workspace.",
+                "",
+                "Next:",
+                f"  1. Open {host_name} in your project directory.",
+                "  2. Type: ~go",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                f"  Prewarmed: {install_result.workspace_root}",
+                f"  Bundle: {install_result.bundle_root if install_result.bundle_root is not None else '(not requested)'}",
+                "",
+                "Next:",
+                f"  1. Reopen {host_name} in that project.",
+                "  2. Type: ~go",
+            ]
+        )
+    lines.extend(
+        [
+            "",
+            "Diagnostics:",
+            f"  {_friendly_smoke_summary(install_result.smoke_output, 'en-US')}",
+            "  Run again with `--verbose` for full install details.",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _render_distribution_user_result_zh(report: DistributionInstallReport) -> str:
+    install_result = report.install_result
+    title = "Sopify 已是最新。" if _is_noop_install(install_result) else "Sopify 安装完成。"
+    host_name = _host_display_name(install_result.target.host)
+    lines = [
+        title,
+        "",
+        "已安装：",
+        f"  宿主：{host_name}（{install_result.target.value}）",
+        f"  语言：{_language_display_name(install_result.target.language, 'zh-CN')}",
+        f"  宿主提示：{_action_label(install_result.host_install.action, 'zh-CN')}",
+        f"  运行时：{install_result.payload_root}",
+        f"  版本：{install_result.payload_install.version or 'unknown'}",
+        f"  运行时操作：{_action_label(install_result.payload_install.action, 'zh-CN')}",
+        "",
+        "项目：",
+    ]
+    if install_result.workspace_root is None:
+        lines.extend(
+            [
+                "  这次没有修改任何项目目录。",
+                "  进入项目后第一次输入 `~go` 时，会自动初始化 Sopify 项目文件。",
+                "",
+                "下一步：",
+                f"  1. 在项目目录打开 {host_name}。",
+                "  2. 输入：~go",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                f"  已预热：{install_result.workspace_root}",
+                f"  Bundle：{install_result.bundle_root if install_result.bundle_root is not None else '(not requested)'}",
+                "",
+                "下一步：",
+                f"  1. 在该项目中重新打开 {host_name}。",
+                "  2. 输入：~go",
+            ]
+        )
+    lines.extend(
+        [
+            "",
+            "诊断：",
+            f"  {_friendly_smoke_summary(install_result.smoke_output, 'zh-CN')}",
+            "  需要完整安装细节时，请加 `--verbose` 重新运行。",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def _select_host_status(payload: dict[str, object], target: InstallTarget) -> dict[str, object]:
     for host in payload["hosts"]:
         if host["host_id"] == target.host:
@@ -413,3 +549,45 @@ def _is_noop_install(install_result: InstallResult) -> bool:
 def _first_smoke_line(smoke_output: str) -> str:
     first_line = smoke_output.splitlines()[0].strip() if smoke_output else ""
     return first_line or "(no smoke output)"
+
+
+def _friendly_smoke_summary(smoke_output: str, language: str) -> str:
+    first_line = _first_smoke_line(smoke_output)
+    if first_line.startswith("Runtime smoke check passed"):
+        return "运行时自检已通过。" if language == "zh-CN" else "Runtime smoke check passed."
+    return first_line
+
+
+def _host_display_name(host_id: str) -> str:
+    return {
+        "codex": "Codex",
+        "claude": "Claude",
+    }.get(host_id, host_id)
+
+
+def _language_display_name(language: str, output_language: str) -> str:
+    if output_language == "zh-CN":
+        return {
+            "zh-CN": "简体中文",
+            "en-US": "English",
+        }.get(language, language)
+    return {
+        "zh-CN": "Simplified Chinese",
+        "en-US": "English",
+    }.get(language, language)
+
+
+def _action_label(action: str, language: str) -> str:
+    if language == "zh-CN":
+        return {
+            "installed": "已安装",
+            "updated": "已更新",
+            "skipped": "已是最新",
+            "bootstrapped": "已初始化",
+        }.get(action, action)
+    return {
+        "installed": "installed",
+        "updated": "updated",
+        "skipped": "already current",
+        "bootstrapped": "initialized",
+    }.get(action, action)

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 import sys
 
@@ -17,6 +18,8 @@ from installer.distribution import (
     DistributionSourceMetadata,
     render_distribution_error,
     render_distribution_result,
+    render_distribution_user_error,
+    render_distribution_user_result,
     run_distribution_install,
 )
 from installer.hosts import get_host_adapter, iter_installable_hosts
@@ -39,25 +42,31 @@ def build_parser() -> argparse.ArgumentParser:
         for capability in iter_installable_hosts()
         for language in LANGUAGE_DIRECTORY_MAP
     )
-    parser = argparse.ArgumentParser(description="Install Sopify into a target workspace and host environment.")
+    parser = argparse.ArgumentParser(
+        description=(
+            "Install Sopify for a host. By default this installs the host prompt and Sopify runtime only; "
+            "project files are initialized later when you run `~go` in a workspace."
+        )
+    )
     parser.add_argument(
         "--target",
         default=None,
-        help=f"Install target in <host:lang> format. Required in non-interactive mode. Supported: {supported_targets}",
+        help=f"Host and language to install, for example codex:zh-CN. Supported: {supported_targets}",
     )
     parser.add_argument(
         "--workspace",
         default=None,
         help=(
-            "Optional internal-only workspace prewarm path. Default user flow is to install the host prompt and "
-            "global payload first, then let runtime gate bootstrap `.sopify-runtime/` on the first project trigger."
+            "Advanced: prewarm an existing project path now. Most users should omit this and let `~go` initialize "
+            "project files on first use."
         ),
     )
     parser.add_argument(
         "--ref",
         default=None,
-        help="Optional source ref override for remote install entrypoints. Not supported for repo-local installs.",
+        help="Advanced: override the remote source ref. Not supported for repo-local installs.",
     )
+    parser.add_argument("--verbose", action="store_true", help="Show full diagnostic install details.")
     parser.add_argument("--source-channel", default="repo-local", help=argparse.SUPPRESS)
     parser.add_argument("--source-resolved-ref", default="working-tree", help=argparse.SUPPRESS)
     parser.add_argument("--source-asset-name", default="scripts/install_sopify.py", help=argparse.SUPPRESS)
@@ -119,72 +128,11 @@ def run_install(*, target_value: str, workspace_value: str | None, repo_root: Pa
     )
 
 
-def render_result(result: InstallResult) -> str:
-    is_noop_install = (
-        result.host_install.action == "skipped"
-        and result.payload_install.action == "skipped"
-        and result.workspace_root is None
-    )
-    lines = [
-        "Sopify already current:" if is_noop_install else "Installed Sopify successfully:",
-        f"  target: {result.target.value}",
-        f"  host root: {result.host_root}",
-        f"  payload root: {result.payload_root}",
-        f"  workspace: {result.workspace_root if result.workspace_root is not None else '(not requested)'}",
-        f"  bundle root: {result.bundle_root if result.bundle_root is not None else '(not requested)'}",
-        "",
-        "Host:",
-        f"  action: {result.host_install.action}",
-        f"  version: {result.host_install.version or 'unknown'}",
-    ]
-    lines.extend(f"  - {path}" for path in result.host_install.paths)
-    lines.extend(
-        [
-            "",
-            "Payload:",
-            f"  action: {result.payload_install.action}",
-            f"  version: {result.payload_install.version or 'unknown'}",
-        ]
-    )
-    lines.extend(f"  - {path}" for path in result.payload_install.paths)
-    lines.append("")
-    lines.append("Workspace:")
-    if result.workspace_bootstrap is None:
-        lines.append("  action: skipped")
-        lines.append("  reason: workspace bootstrap not requested")
-    else:
-        lines.extend(
-            [
-                f"  action: {result.workspace_bootstrap.action}",
-                f"  state: {result.workspace_bootstrap.state}",
-                f"  reason: {result.workspace_bootstrap.reason_code}",
-                f"  message: {result.workspace_bootstrap.message}",
-            ]
-        )
-        if result.workspace_bootstrap.bundle_root != Path("."):
-            lines.append(f"  - {result.workspace_bootstrap.bundle_root}")
-    lines.extend(
-        [
-            "",
-            "Smoke check:",
-            f"  {result.smoke_output}",
-            "",
-            "Next:",
-        ]
-    )
-    if result.workspace_root is None:
-        if is_noop_install:
-            lines.append("  No reinstall needed. Trigger Sopify inside any project workspace to bootstrap `.sopify-runtime/` on demand.")
-        else:
-            lines.append("  Trigger Sopify inside any project workspace to bootstrap `.sopify-runtime/` on demand.")
-    else:
-        lines.append("  Reopen the workspace in the selected host and use Sopify commands or plain requests.")
-    return "\n".join(lines)
-
-
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    verbose = args.verbose or _env_flag_enabled(os.environ.get("SOPIFY_DEBUG"))
+    output_language = _infer_output_language(args.target)
     source_metadata = DistributionSourceMetadata(
         resolved_ref=args.source_resolved_ref,
         asset_name=args.source_asset_name,
@@ -206,14 +154,31 @@ def main(argv: list[str] | None = None) -> int:
             install_executor=run_install,
         )
     except DistributionError as exc:
-        print(render_distribution_error(exc), file=sys.stderr)
+        if verbose:
+            rendered_error = render_distribution_error(exc)
+        else:
+            rendered_error = render_distribution_user_error(exc, language=output_language)
+        print(rendered_error, file=sys.stderr)
         return 1
     except InstallError as exc:
-        print(f"Install failed: {exc}", file=sys.stderr)
+        if verbose:
+            print(f"Install failed: {exc}", file=sys.stderr)
+        elif output_language == "zh-CN":
+            print(f"Sopify 安装失败：{exc}\n\n诊断信息：\n  reason_code: INSTALLER_FAILED", file=sys.stderr)
+        else:
+            print(f"Sopify install failed: {exc}\n\nDiagnostics:\n  reason_code: INSTALLER_FAILED", file=sys.stderr)
         return 1
 
-    print(render_distribution_result(report))
+    print(render_distribution_result(report) if verbose else render_distribution_user_result(report))
     return 0
+
+
+def _env_flag_enabled(value: str | None) -> bool:
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _infer_output_language(target_value: str | None) -> str:
+    return "zh-CN" if str(target_value or "").strip().endswith(":zh-CN") else "en-US"
 
 
 if __name__ == "__main__":
