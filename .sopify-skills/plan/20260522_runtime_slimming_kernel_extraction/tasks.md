@@ -130,11 +130,41 @@ archive_ready: false
   > - run_runtime() 兼容 wrapper 仍在 engine.py，尚未删除
   > - _kernel_turn 仍包含 11 个 non-kernel route handler 的分发逻辑
   > - 以上均属 Package A 范围
-- [ ] 4.10b **Step 3 Package A: 批量删除 + kernel helpers 内联**
-  > 范围: (1) 批量删除 ~40 非内核模块 (~18.8K LOC); (2) 将 18 个 kernel helpers 从 engine.py 内联到 _kernel_turn.py; (3) 删除 11 个 non-kernel route handler import 及对应调用点; (4) 删除 engine.py; (5) 清理 models.py bridge 消费者
+- [ ] 4.10b **Step 3 Package A: _kernel_turn → engine 依赖切断 + 合同面审计 + 批量删除**
+  > 判断边界: 按"当前宿主可见 contract 还在不在"删，不按模块名猜测。行为还需要但文件不需要时，优先内联到 retained 模块；不新造模块/层次/public surface。
+  >
+  > **A1: _kernel_turn → engine 依赖切断（仅切实现耦合，不删功能面）** ✅ 完成
+  > - 将 18 个 kernel-path helpers + 9 个 transitive deps（共 27 项: 4 constants + 23 functions）从 engine.py 内联到 _kernel_turn.py
+  > - 18 helpers: `_HOST_FACING_TRUTH_KIND_ENGINE_RUNTIME_HANDOFF`, `_build_route_native_gate_decision_state`, `_clarification_pending_route`, `_decision_pending_route`, `_derived_resolution_id`, `_exec_plan_unavailable_route`, `_is_zero_write_conflict_inspect`, `_make_run_id`, `_make_run_state`, `_pending_required_host_action`, `_recovery_store_for_route`, `_resolve_execution_state_store`, `_result_state_store_for_route`, `_set_execution_run_state`, `_snapshot_global_execution_run`, `_snapshot_review_run`, `_with_global_handoff_ownership`, `_with_route_artifacts`
+  > - 9 transitive deps: `_new_resolution_id`, `_snapshot_has_global_execution_truth`, `_GLOBAL_EXECUTION_ROUTES`, `_promote_review_state_to_global_execution`, `_execution_gate_decision_resume_context`, `_HOST_FACING_TRUTH_KIND_PROMOTION_GLOBAL_EXECUTION`, `_PROMOTABLE_REVIEW_STAGES`, `_with_global_run_ownership`, `_soft_execution_ownership_warning`
+  > - 新增 import（非内联）: `build_execution_gate_decision_state` from `.decision`; stdlib `sha1`, `uuid4`
+  > - 完成标志: `from .engine import (kernel path 组)` 全部删除，_kernel_turn.py 对 engine.py 的 import 仅剩 11 个 non-kernel handler
+  > - 不动: 非内核路由分支（plan_only/workflow/light_iterate/cancel/archive/resume/conflict）、非内核 leaf imports（bootstrap_kb/SkillRegistry/stale_*/archive_lifecycle/skill_runner）
+  > - 延后: `_kernel_turn.py` 命名暂不调整；待 Package A + C 稳定后在 4.12 统一评估
+  >
+  > **A2: live contract audit（基于切断后的真实消费者）**
+  > - 逐项审计: archive_lifecycle, cancel_active, clarification_resume, decision_resume, state_conflict, runtime_skill, bootstrap_kb — 各自是否仍被 router.py SUPPORTED_ROUTE_NAMES / output.py route family / gate / tests 行为面消费
+  > - 已不再被任何 contract 面消费的 → 标记为可删; 仍在现行 contract 面的 → 保留或 inline
+  > - 输出: 每项一条判定 (delete / retain / inline-to-kernel)
+  >
+  > **A3: 批量删除（仅限 A2 确认脱离 contract 的模块 + 对应 tests/scripts）**
+  > - 按 S3.1 deletion table 执行，但只删 A2 已确认无生产 contract 面的条目
+  > - engine.py: A1 完成 + A2 确认 11 non-kernel handler 归宿后删除
+  > - tests: 按 S3.1 C/D 分类处理; 保留等价覆盖测试（Section A）不动
+  > - scripts: co-delete + cutover 按 S3.1 scripts 表处理
 - [ ] 4.10c Step 3 Package C: models.py bridge 退场
   > 范围: (1) 删除 runtime/models.py; (2) tests 从 runtime.models → sopify_contracts; (3) manifest/protocol 表面收缩
 - [ ] 4.11 kernel 验证：确认 gate → route → handoff → checkpoint 链路在 kernel-only 模式下可用
+- [ ] 4.12 post-cutover naming/comment polish（deferred，非行为变更）
+  > 进入条件: Package A + C 完成，retained 模块集合稳定
+  > 范围:
+  > - 确认 `runtime/_kernel_turn.py` 的最终命名，按最终职责改名
+  > - 审查其他 retained/internal 文件名是否仍带过渡态语义
+  > - 对难以直读的 orchestration / state-ownership / resolution-id 代码补充选择性注释
+  > 非目标:
+  > - 不改业务逻辑
+  > - 不新增 public surface / 抽象层
+  > - 不做大规模重构
 
 ## 5. 文档更新
 - [ ] 5.1 按审计结果决定是否需要回写 `blueprint/tasks.md`

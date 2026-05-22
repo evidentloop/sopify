@@ -325,13 +325,18 @@ Step 3 Package B: kernel orchestration seam extraction ✅
   - action_intent.py 保留完整 (ingress support)，不拆分
   - 决策记录: 6 项架构决策均已确认 (详见 tasks.md 4.10a)
 
-Step 3 Package A: 批量删除 + kernel helpers 内联 ← 当前位置
-  - 批量删除 ~40 非 kernel 模块 (~18.8K LOC)
-  - 18 kernel helpers: engine.py → _kernel_turn.py 内联
-  - 11 non-kernel route handlers: 删除 import + 对应调用点
-  - 删除 engine.py
-  - 入口脚本 in-place cutover: 路径名被 manifest/test 冻结 → 原地重写
-    只做: argparse → 调用 kernel → JSON/text 输出 → exit code
+Step 3 Package A: _kernel_turn → engine 依赖切断 + contract audit + 批量删除 ← 当前位置
+  A1 ✅: 内联 27 项 (18 helpers + 9 transitive deps; 4 constants + 23 functions) 到 _kernel_turn.py
+      新增 import: build_execution_gate_decision_state from .decision; stdlib sha1, uuid4
+      结果: kernel-path import 清零，对 engine.py 仅剩 11 non-kernel handler import
+      不动: 非内核路由分支、非内核 leaf imports、engine.py 本身
+  A2: live contract audit — 基于切断后的真实消费者
+      逐项审计 archive/cancel/resume/conflict/skill/kb 是否仍在
+      router.py SUPPORTED_ROUTE_NAMES / output.py / gate / tests 合同面上
+      输出: 每项一条判定 (delete / retain / inline)
+  A3: 批量删除 — 仅限 A2 确认脱离 contract 的模块 + tests/scripts
+      engine.py: A1 + A2 确认 non-kernel handler 归宿后删除
+      入口脚本: in-place cutover (路径名被 manifest 冻结 → 原地重写)
 
 Step 3 Package C: models.py bridge 退场
   - 删除 runtime/models.py

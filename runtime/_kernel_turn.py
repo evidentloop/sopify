@@ -1,25 +1,25 @@
-"""Kernel orchestration entry point (internal, Package B transition).
+"""Kernel orchestration entry point (internal).
 
 Guarantees achieved:
   - gate.py / cli.py / plan_orchestrator.py import execute_kernel_turn()
     from this module instead of engine.run_runtime().
   - engine.run_runtime() is a deprecated lazy-import wrapper.
   - No runtime.models bridge consumption — types come from sopify_contracts.
+  - Kernel-path helpers are inlined (A1 complete) — no engine.py
+    implementation coupling for the core orchestration pipeline.
 
-NOT yet achieved:
-  - This module still imports ~18 kernel-path helpers and ~11 non-kernel
-    route handlers from engine.py.  The engine implementation dependency
-    is NOT severed — only the caller-facing symbol is.
-  - Package A must: (1) inline kernel helpers into this module,
-    (2) delete non-kernel handler imports + their call sites,
-    (3) delete engine.py.
+Remaining engine dependency:
+  - 11 non-kernel route handlers still imported from engine.py.
+    A2 contract audit will determine which are live vs. dead.
 """
 
 from __future__ import annotations
 
 from dataclasses import replace
+from hashlib import sha1
 from pathlib import Path
 from typing import Any, Mapping, Optional
+from uuid import uuid4
 
 # -- Kernel module imports (retained) -----------------------------------------
 from .action_intent import (
@@ -59,43 +59,435 @@ from .archive_lifecycle import (
     resolve_archive_subject,
 )
 from .clarification import stale_clarification
-from .decision import stale_decision
+from .decision import build_execution_gate_decision_state, stale_decision
 from .kb import bootstrap_kb
 from .skill_registry import SkillRegistry
 from .skill_runner import SkillExecutionError, run_runtime_skill
 
-# -- Engine helpers: kernel path (Package A: inline into this module) ---------
-# These are shared utilities used by the retained kernel orchestration path.
-# They remain in engine.py because non-kernel route handlers also reference
-# them, creating cross-dependencies that prevent a clean move without a third
-# shared module.  Package A must inline/migrate these FIRST before deleting
-# engine.py.
-from .engine import (
-    _HOST_FACING_TRUTH_KIND_ENGINE_RUNTIME_HANDOFF,
-    _build_route_native_gate_decision_state,
-    _clarification_pending_route,
-    _decision_pending_route,
-    _derived_resolution_id,
-    _exec_plan_unavailable_route,
-    _is_zero_write_conflict_inspect,
-    _make_run_id,
-    _make_run_state,
-    _pending_required_host_action,
-    _recovery_store_for_route,
-    _resolve_execution_state_store,
-    _result_state_store_for_route,
-    _set_execution_run_state,
-    _snapshot_global_execution_run,
-    _snapshot_review_run,
-    _with_global_handoff_ownership,
-    _with_route_artifacts,
-)
+# -- Kernel-path constants & helpers (A1: inlined from engine.py) -------------
 
-# -- Engine helpers: non-kernel route handlers (Package A: delete) ------------
+_HOST_FACING_TRUTH_KIND_ENGINE_RUNTIME_HANDOFF = "engine_runtime_handoff"
+_HOST_FACING_TRUTH_KIND_PROMOTION_GLOBAL_EXECUTION = "promotion_global_execution"
+_GLOBAL_EXECUTION_ROUTES = frozenset({"resume_active", "exec_plan", "archive_lifecycle"})
+_PROMOTABLE_REVIEW_STAGES = frozenset({"plan_generated", "ready_for_execution", "develop_pending"})
+
+
+def _new_resolution_id() -> str:
+    return uuid4().hex
+
+
+def _make_run_id(request_text: str) -> str:
+    timestamp = iso_now().replace(":", "").replace("-", "")[:15]
+    digest = sha1(request_text.encode("utf-8")).hexdigest()[:6]
+    return f"{timestamp}_{digest}"
+
+
+def _make_run_state(
+    decision: RouteDecision,
+    plan_artifact: PlanArtifact,
+    *,
+    stage: str = "plan_generated",
+    execution_gate: ExecutionGate | None = None,
+    execution_authorization_receipt: Mapping[str, Any] | None = None,
+) -> RunState:
+    now = iso_now()
+    return RunState(
+        run_id=_make_run_id(decision.request_text),
+        status="active",
+        stage=stage,
+        route_name=decision.route_name,
+        title=plan_artifact.title,
+        created_at=now,
+        updated_at=now,
+        plan_id=plan_artifact.plan_id,
+        plan_path=plan_artifact.path,
+        execution_gate=execution_gate,
+        execution_authorization_receipt=execution_authorization_receipt,
+        request_excerpt=summarize_request_text(decision.request_text),
+        request_sha1=stable_request_sha1(decision.request_text),
+        owner_session_id="",
+        owner_host="",
+        owner_run_id="",
+    )
+
+
+def _with_route_artifacts(decision: RouteDecision, artifacts: Mapping[str, Any]) -> RouteDecision:
+    merged = {**dict(decision.artifacts), **dict(artifacts)}
+    return replace(decision, artifacts=merged)
+
+
+def _is_zero_write_conflict_inspect(route: RouteDecision) -> bool:
+    return route.route_name == "state_conflict" and route.active_run_action != "abort_conflict"
+
+
+def _pending_required_host_action(snapshot) -> str:  # noqa: ANN001
+    if snapshot.current_clarification is not None and snapshot.current_clarification.status in {"pending", "collecting"}:
+        return "answer_questions"
+    if snapshot.current_decision is not None and snapshot.current_decision.status in {"pending", "collecting", "confirmed", "cancelled", "timed_out"}:
+        return "confirm_decision"
+    return ""
+
+
+def _with_global_run_ownership(run_state: RunState, *, session_id: str | None) -> RunState:
+    owner_session_id = str(session_id or run_state.owner_session_id or "").strip()
+    return RunState(
+        run_id=run_state.run_id,
+        status=run_state.status,
+        stage=run_state.stage,
+        route_name=run_state.route_name,
+        title=run_state.title,
+        created_at=run_state.created_at,
+        updated_at=run_state.updated_at,
+        plan_id=run_state.plan_id,
+        plan_path=run_state.plan_path,
+        execution_gate=run_state.execution_gate,
+        execution_authorization_receipt=run_state.execution_authorization_receipt,
+        request_excerpt=run_state.request_excerpt,
+        request_sha1=run_state.request_sha1,
+        owner_session_id=owner_session_id,
+        owner_host=run_state.owner_host or "runtime",
+        owner_run_id=run_state.owner_run_id or run_state.run_id,
+        resolution_id=run_state.resolution_id,
+    )
+
+
+def _with_global_handoff_ownership(
+    handoff: RuntimeHandoff,
+    *,
+    current_run: RunState | None,
+    session_id: str | None,
+) -> RuntimeHandoff:
+    observability = dict(handoff.observability)
+    owner_session_id = ""
+    if current_run is not None:
+        owner_session_id = current_run.owner_session_id
+    if not owner_session_id:
+        owner_session_id = str(session_id or "").strip()
+    if owner_session_id:
+        observability["owner_session_id"] = owner_session_id
+    if current_run is not None:
+        if current_run.owner_host:
+            observability["owner_host"] = current_run.owner_host
+        if current_run.owner_run_id:
+            observability["owner_run_id"] = current_run.owner_run_id
+    return RuntimeHandoff(
+        schema_version=handoff.schema_version,
+        route_name=handoff.route_name,
+        run_id=handoff.run_id,
+        plan_id=handoff.plan_id,
+        plan_path=handoff.plan_path,
+        handoff_kind=handoff.handoff_kind,
+        required_host_action=handoff.required_host_action,
+        recommended_skill_ids=handoff.recommended_skill_ids,
+        artifacts=handoff.artifacts,
+        notes=handoff.notes,
+        observability=observability,
+        resolution_id=handoff.resolution_id,
+    )
+
+
+def _set_execution_run_state(
+    state_store: StateStore,
+    run_state: RunState,
+    *,
+    session_id: str | None,
+) -> None:
+    if state_store.session_id is not None:
+        state_store.set_current_run(run_state)
+        return
+    state_store.set_current_run(_with_global_run_ownership(run_state, session_id=session_id))
+
+
+def _derived_resolution_id(
+    *,
+    resolved_resolution_id: str = "",
+    current_run: RunState | None = None,
+    current_handoff: RuntimeHandoff | None = None,
+) -> str:
+    for candidate in (
+        resolved_resolution_id,
+        current_run.resolution_id if current_run is not None else "",
+        current_handoff.resolution_id if current_handoff is not None else "",
+    ):
+        normalized = str(candidate or "").strip()
+        if normalized:
+            return normalized
+    return _new_resolution_id()
+
+
+def _snapshot_has_global_execution_truth(snapshot: ContextResolvedSnapshot | None) -> bool:
+    if snapshot is None:
+        return False
+    return snapshot.preferred_state_scope == "global" and snapshot.execution_active_run is not None
+
+
+def _snapshot_global_execution_run(snapshot: ContextResolvedSnapshot | None) -> RunState | None:
+    if not _snapshot_has_global_execution_truth(snapshot):
+        return None
+    return snapshot.execution_active_run
+
+
+def _snapshot_review_run(snapshot: ContextResolvedSnapshot | None) -> RunState | None:
+    if snapshot is None or snapshot.current_run is None:
+        return None
+    global_run = _snapshot_global_execution_run(snapshot)
+    if global_run is not None and snapshot.current_run == global_run:
+        return None
+    return snapshot.current_run
+
+
+def _recovery_store_for_route(
+    decision: RouteDecision,
+    *,
+    review_store: StateStore,
+    global_store: StateStore,
+    snapshot: ContextResolvedSnapshot | None = None,
+) -> StateStore:
+    if decision.route_name == "state_conflict" and snapshot is not None and snapshot.preferred_state_scope == "global":
+        return global_store
+    if decision.route_name in _GLOBAL_EXECUTION_ROUTES and _snapshot_has_global_execution_truth(snapshot):
+        return global_store
+    return review_store
+
+
+def _soft_execution_ownership_warning(
+    *,
+    existing_global_run: RunState | None,
+    session_id: str | None,
+) -> str | None:
+    if (
+        existing_global_run is not None
+        and existing_global_run.owner_session_id
+        and session_id
+        and existing_global_run.owner_session_id != session_id
+    ):
+        return (
+            f"Soft ownership warning: overwriting global execution context "
+            f"owned by session {existing_global_run.owner_session_id}"
+        )
+    return None
+
+
+def _promote_review_state_to_global_execution(
+    *,
+    review_store: StateStore,
+    global_store: StateStore,
+    review_plan: PlanArtifact | None,
+    review_run: RunState | None,
+    review_handoff: RuntimeHandoff | None,
+    existing_global_run: RunState | None,
+    session_id: str | None,
+    resolution_id: str,
+) -> tuple[bool, list[str]]:
+    if review_store is global_store:
+        return (False, [])
+    if review_plan is None or review_run is None:
+        return (False, [])
+    if review_run.stage not in _PROMOTABLE_REVIEW_STAGES:
+        return (False, [])
+
+    notes: list[str] = []
+    owner_warning = _soft_execution_ownership_warning(existing_global_run=existing_global_run, session_id=session_id)
+    if owner_warning is not None:
+        notes.append(owner_warning)
+
+    global_store.set_current_plan(review_plan)
+    global_run = _with_global_run_ownership(review_run, session_id=session_id)
+    if review_handoff is not None:
+        global_run, _ = global_store.set_host_facing_truth(
+            run_state=global_run,
+            handoff=_with_global_handoff_ownership(
+                review_handoff,
+                current_run=global_run,
+                session_id=session_id,
+            ),
+            resolution_id=_derived_resolution_id(
+                resolved_resolution_id=resolution_id,
+                current_run=global_run,
+                current_handoff=review_handoff,
+            ),
+            truth_kind=_HOST_FACING_TRUTH_KIND_PROMOTION_GLOBAL_EXECUTION,
+        )
+    else:
+        global_store.set_current_run(global_run)
+    notes.append(f"Promoted session review state to global execution truth from {review_store.root.name}")
+    return (True, notes)
+
+
+def _resolve_execution_state_store(
+    decision: RouteDecision,
+    *,
+    config: RuntimeConfig,
+    review_store: StateStore,
+    global_store: StateStore,
+    recovered_context: RecoveredContext,
+    session_id: str | None,
+) -> tuple[StateStore, Any, list[str]]:
+    global_execution_context = recover_context(
+        decision,
+        config=config,
+        state_store=global_store,
+        global_state_store=global_store,
+    )
+    if global_execution_context.current_run is not None and global_execution_context.current_plan is not None:
+        return (global_store, global_execution_context, [])
+    promoted, promotion_notes = _promote_review_state_to_global_execution(
+        review_store=review_store,
+        global_store=global_store,
+        review_plan=recovered_context.current_plan,
+        review_run=recovered_context.current_run,
+        review_handoff=recovered_context.current_handoff,
+        existing_global_run=global_execution_context.current_run,
+        session_id=session_id,
+        resolution_id=recovered_context.resolution_id,
+    )
+    recovery_store = global_store if promoted else review_store
+    recovered = recover_context(
+        decision,
+        config=config,
+        state_store=recovery_store,
+        global_state_store=global_store,
+    )
+    return (recovery_store, recovered, promotion_notes)
+
+
+def _result_state_store_for_route(
+    decision: RouteDecision,
+    *,
+    review_store: StateStore,
+    global_store: StateStore,
+    canceled_store: StateStore | None,
+    preserved_review_after_cancel: bool = False,
+    current_clarification: ClarificationState | None = None,
+    current_decision: DecisionState | None = None,
+    snapshot: ContextResolvedSnapshot | None = None,
+) -> StateStore:
+    if canceled_store is not None:
+        if canceled_store is global_store and preserved_review_after_cancel:
+            return review_store
+        return canceled_store
+    if decision.route_name == "state_conflict" and snapshot is not None and snapshot.preferred_state_scope == "global":
+        return global_store
+    if decision.route_name in _GLOBAL_EXECUTION_ROUTES:
+        return global_store
+    if decision.route_name in {"decision_pending", "decision_resume"}:
+        if current_decision is not None and current_decision.phase in {"execution_gate", "develop"}:
+            return global_store
+        return review_store
+    if decision.route_name in {"clarification_pending", "clarification_resume"}:
+        if current_clarification is not None and current_clarification.phase == "develop":
+            return global_store
+        return review_store
+    return review_store
+
+
+def _clarification_pending_route(decision: RouteDecision, *, reason: str) -> RouteDecision:
+    return RouteDecision(
+        route_name="clarification_pending",
+        request_text=decision.request_text,
+        reason=reason,
+        command=decision.command,
+        complexity=decision.complexity,
+        plan_level=decision.plan_level,
+        candidate_skill_ids=decision.candidate_skill_ids,
+        should_recover_context=True,
+        should_create_plan=False,
+        capture_mode=decision.capture_mode,
+        runtime_skill_id=None,
+        active_run_action="inspect_clarification",
+        artifacts=decision.artifacts,
+    )
+
+
+def _decision_pending_route(decision: RouteDecision, *, reason: str) -> RouteDecision:
+    return RouteDecision(
+        route_name="decision_pending",
+        request_text=decision.request_text,
+        reason=reason,
+        command=decision.command,
+        complexity=decision.complexity,
+        plan_level=decision.plan_level,
+        candidate_skill_ids=decision.candidate_skill_ids,
+        should_recover_context=True,
+        should_create_plan=False,
+        capture_mode=decision.capture_mode,
+        runtime_skill_id=None,
+        active_run_action="inspect_decision",
+        artifacts=decision.artifacts,
+    )
+
+
+def _exec_plan_unavailable_route(decision: RouteDecision, *, reason: str) -> RouteDecision:
+    return RouteDecision(
+        route_name="exec_plan",
+        request_text=decision.request_text,
+        reason=reason,
+        command=decision.command,
+        complexity=decision.complexity,
+        plan_level=decision.plan_level,
+        candidate_skill_ids=decision.candidate_skill_ids or ("develop",),
+        should_recover_context=True,
+        should_create_plan=False,
+        capture_mode=decision.capture_mode,
+        runtime_skill_id=None,
+        active_run_action="inspect_exec_recovery",
+        artifacts=decision.artifacts,
+    )
+
+
+def _execution_gate_decision_resume_context(
+    *,
+    decision_state: DecisionState,
+    current_plan: PlanArtifact,
+    current_run: RunState | None,
+    gate: ExecutionGate,
+) -> Mapping[str, Any]:
+    resume_context = dict(decision_state.resume_context)
+    resume_context.setdefault("active_run_stage", current_run.stage if current_run is not None else "decision_pending")
+    resume_context.setdefault("current_plan_path", current_plan.path)
+    resume_context["task_refs"] = list(resume_context.get("task_refs") or [])
+    resume_context["changed_files"] = list(resume_context.get("changed_files") or [])
+    resume_context.setdefault(
+        "working_summary",
+        f"Execution gate is waiting for a blocking-risk decision before develop continues: {gate.blocking_reason}",
+    )
+    resume_context["verification_todo"] = list(resume_context.get("verification_todo") or [])
+    resume_context.setdefault("resume_after", "continue_host_develop")
+    return resume_context
+
+
+def _build_route_native_gate_decision_state(
+    decision: RouteDecision,
+    *,
+    gate: ExecutionGate,
+    current_plan: PlanArtifact,
+    current_run: RunState | None,
+    config: RuntimeConfig,
+) -> DecisionState | None:
+    """Create execution-bound gate decisions without downcasting their phase."""
+    decision_state = build_execution_gate_decision_state(
+        decision,
+        gate=gate,
+        current_plan=current_plan,
+        config=config,
+    )
+    if decision_state is None:
+        return None
+    return replace(
+        decision_state,
+        resume_context=_execution_gate_decision_resume_context(
+            decision_state=decision_state,
+            current_plan=current_plan,
+            current_run=current_run,
+            gate=gate,
+        ),
+    )
+
+
+# -- Engine helpers: non-kernel route handlers (A2: audit before removing) ----
 # These implement route-specific dispatch for non-kernel routes (archive,
 # planning, cancel, clarification/decision resume, skill execution).
-# When Package A deletes engine.py and the leaf modules they depend on,
-# the corresponding call sites in execute_kernel_turn() are also removed.
+# A2 contract audit will determine which of these are still live.
 from .engine import (
     _PlanningContext,
     _advance_planning_route,
