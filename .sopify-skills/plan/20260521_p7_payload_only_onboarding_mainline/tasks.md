@@ -112,11 +112,55 @@ lifecycle_state: active
 
 ## S5: 发布链 + example
 
-- [ ] release asset 结构定义
-- [ ] install/bootstrap 命令文档
-- [ ] examples/ 包含至少 1 个可独立跟随的端到端 demo
-- [ ] README 更新（含接入步骤 + 视觉资产）
-- [ ] polish：Sopify ASCII art logo（45 列，仅 interactive terminal，`isatty()` 门控）
+**设计结论（4 项锁定）：**
+
+### DC-1: Release asset 范围
+
+**包含：**
+- `install.sh` / `install.ps1`（已有 `render-release-installers.py` 渲染 stable channel）
+- `bootstrap.sh`（convenience wrapper：`curl|bash` 一键 init workspace）
+- CHANGELOG.md release notes（已有 `release-draft-changelog.py`）
+
+**不包含：**
+- 不新增 tarball / wheel / binary 分发（当前 git clone + curl install 已满足最小接入）
+- 不做 PyPI / npm 发布（超出 P7 范围）
+- 不改动 CI release workflow（ci.yml 当前已覆盖 preflight + smoke + gate）
+
+### DC-2: Example 范围
+
+- 只做 1 个最小外部 repo example（`examples/external-repo-quickstart/`）
+- 目标：展示 Copilot + Sopify 全链路（bootstrap → 首次 `~go` → state 写入 → handoff 消费）
+- 不做多宿主矩阵（Codex/Claude 的接入已在 README 现有 Install targets 覆盖）
+- 不做 monorepo / polyglot 等高级场景
+
+### DC-3: README / docs 入口顺序
+
+现有 README 已覆盖 Codex/Claude 的 deep install 路径。P7 新增：
+1. README 新增 "External Repo (Copilot)" 段落在 Install targets 表后，展示 `bootstrap.sh` 一键接入
+2. 保留 `docs/how-sopify-works.en.md` 作为深入入口，不重构
+3. S4 已知限制的对外表述：
+   - Copilot 触发入口尚未就绪 → 对外文案只写 "Copilot trigger wiring is coming next"，不暴露 `--host-id copilot` 等内部实现细节
+   - sync 只增不减 → 不面向用户暴露（内部实现细节，不影响首次接入）
+
+### DC-4: ASCII art 降级
+
+- 明确为最后 polish，不阻塞 S5 主链路
+- 实现顺序排在 README 更新之后
+- 如果时间不够，可推迟到 S6 后或独立 patch
+
+**实现顺序：**
+
+- [ ] T2: `bootstrap.sh` convenience wrapper — curl one-liner 下载并执行 `python3 -m sopify_bootstrap init`（先落实入口，后续 example 基于真实入口写）
+- [ ] T1: `examples/external-repo-quickstart/` — 最小端到端 demo（基于 T2 真实入口）
+- [ ] T4: install/bootstrap 命令文档 — `docs/` 下新增或更新接入文档（完整步骤）
+- [ ] T3: README 更新 — Install targets 表增加 Copilot 行 + External Repo 段落（docs 压缩版）
+- [ ] T5: polish — Sopify ASCII art logo（45 列，仅 interactive terminal，`isatty()` 门控）
+
+**验收标准：**
+- `examples/external-repo-quickstart/` 包含可独立跟随的步骤说明
+- README 中 Copilot 接入路径可发现
+- `bootstrap.sh` 可从空 repo 产出 `.sopify-skills/sopify.json` + `.gitignore` managed block
+- 全量测试无回归
 
 ## S6: Smoke test + 验收
 
