@@ -2,7 +2,7 @@
 plan_id: 20260521_p7_payload_only_onboarding_mainline
 feature_key: p7_payload_only_onboarding_mainline
 level: standard
-lifecycle_state: active
+lifecycle_state: completed
 ---
 
 # 任务清单
@@ -91,26 +91,104 @@ lifecycle_state: active
 
 **前置：** S3 决策 spike 已完成内容来源、frontmatter/applyTo、源 repo 策略、运行面验证、managed block 策略。
 
-- [ ] repo-local activation adapter：按宿主类型决定是否写本地 instruction 文件
-  - 全局 prompt 型（Codex/Claude）：默认不写 repo-local header
-  - 本地 instruction 文件型（Copilot）：managed block upsert 到 `.github/copilot-instructions.md` / `.github/instructions/sopify.instructions.md`
-  - 若目标运行面不读取 path-specific instructions，重说明内联到轻入口
-- [ ] Copilot 资产重构：从 `Copilot/Skills/CN/COPILOT.md`（P4d seed）提炼 bootstrap 产物
-  - 拆成轻入口 + 重说明两层
-  - 去掉 pilot-only 语气，对齐 sopify.json + bootstrap/install 叙事
-  - 原 COPILOT.md 保留为 source seed / reference
-- [ ] managed block 边界、升级/覆盖策略、冲突处理、卸载/回滚
+**实现方案：** 不注册 HostAdapter（Copilot 无 `~/.copilot/` 全局目录）；用 audit-only allowlist 透传 preflight；payload 预分发资源文件；bootstrap 双路径插桩。
+
+- [x] T0: preflight 透传 — `_AUDIT_ONLY_HOST_IDS` allowlist + 双变量拆分 (`detected_host_id` / `bootstrap_host_id` / `payload_host_id`)
+  - `runtime/workspace_preflight.py`: `_ensure_supported_host_id()` 跳过 audit-only；`_validate_host_id_alignment()` 跳过 audit-only
+  - 结果 contract: `preflight.host_id`=实际 payload 属主, `preflight.bootstrap_host_id`=copilot, `preflight.payload_host_id`=实际 payload 属主
+- [x] T2: 内容 & payload 资源部署
+  - `installer/resources/copilot/lightweight.md` (1128B，< 4K Code Review cap) — 轻入口 managed block 内容
+  - `installer/resources/copilot/full.md` (6199B，含 `applyTo: "**"` frontmatter) — 重说明 owned file 内容
+  - `installer/payload.py`: `_ensure_copilot_instruction_resources()` 绕过 `_payload_is_current` early return
+- [x] T3: managed block 机制 — `_write_managed_instruction_block` / `_remove_managed_instruction_block` / `_sync_copilot_instruction_assets`
+  - `installer/bootstrap_workspace.py`: 7 个新函数，双路径插桩 (READY + MISSING/OUTDATED)
+  - READY 路径：instruction sync 在 `request_authorization_mode` 写入门控内执行
+- [x] T1: 路由 — `host_id == "copilot"` 字符串判断，不进 host registry
+- [x] 测试：8 个新测试 (6 bootstrap + 2 preflight)，全量 723 passed + 51 subtests
+
+**已知限制（S5+ 解决）：**
+- 仓内无生产入口传 `--host-id copilot`。S4 只实现分发机制，Copilot 侧触发入口（如 copilot-setup-steps / custom instruction 引导）属于 S5/S6 范围
+- 资源同步为"只增不减"：payload 侧只 copy 不清理已删除资源，workspace 侧不主动清理旧指令文件。资源改名/回退场景需手动清理或后续加 reconcile 逻辑
 
 ## S5: 发布链 + example
 
-- [ ] release asset 结构定义
-- [ ] install/bootstrap 命令文档
-- [ ] examples/ 包含至少 1 个可独立跟随的端到端 demo
-- [ ] README 更新（含接入步骤 + 视觉资产）
-- [ ] polish：Sopify ASCII art logo（45 列，仅 interactive terminal，`isatty()` 门控）
+**设计结论（4 项锁定）：**
+
+### DC-1: Release asset 范围
+
+**包含：**
+- `install.sh` / `install.ps1`（已有 `render-release-installers.py` 渲染 stable channel）
+- `bootstrap.sh`（convenience wrapper：`curl|bash` 一键 init workspace）
+- CHANGELOG.md release notes（已有 `release-draft-changelog.py`）
+
+**不包含：**
+- 不新增 tarball / wheel / binary 分发（当前 git clone + curl install 已满足最小接入）
+- 不做 PyPI / npm 发布（超出 P7 范围）
+- 不改动 CI release workflow（ci.yml 当前已覆盖 preflight + smoke + gate）
+
+### DC-2: Example 范围
+
+- 只做 1 个最小外部 repo example（`examples/external-repo-quickstart/`）
+- 目标：展示 Copilot + Sopify 全链路（bootstrap → 首次 `~go` → state 写入 → handoff 消费）
+- 不做多宿主矩阵（Codex/Claude 的接入已在 README 现有 Install targets 覆盖）
+- 不做 monorepo / polyglot 等高级场景
+
+### DC-3: README / docs 入口顺序
+
+现有 README 已覆盖 Codex/Claude 的 deep install 路径。P7 新增：
+1. README 新增 "External Repo (Copilot)" 段落在 Install targets 表后，展示 `bootstrap.sh` 一键接入
+2. 保留 `docs/how-sopify-works.en.md` 作为深入入口，不重构
+3. S4 已知限制的对外表述：
+   - Copilot 触发入口尚未就绪 → 对外文案只写 "Copilot trigger wiring is coming next"，不暴露 `--host-id copilot` 等内部实现细节
+   - sync 只增不减 → 不面向用户暴露（内部实现细节，不影响首次接入）
+
+### DC-4: ASCII art 降级
+
+- 明确为最后 polish，不阻塞 S5 主链路
+- 实现顺序排在 README 更新之后
+- 如果时间不够，可推迟到 S6 后或独立 patch
+
+**实现顺序：**
+
+- [x] T2: `bootstrap.sh` convenience wrapper — curl one-liner 下载并执行 `python3 scripts/sopify_init.py init`（commit `0405ebc`）
+- [x] T1: `examples/external-repo-quickstart/` — 最小端到端 demo（commit `f025cc5`）
+- [x] T4: install/bootstrap 命令文档 — `docs/getting-started.md`（权威 onboarding 入口）
+- [x] T3: README 更新 — Install targets 表增加 Copilot 行 + Setup Paths 选路表格 + 架构描述更新 + SVG Copilot Adapter 框
+- [x] T5: polish — Sopify ASCII art logo（44 列，#9a89eb 中紫，`isatty()` + `NO_COLOR` 门控）
+
+**验收标准：**
+- ✅ `examples/external-repo-quickstart/` 包含可独立跟随的步骤说明
+- ✅ README 中 Copilot 接入路径可发现（选路表格 + Copilot 行）
+- ✅ `bootstrap.sh` 可从空 repo 产出 `.sopify-skills/sopify.json` + `.gitignore` managed block
+- ✅ 全量测试无回归（740 passed，1 pre-existing failure）
+
+**文档收口结论：**
+- README = 摘要导航（选路表格 + 链接）
+- docs/getting-started.md = 唯一权威 onboarding（含运行面宣称 + 时效标注）
+- examples/ = 最小 demo，不重复 host 细节
 
 ## S6: Smoke test + 验收
 
-- [ ] 机器 smoke test：bootstrap → state write → handoff consume（端到端）
-- [ ] 至少 1 个非 Sopify repo 走通全链路
-- [ ] receipt + 蓝图同步 + history 归档
+- [x] 机器 smoke test：`tests/test_sopify_init_smoke.py`（12 tests — init, copilot, no-copilot, idempotency, gitignore, non-git, CLI, logo gate, bootstrap.sh syntax/markers/help）
+
+**以下两项迁移至 follow-up 验收包：**
+
+> 迁移理由：S1-S5 为代码实现切片，已全部完成且自动化 smoke 通过。剩余两项
+> 属于手工验收仪式和方案包生命周期归档，性质不同于实现工作，不应阻塞代码
+> 合入。迁移后 P7 代码实现在本分支收口，验收/归档在后续独立进行。
+
+- ~~至少 1 个非 Sopify repo 走通全链路（手工验收或 CI 集成）~~ → 迁移
+- ~~receipt + 蓝图同步 + history 归档~~ → 迁移
+
+## P7 收口
+
+**状态：代码实现完成，待合入 main。**
+
+| 切片 | 状态 | 摘要 |
+|------|------|------|
+| S1 激活物迁移方案 | ✅ | DR-1/2/3 锁定，定性校正 |
+| S2 迁移实现 | ✅ | 统一 marker + dual-path detection |
+| S3 Bootstrap 入口 | ✅ | preflight + bootstrap 双路径 |
+| S4 Copilot 指令分发 | ✅ | managed block + owned file + payload 资源 |
+| S5 发布链 + example | ✅ | bootstrap.sh + quickstart + docs + README + logo |
+| S6 Smoke test | ✅（自动化部分） | 12 tests 全绿，手工验收迁至 follow-up |

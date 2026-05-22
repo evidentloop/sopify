@@ -440,6 +440,8 @@ def preflight_workspace_runtime(
     payload_manifest = payload_resolution["payload_manifest"]
     payload_manifest_file = payload_resolution["payload_manifest_file"]
     detected_host_id = payload_resolution["host_id"]
+    _requested_host = str(host_id or "").strip() or None
+    bootstrap_host_id = _requested_host if _requested_host in _AUDIT_ONLY_HOST_IDS else detected_host_id
     payload_root = payload_resolution["payload_root"]
 
     if payload_manifest is None or payload_manifest_file is None:
@@ -461,8 +463,8 @@ def preflight_workspace_runtime(
         command.extend(["--activation-root", str(activation_root_path)])
     if interaction_mode is not None:
         command.extend(["--interaction-mode", str(interaction_mode)])
-    if detected_host_id:
-        command.extend(["--host-id", detected_host_id])
+    if bootstrap_host_id:
+        command.extend(["--host-id", bootstrap_host_id])
     if requested_root is not None:
         command.extend(["--requested-root", str(requested_root_path)])
     completed, helper_argv_mode = _run_bootstrap_helper_with_compatibility(
@@ -521,7 +523,10 @@ def preflight_workspace_runtime(
     payload.setdefault("helper_path", str(helper_path))
     payload.setdefault("helper_argv_mode", helper_argv_mode)
     if detected_host_id:
-        payload.setdefault("host_id", detected_host_id)
+        payload["host_id"] = detected_host_id
+    if bootstrap_host_id and bootstrap_host_id != detected_host_id:
+        payload["bootstrap_host_id"] = bootstrap_host_id
+        payload["payload_host_id"] = detected_host_id
     return payload
 
 
@@ -546,8 +551,11 @@ def _payload_manifest_not_found_evidence(*, home_root: Path, requested_host_id: 
     return evidence
 
 
+_AUDIT_ONLY_HOST_IDS = frozenset({"copilot"})
+
+
 def _ensure_supported_host_id(*, requested_host_id: str | None, home_root: Path) -> None:
-    if requested_host_id is None:
+    if requested_host_id is None or requested_host_id in _AUDIT_ONLY_HOST_IDS:
         return
     try:
         resolve_host_payload_root(home_root=home_root, host_id=requested_host_id)
@@ -571,6 +579,8 @@ def _validate_host_id_alignment(
     selection_source: str,
 ) -> None:
     if requested_host_id is None or selected_host_id is None or requested_host_id == selected_host_id:
+        return
+    if requested_host_id in _AUDIT_ONLY_HOST_IDS:
         return
     _raise_host_mismatch(
         requested_host_id=requested_host_id,

@@ -20,6 +20,7 @@ PAYLOAD_MANIFEST_FILENAME = "payload-manifest.json"
 PAYLOAD_DIRNAME = "sopify"
 PAYLOAD_BUNDLES_RELATIVE_PATH = Path("bundles")
 PAYLOAD_HELPER_RELATIVE_PATH = Path("helpers") / "bootstrap_workspace.py"
+PAYLOAD_INSTRUCTION_RESOURCES_DIR = Path("resources") / "copilot"
 _REQUIRED_BUNDLE_CAPABILITIES = {
     "bundle_role": "control_plane",
     "manifest_first": True,
@@ -47,8 +48,9 @@ def install_global_payload(
     desired_version = _normalize_payload_bundle_version(_source_payload_version(adapter, repo_root))
 
     if _payload_is_current(payload_root, desired_version):
+        resources_changed = _ensure_copilot_instruction_resources(repo_root=repo_root, payload_root=payload_root)
         return InstallPhaseResult(
-            action="skipped",
+            action="updated" if resources_changed else "skipped",
             root=payload_root,
             version=desired_version,
             paths=validate_payload_install(payload_root),
@@ -61,6 +63,7 @@ def install_global_payload(
         desired_bundle_version=desired_version,
     )
     _install_bootstrap_helper(repo_root=repo_root, payload_root=payload_root)
+    _install_copilot_instruction_resources(repo_root=repo_root, payload_root=payload_root)
     _write_payload_manifest(payload_root=payload_root, bundle_root=bundle_root, payload_version=desired_version)
     return InstallPhaseResult(
         action=action,
@@ -149,6 +152,37 @@ def _install_bootstrap_helper(*, repo_root: Path, payload_root: Path) -> Path:
     shutil.copy2(helper_source, helper_target)
     helper_target.chmod(0o755)
     return helper_target
+
+
+def _install_copilot_instruction_resources(*, repo_root: Path, payload_root: Path) -> None:
+    """Copy Copilot instruction resource files into the payload directory."""
+    source_dir = repo_root / "installer" / "resources" / "copilot"
+    if not source_dir.is_dir():
+        return
+    target_dir = payload_root / PAYLOAD_INSTRUCTION_RESOURCES_DIR
+    target_dir.mkdir(parents=True, exist_ok=True)
+    for source_file in sorted(source_dir.iterdir()):
+        if source_file.is_file() and source_file.suffix == ".md":
+            shutil.copy2(source_file, target_dir / source_file.name)
+
+
+def _ensure_copilot_instruction_resources(*, repo_root: Path, payload_root: Path) -> bool:
+    """Ensure instruction resources are present; return True if any were added or updated."""
+    source_dir = repo_root / "installer" / "resources" / "copilot"
+    if not source_dir.is_dir():
+        return False
+    target_dir = payload_root / PAYLOAD_INSTRUCTION_RESOURCES_DIR
+    changed = False
+    for source_file in sorted(source_dir.iterdir()):
+        if not source_file.is_file() or source_file.suffix != ".md":
+            continue
+        target_file = target_dir / source_file.name
+        if target_file.is_file() and target_file.read_bytes() == source_file.read_bytes():
+            continue
+        target_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_file, target_file)
+        changed = True
+    return changed
 
 
 def _install_versioned_runtime_bundle(

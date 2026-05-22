@@ -24,6 +24,13 @@ _TEMPLATES = (
             '$SourceRef = "main"': '$SourceRef = "__RENDERED_RELEASE_TAG__"',
         },
     ),
+    (
+        REPO_ROOT / "bootstrap.sh",
+        {
+            'SOURCE_CHANNEL="dev"': 'SOURCE_CHANNEL="stable"',
+            'SOURCE_REF="main"': '__RENDERED_SHELL_SOURCE_REF__',
+        },
+    ),
 )
 
 

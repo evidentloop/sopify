@@ -41,6 +41,7 @@ from canonical_writer import StateStore, iso_now
 from runtime.state import stable_request_sha1
 from runtime.workspace_preflight import _drop_cli_arg_pairs
 from runtime.workspace_preflight import preflight_workspace_runtime
+from runtime.workspace_preflight import _AUDIT_ONLY_HOST_IDS
 
 
 def _rewrite_background_scope(
@@ -2458,6 +2459,47 @@ class RuntimeGateTests(unittest.TestCase):
         self.assertIn("clarification_checkpoint_only", scenario_ids)
         self.assertIn("decision_checkpoint_only", scenario_ids)
         self.assertIn("fail_closed_missing_handoff", scenario_ids)
+
+
+class AuditOnlyHostIdTests(unittest.TestCase):
+    """Tests for the audit-only host ID passthrough in workspace preflight."""
+
+    def test_copilot_is_audit_only(self) -> None:
+        self.assertIn("copilot", _AUDIT_ONLY_HOST_IDS)
+
+    def test_copilot_host_id_passes_preflight_without_payload(self) -> None:
+        """Copilot host_id should borrow a discovered payload, not raise."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            workspace = temp_root / "workspace"
+            workspace.mkdir(parents=True, exist_ok=True)
+            (workspace / ".git").mkdir(parents=True, exist_ok=True)
+            home = temp_root / "home"
+            CODEX_ADAPTER.destination_root(home).mkdir(parents=True, exist_ok=True)
+            install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home)
+
+            clean_env = {k: v for k, v in os.environ.items()
+                         if not k.startswith("CODEX_") and not k.startswith("CLAUDE_")}
+            with patch.dict(os.environ, clean_env, clear=True):
+                result = enter_runtime_gate(
+                    "~go",
+                    workspace_root=workspace,
+                    host_id="copilot",
+                    user_home=home,
+                )
+            self.assertNotEqual(result.get("status"), "error",
+                                f"Copilot should not be rejected: {result.get('message', '')}")
+            preflight = result.get("preflight") or {}
+            self.assertIn(preflight.get("host_id"), {"codex", "claude"},
+                          "host_id should reflect the discovered payload owner")
+            bootstrap_host = preflight.get("bootstrap_host_id")
+            if bootstrap_host is not None:
+                self.assertEqual(bootstrap_host, "copilot")
+            payload_host = preflight.get("payload_host_id")
+            if payload_host is not None:
+                self.assertIn(payload_host, {"codex", "claude"},
+                              "payload_host_id should reflect the real payload owner")
+                self.assertEqual(preflight.get("host_id"), payload_host)
 
 
 if __name__ == "__main__":

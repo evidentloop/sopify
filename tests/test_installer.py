@@ -93,12 +93,15 @@ def _run_installed_bootstrap_helper(
     workspace_root: Path,
     request: str = "",
     activation_root: Path | None = None,
+    host_id: str | None = None,
 ) -> dict[str, object]:
     command = [sys.executable, str(helper_path), "--workspace-root", str(workspace_root)]
     if request:
         command.extend(["--request", request])
     if activation_root is not None:
         command.extend(["--activation-root", str(activation_root)])
+    if host_id is not None:
+        command.extend(["--host-id", host_id])
     completed = subprocess.run(
         command,
         capture_output=True,
@@ -1378,6 +1381,187 @@ class InstallRenderTests(unittest.TestCase):
                 self.assertEqual(actual.get("primary_code"), expected.get("primary_code"))
                 self.assertEqual(actual.get("action_level"), expected.get("action_level"))
                 self.assertEqual(actual.get("message_hint"), expected.get("message_hint"))
+
+
+class CopilotInstructionSyncTests(unittest.TestCase):
+    """Tests for Copilot instruction file sync during workspace bootstrap."""
+
+    def _setup_workspace_with_payload(self, temp_dir: str) -> tuple[Path, Path, Path]:
+        home_root = Path(temp_dir) / "home"
+        workspace_root = Path(temp_dir) / "workspace"
+        workspace_root.mkdir(parents=True, exist_ok=True)
+        CODEX_ADAPTER.destination_root(home_root).mkdir(parents=True, exist_ok=True)
+        (workspace_root / ".git" / "info").mkdir(parents=True, exist_ok=True)
+        payload_phase = install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root)
+        helper_path = payload_phase.root / "helpers" / "bootstrap_workspace.py"
+        return home_root, workspace_root, helper_path
+
+    def test_copilot_host_creates_instruction_files(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            _home, workspace_root, helper_path = self._setup_workspace_with_payload(temp_dir)
+            result = _run_installed_bootstrap_helper(
+                helper_path=helper_path,
+                workspace_root=workspace_root,
+                request="~go",
+                host_id="copilot",
+            )
+            self.assertEqual(result["action"], "bootstrapped")
+            instructions_path = workspace_root / ".github" / "copilot-instructions.md"
+            self.assertTrue(instructions_path.exists(), "copilot-instructions.md should be created")
+            content = instructions_path.read_text(encoding="utf-8")
+            self.assertIn("<!-- BEGIN SOPIFY MANAGED BLOCK -->", content)
+            self.assertIn("<!-- END SOPIFY MANAGED BLOCK -->", content)
+            self.assertIn("Sopify", content)
+
+            owned_path = workspace_root / ".github" / "instructions" / "sopify.instructions.md"
+            self.assertTrue(owned_path.exists(), "sopify.instructions.md should be created")
+            owned_content = owned_path.read_text(encoding="utf-8")
+            self.assertIn("applyTo:", owned_content)
+
+    def test_codex_host_does_not_create_instruction_files(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            _home, workspace_root, helper_path = self._setup_workspace_with_payload(temp_dir)
+            result = _run_installed_bootstrap_helper(
+                helper_path=helper_path,
+                workspace_root=workspace_root,
+                request="~go",
+                host_id="codex",
+            )
+            self.assertEqual(result["action"], "bootstrapped")
+            self.assertFalse(
+                (workspace_root / ".github" / "copilot-instructions.md").exists(),
+                "Codex should not create copilot-instructions.md",
+            )
+            self.assertFalse(
+                (workspace_root / ".github" / "instructions" / "sopify.instructions.md").exists(),
+                "Codex should not create sopify.instructions.md",
+            )
+
+    def test_copilot_instruction_upserts_existing_content(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            _home, workspace_root, helper_path = self._setup_workspace_with_payload(temp_dir)
+            github_dir = workspace_root / ".github"
+            github_dir.mkdir(parents=True, exist_ok=True)
+            instructions_path = github_dir / "copilot-instructions.md"
+            instructions_path.write_text("# My project rules\n\nDo not change tests.\n", encoding="utf-8")
+
+            _run_installed_bootstrap_helper(
+                helper_path=helper_path,
+                workspace_root=workspace_root,
+                request="~go",
+                host_id="copilot",
+            )
+
+            content = instructions_path.read_text(encoding="utf-8")
+            self.assertIn("# My project rules", content, "User content should be preserved")
+            self.assertIn("Do not change tests.", content, "User content should be preserved")
+            self.assertIn("<!-- BEGIN SOPIFY MANAGED BLOCK -->", content, "Managed block should be added")
+
+    def test_copilot_instruction_replaces_existing_managed_block(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            _home, workspace_root, helper_path = self._setup_workspace_with_payload(temp_dir)
+            github_dir = workspace_root / ".github"
+            github_dir.mkdir(parents=True, exist_ok=True)
+            instructions_path = github_dir / "copilot-instructions.md"
+            instructions_path.write_text(
+                "# Rules\n\n"
+                "<!-- BEGIN SOPIFY MANAGED BLOCK -->\nold content\n<!-- END SOPIFY MANAGED BLOCK -->\n",
+                encoding="utf-8",
+            )
+
+            _run_installed_bootstrap_helper(
+                helper_path=helper_path,
+                workspace_root=workspace_root,
+                request="~go",
+                host_id="copilot",
+            )
+
+            content = instructions_path.read_text(encoding="utf-8")
+            self.assertIn("# Rules", content)
+            self.assertNotIn("old content", content, "Old managed block content should be replaced")
+            self.assertIn("Sopify", content, "New managed block content should be present")
+
+    def test_non_copilot_host_does_not_remove_existing_instructions(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            _home, workspace_root, helper_path = self._setup_workspace_with_payload(temp_dir)
+
+            # First bootstrap with copilot to create instruction files
+            _run_installed_bootstrap_helper(
+                helper_path=helper_path,
+                workspace_root=workspace_root,
+                request="~go",
+                host_id="copilot",
+            )
+            self.assertTrue((workspace_root / ".github" / "copilot-instructions.md").exists())
+
+            # Second bootstrap with codex should not remove them
+            _run_installed_bootstrap_helper(
+                helper_path=helper_path,
+                workspace_root=workspace_root,
+                request="~go",
+                host_id="codex",
+            )
+            self.assertTrue(
+                (workspace_root / ".github" / "copilot-instructions.md").exists(),
+                "Codex bootstrap should not remove Copilot instruction files",
+            )
+            self.assertTrue(
+                (workspace_root / ".github" / "instructions" / "sopify.instructions.md").exists(),
+                "Codex bootstrap should not remove owned instruction file",
+            )
+
+    def test_copilot_instruction_sync_on_ready_workspace(self) -> None:
+        """Verify instruction sync works on the READY/NEWER_THAN_GLOBAL path."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            _home, workspace_root, helper_path = self._setup_workspace_with_payload(temp_dir)
+
+            # First bootstrap to create workspace
+            _run_installed_bootstrap_helper(
+                helper_path=helper_path,
+                workspace_root=workspace_root,
+                request="~go",
+                host_id="codex",
+            )
+            self.assertFalse((workspace_root / ".github" / "copilot-instructions.md").exists())
+
+            # Second bootstrap with copilot on already-ready workspace
+            result = _run_installed_bootstrap_helper(
+                helper_path=helper_path,
+                workspace_root=workspace_root,
+                request="~go",
+                host_id="copilot",
+            )
+            self.assertIn(result["action"], {"updated", "skipped"})
+            self.assertTrue(
+                (workspace_root / ".github" / "copilot-instructions.md").exists(),
+                "Copilot instruction files should be created on ready workspace",
+            )
+
+    def test_copilot_instruction_not_synced_without_authorization(self) -> None:
+        """READY path: unauthorized request should NOT trigger instruction sync."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            _home, workspace_root, helper_path = self._setup_workspace_with_payload(temp_dir)
+
+            # First bootstrap to create workspace (authorized)
+            _run_installed_bootstrap_helper(
+                helper_path=helper_path,
+                workspace_root=workspace_root,
+                request="~go",
+                host_id="codex",
+            )
+
+            # Second bootstrap with copilot but unauthorized request
+            result = _run_installed_bootstrap_helper(
+                helper_path=helper_path,
+                workspace_root=workspace_root,
+                request="hello explain this code",
+                host_id="copilot",
+            )
+            self.assertFalse(
+                (workspace_root / ".github" / "copilot-instructions.md").exists(),
+                "Unauthorized request should NOT create Copilot instruction files on READY workspace",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
