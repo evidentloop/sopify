@@ -35,7 +35,7 @@ from installer.validate import (
     validate_payload_install,
     validate_workspace_stub_manifest,
 )
-from scripts.sopify_init import init_workspace
+from scripts.sopify_init import init_workspace, _LOGO_LINES, _LOGO_COLOR, _LOGO_RESET
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -206,6 +206,11 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Sopify install failed: {exc}\n\nDiagnostics:\n  reason_code: INSTALLER_FAILED", file=sys.stderr)
         return 1
 
+    if isinstance(report.install_result, BootstrapOnlyResult) and sys.stdout.isatty():
+        use_color = os.environ.get("NO_COLOR") is None
+        for line in _LOGO_LINES:
+            print(f"{_LOGO_COLOR}{line}{_LOGO_RESET}" if use_color else line)
+        print()
     print(render_distribution_result(report) if verbose else render_distribution_user_result(report))
     return 0
 

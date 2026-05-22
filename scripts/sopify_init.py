@@ -126,7 +126,7 @@ def _write_sopify_json(workspace_root: Path, *, source_version: str | None) -> b
 
     payload = {
         "schema_version": str(existing.get("schema_version") or "1"),
-        "workspace_kind": "external",
+        "workspace_kind": existing.get("workspace_kind") or "external",
         "bundle_version": existing.get("bundle_version") or source_version,
         "locator_mode": "global_first",
         "capabilities": list(_WORKSPACE_CAPABILITIES),
