@@ -31,6 +31,7 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 | P4d | Copilot CLI Pilot | payload_capable + 接续增强的最小新宿主画像验证 | `history/2026-05/20260519_p4d_copilot_cli_pilot/` |
 | P5 | Contract Surface Shrinkage | 58 面逐项裁定，candidate-kernel 680→210 LOC，dead code -8 LOC | `history/2026-05/20260520_p5_contract_surface_shrinkage/` |
 | P6 | Canonical Writer Cutover | 三层物理分离：sopify_contracts 1,227 + canonical_writer 605 LOC，依赖单向，新宿主可直接写 | `history/2026-05/20260520_p6_canonical_writer_cutover/` |
+| P7 | Copilot Payload-Only Onboarding Mainline | 一键 bootstrap + unified install.sh --target copilot + 发布链 + spinner UX | `history/2026-05/20260522_p7_payload_only_onboarding_mainline/` |
 
 ## 主线里程碑
 
@@ -67,8 +68,9 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 把外部 repo 接入做成产品：一条官方默认路（Copilot + payload-only）、一套 bootstrap 动作、版本锚点迁入 `.sopify-skills/`、最小 smoke 验证。吸收 Copilot Payload-Only Onboarding Proof + First-Use Adoption Proof 相关交付物。
 
 - 前置：P6 ✅
-- 状态：活跃 — 方案包 `plan/20260521_p7_payload_only_onboarding_mainline/`
+- 状态：✅ 已完成 — 归档于 `history/2026-05/20260522_p7_payload_only_onboarding_mainline/`
 - 升级判断：至少 1 个非 Sopify repo 走通 Copilot + Sopify 全链路（bootstrap → state write → handoff consume）
+- 收口备注：bootstrap + state write 已验证；handoff consume 待独立端到端验收确认
 
 ## 证据型候选（为下一主线提供升级证据，不占 P 编号）
 
@@ -136,8 +138,8 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 - [ ] 方案级收敛语义操作化（risk ladder + 验证深度规则 + 多审查者冲突解决）
 - [ ] 轻量化产品指标与 acceptance gate（首次上手步骤数、必需文件数、默认 workflow 必需 contract 数）
 - [ ] 产品层 ↔ 实现层 contract matrix 正式化（ownership / admission / lifecycle responsibilities）
-- [ ] GitHub Release pipeline 建立（首次 release 创建 + tag 规范 + install 脚本端到端验证）
-- [ ] 测试套件健康基线（pass rate ≥ 99%；当前基线 717 tests / 695 passed / 22 failed = 97%）
+- [x] GitHub Release pipeline 建立（首次 release 创建 + tag 规范 + install 脚本端到端验证）
+- [x] 测试套件健康基线（pass rate ≥ 99%；当前基线 743 tests / 743 passed = 100%）
 
 ## 已关闭 / 已吸收项
 
