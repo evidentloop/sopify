@@ -54,6 +54,57 @@ log_step() {
   echo "Sopify: $1" >&2
 }
 
+# ── Spinner ──────────────────────────────────────────────────────────────
+_SPIN_PID=""
+_SPIN_LINES=0  # number of completed ✓ lines printed
+
+_spin_cleanup() {
+  if [[ -n "$_SPIN_PID" ]]; then
+    kill "$_SPIN_PID" 2>/dev/null || true
+    wait "$_SPIN_PID" 2>/dev/null || true
+    _SPIN_PID=""
+  fi
+}
+
+_spinner_loop() {
+  local msg="$1"
+  local chars="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+  while true; do
+    for (( i=0; i<${#chars}; i++ )); do
+      printf "\r  %s %s" "${chars:$i:1}" "$msg" >&2
+      sleep 0.08
+    done
+  done
+}
+
+spin_start() {
+  if [[ -t 2 ]]; then
+    _spin_cleanup
+    _spinner_loop "$1" &
+    _SPIN_PID=$!
+  else
+    log_step "$1"
+  fi
+}
+
+spin_stop() {
+  if [[ -n "$_SPIN_PID" ]]; then
+    kill "$_SPIN_PID" 2>/dev/null || true
+    wait "$_SPIN_PID" 2>/dev/null || true
+    _SPIN_PID=""
+    printf "\r\033[K  ✓ %s\n" "$1" >&2
+    (( _SPIN_LINES++ )) || true
+  fi
+}
+
+# Erase all completed spinner lines (cursor up N + clear to bottom).
+_spin_erase_all() {
+  if [[ -t 2 ]] && (( _SPIN_LINES > 0 )); then
+    printf "\033[%dA\033[J" "$_SPIN_LINES" >&2
+    _SPIN_LINES=0
+  fi
+}
+
 require_command() {
   local command_name="$1"
   local reason_code="$2"
@@ -99,13 +150,15 @@ if [[ -z "$RESOLVED_REF" ]]; then
   fail "input" "MISSING_SOURCE_REF" "No source ref was resolved for the installer." "Retry with --ref <tag-or-branch>, or inspect the release asset rendering."
 fi
 
-log_step "Checking requirements..."
+spin_start "Checking requirements..."
 require_command "curl" "MISSING_CURL" "Install curl, or use the inspect-first flow to download the release asset manually."
 require_command "tar" "MISSING_TAR" "Install tar, or use a machine with basic archive support."
 require_command "python3" "MISSING_PYTHON3" "Install Python 3, then rerun the installer."
+spin_stop "Requirements OK"
 
 TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/sopify-install.XXXXXX")"
 cleanup() {
+  _spin_cleanup
   rm -rf "$TMP_DIR"
 }
 trap cleanup EXIT
@@ -113,15 +166,20 @@ trap cleanup EXIT
 ARCHIVE_URL="https://codeload.github.com/${REPO_OWNER}/${REPO_NAME}/tar.gz/${RESOLVED_REF}"
 ARCHIVE_PATH="$TMP_DIR/source.tar.gz"
 
-log_step "Downloading Sopify source (${RESOLVED_REF})..."
+spin_start "Downloading Sopify source (${RESOLVED_REF})..."
 if ! curl -fsSL "$ARCHIVE_URL" -o "$ARCHIVE_PATH"; then
+  _spin_cleanup
   fail "download" "SOURCE_FETCH_FAILED" "Failed to download source archive: $ARCHIVE_URL" "Check network access, verify the ref exists, or use the inspect-first path."
 fi
+spin_stop "Downloaded (${RESOLVED_REF})"
 
-log_step "Unpacking installer..."
+spin_start "Unpacking installer..."
 if ! tar -xzf "$ARCHIVE_PATH" -C "$TMP_DIR"; then
+  _spin_cleanup
   fail "unpack" "SOURCE_EXTRACT_FAILED" "Failed to extract source archive: $ARCHIVE_PATH" "Retry the installer or inspect the downloaded archive locally."
 fi
+
+spin_stop "Unpacked"
 
 SOURCE_DIR="$(find "$TMP_DIR" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
 if [[ -z "$SOURCE_DIR" || ! -d "$SOURCE_DIR" ]]; then
@@ -133,7 +191,9 @@ if [[ ! -f "$ENTRYPOINT" ]]; then
   fail "unpack" "INSTALL_ENTRYPOINT_MISSING" "Missing install entrypoint inside source archive: $ENTRYPOINT" "Retry the installer or inspect the downloaded archive locally."
 fi
 
-log_step "Running installer..."
+_spin_cleanup
+_spin_erase_all
+if [[ -t 2 ]]; then echo >&2; fi
 python3 "$ENTRYPOINT" \
   --source-channel "$SOURCE_CHANNEL" \
   --source-resolved-ref "$RESOLVED_REF" \
