@@ -26,6 +26,17 @@ _SOPIFY_SKILLS_DIR = ".sopify-skills"
 _SOPIFY_JSON_FILENAME = "sopify.json"
 _WORKSPACE_CAPABILITIES = ["preferences_preload", "runtime_gate"]
 
+_LOGO_LINES = [
+    "███████╗ █████╗ ██████╗ ██╗███████╗██╗   ██╗",
+    "██╔════╝██╔══██╗██╔══██╗██║██╔════╝╚██╗ ██╔╝",
+    "███████╗██║  ██║██████╔╝██║█████╗   ╚████╔╝",
+    "╚════██║██║  ██║██╔═══╝ ██║██╔══╝    ╚██╔╝",
+    "███████║╚█████╔╝██║     ██║██║        ██║",
+    "╚══════╝ ╚════╝ ╚═╝     ╚═╝╚═╝        ╚═╝",
+]
+_LOGO_COLOR = "\033[38;2;154;137;235m"  # #9a89eb
+_LOGO_RESET = "\033[0m"
+
 _MANAGED_IGNORE_BEGIN = "# BEGIN sopify-managed"
 _MANAGED_IGNORE_END = "# END sopify-managed"
 _MANAGED_IGNORE_ENTRIES = (
@@ -325,6 +336,14 @@ def main(argv: list[str] | None = None) -> int:
         copilot=not args.no_copilot,
     )
 
+    if sys.stdout.isatty() and result.get("action") != "failed":
+        use_color = os.environ.get("NO_COLOR") is None
+        for line in _LOGO_LINES:
+            if use_color:
+                print(f"{_LOGO_COLOR}{line}{_LOGO_RESET}")
+            else:
+                print(line)
+        print()
     print(_render_user_output(result, language=language))
     return 0 if result.get("action") != "failed" else 1
 

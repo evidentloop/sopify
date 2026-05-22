@@ -60,7 +60,7 @@ Sopify uses project-level conventions to make critical steps visible. The basic 
 <img src="./assets/sopify-architecture.svg" width="800" alt="Sopify Architecture — Evidence & Authorization Layer" />
 </div>
 
-User input flows through a host adapter (Codex, Claude, etc.) into the Core Protocol, where every action is proposed, validated, gated, and receipted. The Validator is the sole authorizer — the host LLM is only a proposal source. Knowledge layers (blueprint, plan, history) persist across sessions and hosts.
+User input flows through a host adapter (Codex, Claude, Copilot) into the Core Protocol, where every action is proposed, validated, gated, and receipted. The Validator is the sole authorizer — the host LLM is only a proposal source. Knowledge layers (blueprint, plan, history) persist across sessions and hosts.
 
 ## Installation
 
@@ -100,17 +100,24 @@ The protocol works with any host. Verified runtime integrations today:
 |------|----------------|--------------|---------------------|-------|
 | `codex` | `codex:zh-CN` / `codex:en-US` | Deep verified | Host install flow, workspace bootstrap, and runtime package smoke are verified | Suitable for daily use |
 | `claude` | `claude:zh-CN` / `claude:en-US` | Deep verified | Host install flow, workspace bootstrap, and runtime package smoke are verified | Suitable for daily use |
+| `copilot` | Bootstrap only | Workspace ready | Bootstrap, instruction distribution, and workspace marker are verified | Trigger wiring coming next |
 
 Notes:
 
 - Use `sopify status` / `sopify doctor` for detailed capability claims and live diagnostics
 - `Availability` expresses the current delivery tier, while `Validation coverage` describes what has already been validated
 
-Installer behavior:
+### Setup Paths
 
-- Installs the selected host prompt layer and the Sopify payload
-- A standard install makes your host ready to run Sopify; most users do not need `--workspace`
-- `--workspace` is an advanced prewarm path for maintainers, CI, or explicit repository setup
+| You want to… | Script | Command |
+|--------------|--------|---------|
+| Set up a new host (Codex / Claude) | `install.sh` | As shown above — installs host prompt layer + Sopify payload |
+| Add Sopify to an existing repo | `bootstrap.sh` | `curl -fsSL .../bootstrap.sh \| bash` — workspace only, no global install |
+
+- `install.sh` installs the selected host prompt layer and the Sopify payload. Most users do not need `--workspace`; that is an advanced prewarm path for maintainers or CI.
+- `bootstrap.sh` creates `.sopify-skills/sopify.json`, updates `.gitignore`, and distributes Copilot instruction files. Pass `--no-copilot` to skip Copilot files.
+
+For the full setup guide, see [Getting Started](./docs/getting-started.md). For a step-by-step demo, see [External Repo Quickstart](./examples/external-repo-quickstart/README.md).
 
 ### After Install
 

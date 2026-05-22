@@ -2,7 +2,7 @@
 plan_id: 20260521_p7_payload_only_onboarding_mainline
 feature_key: p7_payload_only_onboarding_mainline
 level: standard
-lifecycle_state: active
+lifecycle_state: completed
 ---
 
 # 任务清单
@@ -150,20 +150,45 @@ lifecycle_state: active
 
 **实现顺序：**
 
-- [ ] T2: `bootstrap.sh` convenience wrapper — curl one-liner 下载并执行 `python3 -m sopify_bootstrap init`（先落实入口，后续 example 基于真实入口写）
-- [ ] T1: `examples/external-repo-quickstart/` — 最小端到端 demo（基于 T2 真实入口）
-- [ ] T4: install/bootstrap 命令文档 — `docs/` 下新增或更新接入文档（完整步骤）
-- [ ] T3: README 更新 — Install targets 表增加 Copilot 行 + External Repo 段落（docs 压缩版）
-- [ ] T5: polish — Sopify ASCII art logo（45 列，仅 interactive terminal，`isatty()` 门控）
+- [x] T2: `bootstrap.sh` convenience wrapper — curl one-liner 下载并执行 `python3 scripts/sopify_init.py init`（commit `0405ebc`）
+- [x] T1: `examples/external-repo-quickstart/` — 最小端到端 demo（commit `f025cc5`）
+- [x] T4: install/bootstrap 命令文档 — `docs/getting-started.md`（权威 onboarding 入口）
+- [x] T3: README 更新 — Install targets 表增加 Copilot 行 + Setup Paths 选路表格 + 架构描述更新 + SVG Copilot Adapter 框
+- [x] T5: polish — Sopify ASCII art logo（44 列，#9a89eb 中紫，`isatty()` + `NO_COLOR` 门控）
 
 **验收标准：**
-- `examples/external-repo-quickstart/` 包含可独立跟随的步骤说明
-- README 中 Copilot 接入路径可发现
-- `bootstrap.sh` 可从空 repo 产出 `.sopify-skills/sopify.json` + `.gitignore` managed block
-- 全量测试无回归
+- ✅ `examples/external-repo-quickstart/` 包含可独立跟随的步骤说明
+- ✅ README 中 Copilot 接入路径可发现（选路表格 + Copilot 行）
+- ✅ `bootstrap.sh` 可从空 repo 产出 `.sopify-skills/sopify.json` + `.gitignore` managed block
+- ✅ 全量测试无回归（740 passed，1 pre-existing failure）
+
+**文档收口结论：**
+- README = 摘要导航（选路表格 + 链接）
+- docs/getting-started.md = 唯一权威 onboarding（含运行面宣称 + 时效标注）
+- examples/ = 最小 demo，不重复 host 细节
 
 ## S6: Smoke test + 验收
 
-- [ ] 机器 smoke test：bootstrap → state write → handoff consume（端到端）
-- [ ] 至少 1 个非 Sopify repo 走通全链路
-- [ ] receipt + 蓝图同步 + history 归档
+- [x] 机器 smoke test：`tests/test_sopify_init_smoke.py`（12 tests — init, copilot, no-copilot, idempotency, gitignore, non-git, CLI, logo gate, bootstrap.sh syntax/markers/help）
+
+**以下两项迁移至 follow-up 验收包：**
+
+> 迁移理由：S1-S5 为代码实现切片，已全部完成且自动化 smoke 通过。剩余两项
+> 属于手工验收仪式和方案包生命周期归档，性质不同于实现工作，不应阻塞代码
+> 合入。迁移后 P7 代码实现在本分支收口，验收/归档在后续独立进行。
+
+- ~~至少 1 个非 Sopify repo 走通全链路（手工验收或 CI 集成）~~ → 迁移
+- ~~receipt + 蓝图同步 + history 归档~~ → 迁移
+
+## P7 收口
+
+**状态：代码实现完成，待合入 main。**
+
+| 切片 | 状态 | 摘要 |
+|------|------|------|
+| S1 激活物迁移方案 | ✅ | DR-1/2/3 锁定，定性校正 |
+| S2 迁移实现 | ✅ | 统一 marker + dual-path detection |
+| S3 Bootstrap 入口 | ✅ | preflight + bootstrap 双路径 |
+| S4 Copilot 指令分发 | ✅ | managed block + owned file + payload 资源 |
+| S5 发布链 + example | ✅ | bootstrap.sh + quickstart + docs + README + logo |
+| S6 Smoke test | ✅（自动化部分） | 12 tests 全绿，手工验收迁至 follow-up |

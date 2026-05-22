@@ -7,7 +7,7 @@ decisions, and persist project knowledge.
 
 - Git repository (local or remote)
 - Python 3.11+
-- An AI host: **Copilot** (VS Code / CLI / Cloud Agent), **Codex**, or **Claude**
+- An AI host: **Copilot**, **Codex**, or **Claude**
 
 ## Step 1 — Bootstrap
 
@@ -79,9 +79,8 @@ curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/instal
 
 Then use `~go` to start a managed workflow.
 
-For **Copilot** users: the workspace is ready. Copilot will read the instruction
-files automatically. Full trigger wiring (equivalent to `~go`) is coming in a
-future release.
+For **Copilot** users: the workspace is ready. Full trigger wiring is coming in
+a future release.
 
 ## What Happens Next
 
