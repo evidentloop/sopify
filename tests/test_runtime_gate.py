@@ -35,7 +35,10 @@ from installer.hosts.claude import CLAUDE_ADAPTER
 from installer.hosts.codex import CODEX_ADAPTER
 from installer.outcome_contract import annotate_outcome_payload, render_outcome_summary
 from installer.payload import install_global_payload
-from runtime.models import ClarificationState, DecisionOption, DecisionState, PlanArtifact, RouteDecision, RunState, RuntimeHandoff
+from sopify_contracts.artifacts import PlanArtifact
+from sopify_contracts.core import RouteDecision, RunState
+from sopify_contracts.decision import ClarificationState, DecisionOption, DecisionState
+from sopify_contracts.handoff import RuntimeHandoff
 from runtime.plan_scaffold import create_plan_scaffold
 from canonical_writer import StateStore, iso_now
 from runtime.state import stable_request_sha1

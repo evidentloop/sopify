@@ -37,7 +37,9 @@ from .develop_quality import (
 from .decision_policy import has_tradeoff_checkpoint_signal
 from .handoff import build_runtime_handoff
 from .context_snapshot import resolve_context_snapshot
-from .models import PlanArtifact, RecoveredContext, RouteDecision, RunState, RuntimeConfig, RuntimeHandoff
+from sopify_contracts.artifacts import PlanArtifact
+from sopify_contracts.core import RouteDecision, RunState, RuntimeConfig
+from sopify_contracts.handoff import RecoveredContext, RuntimeHandoff
 from canonical_writer import StateStore, iso_now
 
 _HOST_FACING_TRUTH_KIND_DEVELOP_CALLBACK = "develop_callback"

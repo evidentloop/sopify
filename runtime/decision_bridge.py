@@ -26,16 +26,16 @@ from .entry_guard import (
     DECISION_BRIDGE_HANDOFF_MISMATCH_REASON,
     DEFAULT_RUNTIME_ENTRY as ENTRY_GUARD_DEFAULT_RUNTIME_ENTRY,
 )
-from .models import (
+from sopify_contracts.core import RuntimeConfig
+from sopify_contracts.decision import (
     DecisionCheckpoint,
     DecisionCondition,
     DecisionField,
     DecisionOption,
     DecisionState,
     DecisionSubmission,
-    RuntimeConfig,
-    RuntimeHandoff,
 )
+from sopify_contracts.handoff import RuntimeHandoff
 from canonical_writer import StateStore, iso_now
 
 BRIDGE_SCHEMA_VERSION = "1"

@@ -7,7 +7,7 @@ from types import MappingProxyType
 from typing import Any, Mapping, Sequence
 
 from .deterministic_guard import DeterministicGuardResult
-from .models import RunState
+from sopify_contracts.core import RunState
 
 _SUPPORTED_PROJECTION_ACTIONS = frozenset(
     {

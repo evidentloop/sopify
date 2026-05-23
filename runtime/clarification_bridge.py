@@ -30,7 +30,9 @@ from .entry_guard import (
     CLARIFICATION_BRIDGE_HANDOFF_MISMATCH_REASON,
     DEFAULT_RUNTIME_ENTRY as ENTRY_GUARD_DEFAULT_RUNTIME_ENTRY,
 )
-from .models import ClarificationState, RuntimeConfig, RuntimeHandoff
+from sopify_contracts.core import RuntimeConfig
+from sopify_contracts.decision import ClarificationState
+from sopify_contracts.handoff import RuntimeHandoff
 from canonical_writer import StateStore
 
 BRIDGE_SCHEMA_VERSION = "1"

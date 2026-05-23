@@ -17,7 +17,8 @@ from .cli_interactive import InteractiveSessionFactory, TerminalInteractiveSessi
 from .config import load_runtime_config
 from .decision_bridge import prompt_cli_decision_submission
 from ._kernel_turn import execute_kernel_turn
-from .models import RuntimeConfig, RuntimeResult
+from sopify_contracts.core import RuntimeConfig
+from sopify_contracts.handoff import RuntimeResult
 from .workspace_preflight import WorkspacePreflightError, preflight_workspace_runtime as _shared_preflight_workspace_runtime
 
 PLAN_ORCHESTRATOR_PENDING_EXIT = 2

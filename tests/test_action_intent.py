@@ -674,7 +674,7 @@ class EnginePreRouteInterceptorTests(unittest.TestCase):
 
     def test_route_decision_construction_from_override(self) -> None:
         """Verify RouteDecision can be constructed from validator output."""
-        from runtime.models import RouteDecision
+        from sopify_contracts.core import RouteDecision
         proposal = ActionProposal("consult_readonly", "none", "high")
         validator = ActionValidator()
         decision = validator.validate(proposal, ValidationContext())

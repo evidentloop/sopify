@@ -76,7 +76,9 @@ from runtime.skill_registry import SkillRegistry
 from canonical_writer import StateStore, iso_now
 from canonical_writer.invariants import HOST_FACING_TRUTH_WRITE_KINDS, InvariantViolationError
 from runtime.state import local_day_now
-from runtime.models import (
+from sopify_contracts.artifacts import PlanArtifact
+from sopify_contracts.core import ExecutionGate, RouteDecision, RunState, SkillMeta
+from sopify_contracts.decision import (
     ClarificationState,
     DecisionCheckpoint,
     DecisionCondition,
@@ -87,15 +89,9 @@ from runtime.models import (
     DecisionState,
     DecisionSubmission,
     DecisionValidation,
-    ExecutionGate,
-    PlanArtifact,
-    PlanProposalState,
-    RecoveredContext,
-    RouteDecision,
-    RuntimeHandoff,
-    RunState,
-    SkillMeta,
 )
+from sopify_contracts.handoff import RecoveredContext, RuntimeHandoff
+from sopify_contracts.proposal import PlanProposalState
 
 DEFAULT_RUNTIME_WORKFLOW_TEST_FILE = "tests/test_runtime_engine.py"
 _FOOTER_TIME_LABELS = ("Generated At:", "生成时间:")

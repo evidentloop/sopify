@@ -41,7 +41,10 @@ from .archive_lifecycle import (
 )
 from .handoff import build_runtime_handoff
 from .kb import bootstrap_kb, ensure_blueprint_index, ensure_blueprint_scaffold
-from .models import ClarificationState, DecisionState, ExecutionGate, KbArtifact, PlanArtifact, RecoveredContext, RouteDecision, RunState, RuntimeConfig, RuntimeHandoff, RuntimeResult, SkillActivation, SkillMeta
+from sopify_contracts.artifacts import KbArtifact, PlanArtifact
+from sopify_contracts.core import ExecutionGate, RouteDecision, RunState, RuntimeConfig, SkillMeta
+from sopify_contracts.decision import ClarificationState, DecisionState
+from sopify_contracts.handoff import RecoveredContext, RuntimeHandoff, RuntimeResult, SkillActivation
 from .plan_registry import (
     PlanRegistryError,
     encode_priority_note_event,
