@@ -325,23 +325,32 @@ Step 3 Package B: kernel orchestration seam extraction ✅
   - action_intent.py 保留完整 (ingress support)，不拆分
   - 决策记录: 6 项架构决策均已确认 (详见 tasks.md 4.10a)
 
-Step 3 Package A: _kernel_turn → engine 依赖切断 + contract audit + 批量删除 ← 当前位置
+Step 3 Package A: _kernel_turn → engine 依赖切断 + contract audit + 批量删除 — re-scoped / partial close (2026-05-23)
   A1 ✅: 内联 27 项 (18 helpers + 9 transitive deps; 4 constants + 23 functions) 到 _kernel_turn.py
-      新增 import: build_execution_gate_decision_state from .decision; stdlib sha1, uuid4
       结果: kernel-path import 清零，对 engine.py 仅剩 11 non-kernel handler import
-      不动: 非内核路由分支、非内核 leaf imports、engine.py 本身
-  A2: live contract audit — 基于切断后的真实消费者
-      逐项审计 archive/cancel/resume/conflict/skill/kb 是否仍在
-      router.py SUPPORTED_ROUTE_NAMES / output.py / gate / tests 合同面上
-      输出: 每项一条判定 (delete / retain / inline)
-  A3: 批量删除 — 仅限 A2 确认脱离 contract 的模块 + tests/scripts
-      engine.py: A1 + A2 确认 non-kernel handler 归宿后删除
-      入口脚本: in-place cutover (路径名被 manifest 冻结 → 原地重写)
+  A2 ✅: live contract audit
+      9 个 handler 判定 retain (engine import)，1 个 (skill execution) 已删
+      _kernel_turn.py → engine.py import: 11 → 10
+      第二层审计: 8 模块 (~3,758 LOC) 从 co-delete 重分类为 retain as module
+      archive_lifecycle 是蓝图 canonical capability，不可工程侧单方面降级
+      保留的是 capability/contract，不是所有实现载体；legacy scripts/bridge 仍可删
+  A3 immediate deletion ✅:
+      已完成: skill execution sidecar 删除 (-187 LOC) ✅ 2141ed6
+      否决: 38 项大内联（~1,655 LOC，非真收缩）
+  Package A 未关闭项:
+      engine.py: blocked shell (10 handler import)，_kernel_turn → engine 切断未完成
+      plan_scaffold.py: 464 LOC, blocked by engine.py _advance_planning_route
+      S3.1 大 co-delete 表降级为旧假设，不再作为执行清单
 
-Step 3 Package C: models.py bridge 退场
-  - 删除 runtime/models.py
-  - tests 从 runtime.models → sopify_contracts
-  - manifest/protocol 表面收缩
+Step 3 Package C: models.py bridge 退场 — 前提未满足
+  第一层阻塞: 9 个 A2 retained 非 kernel 模块仍 from .models import
+  第二层阻塞: 所有未退场 legacy 生产消费者 (engine.py, plan_orchestrator.py,
+              plan_scaffold.py, action_projection.py, builtin_catalog.py,
+              develop_callback.py, preferences.py, knowledge_layout.py 等)
+              以上不是完整枚举；所有未删除的 .models 消费者都必须 rewire 或共删
+  进入条件: runtime/ 下零 from .models 消费者
+  rewire 范围: archive_lifecycle / clarification / context_recovery / decision / kb /
+              output / plan_registry / skill_registry / skill_resolver + 全部 legacy 消费者
 
 Step 4: 用等价覆盖测试守住 contract
   - 7 个 contract test 保留等价覆盖
@@ -409,6 +418,25 @@ Step 4: 用等价覆盖测试守住 contract
 
 > **⚠ `_yaml.py` 特殊处理**: config.py (kernel support) 通过 `from ._yaml import` 依赖它。
 > S4 需决定: 将 YAML 加载逻辑内联到 config.py，还是保留 `_yaml.py` 作为 kernel utility。
+
+> **⚠ A2 重分类 (2026-05-23)**: 上表中以下模块经 A2 live contract audit 重分类。
+> S3.1 原表不再作为执行清单；保留的是 capability/contract，不是所有实现载体。
+>
+> | 模块 | 原分类 | 新分类 | 证据 |
+> |------|--------|--------|------|
+> | `archive_lifecycle.py` | co-delete | **retain** | _kernel_turn.py:53-59; 蓝图 canonical capability (blueprint/design.md:295,659,794) |
+> | `plan_registry.py` | co-delete | **retain** | archive_lifecycle:17 → remove_plan_entry (critical path); output.py:12 |
+> | `kb.py` | co-delete | **retain** | _kernel_turn.py:63,534 bootstrap_kb |
+> | `clarification.py` | co-delete | **retain** | router + checkpoint_request + handoff + _kernel_turn |
+> | `decision.py` | co-delete | **retain** | router + handoff + _kernel_turn |
+> | `context_recovery.py` | co-delete | **retain** | _kernel_turn.py:35 recover_context |
+> | `skill_registry.py` | co-delete | **retain** | _kernel_turn.py:538 SkillRegistry.discover() |
+> | `skill_resolver.py` | co-delete | **retain** | router.py:775 resolve_route_candidate_skills() |
+> | `plan_scaffold.py` | co-delete | **delete candidate, blocked by engine.py** | 零直接 retained 消费者 |
+> | `skill_runner.py` | co-delete | **deleted** ✅ 2141ed6 | A2 确认悬空路径 |
+>
+> 净效果: 8 模块 (~3,758 LOC) retain; 1 模块 (85 LOC) 已删; 1 模块 (464 LOC) 待删 blocked。
+> legacy scripts/bridge/helper 不因模块 retain 而自动保留，仍可独立退场。
 
 ### scripts/ 退场+cutover 清单 (15 entries)
 
