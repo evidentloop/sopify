@@ -62,7 +62,6 @@ from .clarification import stale_clarification
 from .decision import build_execution_gate_decision_state, stale_decision
 from .kb import bootstrap_kb
 from .skill_registry import SkillRegistry
-from .skill_runner import SkillExecutionError, run_runtime_skill
 
 # -- Kernel-path constants & helpers (A1: inlined from engine.py) -------------
 
@@ -486,8 +485,8 @@ def _build_route_native_gate_decision_state(
 
 # -- Engine helpers: non-kernel route handlers (A2: audit before removing) ----
 # These implement route-specific dispatch for non-kernel routes (archive,
-# planning, cancel, clarification/decision resume, skill execution).
-# A2 contract audit will determine which of these are still live.
+# planning, cancel, clarification/decision resume, activation metadata).
+# A2 confirmed all remaining imports are live contract consumers.
 from .engine import (
     _PlanningContext,
     _advance_planning_route,
@@ -495,7 +494,6 @@ from .engine import (
     _augment_generated_files,
     _build_skill_activation,
     _derive_route_from_authorized_proposal,
-    _find_skill,
     _handle_cancel_active,
     _handle_clarification_resume,
     _handle_decision_resume,
@@ -962,19 +960,6 @@ def execute_kernel_turn(
         state_store=result_store,
         global_state_store=global_store,
     )
-
-    if effective_route.runtime_skill_id is not None:
-        skill = _find_skill(skills, effective_route.runtime_skill_id)
-        payload = dict((runtime_payloads or {}).get(effective_route.runtime_skill_id, {}))
-        if skill is None:
-            notes.append(f"Runtime skill not found: {effective_route.runtime_skill_id}")
-        elif not payload:
-            notes.append(f"Runtime payload missing for skill: {effective_route.runtime_skill_id}")
-        else:
-            try:
-                skill_result = run_runtime_skill(skill, payload=payload)
-            except SkillExecutionError as exc:
-                notes.append(str(exc))
 
     activation = _build_skill_activation(
         decision=effective_route,

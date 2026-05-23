@@ -67,7 +67,6 @@ from .action_intent import (
     generate_proposal_id,
 )
 from .skill_registry import SkillRegistry
-from .skill_runner import SkillExecutionError, run_runtime_skill
 from canonical_writer import StateStore, iso_now
 from .state import (
     local_day_now,
@@ -1000,12 +999,6 @@ def _make_run_id(request_text: str) -> str:
 
 
 
-
-def _find_skill(skills: tuple[SkillMeta, ...], skill_id: str) -> SkillMeta | None:
-    for skill in skills:
-        if skill.skill_id == skill_id:
-            return skill
-    return None
 
 
 def _build_skill_activation(
