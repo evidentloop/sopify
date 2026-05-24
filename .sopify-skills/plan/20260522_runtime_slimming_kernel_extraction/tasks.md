@@ -290,7 +290,7 @@ archive_ready: false
   > - 删 RuntimeHandoff.recommended_skill_ids 字段
   > - 删 skill_registry.py / skill_resolver.py / skill_schema.py
   > - candidate_skill_ids 保留为内部字段（checkpoint materializer 恢复链需要），不再往宿主面扩散
-- [ ] 6.4 **skill discovery 退场 + recommended_skill_ids 删除** (难度: 中，承接 6.3 裁定 C1)
+- [x] 6.4 **skill discovery 退场 + recommended_skill_ids 删除** (已完成)
   > 删除范围:
   > - skill_registry.py (255) + skill_resolver.py (111) = ~366 LOC 删除
   > - skill_schema.py (140) 保留：generate-builtin-catalog.py (CI/preflight 依赖) 仍需要 normalize_skill_manifest
@@ -310,7 +310,7 @@ archive_ready: false
   > - host bare-text ingress 仍依赖 _ACTION_KEYWORDS / _ARCHITECTURE_KEYWORDS + estimate_complexity()
   > - authorized ActionProposal derive 仍依赖同一套 complexity heuristic
   > 上述两层待单独题处理；代码收口前不得先改协议宣称其已退役
-- [ ] 6.5 **plan_registry 结构重构审计** (难度: 最高)
+- [x] 6.5 **plan_registry 结构重构审计** (已完成)
   > 范围: plan_registry.py (1,013 LOC) + plan_scaffold.py (464 LOC, blocked by engine.py)
   > 消费者: engine.py:47 (5 符号) + archive_lifecycle.py:18 + output.py:12 + plan_scaffold.py:17
   > 核心问题不是"能不能删文件"，而是:
@@ -318,14 +318,19 @@ archive_ready: false
   > - 还是拆回 engine / archive_lifecycle / output / plan_scaffold
   > 与 engine 的关系: engine planning 主块（`_advance_planning_route` / `_resolve_plan_for_request` / `_apply_execution_gate_to_plan`）重度依赖 plan_registry + plan_scaffold；必须先定 6.5 的终态，后续 engine decomposition 才知道往哪拆
   > 最后打；受益于前面题目的清理减少干扰变量
-- [ ] 6.6 **engine decomposition** (难度: 最高，6.5 后执行)
-  > 目标: 真正切断 `_kernel_turn -> engine` 的 10 个 live handler 依赖，不再让 engine.py 充当巨型后厨
-  > 范围: planning 主块 + checkpoint resume 主块 + execution ownership / promotion 主块
-  > 关键块:
-  > - `_handle_clarification_resume`
-  > - `_handle_decision_resume`
-  > - `_advance_planning_route`
-  > - `_resolve_plan_for_request`
-  > - `_apply_execution_gate_to_plan`
-  > 执行顺序: 先前面 6.2-6.5 降噪，再单开 6.6；不把它混做 plan_registry 的附属清扫
-  > 预期结果: engine 只保留极薄兼容壳或彻底退空，kernel orchestration 行为不再依赖 engine 内部 handler
+- [x] 6.6 **engine decomposition** (已完成)
+  > 终态:
+  > - `_planning.py` (1496 LOC): planning 主链 + resume + gate checkpoint + execution-resume
+  > - `engine.py` (343 LOC): conflict/cancel + activation + archive + run_runtime wrapper
+  > - `_kernel_turn.py` (783 LOC): 纯编排 — store/promotion/receipt/handoff
+  > - import 面: _planning×7 + engine×5 = 12 (原 engine×9 + 7 隐藏重复 = 16)
+  >
+  > 分步:
+  > - 6.6a: 删 engine.py 10 个 A1-era 死代码函数 (−219 LOC)
+  > - 6.6b: planning pipeline → _planning.py + 消除 7 双份 helper + resolve_execution_resume 下沉
+  >
+  > owner map:
+  > - _kernel_turn: store resolution, promotion, handoff ownership, result store selection, 总编排
+  > - _planning: planning 主链, clarification/decision resume, execution-resume gate mutation
+  > - engine: conflict/cancel, activation, archive, run_runtime deprecated wrapper
+

@@ -39,13 +39,11 @@ from .context_snapshot import (
     recovery_store_for_route,
     resolve_context_snapshot,
     snapshot_global_execution_run,
-    snapshot_has_global_execution_truth,
     snapshot_review_run,
 )
-from .execution_gate import evaluate_execution_gate
 from .handoff import build_runtime_handoff
 from .router import Router
-from .state import make_run_id, make_run_state, stable_request_sha1, summarize_request_text
+from .state import make_run_id, stable_request_sha1, summarize_request_text
 from canonical_writer import StateStore, iso_now
 from canonical_writer.invariants import stamp_handoff_resolution_id
 from sopify_contracts.artifacts import KbArtifact, PlanArtifact
@@ -67,7 +65,7 @@ from .archive_lifecycle import (
     resolve_archive_subject,
 )
 from .clarification import stale_clarification
-from .decision import build_execution_gate_decision_state, stale_decision
+from .decision import stale_decision
 from .kb import bootstrap_kb
 
 # -- Kernel-path constants & helpers (A1: inlined from engine.py) -------------
@@ -95,29 +93,6 @@ def _pending_required_host_action(snapshot) -> str:  # noqa: ANN001
     if snapshot.current_decision is not None and snapshot.current_decision.status in {"pending", "collecting", "confirmed", "cancelled", "timed_out"}:
         return "confirm_decision"
     return ""
-
-
-def _with_global_run_ownership(run_state: RunState, *, session_id: str | None) -> RunState:
-    owner_session_id = str(session_id or run_state.owner_session_id or "").strip()
-    return RunState(
-        run_id=run_state.run_id,
-        status=run_state.status,
-        stage=run_state.stage,
-        route_name=run_state.route_name,
-        title=run_state.title,
-        created_at=run_state.created_at,
-        updated_at=run_state.updated_at,
-        plan_id=run_state.plan_id,
-        plan_path=run_state.plan_path,
-        execution_gate=run_state.execution_gate,
-        execution_authorization_receipt=run_state.execution_authorization_receipt,
-        request_excerpt=run_state.request_excerpt,
-        request_sha1=run_state.request_sha1,
-        owner_session_id=owner_session_id,
-        owner_host=run_state.owner_host or "runtime",
-        owner_run_id=run_state.owner_run_id or run_state.run_id,
-        resolution_id=run_state.resolution_id,
-    )
 
 
 def _with_global_handoff_ownership(
@@ -154,17 +129,6 @@ def _with_global_handoff_ownership(
     )
 
 
-def _set_execution_run_state(
-    state_store: StateStore,
-    run_state: RunState,
-    *,
-    session_id: str | None,
-) -> None:
-    if state_store.session_id is not None:
-        state_store.set_current_run(run_state)
-        return
-    state_store.set_current_run(_with_global_run_ownership(run_state, session_id=session_id))
-
 
 def _derived_resolution_id(
     *,
@@ -182,23 +146,6 @@ def _derived_resolution_id(
             return normalized
     return _new_resolution_id()
 
-
-def _soft_execution_ownership_warning(
-    *,
-    existing_global_run: RunState | None,
-    session_id: str | None,
-) -> str | None:
-    if (
-        existing_global_run is not None
-        and existing_global_run.owner_session_id
-        and session_id
-        and existing_global_run.owner_session_id != session_id
-    ):
-        return (
-            f"Soft ownership warning: overwriting global execution context "
-            f"owned by session {existing_global_run.owner_session_id}"
-        )
-    return None
 
 
 def _promote_review_state_to_global_execution(
@@ -314,122 +261,30 @@ def _result_state_store_for_route(
     return review_store
 
 
-def _clarification_pending_route(decision: RouteDecision, *, reason: str) -> RouteDecision:
-    return RouteDecision(
-        route_name="clarification_pending",
-        request_text=decision.request_text,
-        reason=reason,
-        command=decision.command,
-        complexity=decision.complexity,
-        plan_level=decision.plan_level,
-        candidate_skill_ids=decision.candidate_skill_ids,
-        should_recover_context=True,
-        should_create_plan=False,
-        capture_mode=decision.capture_mode,
-        runtime_skill_id=None,
-        active_run_action="inspect_clarification",
-        artifacts=decision.artifacts,
-    )
 
 
-def _decision_pending_route(decision: RouteDecision, *, reason: str) -> RouteDecision:
-    return RouteDecision(
-        route_name="decision_pending",
-        request_text=decision.request_text,
-        reason=reason,
-        command=decision.command,
-        complexity=decision.complexity,
-        plan_level=decision.plan_level,
-        candidate_skill_ids=decision.candidate_skill_ids,
-        should_recover_context=True,
-        should_create_plan=False,
-        capture_mode=decision.capture_mode,
-        runtime_skill_id=None,
-        active_run_action="inspect_decision",
-        artifacts=decision.artifacts,
-    )
 
 
-def _exec_plan_unavailable_route(decision: RouteDecision, *, reason: str) -> RouteDecision:
-    return RouteDecision(
-        route_name="exec_plan",
-        request_text=decision.request_text,
-        reason=reason,
-        command=decision.command,
-        complexity=decision.complexity,
-        plan_level=decision.plan_level,
-        candidate_skill_ids=decision.candidate_skill_ids or ("develop",),
-        should_recover_context=True,
-        should_create_plan=False,
-        capture_mode=decision.capture_mode,
-        runtime_skill_id=None,
-        active_run_action="inspect_exec_recovery",
-        artifacts=decision.artifacts,
-    )
-
-
-def _execution_gate_decision_resume_context(
-    *,
-    decision_state: DecisionState,
-    current_plan: PlanArtifact,
-    current_run: RunState | None,
-    gate: ExecutionGate,
-) -> Mapping[str, Any]:
-    resume_context = dict(decision_state.resume_context)
-    resume_context.setdefault("active_run_stage", current_run.stage if current_run is not None else "decision_pending")
-    resume_context.setdefault("current_plan_path", current_plan.path)
-    resume_context["task_refs"] = list(resume_context.get("task_refs") or [])
-    resume_context["changed_files"] = list(resume_context.get("changed_files") or [])
-    resume_context.setdefault(
-        "working_summary",
-        f"Execution gate is waiting for a blocking-risk decision before develop continues: {gate.blocking_reason}",
-    )
-    resume_context["verification_todo"] = list(resume_context.get("verification_todo") or [])
-    resume_context.setdefault("resume_after", "continue_host_develop")
-    return resume_context
-
-
-def _build_route_native_gate_decision_state(
-    decision: RouteDecision,
-    *,
-    gate: ExecutionGate,
-    current_plan: PlanArtifact,
-    current_run: RunState | None,
-    config: RuntimeConfig,
-) -> DecisionState | None:
-    """Create execution-bound gate decisions without downcasting their phase."""
-    decision_state = build_execution_gate_decision_state(
-        decision,
-        gate=gate,
-        current_plan=current_plan,
-        config=config,
-    )
-    if decision_state is None:
-        return None
-    return replace(
-        decision_state,
-        resume_context=_execution_gate_decision_resume_context(
-            decision_state=decision_state,
-            current_plan=current_plan,
-            current_run=current_run,
-            gate=gate,
-        ),
-    )
 
 
 # -- Engine helpers: non-kernel route handlers (A2: audit before removing) ----
 # These implement route-specific dispatch for non-kernel routes (archive,
 # planning, cancel, clarification/decision resume, activation metadata).
 # A2 confirmed all remaining imports are live contract consumers.
-from .engine import (
+from ._planning import (
     _PlanningContext,
     _advance_planning_route,
+    _handle_clarification_resume,
+    _handle_decision_resume,
+    _soft_execution_ownership_warning,
+    _with_global_run_ownership,
+    resolve_execution_resume,
+)
+from .engine import (
     _archive_state_store_for_current_plan,
     _augment_generated_files,
     _build_skill_activation,
     _handle_cancel_active,
-    _handle_clarification_resume,
-    _handle_decision_resume,
     _handle_state_conflict,
 )
 from .router import _derive_route_from_authorized_proposal
@@ -744,129 +599,19 @@ def execute_kernel_turn(
             session_id=session_id,
         )
         notes.extend(promotion_notes)
-        if execution_recovered.current_clarification is not None:
-            effective_route = _clarification_pending_route(
-                effective_route,
-                reason="Pending clarification must be answered before execution can continue",
-            )
-            notes.append("Blocked execution because clarification is still pending")
-        else:
-            current_plan = execution_recovered.current_plan
-            if current_plan is None:
-                if effective_route.route_name == "exec_plan":
-                    effective_route = _exec_plan_unavailable_route(
-                        effective_route,
-                        reason="Advanced exec recovery is unavailable because no active plan or confirmed recovery state exists",
-                    )
-                    notes.append("Rejected ~go exec because no active plan or confirmed recovery state is available")
-                else:
-                    notes.append("No active plan available to resume")
-            else:
-                gate = evaluate_execution_gate(
-                    decision=effective_route,
-                    plan_artifact=current_plan,
-                    current_clarification=None,
-                    current_decision=(
-                        execution_recovered.current_decision
-                        if execution_recovered.current_decision is not None
-                        and execution_recovered.current_decision.status == "confirmed"
-                        and execution_recovered.current_decision.selection is not None
-                        else None
-                    ),
-                    config=config,
-                )
-                # P1.5-B: generate receipt AFTER gate eval so gate_status is final truth.
-                if _receipt_ingredients is not None:
-                    execution_auth_receipt = ExecutionAuthorizationReceipt.create(
-                        plan_path=_receipt_ingredients["plan_path"],
-                        plan_revision_digest=_receipt_ingredients["revision_digest"],
-                        gate_status=gate.gate_status,
-                        action_proposal_id=_receipt_ingredients["proposal_id"],
-                        request_sha1=_receipt_ingredients["request_sha1"],
-                    )
-                # Resolve receipt dict: new receipt wins; otherwise carry forward.
-                _prev_run = execution_recovered.current_run
-                _receipt_dict = (
-                    execution_auth_receipt.to_dict()
-                    if execution_auth_receipt is not None
-                    else (_prev_run.execution_authorization_receipt if _prev_run is not None else None)
-                )
-                if gate.gate_status == "decision_required" and gate.blocking_reason != "unresolved_decision":
-                    current_run = execution_recovered.current_run
-                    next_run_state = RunState(
-                        run_id=current_run.run_id if current_run is not None else make_run_id(effective_route.request_text),
-                        status="active",
-                        stage="decision_pending",
-                        route_name=effective_route.route_name,
-                        title=current_plan.title,
-                        created_at=current_run.created_at if current_run is not None else current_plan.created_at,
-                        updated_at=iso_now(),
-                        plan_id=current_plan.plan_id,
-                        plan_path=current_plan.path,
-                        execution_gate=gate,
-                        execution_authorization_receipt=_receipt_dict,
-                        request_excerpt=summarize_request_text(effective_route.request_text),
-                        request_sha1=stable_request_sha1(effective_route.request_text),
-                    )
-                    gate_decision = _build_route_native_gate_decision_state(
-                        effective_route,
-                        gate=gate,
-                        current_plan=current_plan,
-                        current_run=next_run_state,
-                        config=config,
-                    )
-                    if gate_decision is not None:
-                        _set_execution_run_state(
-                            execution_store,
-                            next_run_state,
-                            session_id=session_id,
-                        )
-                        execution_store.set_current_decision(gate_decision)
-                        effective_route = _decision_pending_route(
-                            effective_route,
-                            reason="Execution gate found a blocking risk that still requires confirmation",
-                        )
-                        notes.extend(gate.notes)
-                        notes.append(f"Execution gate requested a new decision: {gate_decision.decision_id}")
-                    else:
-                        notes.append("Execution gate requires a decision before develop can continue")
-                elif gate.gate_status != "ready":
-                    _set_execution_run_state(
-                        execution_store,
-                        make_run_state(
-                            effective_route,
-                            current_plan,
-                            stage="plan_generated",
-                            execution_gate=gate,
-                            execution_authorization_receipt=_receipt_dict,
-                        ),
-                        session_id=session_id,
-                    )
-                    notes.extend(gate.notes)
-                    notes.append("Blocked execution because the execution gate is not ready")
-                else:
-                    current_run = execution_recovered.current_run
-                    _set_execution_run_state(
-                        execution_store,
-                        RunState(
-                            run_id=current_run.run_id if current_run is not None else make_run_id(effective_route.request_text),
-                            status="active",
-                            stage="develop_pending",
-                            route_name=effective_route.route_name,
-                            title=current_plan.title,
-                            created_at=current_run.created_at if current_run is not None else current_plan.created_at,
-                            updated_at=iso_now(),
-                            plan_id=current_plan.plan_id,
-                            plan_path=current_plan.path,
-                            execution_gate=gate,
-                            execution_authorization_receipt=_receipt_dict,
-                            request_excerpt=current_run.request_excerpt if current_run is not None else summarize_request_text(effective_route.request_text),
-                            request_sha1=current_run.request_sha1 if current_run is not None else stable_request_sha1(effective_route.request_text),
-                        ),
-                        session_id=session_id,
-                    )
-                    notes.extend(gate.notes)
-                    notes.append("Active run resumed")
+        effective_route, resume_notes, execution_auth_receipt = resolve_execution_resume(
+            effective_route,
+            execution_store=execution_store,
+            current_clarification=execution_recovered.current_clarification,
+            current_decision=execution_recovered.current_decision,
+            current_plan=execution_recovered.current_plan,
+            current_run=execution_recovered.current_run,
+            config=config,
+            session_id=session_id,
+            receipt_ingredients=_receipt_ingredients,
+            prior_receipt=execution_auth_receipt,
+        )
+        notes.extend(resume_notes)
         recovered = execution_recovered
 
     if not _is_zero_write_conflict_inspect(effective_route):

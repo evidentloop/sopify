@@ -6,7 +6,7 @@ import pytest
 from dataclasses import replace
 
 from tests.runtime_test_support import *
-from runtime.engine import _advance_planning_route
+from runtime._planning import _advance_planning_route
 
 
 _FRONT_MATTER_RE = re.compile(r"\A---\n(?P<front>.*?)\n---\n", re.DOTALL)
