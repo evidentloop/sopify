@@ -9,7 +9,7 @@ import re
 from tempfile import NamedTemporaryFile
 from typing import Any, Mapping, Sequence
 
-from ._yaml import YamlParseError, dump_yaml, load_yaml
+from .._yaml import YamlParseError, dump_yaml, load_yaml
 from sopify_contracts.artifacts import PlanArtifact
 from sopify_contracts.core import RuntimeConfig
 from canonical_writer import StateStore, iso_now

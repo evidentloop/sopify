@@ -37,7 +37,7 @@ from runtime.action_intent import ActionProposal, ArchiveSubjectProposal, PlanSu
 from runtime.handoff import build_runtime_handoff
 from runtime.kb import bootstrap_kb, ensure_blueprint_index
 from runtime.knowledge_layout import materialization_stage, resolve_context_profile
-from runtime.plan_registry import (
+from runtime.plan.registry import (
     PlanRegistryError,
     confirm_plan_priority,
     get_plan_entry,
@@ -46,7 +46,8 @@ from runtime.plan_registry import (
     recommend_plan_candidates,
     registry_relative_path,
 )
-from runtime.plan_scaffold import create_plan_scaffold, request_explicitly_wants_new_plan
+from runtime.plan.scaffold import create_plan_scaffold
+from runtime.plan.intent import request_explicitly_wants_new_plan
 from runtime.output import render_runtime_output
 from runtime.preferences import preload_preferences, preload_preferences_for_workspace
 from runtime.router import Router

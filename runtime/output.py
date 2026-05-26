@@ -9,7 +9,7 @@ from .clarification import CURRENT_CLARIFICATION_RELATIVE_PATH
 from .decision import CURRENT_DECISION_RELATIVE_PATH
 from .handoff import CURRENT_HANDOFF_RELATIVE_PATH
 from sopify_contracts.handoff import RuntimeResult
-from .plan_registry import extract_priority_note_event
+from .plan.registry import extract_priority_note_event
 
 _PHASE_LABELS = {
     "zh-CN": {

@@ -28,15 +28,15 @@ from .kb import ensure_blueprint_index, ensure_blueprint_scaffold
 from sopify_contracts.artifacts import KbArtifact, PlanArtifact
 from sopify_contracts.core import ExecutionGate, RouteDecision, RunState, RuntimeConfig
 from sopify_contracts.decision import ClarificationState, DecisionState
-from .plan_registry import (
+from .plan.registry import (
+    PlanRegistryError,
     encode_priority_note_event,
     priority_note_for_plan,
+    upsert_plan_entry,
 )
-from .plan_scaffold import (
-    create_plan_scaffold,
-    find_plan_by_request_reference,
-    request_explicitly_wants_new_plan,
-)
+from .plan.scaffold import create_plan_scaffold
+from .plan.lookup import find_plan_by_request_reference
+from .plan.intent import request_explicitly_wants_new_plan
 from canonical_writer import StateStore, iso_now
 from .state import (
     make_run_id,
@@ -917,6 +917,14 @@ def _advance_planning_route(
         level=level,
         decision_state=confirmed_decision,
     )
+    try:
+        upsert_plan_entry(
+            config=config,
+            artifact=created,
+            request_text=decision.request_text,
+        )
+    except PlanRegistryError:
+        pass
     state_store.set_current_plan(created)
     kb_artifact = _merge_kb_artifacts(kb_artifact, ensure_blueprint_index(config), config=config)
     notes.extend(

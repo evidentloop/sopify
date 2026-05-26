@@ -15,7 +15,7 @@ from .knowledge_layout import resolve_path
 from .knowledge_sync import KNOWLEDGE_SYNC_KEYS, knowledge_sync_targets, parse_knowledge_sync
 from sopify_contracts.artifacts import KbArtifact, PlanArtifact
 from sopify_contracts.core import RuntimeConfig
-from .plan_registry import PlanRegistryError, remove_plan_entry
+from .plan.registry import PlanRegistryError, remove_plan_entry
 from canonical_writer import StateStore, iso_now
 
 ARCHIVE_STATUS_COMPLETED = "completed"
