@@ -425,7 +425,7 @@ archive_ready: false
 
 | 编号 | 内容 | 当前状态 |
 |------|------|----------|
-| 4.11 | kernel 验证 (gate→route→handoff→checkpoint) | coverage audit 完成; `_kernel_turn` 直接测试仍缺 |
+| 4.11 | kernel 验证 (gate→route→handoff→checkpoint) | ✅ 完成 — `test_runtime_kernel_turn.py` (5 cases) |
 | 4.12 | naming/comment polish | deferred — 进入条件: 模块集合稳定 |
 
 ### Tier 4: 文档更新
