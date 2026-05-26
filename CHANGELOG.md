@@ -6,6 +6,21 @@ Format: Summary → Changed → Plan Packages. File-level details live in `git l
 
 ## [Unreleased]
 
+## [2026-05-26.134110] - 2026-05-26
+
+### Summary
+
+- Updated 1 active plan package(s); Changes across: Scripts, Changed.
+
+### Changed
+
+- **Scripts**: Adjusted maintenance scripts (2 files)
+- **Changed**: Updated project files (1 files)
+
+### Plan Packages
+
+- `20260522_runtime_slimming_kernel_extraction` (active)
+
 ## [2026-05-26.130923] - 2026-05-26
 
 ### Summary

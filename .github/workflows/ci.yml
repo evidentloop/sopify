@@ -86,3 +86,9 @@ jobs:
 
       - name: Run runtime smoke check
         run: bash scripts/check-runtime-smoke.sh
+
+      - name: Run install/payload bootstrap smoke
+        run: python3 scripts/check-install-payload-bundle-smoke.py
+
+      - name: Run prompt runtime gate smoke
+        run: python3 scripts/check-prompt-runtime-gate-smoke.py

@@ -421,12 +421,12 @@ archive_ready: false
 > - ✅ 4.13-A: 停写 legacy workspace stub (.sopify-runtime/manifest.json)，收敛到单 marker (.sopify-skills/sopify.json) + stub 合同对齐 + 文档同步
 > - ✅ 4.13-B: sync-runtime-assets.sh 壳套壳重写为纯 Python (installer/runtime_bundle.py shutil.copytree + write_bundle_manifest) + bundle contract 测试对齐 + bash 脚本删除
 >
-> **Phase B — 需先定义最小 contract (产品设计题)**:
-> - install smoke (check-install-payload-bundle-smoke.py) 最小 contract 重设计
-> - prompt smoke (check-prompt-runtime-gate-smoke.py) 最小 contract 重设计
-> - legacy_fallback 退役 (双 marker Phase 1 完成后自然死亡)
->
-> **风险**: 改 bootstrap_workspace.py (1507 LOC) 核心逻辑，不是边缘脚本
+> **Phase B — ✅ 完成（smoke 稳态化 + legacy_fallback 判定）**:
+> - ✅ check-runtime-smoke.sh: 删除 2 条 legacy 反向断言（wiki overview / history index 不存在检查 — 4.13-A 已收口），其余 ~28 条稳态 contract 保留。脚本保留不删（6 处 bundle/installer 活跃 consumer）
+> - ✅ check-prompt-runtime-gate-smoke.py: 6 个场景全部确认为稳态 gate contract，加 stable contract 标注。与 install smoke 一起加入 CI
+> - ✅ check-install-payload-bundle-smoke.py: 已是稳态 contract，无需重设计。加入 CI
+> - ✅ legacy_fallback 判定: 作为 workspace stub 字段已退役（4.13-A 停写 legacy stub）。`_legacy_payload_bundle_version()` / `_legacy_bundle_manifest_path()` 保留为 versioned layout 兼容路径（bootstrap_workspace.py / validate.py / workspace_preflight.py 共 ~60 LOC），有 hard gate 测试保护，后续随 bundle layout 正式固定后收口
+> - 不碰 bootstrap_workspace.py 核心逻辑（1507 LOC 风险隔离）
 
 ### Tier 3: 验证与 polish
 
