@@ -2,39 +2,18 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from hashlib import sha1
+from datetime import datetime
 from pathlib import Path
 import re
-from typing import Iterable, List, Mapping, Sequence
+from typing import List
 
-from ._yaml import YamlParseError, load_yaml
-from .decision import option_by_id
-from .knowledge_sync import render_knowledge_sync_front_matter
+from ..decision import option_by_id
+from ..knowledge_sync import render_knowledge_sync_front_matter
+from .identity import derive_topic_key
 from sopify_contracts.artifacts import PlanArtifact
 from sopify_contracts.core import RuntimeConfig
 from sopify_contracts.decision import DecisionState
-from .plan_registry import PlanRegistryError, upsert_plan_entry
 from canonical_writer import iso_now
-
-_FRONT_MATTER_RE = re.compile(r"\A---\n(?P<front>.*?)\n---\n(?P<body>.*)\Z", re.DOTALL)
-_PLAN_REFERENCE_RE = re.compile(r"(?P<plan_id>\d{8}_[a-z0-9][a-z0-9_.-]*)", re.IGNORECASE)
-_EXPLICIT_NEW_PLAN_PATTERNS = (
-    re.compile(r"\bnew\s+plan\b", re.IGNORECASE),
-    re.compile(r"\bcreate\s+(?:a\s+)?new\s+plan\b", re.IGNORECASE),
-    re.compile(r"新建(?:一个)?\s*plan", re.IGNORECASE),
-    re.compile(r"新\s*plan", re.IGNORECASE),
-    re.compile(r"新的\s*plan", re.IGNORECASE),
-    re.compile(r"另起(?:一个)?\s*plan", re.IGNORECASE),
-    re.compile(r"新增(?:一个)?\s*plan", re.IGNORECASE),
-)
-_NEGATED_NEW_PLAN_PATTERNS = (
-    re.compile(
-        r"(?:不要|别|不用|无需|禁止)\s*(?:再|另外|额外|单独)?\s*(?:新建(?:一个)?(?:新的)?\s*plan|新\s*plan|新的\s*plan)",
-        re.IGNORECASE,
-    ),
-    re.compile(r"(?:do\s+not|don't|dont|no\s+need\s+to)\s+(?:create\s+(?:a\s+)?new\s+plan|new\s+plan)", re.IGNORECASE),
-)
 
 
 def create_plan_scaffold(
@@ -125,15 +104,6 @@ def create_plan_scaffold(
         created_at=iso_now(),
         topic_key=resolved_topic_key,
     )
-    try:
-        upsert_plan_entry(
-            config=config,
-            artifact=artifact,
-            request_text=request_text,
-        )
-    except PlanRegistryError:
-        # Governance sync must not block core plan creation.
-        pass
     return artifact
 
 
@@ -160,115 +130,6 @@ def _derive_title(request_text: str) -> str:
     return first_line[:45].rstrip() + "..."
 
 
-def derive_topic_key(request_text: str) -> str:
-    cleaned = " ".join(request_text.split())
-    if not cleaned:
-        return "task"
-    normalized = _slugify(cleaned)[:48].rstrip("-")
-    if normalized:
-        return normalized
-    return f"task-{sha1(cleaned.encode('utf-8')).hexdigest()[:6]}"
-
-
-def request_explicitly_wants_new_plan(request_text: str) -> bool:
-    normalized = " ".join(request_text.split())
-    matches = _collect_new_plan_intent_matches(normalized)
-    effective_matches = _drop_positive_matches_covered_by_negated(matches)
-    if not effective_matches:
-        return False
-    last_match = max(effective_matches, key=lambda item: (item[0], item[1]))
-    return last_match[2] == "positive"
-
-
-def _collect_new_plan_intent_matches(text: str) -> list[tuple[int, int, str]]:
-    seen: set[tuple[int, int, str]] = set()
-    ordered: list[tuple[int, int, str]] = []
-    for polarity, patterns in (
-        ("negated", _NEGATED_NEW_PLAN_PATTERNS),
-        ("positive", _EXPLICIT_NEW_PLAN_PATTERNS),
-    ):
-        for pattern in patterns:
-            for match in pattern.finditer(text):
-                span = (match.start(), match.end(), polarity)
-                if span in seen:
-                    continue
-                seen.add(span)
-                ordered.append(span)
-    return ordered
-
-
-def _drop_positive_matches_covered_by_negated(
-    matches: Sequence[tuple[int, int, str]],
-) -> list[tuple[int, int, str]]:
-    negated_spans = [(start, end) for start, end, polarity in matches if polarity == "negated"]
-    effective: list[tuple[int, int, str]] = []
-    for start, end, polarity in matches:
-        if polarity == "positive" and any(neg_start <= start and end <= neg_end for neg_start, neg_end in negated_spans):
-            continue
-        effective.append((start, end, polarity))
-    return effective
-
-
-def find_plan_by_request_reference(request_text: str, *, config: RuntimeConfig) -> PlanArtifact | None:
-    for match in _PLAN_REFERENCE_RE.finditer(request_text):
-        plan_id = (match.group("plan_id") or "").strip()
-        if not plan_id:
-            continue
-        artifact = load_plan_artifact(config.plan_root / plan_id, config=config)
-        if artifact is not None:
-            return artifact
-    return None
-
-
-def find_plan_by_topic_key(topic_key: str, *, config: RuntimeConfig) -> PlanArtifact | None:
-    matches: list[PlanArtifact] = []
-    plan_root = config.plan_root
-    if not plan_root.exists():
-        return None
-    for plan_dir in sorted(plan_root.iterdir()):
-        artifact = load_plan_artifact(plan_dir, config=config)
-        if artifact is None:
-            continue
-        candidate_topic_key = artifact.topic_key or derive_topic_key(artifact.title)
-        if candidate_topic_key == topic_key:
-            matches.append(artifact)
-            if len(matches) > 1:
-                return None
-    return matches[0] if len(matches) == 1 else None
-
-
-def load_plan_artifact(plan_dir: Path, *, config: RuntimeConfig) -> PlanArtifact | None:
-    if not plan_dir.exists() or not plan_dir.is_dir():
-        return None
-
-    metadata_path = _pick_metadata_file(plan_dir)
-    if metadata_path is None:
-        return None
-
-    metadata, body = _load_plan_metadata(metadata_path)
-    if metadata is None:
-        return None
-
-    plan_id = str(metadata.get("plan_id") or plan_dir.name)
-    level = str(metadata.get("level") or ("light" if metadata_path.name == "plan.md" else "standard"))
-    title = _extract_title(body) or plan_id
-    summary = _extract_summary(body, fallback=title)
-    topic_key = str(metadata.get("topic_key") or metadata.get("feature_key") or derive_topic_key(title))
-    files = tuple(str(path.relative_to(config.workspace_root)) for path in _collect_plan_files(plan_dir))
-    created_at = _path_created_at(metadata_path)
-
-    return PlanArtifact(
-        plan_id=plan_id,
-        title=title,
-        summary=summary,
-        level=level,
-        path=str(plan_dir.relative_to(config.workspace_root)),
-        files=files,
-        created_at=created_at,
-        topic_key=topic_key,
-    )
-
-
 def _make_plan_id(topic_key: str, *, plan_root: Path) -> str:
     date_prefix = datetime.now().strftime("%Y%m%d")
     base = f"{date_prefix}_{topic_key}"
@@ -280,9 +141,6 @@ def _make_plan_id(topic_key: str, *, plan_root: Path) -> str:
     return candidate
 
 
-def _slugify(value: str) -> str:
-    ascii_slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
-    return ascii_slug or "task"
 def _render_light_plan(title: str, summary: str, *, plan_id: str, feature_key: str, decision_state: DecisionState | None) -> str:
     return (
         _render_plan_front_matter(plan_id=plan_id, feature_key=feature_key, level="light", decision_state=decision_state)
@@ -409,58 +267,3 @@ def _render_decision_section(decision_state: DecisionState | None) -> str:
         "- 候选方案:\n"
         f"{options}\n\n"
     )
-
-
-def _pick_metadata_file(plan_dir: Path) -> Path | None:
-    for filename in ("plan.md", "tasks.md"):
-        candidate = plan_dir / filename
-        if candidate.exists() and candidate.is_file():
-            return candidate
-    return None
-
-
-def _load_plan_metadata(metadata_path: Path) -> tuple[Mapping[str, object] | None, str]:
-    raw_text = metadata_path.read_text(encoding="utf-8")
-    match = _FRONT_MATTER_RE.match(raw_text)
-    if match is None:
-        return None, raw_text
-    front_matter = match.group("front")
-    body = match.group("body")
-    try:
-        metadata = load_yaml(front_matter)
-    except YamlParseError:
-        return None, body
-    if not isinstance(metadata, Mapping):
-        return None, body
-    return metadata, body
-
-
-def _collect_plan_files(plan_dir: Path) -> list[Path]:
-    collected: list[Path] = []
-    for child in sorted(plan_dir.iterdir()):
-        collected.append(child)
-    return collected
-
-
-def _extract_title(body: str) -> str:
-    for line in body.splitlines():
-        stripped = line.strip()
-        if stripped.startswith("# "):
-            return stripped[2:].strip()
-    return ""
-
-
-def _extract_summary(body: str, *, fallback: str) -> str:
-    lines = [line.strip() for line in body.splitlines() if line.strip()]
-    if not lines:
-        return fallback
-    for index, line in enumerate(lines):
-        if line.startswith("# "):
-            if index + 1 < len(lines):
-                return lines[index + 1]
-            break
-    return lines[0]
-
-
-def _path_created_at(path: Path) -> str:
-    return datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).replace(microsecond=0).isoformat()

@@ -26,7 +26,7 @@ from sopify_contracts.artifacts import PlanArtifact
 from sopify_contracts.core import RouteDecision, RunState, RuntimeConfig, SkillMeta
 from sopify_contracts.decision import ClarificationState, DecisionState
 from sopify_contracts.handoff import RuntimeHandoff, RuntimeResult, SkillActivation
-from .plan_registry import (
+from .plan.registry import (
     PlanRegistryError,
     get_plan_entry,
     registry_relative_path,

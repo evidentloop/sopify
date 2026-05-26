@@ -3,45 +3,38 @@ from __future__ import annotations
 
 from tests.runtime_test_support import *
 from runtime.archive_lifecycle import apply_archive_subject, resolve_archive_subject
+from runtime.plan.registry import upsert_plan_entry
+from sopify_contracts.core import RuntimeConfig
+
+
+def _scaffold_with_registry(request_text: str, *, config: RuntimeConfig, level: str) -> PlanArtifact:
+    """Create a scaffold and sync it to the registry (mirrors _planning.py caller behavior)."""
+    artifact = create_plan_scaffold(request_text, config=config, level=level)
+    upsert_plan_entry(config=config, artifact=artifact, request_text=request_text)
+    return artifact
 
 
 class PlanRegistryTests(unittest.TestCase):
-    def test_plan_scaffold_auto_upserts_registry_with_suggested_priority(self) -> None:
+    def test_plan_scaffold_does_not_auto_upsert_registry(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
             config = load_runtime_config(workspace)
 
-            artifact = create_plan_scaffold("实现 runtime skeleton", config=config, level="standard")
+            create_plan_scaffold("实现 runtime skeleton", config=config, level="standard")
 
             registry_file = workspace / registry_relative_path(config)
-            self.assertTrue(registry_file.exists())
-
-            read_result = read_plan_registry(config)
-            self.assertEqual(read_result.payload["mode"], "observe_only")
-            self.assertEqual(read_result.payload["selection_policy"], "explicit_only")
-            self.assertEqual(read_result.payload["priority_policy"], "heuristic_v1")
-
-            entry_result = get_plan_entry(config=config, plan_id=artifact.plan_id)
-            self.assertIsNotNone(entry_result.entry)
-            assert entry_result.entry is not None
-            self.assertEqual(entry_result.entry["snapshot"]["path"], artifact.path)
-            self.assertEqual(entry_result.entry["snapshot"]["title"], artifact.title)
-            self.assertIsNone(entry_result.entry["governance"]["priority"])
-            self.assertIsNone(entry_result.entry["governance"]["priority_source"])
-            self.assertEqual(entry_result.entry["governance"]["status"], "todo")
-            self.assertEqual(entry_result.entry["advice"]["suggested_priority"], "p2")
-            self.assertTrue(entry_result.entry["advice"]["suggested_reason"])
+            self.assertFalse(registry_file.exists())
 
     def test_missing_registry_backfills_existing_plan_dirs_on_next_create(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
             config = load_runtime_config(workspace)
 
-            first = create_plan_scaffold("补 runtime 骨架", config=config, level="standard")
+            first = _scaffold_with_registry("补 runtime 骨架", config=config, level="standard")
             registry_file = workspace / registry_relative_path(config)
             registry_file.unlink()
 
-            second = create_plan_scaffold("实现 runtime skeleton", config=config, level="standard")
+            second = _scaffold_with_registry("实现 runtime skeleton", config=config, level="standard")
 
             read_result = read_plan_registry(config)
             plan_ids = {entry["plan_id"] for entry in read_result.payload["plans"]}
@@ -52,7 +45,7 @@ class PlanRegistryTests(unittest.TestCase):
             workspace = Path(temp_dir)
             config = load_runtime_config(workspace)
 
-            artifact = create_plan_scaffold("实现 runtime skeleton", config=config, level="standard")
+            artifact = _scaffold_with_registry("实现 runtime skeleton", config=config, level="standard")
             confirm_plan_priority(
                 config=config,
                 plan_id=artifact.plan_id,
@@ -92,7 +85,7 @@ class PlanRegistryTests(unittest.TestCase):
             store = StateStore(config)
             store.ensure()
 
-            artifact = create_plan_scaffold("实现 runtime skeleton", config=config, level="standard")
+            artifact = _scaffold_with_registry("实现 runtime skeleton", config=config, level="standard")
             store.set_current_plan(artifact)
 
             result = apply_archive_subject(
@@ -124,9 +117,9 @@ class PlanRegistryTests(unittest.TestCase):
             store = StateStore(config)
             store.ensure()
 
-            current_plan = create_plan_scaffold("第一性原理协作规则分层落地", config=config, level="standard")
+            current_plan = _scaffold_with_registry("第一性原理协作规则分层落地", config=config, level="standard")
             store.set_current_plan(current_plan)
-            backlog_plan = create_plan_scaffold("补 runtime 骨架", config=config, level="standard")
+            backlog_plan = _scaffold_with_registry("补 runtime 骨架", config=config, level="standard")
 
             recommendations = recommend_plan_candidates(config=config)
 
@@ -142,8 +135,8 @@ class PlanRegistryTests(unittest.TestCase):
             workspace = Path(temp_dir)
             config = load_runtime_config(workspace)
 
-            suggested_plan = create_plan_scaffold("紧急修 runtime blocker", config=config, level="standard")
-            confirmed_plan = create_plan_scaffold("补 runtime 骨架", config=config, level="standard")
+            suggested_plan = _scaffold_with_registry("紧急修 runtime blocker", config=config, level="standard")
+            confirmed_plan = _scaffold_with_registry("补 runtime 骨架", config=config, level="standard")
             confirm_plan_priority(
                 config=config,
                 plan_id=confirmed_plan.plan_id,
@@ -162,12 +155,12 @@ class PlanRegistryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
             config = load_runtime_config(workspace)
-            artifact = create_plan_scaffold("实现 runtime skeleton", config=config, level="standard")
+            artifact = _scaffold_with_registry("实现 runtime skeleton", config=config, level="standard")
 
             registry_file = workspace / registry_relative_path(config)
             before = registry_file.read_text(encoding="utf-8")
 
-            with mock.patch("runtime.plan_registry.iso_now", return_value="2099-01-01T00:00:00+00:00"):
+            with mock.patch("runtime.plan.registry.iso_now", return_value="2099-01-01T00:00:00+00:00"):
                 payload = inspect_plan_registry(config=config, plan_id=artifact.plan_id)
 
             after = registry_file.read_text(encoding="utf-8")
@@ -198,7 +191,7 @@ class PlanRegistryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
 
-            with mock.patch("runtime.plan_scaffold.upsert_plan_entry", side_effect=PlanRegistryError("boom")):
+            with mock.patch("runtime._planning.upsert_plan_entry", side_effect=PlanRegistryError("boom")):
                 result = run_runtime(
                     "~go plan 实现 runtime skeleton",
                     workspace_root=workspace,
@@ -223,9 +216,9 @@ class PlanRegistryTests(unittest.TestCase):
             store = StateStore(config)
             store.ensure()
 
-            current_plan = create_plan_scaffold("第一性原理协作规则分层落地", config=config, level="standard")
+            current_plan = _scaffold_with_registry("第一性原理协作规则分层落地", config=config, level="standard")
             store.set_current_plan(current_plan)
-            backlog_plan = create_plan_scaffold("补 runtime 骨架", config=config, level="standard")
+            backlog_plan = _scaffold_with_registry("补 runtime 骨架", config=config, level="standard")
 
             payload = inspect_plan_registry(config=config, plan_id=backlog_plan.plan_id)
 
@@ -243,7 +236,7 @@ class PlanRegistryTests(unittest.TestCase):
             store = StateStore(config)
             store.ensure()
 
-            artifact = create_plan_scaffold("test sync audit", config=config, level="standard")
+            artifact = _scaffold_with_registry("test sync audit", config=config, level="standard")
             store.set_current_plan(artifact)
 
             result = apply_archive_subject(
@@ -279,7 +272,7 @@ class PlanRegistryTests(unittest.TestCase):
             store = StateStore(config)
             store.ensure()
 
-            artifact = create_plan_scaffold("test blocked audit", config=config, level="full")
+            artifact = _scaffold_with_registry("test blocked audit", config=config, level="full")
             store.set_current_plan(artifact)
 
             result = apply_archive_subject(

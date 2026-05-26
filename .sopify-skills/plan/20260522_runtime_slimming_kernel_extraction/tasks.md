@@ -36,7 +36,7 @@ archive_ready: false
 | 1. 蓝图 delta 校验 | ✅ 完成 | 5 项审计全通过 |
 | 2. 当前消费者扫描 | ✅ 完成 | 4 类清单 + consumer 判定 |
 | 3. 删除就绪结论 | ✅ 完成 | kernel 边界锁定, 退场量级 ~38K LOC |
-| 4. 审计后删除 | ✅ 主线完成 | 4.1-4.5/4.6/4.7-4.10a/4.10c/4.10d/4.13-A/4.13-B ✅; 4.10b/4.11/4.12/4.13 Phase B 待后续 |
+| 4. 审计后删除 | ✅ 主线完成 | 4.1-4.5/4.6/4.7-4.10a/4.10b/4.10c/4.10d/4.13-A/4.13-B ✅; 4.11/4.12/4.13 Phase B 待后续 |
 | 5. 文档更新 | ⚠️ 部分完成 | 5.1/5.2/5.3 ✅; 5.4/5.5/5.6/5.7 待后续 |
 | 6. contract 面清理 + engine 重构 | ✅ 完成 | 6.1-6.6 全部收完, −6,400+ LOC |
 
@@ -183,7 +183,7 @@ archive_ready: false
   > - run_runtime() 兼容 wrapper 仍在 engine.py，尚未删除
   > - _kernel_turn 仍包含 11 个 non-kernel route handler 的分发逻辑
   > - 以上均属 Package A 范围
-- [ ] 4.10b **Step 3 Package A: _kernel_turn → engine 依赖切断 + 合同面审计 + 批量删除** — re-scoped / partial close (2026-05-23)
+- [x] 4.10b **Step 3 Package A: _kernel_turn → engine 依赖切断 + 合同面审计 + 批量删除** — re-scoped / partial close (2026-05-23); **plan_scaffold 单职责重构 + runtime/plan/ 包化** ✅ 完成 (2026-05-25)
   > 判断边界: 按"当前宿主可见 contract 还在不在"删，不按模块名猜测。行为还需要但文件不需要时，优先内联到 retained 模块；不新造模块/层次/public surface。
   >
   > **A1: _kernel_turn → engine 依赖切断（仅切实现耦合，不删功能面）** ✅ 完成
@@ -211,7 +211,7 @@ archive_ready: false
   > | `plan_registry.py` | 953 | **retain as independent governance layer** ✅ 6.5 裁定 | _planning.py + archive_lifecycle + output; YAML 写入已迁出到 _yaml.py |
   > | `skill_registry.py` | — | **deleted** ✅ 6.4 | discovery 退场 |
   > | `skill_resolver.py` | — | **deleted** ✅ 6.4 | resolve_route_candidate_skills 退场，candidate_skill_ids 改为静态 tuple |
-  > | `plan_scaffold.py` | 466 | **retain as single-purpose module** ✅ 维护者确认 | 6.6b 后 runtime 消费者仅 _planning.py; tests 消费者仍多。暂不内联，后续只做主链单职责瘦身 |
+  > | `plan_scaffold.py` | 466→~200 | **refactored → runtime/plan/ package** ✅ 4.10b 完成 (2026-05-25) | 拆为 scaffold/lookup/intent/identity 4 个单职责模块 + registry.py 迁入; create_plan_scaffold() registry side-effect 上提到 _planning.py; 626 tests green |
   > | `skill_runner.py` | — | **deleted** ✅ 4.10b A3 | 悬空路径 |
   >
   > 5 个模块 (archive_lifecycle / kb / clarification / decision / context_recovery) 经维护者确认为 retain as module。
@@ -222,7 +222,7 @@ archive_ready: false
   > **A3: 立即删除面** ✅ 收口
   > - 已完成: runtime skill execution sidecar (-187 LOC) ✅ 2141ed6
   > - 否决: 38 项大内联方案（~1,655 LOC 搬进 _kernel_turn.py 是换文件名不收缩）
-  > - 剩余: plan_scaffold.py (464 LOC) 保留独立模块；后续若继续瘦身，仅做职责收窄审计与测试收口，不再以“内联/删文件”为目标
+  > - 剩余: plan_scaffold.py 已完成单职责重构 ✅ (2026-05-25)：拆为 runtime/plan/{scaffold,lookup,intent,identity,registry}.py; create_plan_scaffold() 不再含 registry write
   > - engine.py: 6.6 完成后已瘦身至 343 LOC（conflict/cancel + activation + archive + run_runtime wrapper）；planning 主块已迁出到 _planning.py
   > - S3.1 大 co-delete 表不再作为执行清单；已降级为旧假设
 - [x] 4.10c Step 3 Package C: models.py bridge 退场 ✅ 完成 (2026-05-23)
