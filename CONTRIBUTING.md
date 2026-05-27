@@ -12,7 +12,7 @@ Thanks for your interest in contributing to Sopify.
 ## Prompt-layer and Skill Authoring
 
 - `skills/{zh,en}` is the prompt-layer source of truth. Each language directory contains `header.md.template` (host-agnostic template) and `skills/sopify/` (skill packages).
-- `Codex/Skills/{CN,EN}` and `Claude/Skills/{CN,EN}` are generated distribution outputs rendered from `skills/` via `scripts/sync-skills.sh`. Do not hand-edit these files.
+- `Codex/Skills/{CN,EN}` and `Claude/Skills/{CN,EN}` are local generated caches rendered from `skills/` via `scripts/sync-skills.sh`; they are ignored by git.
 - `runtime/builtin_skill_packages/*/skill.yaml` is the source of truth for builtin machine metadata.
 - For skill package changes, follow the `SKILL.md` files under [skills/zh/skills/sopify/](./skills/zh/skills/sopify/) / [skills/en/skills/sopify/](./skills/en/skills/sopify/).
 

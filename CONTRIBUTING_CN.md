@@ -12,7 +12,7 @@
 ## Prompt 层与 Skill Authoring
 
 - `skills/{zh,en}` 是 prompt-layer 真源。每个语言目录包含 `header.md.template`（宿主无关模板）和 `skills/sopify/`（skill 包）。
-- `Codex/Skills/{CN,EN}` 和 `Claude/Skills/{CN,EN}` 是由 `scripts/sync-skills.sh` 从 `skills/` 渲染生成的分发产物，不应手工编辑。
+- `Codex/Skills/{CN,EN}` 和 `Claude/Skills/{CN,EN}` 是由 `scripts/sync-skills.sh` 从 `skills/` 渲染出的本地缓存，已被 git 忽略。
 - `runtime/builtin_skill_packages/*/skill.yaml` 是 builtin machine metadata 真源。
 - Skill package 变更时，参考 [skills/zh/skills/sopify/](./skills/zh/skills/sopify/) / [skills/en/skills/sopify/](./skills/en/skills/sopify/) 下各自的 `SKILL.md`。
 
