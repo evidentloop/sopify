@@ -1279,9 +1279,7 @@ class CopilotInstructionSyncTests(unittest.TestCase):
             self.assertIn("Sopify", content)
 
             owned_path = workspace_root / ".github" / "instructions" / "sopify.instructions.md"
-            self.assertTrue(owned_path.exists(), "sopify.instructions.md should be created")
-            owned_content = owned_path.read_text(encoding="utf-8")
-            self.assertIn("applyTo:", owned_content)
+            self.assertFalse(owned_path.exists(), "sopify.instructions.md should not be created")
 
     def test_codex_host_does_not_create_instruction_files(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -1370,9 +1368,9 @@ class CopilotInstructionSyncTests(unittest.TestCase):
                 (workspace_root / ".github" / "copilot-instructions.md").exists(),
                 "Codex bootstrap should not remove Copilot instruction files",
             )
-            self.assertTrue(
+            self.assertFalse(
                 (workspace_root / ".github" / "instructions" / "sopify.instructions.md").exists(),
-                "Codex bootstrap should not remove owned instruction file",
+                "sopify.instructions.md should not be created",
             )
 
     def test_copilot_instruction_sync_on_ready_workspace(self) -> None:

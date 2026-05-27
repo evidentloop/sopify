@@ -25,7 +25,7 @@ from installer.distribution import (
 )
 from installer.hosts import get_host_adapter, iter_installable_hosts
 from installer.hosts.base import install_host_assets
-from installer.models import BootstrapResult, InstallError, InstallResult, LANGUAGE_DIRECTORY_MAP, parse_install_target
+from installer.models import BootstrapResult, InstallError, InstallPhaseResult, InstallResult, LANGUAGE_DIRECTORY_MAP, parse_install_target
 from installer.payload import install_global_payload, run_workspace_bootstrap
 from installer.validate import (
     resolve_payload_bundle_root,
@@ -68,11 +68,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--language", choices=("en-US", "zh-CN"), default=None, help="Copilot bootstrap output language.")
     parser.add_argument(
-        "--no-copilot",
-        action="store_true",
-        help="Copilot bootstrap only: skip Copilot instruction file distribution.",
-    )
-    parser.add_argument(
         "--ref",
         default=None,
         help="Advanced: override the remote source ref. Not supported for repo-local installs.",
@@ -90,24 +85,8 @@ def run_install(
     workspace_value: str | None,
     repo_root: Path,
     home_root: Path | None = None,
-    copilot_enabled: bool = True,
 ) -> InstallResult | BootstrapOnlyResult:
     target = parse_install_target(target_value)
-    if target.host == "copilot":
-        workspace_root = Path(workspace_value or ".").expanduser().resolve()
-        result = init_workspace(
-            workspace_root,
-            source_root=repo_root,
-            copilot=copilot_enabled,
-        )
-        if result.get("action") == "failed":
-            raise InstallError(str(result.get("message") or "Workspace bootstrap failed"))
-        return BootstrapOnlyResult(
-            target=target,
-            workspace_root=workspace_root,
-            bundle_version=result.get("bundle_version"),
-            details=tuple(str(item) for item in result.get("details", [])),
-        )
     workspace_root = Path(workspace_value).expanduser().resolve() if workspace_value is not None else None
     if workspace_root is not None and not workspace_root.exists():
         raise InstallError(f"Workspace does not exist: {workspace_root}")
@@ -116,6 +95,35 @@ def run_install(
 
     resolved_home = (home_root or Path.home()).expanduser().resolve()
     adapter = get_host_adapter(target.host)
+
+    if adapter.is_workspace_scope:
+        # Workspace-scope hosts (e.g. Copilot): render single file to workspace,
+        # skip payload install and workspace bootstrap.
+        if workspace_root is None:
+            workspace_root = Path(workspace_value or ".").expanduser().resolve()
+        host_install = install_host_assets(
+            adapter,
+            repo_root=repo_root,
+            home_root=resolved_home,
+            language_directory=target.language_directory,
+            workspace_root=workspace_root,
+        )
+        return InstallResult(
+            target=target,
+            workspace_root=workspace_root,
+            host_root=host_install.root,
+            payload_root=host_install.root,
+            bundle_root=None,
+            host_install=host_install,
+            payload_install=InstallPhaseResult(
+                action="skipped",
+                root=host_install.root,
+                version=host_install.version,
+                paths=(),
+            ),
+            workspace_bootstrap=None,
+            smoke_output="",
+        )
 
     host_install = install_host_assets(
         adapter,
@@ -188,7 +196,7 @@ def main(argv: list[str] | None = None) -> int:
             request=request,
             repo_root=REPO_ROOT,
             home_root=None,
-            install_executor=lambda **kwargs: run_install(**kwargs, copilot_enabled=not args.no_copilot),
+            install_executor=run_install,
         )
     except DistributionError as exc:
         if verbose:

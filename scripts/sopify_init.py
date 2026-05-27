@@ -21,6 +21,8 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 _SOPIFY_SKILLS_DIR = ".sopify-skills"
 _SOPIFY_JSON_FILENAME = "sopify.json"
@@ -47,7 +49,6 @@ _MANAGED_IGNORE_ENTRIES = (
 _INSTRUCTION_BLOCK_BEGIN = "<!-- BEGIN SOPIFY MANAGED BLOCK -->"
 _INSTRUCTION_BLOCK_END = "<!-- END SOPIFY MANAGED BLOCK -->"
 _COPILOT_INSTRUCTIONS_RELPATH = Path(".github") / "copilot-instructions.md"
-_COPILOT_INSTRUCTION_FILE_RELPATH = Path(".github") / "instructions" / "sopify.instructions.md"
 
 _SOPIFY_VERSION_RE = re.compile(r"^<!--\s*SOPIFY_VERSION:\s*(?P<version>.+?)\s*-->$", re.MULTILINE)
 
@@ -170,7 +171,7 @@ def _write_managed_instruction_block(path: Path, content: str) -> bool:
     if _INSTRUCTION_BLOCK_BEGIN in existing and _INSTRUCTION_BLOCK_END in existing:
         new_content = re.sub(
             rf"{re.escape(_INSTRUCTION_BLOCK_BEGIN)}.*?{re.escape(_INSTRUCTION_BLOCK_END)}",
-            block,
+            lambda _: block,
             existing,
             count=1,
             flags=re.DOTALL,
@@ -182,25 +183,25 @@ def _write_managed_instruction_block(path: Path, content: str) -> bool:
     return _write_text_if_changed(path, _ensure_trailing_newline(new_content))
 
 
-def _write_copilot_instruction_file(workspace_root: Path, content: str) -> bool:
-    target = workspace_root / _COPILOT_INSTRUCTION_FILE_RELPATH
-    return _write_text_if_changed(target, _ensure_trailing_newline(content))
-
-
 def _sync_copilot_instructions(workspace_root: Path, *, source_root: Path) -> bool:
-    resource_dir = source_root / "installer" / "resources" / "copilot"
-    lightweight_path = resource_dir / "lightweight.md"
-    if not lightweight_path.is_file():
+    """Render full Copilot rules from skills/{lang} and write to managed block."""
+    try:
+        from installer.hosts.base import render_single_file, HEADER_TEMPLATE_NAME as _HTN
+        from installer.hosts.copilot import COPILOT_ADAPTER
+    except ImportError:
         return False
-    lightweight = lightweight_path.read_text(encoding="utf-8")
-    changed = _write_managed_instruction_block(
-        workspace_root / _COPILOT_INSTRUCTIONS_RELPATH, lightweight,
+    language_directory = "CN"
+    skills_root = COPILOT_ADAPTER.source_root(source_root, language_directory)
+    header_template = skills_root / _HTN
+    header_source = header_template if header_template.is_file() else skills_root / COPILOT_ADAPTER.header_filename
+    skills_source = skills_root / "skills" / "sopify"
+    if not header_source.is_file() or not skills_source.is_dir():
+        return False
+    full_content = render_single_file(header_source, skills_source, COPILOT_ADAPTER)
+    # Managed block must be self-contained — Copilot CLI only reads copilot-instructions.md
+    return _write_managed_instruction_block(
+        workspace_root / _COPILOT_INSTRUCTIONS_RELPATH, full_content,
     )
-    full_path = resource_dir / "full.md"
-    if full_path.is_file():
-        full = full_path.read_text(encoding="utf-8")
-        changed = _write_copilot_instruction_file(workspace_root, full) or changed
-    return changed
 
 
 # ── Main ─────────────────────────────────────────────────────────────────

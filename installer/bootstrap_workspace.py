@@ -121,7 +121,6 @@ _SOPIFY_MANAGED_IGNORE_ENTRIES = (
 _SOPIFY_INSTRUCTION_BLOCK_BEGIN = "<!-- BEGIN SOPIFY MANAGED BLOCK -->"
 _SOPIFY_INSTRUCTION_BLOCK_END = "<!-- END SOPIFY MANAGED BLOCK -->"
 _COPILOT_INSTRUCTIONS_RELPATH = Path(".github") / "copilot-instructions.md"
-_COPILOT_INSTRUCTION_FILE_RELPATH = Path(".github") / "instructions" / "sopify.instructions.md"
 _COPILOT_HOST_ID = "copilot"
 _INSTRUCTION_RESOURCE_DIR = Path("resources") / "copilot"
 REASON_STUB_SELECTED = "STUB_SELECTED"
@@ -1116,7 +1115,7 @@ def _write_managed_instruction_block(path: Path, content: str) -> bool:
     if _SOPIFY_INSTRUCTION_BLOCK_BEGIN in existing and _SOPIFY_INSTRUCTION_BLOCK_END in existing:
         new_content = re.sub(
             rf"{re.escape(_SOPIFY_INSTRUCTION_BLOCK_BEGIN)}.*?{re.escape(_SOPIFY_INSTRUCTION_BLOCK_END)}",
-            block,
+            lambda _: block,
             existing,
             count=1,
             flags=re.DOTALL,
@@ -1149,34 +1148,13 @@ def _remove_managed_instruction_block(path: Path) -> bool:
     return _write_text_if_changed(path, _ensure_trailing_newline(normalized))
 
 
-def _write_copilot_instruction_file(workspace_root: Path, content: str) -> bool:
-    """Write the owned Copilot instruction file."""
-    target = workspace_root / _COPILOT_INSTRUCTION_FILE_RELPATH
-    return _write_text_if_changed(target, _ensure_trailing_newline(content))
-
-
-def _remove_copilot_instruction_file(workspace_root: Path) -> bool:
-    """Remove the owned Copilot instruction file."""
-    target = workspace_root / _COPILOT_INSTRUCTION_FILE_RELPATH
-    if not target.is_file():
-        return False
-    target.unlink()
-    instructions_dir = target.parent
-    if instructions_dir.is_dir() and not any(instructions_dir.iterdir()):
-        instructions_dir.rmdir()
-    return True
-
-
 def _sync_copilot_instruction_assets(*, workspace_root: Path, payload_root: Path) -> bool:
     """Sync Copilot instruction files from payload resources into the workspace."""
-    lightweight = _read_instruction_resource(payload_root, "lightweight.md")
-    if lightweight is None:
-        return False
     full = _read_instruction_resource(payload_root, "full.md")
-    changed = _write_managed_instruction_block(workspace_root / _COPILOT_INSTRUCTIONS_RELPATH, lightweight)
-    if full is not None:
-        changed = _write_copilot_instruction_file(workspace_root, full) or changed
-    return changed
+    if full is None:
+        return False
+    # Managed block must be self-contained — Copilot CLI only reads copilot-instructions.md
+    return _write_managed_instruction_block(workspace_root / _COPILOT_INSTRUCTIONS_RELPATH, full)
 
 
 def _confirm_bootstrap_message(

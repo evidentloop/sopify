@@ -10,7 +10,7 @@ import sys
 from tempfile import NamedTemporaryFile
 from typing import Any
 
-from installer.hosts.base import HostAdapter, read_sopify_version, HEADER_TEMPLATE_NAME
+from installer.hosts.base import HostAdapter, read_sopify_version, HEADER_TEMPLATE_NAME, render_single_file
 from installer.models import BootstrapResult, InstallError, InstallPhaseResult
 from installer.runtime_bundle import sync_runtime_bundle
 from installer.validate import _normalize_payload_bundle_version, resolve_payload_bundle_root, validate_payload_install
@@ -153,34 +153,41 @@ def _install_bootstrap_helper(*, repo_root: Path, payload_root: Path) -> Path:
 
 
 def _install_copilot_instruction_resources(*, repo_root: Path, payload_root: Path) -> None:
-    """Copy Copilot instruction resource files into the payload directory."""
-    source_dir = repo_root / "installer" / "resources" / "copilot"
-    if not source_dir.is_dir():
+    """Render full Copilot rules from skills/{lang} and store as full.md in payload."""
+    from installer.hosts.copilot import COPILOT_ADAPTER
+
+    language_directory = "CN"
+    skills_root = COPILOT_ADAPTER.source_root(repo_root, language_directory)
+    header_template = skills_root / HEADER_TEMPLATE_NAME
+    header_source = header_template if header_template.is_file() else skills_root / COPILOT_ADAPTER.header_filename
+    skills_source = skills_root / "skills" / "sopify"
+    if not header_source.is_file() or not skills_source.is_dir():
         return
+    full_content = render_single_file(header_source, skills_source, COPILOT_ADAPTER)
     target_dir = payload_root / PAYLOAD_INSTRUCTION_RESOURCES_DIR
     target_dir.mkdir(parents=True, exist_ok=True)
-    for source_file in sorted(source_dir.iterdir()):
-        if source_file.is_file() and source_file.suffix == ".md":
-            shutil.copy2(source_file, target_dir / source_file.name)
+    (target_dir / "full.md").write_text(full_content, encoding="utf-8")
 
 
 def _ensure_copilot_instruction_resources(*, repo_root: Path, payload_root: Path) -> bool:
-    """Ensure instruction resources are present; return True if any were added or updated."""
-    source_dir = repo_root / "installer" / "resources" / "copilot"
-    if not source_dir.is_dir():
+    """Ensure rendered instruction resource is present and current; return True if changed."""
+    from installer.hosts.copilot import COPILOT_ADAPTER
+
+    language_directory = "CN"
+    skills_root = COPILOT_ADAPTER.source_root(repo_root, language_directory)
+    header_template = skills_root / HEADER_TEMPLATE_NAME
+    header_source = header_template if header_template.is_file() else skills_root / COPILOT_ADAPTER.header_filename
+    skills_source = skills_root / "skills" / "sopify"
+    if not header_source.is_file() or not skills_source.is_dir():
         return False
+    full_content = render_single_file(header_source, skills_source, COPILOT_ADAPTER)
     target_dir = payload_root / PAYLOAD_INSTRUCTION_RESOURCES_DIR
-    changed = False
-    for source_file in sorted(source_dir.iterdir()):
-        if not source_file.is_file() or source_file.suffix != ".md":
-            continue
-        target_file = target_dir / source_file.name
-        if target_file.is_file() and target_file.read_bytes() == source_file.read_bytes():
-            continue
-        target_dir.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source_file, target_file)
-        changed = True
-    return changed
+    target_file = target_dir / "full.md"
+    if target_file.is_file() and target_file.read_text(encoding="utf-8") == full_content:
+        return False
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target_file.write_text(full_content, encoding="utf-8")
+    return True
 
 
 def _install_versioned_runtime_bundle(
