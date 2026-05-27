@@ -108,6 +108,7 @@ develop 阶段统一使用以下字段名，不再混用 `discovery_source`、`s
 - `environment_or_dependency`
 - `missing_test_infra`
 - `scope_or_design_mismatch`
+- `human_action_required`
 
 分流约束：
 
@@ -115,6 +116,7 @@ develop 阶段统一使用以下字段名，不再混用 `discovery_source`、`s
 - `environment_or_dependency`：可见标记环境无法证明通过，不把任务伪装为已验证完成。
 - `missing_test_infra`：允许保留任务未验证完成，并显式写出补测要求。
 - `scope_or_design_mismatch`：不得继续盲修，应优先回到 plan review、decision checkpoint 或其他宿主确认链路。
+- `human_action_required`：需要人工物理动作（写凭证、手跑 migration、外部审批），AI 无法代劳；标记 `[!]` 并明确写出人工操作步骤。
 
 ### 2.5 两阶段复审
 
@@ -141,6 +143,11 @@ Stage B `code_quality` 至少检查：
 - 不引入常见漏洞（XSS / SQL 注入等）。
 - 不破坏既有功能。
 - 保持项目代码风格一致。
+
+输出状态符约束：
+
+- `✓` 仅当所有验证行 `result=passed` 且 `reason_code=—`
+- 否则必须使用 `!`
 
 ## 步骤 3：Post-develop advisory review
 

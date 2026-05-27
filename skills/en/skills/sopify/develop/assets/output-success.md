@@ -1,13 +1,16 @@
 [{BRAND_NAME}] Development ✓
 
 Completed: {N}/{N} tasks
-Tests: passed
+Review: spec_compliance {✓/!} — {one-line evidence} | code_quality {✓/!} — {one-line evidence}
+
+Verification summary:
+  | Task | Source | Command | Result | reason_code | Retries |
+  |------|--------|---------|--------|-------------|---------|
+  | {task} | {verification_source} | {command} | {result} | {reason_code / —} | {retry_count} |
 
 ---
 Changes: {N} files
-  - src/xxx.vue
-  - src/xxx.ts
-  - .sopify-skills/blueprint/design.md
-  - .sopify-skills/history/...
+  - {file1}
+  - {file2}
 
 Next: Please verify the functionality

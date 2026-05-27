@@ -108,6 +108,7 @@ Allowed `root_cause` values:
 - `environment_or_dependency`
 - `missing_test_infra`
 - `scope_or_design_mismatch`
+- `human_action_required`
 
 Routing constraints:
 
@@ -115,6 +116,7 @@ Routing constraints:
 - `environment_or_dependency`: make the environment limitation visible and do not present the task as verified.
 - `missing_test_infra`: keep the task unverified and record the missing-test follow-up explicitly.
 - `scope_or_design_mismatch`: do not keep patching blindly; return to plan review, a decision checkpoint, or another host confirmation path.
+- `human_action_required`: requires a human physical action (writing credentials, running migrations manually, external approval) that AI cannot perform; mark `[!]` and specify the required manual steps.
 
 ### 2.5 Two-stage review
 
@@ -141,6 +143,11 @@ Security baseline:
 - Do not introduce common vulnerabilities (XSS / SQL injection / etc.).
 - Do not break existing behavior.
 - Keep the project style consistent.
+
+Output status symbol constraint:
+
+- `✓` is allowed only when every verification row has `result=passed` and `reason_code=—`
+- Otherwise `!` must be used
 
 ## Step 3: Post-develop advisory review
 

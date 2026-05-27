@@ -253,6 +253,15 @@ def render_single_file(
 
     parts = [header.rstrip("\n")]
 
+    # Inline shared top-level references (e.g. shared-writing-dna.md)
+    shared_refs = skills_source / "references"
+    if shared_refs.is_dir():
+        for child in sorted(shared_refs.iterdir()):
+            if child.is_file() and child.suffix in _TEXT_SUFFIXES:
+                file_content = child.read_text(encoding="utf-8").rstrip("\n")
+                rel_path = child.relative_to(skills_source)
+                parts.append(f"<!-- inlined: {rel_path} -->\n{file_content}")
+
     # Flatten skills in deterministic order
     for skill_name in _SKILL_DIRS_ORDER:
         skill_dir = skills_source / skill_name

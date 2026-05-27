@@ -1,14 +1,16 @@
 ---
 name: design
-description: Design phase entry; routes plan grading, task breakdown, and plan package output through references/assets/scripts.
+description: Design phase entry. Aggregates plan-level selection, task breakdown, and package output rules; loads references/assets/scripts on demand.
 ---
 
 # Design (Entry)
 
+> Core philosophy: A plan's value lies in the clarity of its trade-offs, not in its coverage.
+
 ## When to activate
 
 - Entering the design phase (`workflow` / `plan_only` / `light_iterate`).
-- Need to convert validated requirements into a plan package and task list.
+- Need to convert requirements into a plan package and task list.
 
 ## Execution skeleton
 
@@ -21,6 +23,7 @@ description: Design phase entry; routes plan grading, task breakdown, and plan p
 ## Resource navigation
 
 - Long rules: `references/design-rules.md`
+- Shared writing standards: `../references/shared-writing-dna.md` (apply to all output)
 - Templates: `assets/*.md`
 - Deterministic level selector: `scripts/select_plan_level.py`
 

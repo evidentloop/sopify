@@ -2,6 +2,11 @@
 
 修复: {一句话描述}
 
+验证摘要:
+  | 验证来源 | 命令 | 结果 | reason_code |
+  |---------|------|------|-------------|
+  | {verification_source} | {command} | {result} | {reason_code / —} |
+
 ---
 Changes: {N} files
   - {file1}

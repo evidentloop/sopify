@@ -5,6 +5,8 @@ description: Develop phase entry; routes task execution, state updates, KB sync,
 
 # Develop (Entry)
 
+> Core philosophy: No verification evidence, no completion — "it should be fine" is not evidence.
+
 ## When to activate
 
 - Entering the implementation phase (`workflow` / `light_iterate` / `quick_fix` / `exec_plan`).
@@ -22,6 +24,7 @@ description: Develop phase entry; routes task execution, state updates, KB sync,
 ## Resource navigation
 
 - Long rules: `references/develop-rules.md`
+- Shared writing standards: `../references/shared-writing-dna.md` (apply to all output)
 - Output templates: `assets/*.md`
 - Task extraction script: `scripts/extract_pending_tasks.py`
 

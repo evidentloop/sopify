@@ -2,6 +2,11 @@
 
 Fix: {one-line description}
 
+Verification summary:
+  | Source | Command | Result | reason_code |
+  |--------|---------|--------|-------------|
+  | {verification_source} | {command} | {result} | {reason_code / —} |
+
 ---
 Changes: {N} files
   - {file1}

@@ -1,9 +1,11 @@
 ---
 name: analyze
-description: Analyze phase entry; routes scoring, follow-up, and scope checks through references/assets/scripts.
+description: Analyze phase entry. Aggregates scoring, follow-up, and scope-check rules; loads references/assets/scripts on demand.
 ---
 
 # Analyze (Entry)
+
+> Core philosophy: Distinguish the user's "goal" from their "implementation path" — only commit to the goal.
 
 ## When to activate
 
@@ -23,6 +25,7 @@ description: Analyze phase entry; routes scoring, follow-up, and scope checks th
 ## Resource navigation
 
 - Long rules: `references/analyze-rules.md`
+- Shared writing standards: `../references/shared-writing-dna.md` (apply to all output)
 - Follow-up template: `assets/question-output.md`
 - Success template: `assets/success-output.md`
 - Deterministic scoring script: `scripts/score_requirement.py`
