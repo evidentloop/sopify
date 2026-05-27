@@ -20,7 +20,7 @@ hosts:
   copilot:
     host_id: copilot
     config_dir: null
-    header_filename: COPILOT.md
+    header_filename: copilot-instructions.md
     destination_dir: ".github"
     instruction_surface: copilot_instructions_md
     install_enabled: true
