@@ -17,3 +17,4 @@ evals/skill_eval_report.json
 # Generated host prompt distributions. Source of truth is skills/{zh,en}.
 Codex/Skills/
 Claude/Skills/
+Copilot/Skills/
