@@ -56,11 +56,11 @@
 ### 3C. 审计修复 — 🟡 P1 建议级
 
 - [ ] 3.10 `scripts/sopify_init.py` docstring 补全 `--no-copilot`、`--language` 参数说明
-- [ ] 3.11 📌 `examples/external-repo-quickstart/README.md` + `docs/getting-started.md` 修正 `sopify.instructions.md` 为实际安装路径（getting-started.md 有 3 处、quickstart 有 2 处）
-- [ ] 3.12 📌 `install.sh` 添加 `python`/`py` 回退链（与 `install.ps1` 对齐）
+- [x] 3.11 📌 `examples/external-repo-quickstart/README.md` + `docs/getting-started.md` 修正 `sopify.instructions.md` 为实际安装路径（getting-started.md 有 3 处、quickstart 有 2 处）
+- [x] 3.12 📌 `install.sh` 添加 `python`/`py` 回退链（与 `install.ps1` 对齐）
 - [ ] 3.13 `examples/sopify.config.yaml` 补全缺失配置项（`advanced.kb_init` 等）
-- [ ] 3.14 📌 `CONTRIBUTING.md` 更新 `scripts/install-sopify.sh` 等旧脚本路径引用
-- [ ] 3.15 删除 `tests/test_action_intent.py` 中 `~compare` 死测试（L351-353, L368-370）
+- [-] 3.14 📌 `CONTRIBUTING.md` 更新 `scripts/install-sopify.sh` 等旧脚本路径引用 — 脚本实际存在，引用未断
+- [x] 3.15 删除 `tests/test_action_intent.py` 中 `~compare` 死测试（L351-353, L368-370）
 - [ ] 3.16 绝对路径清理（scope：6 个文件，3.1/3.7 已处理的除外，不做 git history rewrite）：`.sopify-skills/history/` 5 文件 + `tests/fixtures/p4d_smoke/current_gate_receipt.json`，替换为相对路径或占位符
 - [ ] 3.17 Wave 1 末尾统一运行测试套件验证无回归：`python3 -m pytest tests -v`（D2 + D3 + D5 全部完成后统一跑一次）
 - [ ] 3.18 🟡 创建 `.github/ISSUE_TEMPLATE/`：bug_report.md + feature_request.md（标准 issue 模板）

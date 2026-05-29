@@ -63,7 +63,6 @@ The bootstrap also updated:
 | `.sopify-skills/sopify.json` | Workspace marker — version anchor + capability declaration |
 | `.gitignore` | Managed ignore block — excludes transient state from version control |
 | `.github/copilot-instructions.md` | Copilot instruction entry — tells Copilot about Sopify conventions |
-| `.github/instructions/sopify.instructions.md` | Detailed Copilot instructions — full rule set |
 
 ## Step 3 — Start Using
 
@@ -110,7 +109,6 @@ To remove Sopify from your project:
 ```bash
 rm -rf .sopify-skills/
 rm -f .github/copilot-instructions.md
-rm -rf .github/instructions/sopify.instructions.md
 # Then remove the sopify-managed block from .gitignore
 ```
 
