@@ -6,6 +6,17 @@ Format: Summary → Changed → Plan Packages. File-level details live in `git l
 
 ## [Unreleased]
 
+### Summary
+
+- `~go exec` 命令移除，`~go` 自动检测活动 plan 并恢复执行
+- 预发布安全清理：.gitignore 补全、本地配置取消追踪、残留 pattern 清除
+
+### Changed
+
+- **Runtime**: `~go exec` 全仓移除；bare `~go` 自动路由 `exec_plan`；`~go finalize` 显式路由 `archive_lifecycle`；旧命令输入返回 migration hint
+- **Security**: `.gitignore` 补全敏感路径；`.claude/settings.local.json` 取消追踪；`bootstrap_workspace.py` 移除 `~summary` 残留 regex
+- **Docs**: README / header templates / blueprint protocol 命令表对齐
+- **Tests**: 658 tests 全过，新增 `~go exec` migration hint 测试
 
 ## [2026-05-28.044700] - 2026-05-28
 
