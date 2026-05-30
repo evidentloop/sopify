@@ -64,8 +64,8 @@
 - [x] 3.3 撰写 CHANGELOG release note（覆盖 P0→P7 主线 + 本次收口）
 - [x] 3.10 `scripts/sopify_init.py` docstring 补全
 - [x] 3.13 `examples/sopify.config.yaml` 补全缺失配置项
-- [ ] 3.17 统一运行测试套件验证无回归
-- [ ] 8.1 更新 `.sopify-skills/blueprint/README.md` 托管区块
+- [x] 3.17 统一运行测试套件验证无回归
+- [x] 8.1 更新 `.sopify-skills/blueprint/README.md` 托管区块
 
 ### Wave C: 输出增强 🟡 P1
 
