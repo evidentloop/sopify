@@ -50,7 +50,7 @@
 - [-] 5.2 `install.ps1` 欢迎信息 — 跳过：同 5.1
 - [-] 5.3 空白状态检测 — 跳过：~go 已自动处理空白 `.sopify-skills/` 初始化
 - [x] 5.4 `examples/external-repo-quickstart/` 补充预期输出 + 关键步骤说明
-- [ ] 5.5 端到端验证：在干净环境跑一次完整 quickstart 链路
+- [x] 5.5 端到端验证：在干净环境跑一次完整 quickstart 链路
 
 ### Wave B: 文档 + 仓库打磨 🟡 P1
 
