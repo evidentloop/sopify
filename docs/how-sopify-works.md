@@ -52,10 +52,12 @@ Checkpoint 规则：
 │   ├── current_handoff.json
 │   ├── current_run.json
 │   ├── current_decision.json
-│   ├── current_clarification.json
+│   ├── current_gate_receipt.json
+│   ├── last_route.json
 │   └── sessions/<session_id>/...   # 并发 review 隔离
 ├── user/
-│   └── preferences.md
+│   ├── preferences.md
+│   └── feedback.jsonl
 └── project.md
 ```
 

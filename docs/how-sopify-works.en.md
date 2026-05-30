@@ -52,10 +52,12 @@ Checkpoint rules:
 │   ├── current_handoff.json
 │   ├── current_run.json
 │   ├── current_decision.json
-│   ├── current_clarification.json
+│   ├── current_gate_receipt.json
+│   ├── last_route.json
 │   └── sessions/<session_id>/...   # parallel review isolation
 ├── user/
-│   └── preferences.md
+│   ├── preferences.md
+│   └── feedback.jsonl
 └── project.md
 ```
 
