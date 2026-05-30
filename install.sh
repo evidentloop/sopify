@@ -153,7 +153,23 @@ fi
 spin_start "Checking requirements..."
 require_command "curl" "MISSING_CURL" "Install curl, or use the inspect-first flow to download the release asset manually."
 require_command "tar" "MISSING_TAR" "Install tar, or use a machine with basic archive support."
-require_command "python3" "MISSING_PYTHON3" "Install Python 3, then rerun the installer."
+
+# Python fallback chain: python3 → python → py -3 (aligned with install.ps1)
+PYTHON_CMD=""
+for _candidate in python3 python py; do
+  if command -v "$_candidate" >/dev/null 2>&1; then
+    PYTHON_CMD="$_candidate"
+    break
+  fi
+done
+if [[ -z "$PYTHON_CMD" ]]; then
+  fail "preflight" "MISSING_PYTHON" "None of python3, python, or py is available." "Install Python 3, then rerun the installer."
+fi
+PYTHON_ARGS=()
+if [[ "$PYTHON_CMD" == "py" ]]; then
+  PYTHON_ARGS+=("-3")
+fi
+
 spin_stop "Requirements OK"
 
 TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/sopify-install.XXXXXX")"
@@ -214,7 +230,7 @@ elif [[ -t 1 ]]; then
     "╚══════╝ ╚════╝ ╚═╝     ╚═╝╚═╝        ╚═╝" \
     ""
 fi
-SOPIFY_LOGO_PRINTED=1 python3 "$ENTRYPOINT" \
+SOPIFY_LOGO_PRINTED=1 "$PYTHON_CMD" "${PYTHON_ARGS[@]}" "$ENTRYPOINT" \
   --source-channel "$SOURCE_CHANNEL" \
   --source-resolved-ref "$RESOLVED_REF" \
   --source-asset-name "$ASSET_NAME" \

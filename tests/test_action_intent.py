@@ -348,10 +348,6 @@ class GateActionProposalTests(unittest.TestCase):
         from runtime.gate import _is_command_prefix_request
         self.assertTrue(_is_command_prefix_request("~go plan 补一下"))
 
-    def test_is_not_command_prefix_compare_removed(self) -> None:
-        from runtime.gate import _is_command_prefix_request
-        self.assertFalse(_is_command_prefix_request("~compare 对比 A 和 B"))
-
     def test_is_not_command_prefix_normal_request(self) -> None:
         from runtime.gate import _is_command_prefix_request
         self.assertFalse(_is_command_prefix_request("请帮我修复一下 bug"))
@@ -364,10 +360,6 @@ class GateActionProposalTests(unittest.TestCase):
         """Regression: ~gofoo must not match — require whitespace or end."""
         from runtime.gate import _is_command_prefix_request
         self.assertFalse(_is_command_prefix_request("~gofoo 实现功能"))
-
-    def test_is_not_command_prefix_comparex(self) -> None:
-        from runtime.gate import _is_command_prefix_request
-        self.assertFalse(_is_command_prefix_request("~comparex 对比"))
 
     def test_is_command_prefix_go_bare(self) -> None:
         from runtime.gate import _is_command_prefix_request

@@ -32,7 +32,6 @@ This creates:
 | `.sopify-skills/sopify.json` | Workspace marker — tells the host that Sopify is active |
 | `.gitignore` | Managed block — excludes transient state from version control |
 | `.github/copilot-instructions.md` | Copilot entry — project-level instruction for Copilot |
-| `.github/instructions/sopify.instructions.md` | Copilot detail — full Sopify rule set |
 
 > **Skip Copilot files:** Pass `--no-copilot` with `--target copilot` if you only want workspace markers.
 
@@ -73,8 +72,7 @@ After install, use `~go` in your AI host to start a managed workflow.
 ### Copilot
 
 Copilot discovers instructions via project-level files. The install command
-writes `.github/copilot-instructions.md` and
-`.github/instructions/sopify.instructions.md` automatically.
+writes `.github/copilot-instructions.md` automatically.
 
 ```bash
 curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | bash -s -- --target copilot
@@ -167,7 +165,6 @@ what changed.
 ```bash
 rm -rf .sopify-skills/
 rm -f .github/copilot-instructions.md
-rm -rf .github/instructions/sopify.instructions.md
 ```
 
 Then remove the `# BEGIN sopify-managed` / `# END sopify-managed` block from
