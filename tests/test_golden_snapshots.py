@@ -192,7 +192,7 @@ def _render_full(adapter: HostAdapter, lang_dir: str) -> str:
     return render_single_file(header_source, skills_source, adapter)
 
 
-_OUTPUT_CONTRACT_ZH_MARKERS = ["输出契约", "必需 section", "Conditional Enhancement & Format Selection"]
+_OUTPUT_CONTRACT_ZH_MARKERS = ["输出契约", "必需 section", "条件增强与格式选择"]
 _OUTPUT_CONTRACT_EN_MARKERS = ["Output Contract", "Required Sections", "Conditional Enhancement & Format Selection"]
 
 
