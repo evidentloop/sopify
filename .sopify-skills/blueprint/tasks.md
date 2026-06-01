@@ -116,11 +116,11 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 
 ### CrossReview
 
-独立审查内核，宿主中立。Phase 0 决策全部锁定（命名/边界/仓库形态/资产层/MVP artifact/集成顺序），Phase 1-4 待推进。与主航道无硬依赖，可独立推进。
+独立审查内核，宿主中立。已作为独立产品发布（`evidentloop/CrossReview`，v0.1.0a3）。Sopify 侧方案已瘦身为纯集成任务（Phase 4a advisory / Phase 4b bridge），产品设计已迁移至 CrossReview 自身蓝图。
 
 - Registry 状态：active + governance deferred
-- 详见：`plan/20260418_cross_review_engine/`
-- 相关蓝图项：CrossReview Phase 4a（advisory skill 接入 develop 后审查）
+- 详见：`plan/20260418_cross_review_engine/`（仅 Sopify 集成任务）
+- 当前阶段：Phase 4a advisory dogfood 中（首次 E2E 2026-05-31 已完成）
 
 ## 流程与工具项
 
