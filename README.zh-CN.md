@@ -19,7 +19,7 @@
 
 ---
 
-Sopify 是一个 AI 辅助开发的协议层。缺事实时停下来问，需要拍板时等你确认，中断后从上次 checkpoint 恢复——即使切换到不同的 AI 宿主也能接力。
+AI 工具写代码很快。但没搞清楚需求就动手，快就变成了返工。Sopify 是一个协议层——缺事实时停下来问，需要拍板时等你确认，中断后从上次 checkpoint 恢复，即使切换到不同的 AI 宿主也能接力。
 
 无需新编辑器、无需新 CLI。安装到你已有的宿主：Codex、Claude、Copilot 均支持。
 
@@ -29,7 +29,13 @@ Sopify 是一个 AI 辅助开发的协议层。缺事实时停下来问，需要
 - **随时恢复** — 基于 checkpoint；换宿主、换机器、换人接手都不用重新交代
 - **决策留痕** — 方案、取舍、审查持久保存在 `.sopify-skills/`
 
-[工作流详细说明 →](./docs/how-sopify-works.md)
+**Sopify 主要在防什么：**
+
+- **过早开写** — 关键信息没补齐、关键决策没拍板，AI 就直接改代码
+- **接力断档** — 一换宿主、换机器、换人接手，就得重新解释上下文
+- **决策失忆** — 重要取舍留在聊天里，没沉淀成项目资产
+
+[查看工作流图、checkpoint 与恢复流程 →](./docs/how-sopify-works.md)
 
 ## 实战演示
 
@@ -77,6 +83,14 @@ curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/instal
 </div>
 
 宿主 LLM 只是提议者，Validator 是唯一裁决者——每个操作都经历提议、校验、收据三步，才会触碰你的代码。知识（蓝图、方案、历史）持久保留在 `.sopify-skills/` 中，跨 session、宿主和团队成员均可访问。
+
+Sopify 靠三件事做到稳定可控、质量可靠：
+
+- 规则不靠模型临场发挥 —— 不同宿主加载的是同一套 Sopify 工作流规则，切换 Claude、Codex 或 Copilot 不会把流程重置
+- 状态不靠聊天记忆 —— plan、decision 和 checkpoint 都落在 `.sopify-skills/`，后续接手读的是项目状态，不是上一段对话
+- 执行前先过 runtime 门禁 —— 检查方案是否完整、风险是否化解、决策是否确认；缺一个就停下，不往下走
+
+这不是 prompt 层的建议，是确定性的门禁——方案不完整，执行就不放行。
 
 ## 安装说明
 

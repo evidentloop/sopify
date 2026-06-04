@@ -19,7 +19,7 @@ English · [简体中文](./README.zh-CN.md) · [Quick Start](#quick-start) · [
 
 ---
 
-Sopify is a protocol layer for AI-assisted development. It stops when facts are missing, waits when a decision needs your sign-off, and resumes from the last checkpoint — even across different AI hosts.
+AI coding tools are fast. But when they jump to code without understanding what's needed, speed becomes rework. Sopify is a protocol layer that stops when facts are missing, waits when a decision needs your sign-off, and resumes from the last checkpoint — even across different AI hosts.
 
 No new editor, no new CLI. Install into the host you already use — Codex, Claude, or Copilot.
 
@@ -29,7 +29,13 @@ No new editor, no new CLI. Install into the host you already use — Codex, Clau
 - **Resume from anywhere** — checkpoint-based; switch hosts, machines, or teammates without re-explaining
 - **Trace every decision** — plans, choices, and reviews persist in `.sopify-skills/`
 
-[How the workflow works →](./docs/how-sopify-works.en.md)
+**What Sopify prevents:**
+
+- **Premature coding** — AI starts changing code before missing facts or decisions are resolved
+- **Lost context** — switching hosts, machines, or teammates forces the work to be re-explained
+- **Forgotten decisions** — important tradeoffs disappear into chat history instead of becoming project artifacts
+
+[See the workflow diagram, checkpoints, and resume flow →](./docs/how-sopify-works.en.md)
 
 ## See It In Action
 
@@ -65,6 +71,14 @@ A month later, someone asks why the cache key includes the user ID. The answer i
 </div>
 
 The LLM is only a proposal source. The Validator is the sole authorizer — every action is proposed, validated, and receipted before it touches your code. Knowledge persists in `.sopify-skills/`, accessible across sessions, hosts, and teammates.
+
+How Sopify achieves stability and quality:
+
+- Workflow rules live outside model memory — hosts load the same Sopify rules, so switching between Claude, Codex, or Copilot does not reset the workflow
+- State persists to the repo — plans, decisions, and checkpoints live in `.sopify-skills/`, so the next session resumes from project state, not chat history
+- Runtime checks gate execution — before code is written, Sopify verifies plan completeness, unresolved risks, and pending decisions; if something is missing, it stops and asks
+
+This isn't prompt-level advice — it's a deterministic gate. If the plan isn't complete, execution doesn't proceed.
 
 ## Installation
 
