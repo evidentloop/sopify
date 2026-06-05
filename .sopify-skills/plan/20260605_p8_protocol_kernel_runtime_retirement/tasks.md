@@ -7,182 +7,368 @@ created: 2026-06-05
 
 # Tasks
 
-> 三波次执行顺序严格：W1 → W2 → W3。每波次收口后才启动下一波次。
+> 三波次严格串行：W1 contract baseline → W2 physical cutover → W3 host proof/docs。
 > 状态标记：`[ ]` 待办 / `[~]` 进行中 / `[x]` 完成 / `[-]` 阻塞 / `[·]` 取消
+> 每个切片必须闭合：Depends / Input / Output / Verify 均明确后才执行。
 
-## Wave 1 — Protocol + State Contract Cutover
+## Wave 1 — Protocol + Contract Baseline
 
-### S1.1 Protocol 5 件 Must-Freeze Schema
+目标：先建立不依赖 runtime 的协议基线。W1 未绿，禁止删除 runtime。
 
-- [ ] `state/active_plan.json` schema：`{ "plan_id": "<id>" }` 极简
-- [ ] `state/current_handoff.json` schema：复用蓝图已定义 handoff schema + required_host_action 字段（复用蓝图 canonical 值：continue_host_develop / answer_questions / confirm_decision / continue_host_consult / resolve_state_conflict）
-- [ ] `plan/<id>/plan.md` 8 必备章节定义：Context/Why / Scope / Approach / Waves / Key Decisions / Constraints / Status / Next
-- [ ] `plan/<id>/receipts/*.json` schema：命名规范 `exec_NNN / verify_NNN / final`；字段 verdict / evidence / provenance / timestamp
-- [ ] `history/<id>/receipt.md` 必备章节：outcome / summary / key_decisions
-- [ ] 落到 `sopify_contracts/schemas/`，标注 MUST/SHOULD/MAY（RFC 2119）
+### W1.1 Freeze 5 Must-Freeze Schemas
 
-### S1.2 protocol.md §2 Plan 包结构升级
+- [ ] Depends: P6 writer 基础（当前 `canonical_writer`）+ sopify_contracts 已存在
+- [ ] Input: `design.md §2` / `protocol.md` 当前 Integration Contract / state 现状
+- [ ] Output: `sopify_contracts/schemas/active_plan.schema.json`
+- [ ] Output: `sopify_contracts/schemas/current_handoff.schema.json`
+- [ ] Output: `sopify_contracts/schemas/plan_md_sections.schema.json`
+- [ ] Output: `sopify_contracts/schemas/plan_receipt.schema.json`
+- [ ] Output: `sopify_contracts/schemas/history_receipt.schema.json`
+- [ ] Verify: schema 文件不 import `runtime`
+- [ ] Verify: `active_plan` schema 只允许 `plan_id`
+- [ ] Verify: `current_handoff.required_host_action` 只允许 canonical 5 值
+- [ ] Verify: `current_handoff` post-P8 required 字段集明确为 `schema_version` / `plan_id` / `required_host_action`
+- [ ] Output: `route_name` / `run_id` / `handoff_kind` / `resolution_id` 默认从 post-P8 `current_handoff` schema `properties` 中全删；未来如需 provenance 字段，必须另走 ADR 重加
+- [ ] Verify: `current_handoff.schema.json` 不再声明 `route_name` / `run_id` / `handoff_kind` / `resolution_id`
+- [ ] Note: schema draft files may exist locally before this task is completed; W1.1 is done only after protocol/compliance review closes the fields.
 
-- [ ] plan 包文件清单（plan.md + optional tasks/design + receipts/ + optional assets/）
-- [ ] plan.md 8 必备章节详细说明
-- [ ] 分级（light / standard / architecture）+ 适用场景
-- [ ] 明确不加 status.json / plan-level README.md / plan/<id>/handoff.json
+### W1.2 Rewrite protocol.md Kernel Sections
 
-### S1.3 protocol.md §6 Verifier Read-Only Contract
+- [ ] Depends: W1.1 schema 字段已确定
+- [ ] Input: `.sopify-skills/blueprint/protocol.md`
+- [ ] Output: protocol.md §2 plan package structure 改为 `plan.md` 唯一语义入口
+- [ ] Output: protocol.md §6 verifier read-only contract 升格为 MUST
+- [ ] Output: protocol.md §6 明确 ExecutionAuthorizationReceipt 为 `[RETIRED in P8]`，并把 post-P8 审计主链指向 `plan/<id>/receipts/*.json` + `history/<id>/receipt.md`
+- [ ] Output: protocol.md §8 Host Protocol Entry Contract：request admission、触发条件、4 步读顺序、读取预算、读后分叉、写回边界
+- [ ] Output: protocol.md §8 明确 ActionProposal 是 runtime-independent workflow/admission 概念，不是 P8 must-freeze schema，不再作为 runtime gate 输入
+- [ ] Output: protocol.md §8 用新的 Host Protocol Entry Contract 整节替换 pre-P8 deep runtime gate 正文，只保留一行 retirement note 指向历史背景
+- [ ] Output: host 在 ActionProposal 指向 managed plan / continuation / finalize 时，入口读顺序为 `active_plan → plan.md → current_handoff → receipts`
+- [ ] Output: protocol.md state file index 改为 2 文件
+- [ ] Verify: protocol.md 不再要求 `runtime_gate.py enter`
+- [ ] Verify: protocol.md 不要求所有用户请求都自动接续 active_plan
+- [ ] Verify: protocol.md 不再把 `current_run/current_plan/current_decision/current_clarification/current_archive_receipt` 作为主链必读
+- [ ] Verify: protocol.md §8 旧 gate-first normative 内容不存在；若有历史说明，仅允许 retirement note
+- [ ] Verify: protocol.md 明确 `_registry.yaml` 不属于 protocol kernel
+- [ ] Verify: protocol.md 明确 prompt asset 负责触发 protocol entry，但不得定义 runtime router
+- [ ] Verify: protocol.md 明确默认不得全量读取 protocol.md / design.md / receipts/
 
-- [ ] `verifier_contract` MUST/MUST_NOT 块
-- [ ] cross-review Phase 4a advisory 路径增加 read-only 声明消费
-- [ ] Validator 消费 verdict 时校验 verifier_contract 声明
-- [ ] 违反 read-only → verdict 降级 advisory
+### W1.3 Define Host Prompt Plan Snapshot
 
-### S1.4 protocol.md §8 Host 入口读顺序升级
+- [ ] Depends: W1.2
+- [ ] Input: current host prompt assets / installer host payload patterns
+- [ ] Output: host prompt summary says: if `.sopify-skills/` exists, first form a runtime-independent ActionProposal for request admission
+- [ ] Output: prompt summary says: only managed plan / continuation / finalize ActionProposal enters the 4-step protocol entry
+- [ ] Output: prompt summary includes ActionProposal categories, 4-step entry order, read budget, and `sopify_writer` write boundary
+- [ ] Output: prompt summary explicitly states that default spec workflow (analyze → design → develop → finalize) is a prompt asset / skill layer function, not runtime logic
+- [ ] Output: prompt summary does not mention `runtime_gate.py`, route families, or `_registry.yaml`
+- [ ] Verify: Qoder prompt asset can be generated from the same Plan Snapshot rules
+- [ ] Verify: host prompt text is short enough to avoid becoming a second protocol.md
+- [ ] Verify: host prompt does not instruct LLM to load full protocol.md by default
+- [ ] Verify: host prompt does not imply consult / quick_fix must continue active_plan
 
-- [ ] 4 步读顺序：active_plan → plan.md → current_handoff → receipts/
-- [ ] 链路失败模式与 fail-open 规则
-- [ ] 顺序设计原则说明（语义优先于缓存）
+### W1.4 Define Plan Package Required Sections
 
-### S1.5 sopify_compliance.py 主链 smoke
+- [ ] Depends: W1.2
+- [ ] Input: current plan package examples under `.sopify-skills/plan/`
+- [ ] Output: plan.md recommended Plan Snapshot + 8 required sections documented: Plan Snapshot (Goal/Status/Next/Task; optional schema field `plan_snapshot`) + Context/Why / Scope / Approach / Waves / Key Decisions / Constraints / Status / Next
+- [ ] Output: Plan Snapshot is the default read window for LLM when present; host falls back to full plan.md when absent or conflicting
+- [ ] Output: Plan Snapshot is documented as user-readable derived status snapshot and continuation entry summary, not directory index, not `_registry.yaml` replacement, not a new state file, and not authoritative audit evidence
+- [ ] Verify: `plan_snapshot` schema 注释明确它只是 plan.md 顶部区块的 schema 抽象，不是独立 carrier，不是 machine truth，不覆盖正文或 receipts
+- [ ] Output: light / standard / architecture 三档文件矩阵
+- [ ] Output: receipts 条件必备规则
+- [ ] Verify: 不新增 `status.json`
+- [ ] Verify: 不新增 plan-level `README.md`
+- [ ] Verify: 不新增 `plan/<id>/handoff.json`
 
-- [ ] 新建 `scripts/sopify_compliance.py`
-- [ ] 实现 3 场景检查：new-plan / continuation / finalize
-- [ ] 输出结构化 report（JSON），可被 CI 消费
-- [ ] CLI 接口：`sopify_compliance check --scenario <scenario> --fixture <path>`
+### W1.5 Define Registry Retirement Contract
 
-### S1.6 最小 Fixture
+- [ ] Depends: W1.2
+- [ ] Input: `runtime/plan/registry.py` / `_registry.yaml` / registry tests
+- [ ] Output: protocol.md 明确 `_registry.yaml` deprecated by P8
+- [ ] Output: design.md 记录 registry 删除理由和后续替代原则
+- [ ] Output: compliance smoke 需要检查 host entry path 不读取 `_registry.yaml`
+- [ ] Verify: `_registry.yaml` 不在 must-freeze 列表
+- [ ] Verify: host 入口读顺序不包含 registry
 
-- [ ] 当前 repo 作为主 fixture（dogfood）
-- [ ] 1 个最小 external repo 作为辅助 fixture
-- [ ] fixture 不依赖 runtime 进程
+### W1.5b Rewrite persistence_red_line and promise surface
 
-### Wave 1 收口
+- [ ] Depends: W1.1 / W1.2
+- [ ] Input: `.sopify-skills/blueprint/design.md` keep-list / persistence_red_line / 对外承诺分层表
+- [ ] Output: P8 design 明确 blueprint `persistence_red_line` 将从 pre-P8 runtime state 集合切到 post-P8 persistence model
+- [ ] Output: P8 design 明确 ExecutionAuthorizationReceipt / current_gate_receipt 在 P8 中 retire，而不是静默丢失
+- [ ] Output: W3 blueprint sync 需要同步更新对外承诺分层表（EAR 从 Now/✅ 退场，receipts/history receipt 写入新的审计承诺面）
+- [ ] Verify: P8 不再只写 “Core state files 6 → 2”，还明确 red-line / keep-list / promise surface 的同步回写要求
 
-- [ ] Wave 1 验收：文档自洽 + sopify_compliance.py 当前 repo 跑通 3 场景
-- [ ] plan.md status 更新为 in_progress（W1 部分）
+### W1.6 Build Runtime-Free Compliance Smoke
 
----
+- [ ] Depends: W1.1 / W1.2 / W1.3 / W1.4 / W1.5 / W1.5b
+- [ ] Input: schema files + filesystem fixture
+- [ ] Output: `scripts/sopify_compliance.py`
+- [ ] Output: CLI: `sopify_compliance check --scenario <new-plan|continuation|finalize> --fixture <path>`
+- [ ] Output: JSON report with scenario, verdict, failures, evidence
+- [ ] Output: CLI is dev/CI smoke only; not a `sopify run/finalize/route` replacement
+- [ ] Verify: `rg "from runtime|import runtime" scripts/sopify_compliance.py` returns no matches
+- [ ] Verify: new-plan scenario writes/validates `state/active_plan.json` + `plan/<id>/plan.md`
+- [ ] Verify: continuation scenario reads 4-step entry order
+- [ ] Verify: continuation scenario fails if prompt/protocol entry references `runtime_gate.py`
+- [ ] Verify: continuation scenario fails if prompt/protocol entry requires active_plan continuation for every user request
+- [ ] Verify: prompt/protocol entry explicitly states consult / unmanaged quick_fix does not enter active_plan continuation by default
+- [ ] Verify: continuation scenario fails if protocol.md §8 still contains pre-P8 gate-first normative body text
+- [ ] Verify: continuation scenario fails if protocol.md still lists `current_run/current_plan/current_clarification/current_decision/current_gate_receipt` as主链必读
+- [ ] Verify: continuation scenario fails if prompt/protocol entry requires full protocol.md/design.md/receipts directory reads by default
+- [ ] Verify: finalize scenario checks `receipts/final.json`, history receipt, and cleared state
+- [ ] Verify: any `_registry.yaml` in entry path fails compliance
 
-## Wave 2 — Runtime Physical Retirement + State 物理重构
+### W1.7 Create Minimal Fixtures
 
-### S2.1 Installer 5 文件解耦
+- [ ] Depends: W1.6
+- [ ] Input: current repo + minimal external fixture directory
+- [ ] Output: current repo dogfood fixture
+- [ ] Output: minimal external repo fixture under tests/fixtures or temporary generated path
+- [ ] Output: consult/quick_fix admission fixture: active_plan exists, user request is unrelated consult or unmanaged quick_fix, expected behavior does not enter 4-step continuation
+- [ ] Verify: fixtures do not need runtime process
+- [ ] Verify: compliance passes all 3 scenarios on current repo
+- [ ] Verify: compliance passes continuation scenario on external fixture
+- [ ] Verify: consult/quick_fix admission fixture is represented as text-level expected behavior or compliance assertion; no LLM behavior test required
 
-- [ ] `installer/validate.py` 移除 runtime import（消费 sopify_contracts 替代）
-- [ ] `installer/bootstrap_workspace.py` 移除 runtime import
-- [ ] `installer/inspection.py` 移除 runtime import
-- [ ] `scripts/install_sopify.py` 移除 runtime import
-- [ ] `scripts/sopify_init.py` 移除 runtime import
-- [ ] 每个文件做 import graph 审计（参考 Phase 1 经验）
+### Wave 1 Gate
 
-### S2.2 CLI Helper 迁移
-
-- [ ] `scripts/sopify_status.py` 改为消费 `installer/inspection.py` contract
-- [ ] `scripts/sopify_doctor.py` 改为消费 `installer/inspection.py` contract
-- [ ] 保持用户入口参数不变（`-h` / `--target` / `--workspace`）
-
-### S2.3 State 物理重构
-
-- [ ] 删除 `state/current_plan.json`（被 active_plan 替代）
-- [ ] 删除 `state/current_run.json`（语义下沉到 plan.md status）
-- [ ] 删除 `state/current_clarification.json`（折叠到 current_handoff.required_host_action = answer_questions）
-- [ ] 删除 `state/current_decision.json`（折叠到 current_handoff.required_host_action = confirm_decision）
-- [ ] 删除 `state/current_archive_receipt.json`（真相进 history/receipt.md）
-- [ ] 删除 `state/last_route.json`（可从 current_handoff 派生）
-- [ ] canonical_writer 适配新结构（只写 active_plan + current_handoff）
-- [ ] sopify_contracts 适配新结构
-
-### S2.4 Tests 分类
-
-- [ ] 列出 tests/ 中所有 runtime-coupled 测试
-- [ ] 分类：保留 contract 测试 / 删除 runtime 测试 / 迁移到 canonical_writer 测试
-- [ ] 删除 runtime-coupled 测试
-- [ ] 迁移需要保留的测试到 canonical_writer 测试套件
-
-### S2.5 Runtime 目录删除
-
-- [ ] 最后确认 Wave 1 smoke 全绿
-- [ ] 删除 `runtime/` 全目录（~16K LOC / 37 文件）
-- [ ] 清理 `pyproject.toml` / `setup.py` 中 runtime 相关入口
-- [ ] 清理 README / docs 中对 runtime 的引用
-
-### S2.6 Installer Bundle 清理
-
-- [ ] 删除 `installer/sopify_bundle.py`
-- [ ] 删除 `installer/hosts/{codex,claude}/` deep adapter（保留 copilot/）
-- [ ] 清理 installer/__init__.py 中的 deep host 导出
-
-### S2.7 Dogfood Smoke
-
-- [ ] 当前 repo 跑 new-plan 场景：创建新 plan → 写 active_plan → 写 plan.md
-- [ ] 当前 repo 跑 continuation 场景：中断后新 session 按 4 步读顺序接续
-- [ ] 当前 repo 跑 finalize 场景：生成 receipts/final.json → 整包进 history → 生成 receipt.md → 清空 state/
-
-### Wave 2 收口
-
-- [ ] Wave 2 验收：W1 smoke 仍绿 + runtime/ 不存在 + canonical_writer 是唯一写路径 + state/ 只剩 2 文件
-- [ ] Dogfood smoke 3 场景全绿
-
----
-
-## Wave 3 — Host Proof + Docs Cutover
-
-### S3.1 试点宿主选定
-
-- [ ] 确认 Cursor 作为试点宿主（Windsurf 放 P9）
-- [ ] 记录选型理由（plan 包内 decision log）
-
-### S3.2 Payload-Capable Adapter
-
-- [ ] 实现 `installer/hosts/cursor/` payload adapter
-- [ ] adapter 只调 canonical_writer，不调 runtime
-- [ ] payload 分发走 install.sh --target cursor
-- [ ] prompt asset 落点符合 design.md §Prompt 镜像治理原则
-
-### S3.3 接续增强接入
-
-- [ ] Cursor adapter 消费 `state/active_plan.json`
-- [ ] Cursor adapter 消费 `plan/<id>/plan.md`
-- [ ] Cursor adapter 消费 `state/current_handoff.json`
-- [ ] Cursor adapter 消费 `plan/<id>/receipts/`
-
-### S3.4 端到端验收
-
-- [ ] fixture repo 上跑通：Cursor 写 handoff → Cursor 新 session 消费 handoff 继续
-- [ ] 整条链路不依赖 runtime 进程
-- [ ] 录制验收 transcript
-
-### S3.5 文档叙事切换
-
-- [ ] 重写 `README.md` 主流程图（"host executes, Sopify is protocol kernel"）
-- [ ] 重写 `README.zh-CN.md` 主流程图
-- [ ] 重写 `docs/how-sopify-works.md` 主流程图 + 状态模型
-- [ ] 重写 `docs/how-sopify-works.en.md` 主流程图 + 状态模型
-- [ ] 更新 `docs/getting-started.md` 新用户引导
-- [ ] 画架构图（用 fireworks-tech-graph）：state 2 文件 + plan + history 三层 + host 4 步入口 + 跨宿主接续
-
-### S3.6 Blueprint 回写
-
-- [ ] 更新 blueprint design.md §Runtime 退场路线："runtime 已物理删除"
-- [ ] 更新 blueprint design.md §Core State Files 6 → 2
-- [ ] 更新 blueprint design.md §State Model：反映新结构（2 文件）
-- [ ] 更新 blueprint design.md §Plan Package Structure：反映三档分级 + receipts 条件必备
-- [ ] 更新 blueprint tasks.md：Runtime retirement Phase 2 标完成
-
-### Wave 3 收口
-
-- [ ] Wave 3 验收：4 条硬指标全部满足
-- [ ] Cursor 消费 active_plan 定位 plan ✓
-- [ ] Cursor 读 plan.md 理解进度 ✓
-- [ ] Cursor 写 handoff + receipts 可被另一 session 接续 ✓
-- [ ] 整条链路不依赖 runtime 进程 ✓
+- [ ] Depends: W1.1-W1.7
+- [ ] Verify: `python3 scripts/sopify_compliance.py check --scenario new-plan --fixture <current>`
+- [ ] Verify: `python3 scripts/sopify_compliance.py check --scenario continuation --fixture <current>`
+- [ ] Verify: `python3 scripts/sopify_compliance.py check --scenario finalize --fixture <current>`
+- [ ] Verify: `rg "runtime_gate|current_run|current_plan|_registry" .sopify-skills/blueprint/protocol.md` only returns legacy notes marked retired or no matches
+- [ ] Verify: protocol.md §8 已完成整节替换；旧 deep runtime gate 正文不存在
+- [ ] Verify: host prompt entry summary exists and does not reintroduce runtime routing
+- [ ] Stop: W1 gate must pass before W2 starts
 
 ---
 
-## P8 总收口
+## Wave 2 — Physical Runtime Retirement
 
-- [ ] plan.md status 更新为 done
-- [ ] 生成 `plan/<id>/receipts/final.json`（finalize 凭证）
-- [ ] 移动整包 → `history/2026-MM/20260605_p8_protocol_kernel_runtime_retirement/`
-- [ ] 生成 `history/<plan_id>/receipt.md`：outcome / summary / key_decisions
-- [ ] blueprint design.md 回写：P8 收口结论
-- [ ] blueprint tasks.md 回写：P8 进入"已完成主航道"表
-- [ ] blueprint README.md 当前焦点刷新
-- [ ] CHANGELOG 条目
+目标：硬切到 protocol kernel。线上用户少，不做 shadow writer，不保留 runtime compatibility layer。
+
+### W2.1 Extract/Keep Minimal CLI Entrypoints
+
+- [ ] Depends: W1 gate
+- [ ] Input: `scripts/sopify_init.py` / `scripts/sopify_status.py` / `scripts/sopify_doctor.py` / `installer/inspection.py`
+- [ ] Output: `sopify_init.py` only bootstraps/fixes workspace layout and activation marker
+- [ ] Output: `sopify_status.py` is read-only: active plan pointer, handoff health, latest receipt
+- [ ] Output: `sopify_doctor.py` is read-only: install/payload/schema/host asset health
+- [ ] Output: helper names and user-facing CLI args preserved only where still relevant
+- [ ] Output: no new `sopify run/route/finalize/gate` CLI
+- [ ] Verify: `rg "from runtime|import runtime" scripts/sopify_init.py scripts/sopify_status.py scripts/sopify_doctor.py installer/inspection.py` returns no matches
+- [ ] Verify: status/doctor still report workspace activation, plan pointer, handoff health
+
+### W2.2 Decouple Installer Core
+
+- [ ] Depends: W2.1
+- [ ] Input: `installer/validate.py` / `installer/bootstrap_workspace.py` / `scripts/install_sopify.py`
+- [ ] Output: installer consumes sopify_contracts / installer models, not runtime
+- [ ] Output: runtime bundle references removed from installer validation
+- [ ] Verify: `rg "runtime_gate|sopify_runtime|runtime/" installer scripts/install_sopify.py` has no active dependency except retired docs/tests slated for deletion
+- [ ] Verify: install smoke still installs payload assets
+
+### W2.3 Rename and Scope sopify_writer
+
+- [ ] Depends: W1 schemas
+- [ ] Input: `canonical_writer/` / `sopify_contracts/*`
+- [ ] Output: package/module surface becomes `sopify_writer`
+- [ ] Output: public writer role documented as "the writer for Sopify protocol state and receipts"
+- [ ] Output: writer allowed writes: `state/active_plan.json`, `state/current_handoff.json`, `plan/<id>/receipts/*.json`, `history/<id>/receipt.md`
+- [ ] Output: writer must not route, choose plan priority, call AI, execute tasks, or orchestrate hosts
+- [ ] Verify: no new writer CLI is introduced by default
+- [ ] Verify: old `canonical_writer` import path is removed; no compatibility alias by default
+
+### W2.4 Migrate StateStore to 2-File Model
+
+- [ ] Depends: W2.3
+- [ ] Input: `sopify_writer/store.py` / `sopify_contracts/*`
+- [ ] Output: `StateStore.get/set/clear_active_plan`
+- [ ] Output: `StateStore.get/set/clear_current_handoff`
+- [ ] Output: removed writer methods for current_run/current_plan/current_clarification/current_decision/current_archive_receipt/last_route
+- [ ] Verify: `state/active_plan.json` contains only `plan_id`
+- [ ] Verify: current_handoff carries plan_id, plan_path, required_host_action, artifacts, notes, observability
+- [ ] Verify: post-P8 writer/schema 不再要求 `route_name` / `run_id` 作为 current_handoff 主链 required 字段
+- [ ] Verify: no sopify_writer code writes removed state files
+
+### W2.5 Fold Clarification/Decision Into Handoff
+
+- [ ] Depends: W2.4
+- [ ] Input: current ClarificationState / DecisionState semantics
+- [ ] Output: handoff artifacts convention for questions/options/submission state
+- [ ] Output: `required_host_action=answer_questions` replaces current_clarification
+- [ ] Output: `required_host_action=confirm_decision` replaces current_decision
+- [ ] Verify: compliance fixture can represent clarification pending with only current_handoff
+- [ ] Verify: compliance fixture can represent decision pending with only current_handoff
+
+### W2.6 Retire Registry Chain
+
+- [ ] Depends: W1.4
+- [ ] Input: `runtime/plan/registry.py`, registry tests, output renderer priority notes, `_registry.yaml`
+- [ ] Output: delete `runtime/plan/registry.py`
+- [ ] Output: remove registry upsert/recommend/inspect callers
+- [ ] Output: remove `_registry.yaml` from active plan directory
+- [ ] Output: remove registry tests or migrate only non-registry plan lookup behavior
+- [ ] Output: remove registry mention from docs
+- [ ] Verify: `find .sopify-skills/plan -name _registry.yaml` returns no files
+- [ ] Verify: `rg "plan.registry|_registry|registry_is_observe_only|suggested_priority" runtime sopify_writer sopify_contracts installer scripts tests docs README.md README.zh-CN.md` returns no active code/docs
+
+### W2.7 Reclassify Tests
+
+- [ ] Depends: W2.1-W2.6
+- [ ] Input: all tests importing runtime
+- [ ] Output: keep protocol / contracts / sopify_writer / installer / compliance tests
+- [ ] Output: delete runtime router/engine/gate/output tests
+- [ ] Output: migrate useful state invariant tests to sopify_writer
+- [ ] Output: migrate plan lookup/scaffold tests if the code survives outside runtime
+- [ ] Verify: `rg "from runtime|import runtime|runtime\\." tests` returns no active imports
+- [ ] Verify: retained test names reflect new modules, not runtime
+
+### W2.8 Remove Runtime Entrypoints and Bundle
+
+- [ ] Depends: W2.1-W2.7
+- [ ] Input: `scripts/runtime_gate.py`, `scripts/sopify_runtime.py`, `scripts/check-prompt-runtime-gate-smoke.py`, `installer/sopify_bundle.py`
+- [ ] Output: delete runtime gate/default runtime entry/bundle smoke scripts
+- [ ] Output: remove bundle manifest fields that point to runtime entry
+- [ ] Verify: `rg "runtime_gate.py|sopify_runtime.py|default_runtime_entry|runtime_gate_entry" installer scripts tests docs README.md README.zh-CN.md .sopify-skills/blueprint` returns no active dependency
+
+### W2.9 Remove Deep Host Adapters
+
+- [ ] Depends: W2.2 / W2.8
+- [ ] Input: `installer/hosts/{codex,claude}.py`
+- [ ] Output: delete deep adapters for Codex/Claude
+- [ ] Output: keep payload-capable host path, including Copilot if still useful
+- [ ] Output: installer host exports updated
+- [ ] Verify: `rg "deep_verified|hosts.codex|hosts.claude|runtime gate" installer docs README.md README.zh-CN.md` returns no active deep path
+
+### W2.10 Delete runtime/ Directory
+
+- [ ] Depends: W2.1-W2.9
+- [ ] Input: `runtime/` all files
+- [ ] Output: delete `runtime/`
+- [ ] Verify: `test ! -d runtime`
+- [ ] Verify: `rg "from runtime|import runtime|runtime\\." . -g '!**/__pycache__/**'` returns no active code imports
+- [ ] Verify: `python3 scripts/sopify_compliance.py check --scenario continuation --fixture <current>` passes
+
+### W2.11 Dogfood Mainline
+
+- [ ] Depends: W2.10
+- [ ] Input: current repo
+- [ ] Output: create/update active plan through sopify_writer
+- [ ] Output: write current_handoff through sopify_writer
+- [ ] Output: finalize to history with final receipt
+- [ ] Verify: state/ only contains `active_plan.json` and `current_handoff.json` during active flow
+- [ ] Verify: finalize clears active_plan/current_handoff
+- [ ] Verify: no `_registry.yaml`
+- [ ] Verify: compliance 3 scenarios all pass
+
+### Wave 2 Gate
+
+- [ ] Depends: W2.1-W2.11
+- [ ] Verify: runtime directory absent
+- [ ] Verify: registry absent
+- [ ] Verify: no runtime imports in active code/tests
+- [ ] Verify: compliance 3 scenarios pass
+- [ ] Stop: W2 gate must pass before W3 starts
+
+---
+
+## Wave 3 — Qoder Host Proof + Narrative Cutover
+
+目标：用 Qoder proof 证明 Sopify 是协议内核，不是 runtime 工作流系统。
+
+### W3.1 Build Qoder Payload Adapter
+
+- [ ] Depends: W2 gate
+- [ ] Input: existing payload host patterns, Copilot payload-capable adapter
+- [ ] Output: `installer/hosts/qoder/` or equivalent payload target
+- [ ] Output: Qoder prompt asset consumes Host Protocol Entry Contract
+- [ ] Output: Qoder prompt asset includes 4-step continuation instructions
+- [ ] Output: install path through `install.sh --target qoder`
+- [ ] Verify: adapter does not import runtime
+- [ ] Verify: adapter does not depend on `_registry.yaml`
+- [ ] Verify: `.qoder/` repo wiki config is not treated as Sopify state
+- [ ] Verify: Qoder prompt asset does not ask LLM to run `runtime_gate.py`
+
+### W3.2 Qoder Continuation Writer Path
+
+- [ ] Depends: W3.1
+- [ ] Input: sopify_writer 2-file model
+- [ ] Output: Qoder can write `state/current_handoff.json`
+- [ ] Output: Qoder can write `plan/<id>/receipts/exec_NNN.json` / `verify_NNN.json`
+- [ ] Output: Qoder uses sopify_writer library/API; no writer CLI unless host limitation forces a thin wrapper
+- [ ] Verify: Qoder new session reads `active_plan → plan.md → current_handoff → receipts`
+- [ ] Verify: same fixture can be resumed without runtime process
+
+### W3.3 End-to-End Proof Transcript
+
+- [ ] Depends: W3.2
+- [ ] Input: fixture repo
+- [ ] Output: transcript showing session A writes handoff/receipt
+- [ ] Output: transcript showing session B resumes from files
+- [ ] Verify: transcript includes active_plan plan_id, plan.md Plan Snapshot or full-plan fallback, plan/task decision context, handoff required_host_action, latest receipt
+- [ ] Verify: no command invokes runtime
+
+### W3.4 Docs Narrative Cutover
+
+- [ ] Depends: W3.3
+- [ ] Input: README / README.zh-CN / docs/how-sopify-works(.en).md / docs/getting-started.md
+- [ ] Output: main narrative becomes "host executes; Sopify preserves auditable AI development assets through protocol, file assets, sopify_writer, receipts"
+- [ ] Output: docs describe the post-P8 product stack as protocol kernel + default workflow + skills/host adapters
+- [ ] Output: docs clarify runtime retirement does not retire analyze/design/develop/kb/templates workflow or development skills; those layers consume protocol assets and write through sopify_writer
+- [ ] Output: architecture diagrams reflect 2 state files + plan/history/receipts
+- [ ] Output: remove runtime gate first language
+- [ ] Output: remove `_registry.yaml` from user-facing docs
+- [ ] Verify: docs present cross-host continuation as a hard proof of asset portability, not the whole Sopify value proposition
+- [ ] Verify: docs do not describe protocol kernel as the whole product, and do not describe default workflow/skills as independent machine truth
+- [ ] Verify: docs do not describe Plan Snapshot as a directory index, registry, or authoritative audit evidence
+- [ ] Verify: `rg "runtime gate|runtime/|_registry|current_run|current_plan" README.md README.zh-CN.md docs` returns no active legacy docs
+
+### W3.5 Blueprint Sync
+
+- [ ] Depends: W3.4
+- [ ] Input: `.sopify-skills/blueprint/README.md`, `design.md`, `tasks.md`, `protocol.md`
+- [ ] Output: blueprint design state model updated to 2 files
+- [ ] Output: runtime retirement route marked complete
+- [ ] Output: registry retirement recorded
+- [ ] Output: blueprint persistence_red_line rewritten from pre-P8 runtime state set to post-P8 persistence model
+- [ ] Output: blueprint promise surface updated: ExecutionAuthorizationReceipt retired in P8; receipts/history receipt documented as post-P8 audit chain
+- [ ] Output: blueprint product model updated to protocol kernel + default workflow + skills/host adapters, with protocol kernel as the only truth/evidence layer
+- [ ] Output: blueprint tasks runtime retirement Phase 2 marked done
+- [ ] Verify: blueprint no longer calls runtime state files "运行期不可删"
+- [ ] Verify: blueprint does not imply default workflow or development skills were removed by runtime retirement
+
+### Wave 3 Gate
+
+- [ ] Depends: W3.1-W3.5
+- [ ] Verify: Qoder consumes active_plan to locate plan
+- [ ] Verify: Qoder reads plan.md to understand progress
+- [ ] Verify: Qoder writes handoff + receipts that another session can consume
+- [ ] Verify: whole chain has no runtime process
+
+---
+
+## Finalize
+
+### F1 Final Receipts
+
+- [ ] Depends: W3 gate
+- [ ] Output: `plan/<id>/receipts/final.json`
+- [ ] Output: final receipt includes outcome, verification commands, key decisions, deleted surfaces
+- [ ] Verify: final receipt validates against schema
+
+### F2 Archive
+
+- [ ] Depends: F1
+- [ ] Output: move plan package to `history/2026-06/20260605_p8_protocol_kernel_runtime_retirement/`
+- [ ] Output: generate `history/.../receipt.md`
+- [ ] Output: clear active_plan/current_handoff
+- [ ] Verify: history receipt includes runtime deletion, registry deletion, Qoder proof, docs cutover
+
+### F3 Release Notes
+
+- [ ] Depends: F2
+- [ ] Output: CHANGELOG entry
+- [ ] Output: README headline reflects protocol kernel target state
+- [ ] Verify: install/getting-started path matches post-P8 architecture
