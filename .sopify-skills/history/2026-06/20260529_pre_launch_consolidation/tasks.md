@@ -1,6 +1,6 @@
 # 任务清单: 推广前大收口整合
 
-目录: `.sopify-skills/plan/20260529_pre_launch_consolidation/`
+目录: `.sopify-skills/history/2026-06/20260529_pre_launch_consolidation/`（原 `.sopify-skills/plan/20260529_pre_launch_consolidation/`，2026-06-05 归档）
 
 ## 价值分级说明
 
@@ -70,52 +70,60 @@
 - [x] 3.17 统一运行测试套件验证无回归
 - [x] 8.1 更新 `.sopify-skills/blueprint/README.md` 托管区块
 
-### Wave C: 输出增强 🟡 P1
+### Wave C: 输出增强 🟡 P1 — ✅ 已实现（归档日状态回写）
 
 > 提升 Sopify 每次输出的人类可读性。不影响用户可见安装面，但提升使用体感。
+>
+> **归档说明（2026-06-05）**：四项任务已于 2026-05-28 通过 PR #54 output-contract enforcement 落地。本次归档同步 tasks.md 状态，不代表执行顺序。
 
-- [ ] 1.1 升级 zh `output-contract.md`：§3 整体升级（密度梯度 / emoji 纪律 / 交付物分段叙事 / 发现报告分组）+ §5 脱敏规则
-- [ ] 1.2 同步升级 en `output-contract.md`
-- [ ] 1.3 修改 zh `develop/SKILL.md`：输出选择逻辑引用更新后的 §3
-- [ ] 1.4 同步修改 en `develop/SKILL.md`
+- [x] 1.1 升级 zh `output-contract.md`：§3 整体升级（密度梯度 / emoji 纪律 / 交付物分段叙事 / 发现报告分组）+ §5 脱敏规则 → PR #54
+- [x] 1.2 同步升级 en `output-contract.md` → PR #54
+- [x] 1.3 修改 zh `develop/SKILL.md`：输出选择逻辑引用更新后的 §3 → PR #54
+- [x] 1.4 同步修改 en `develop/SKILL.md` → PR #54
 
-### Wave D: 推广文章 🟡 P1
+### Wave D: 推广文章 🟡 P1 — drafts prepared / user publish deferred
 
 > 所有用户可见面就绪后最后写。AI 协助撰写，用户审阅发布。
+>
+> **归档说明（2026-06-05）**：草稿已就绪（掘金 / V2EX / dev.to / X / 小红书等），本地位于 `docs/articles/`。`docs/articles/` 被 `.gitignore` 忽略，不进入可审计归档资产；用户决定发布时再单独处理。本包不吸纳草稿作为正式产物。
 
-- [ ] 6.1 掘金主文草稿："AI 编程的失忆症——我如何用 Sopify 解决"
-- [ ] 6.2 V2EX 讨论帖草稿："AI 编程的 3 个隐藏问题"
-- [ ] 6.3 GitHub Blog / dev.to 英文稿草稿："Beyond chat: resumable AI coding with Sopify"
-- [ ] 6.4 即刻/X 短内容素材（截图 + 一句话 + 链接）× 3 条
-- [ ] 6.5 交付用户审阅修改后发布
+- [x] 6.1 掘金主文草稿："AI 编程的失忆症——我如何用 Sopify 解决" → `docs/articles/juejin-draft.md`（local）
+- [x] 6.2 V2EX 讨论帖草稿："AI 编程的 3 个隐藏问题" → `docs/articles/v2ex-post.md`（local）
+- [x] 6.3 GitHub Blog / dev.to 英文稿草稿："Beyond chat: resumable AI coding with Sopify" → `docs/articles/devto-post.md`（local）
+- [x] 6.4 即刻/X 短内容素材（截图 + 一句话 + 链接）× 3 条 → `docs/articles/social-snippets.md`（local）
+- [-] 6.5 交付用户审阅修改后发布 — deferred（用户发布动作；不阻断归档）
 
-### Wave E: 延后项 🟢 P2
+### Wave E: 延后项 🟢 P2 — absorbed by P8 / manual deferred
 
 > 推广后按反馈迭代。
+>
+> **归档说明（2026-06-05）**：runtime 线（7.1–7.4）已被 P8 Protocol Kernel & Runtime Retirement 吸收；手工 / 推广后项明确 defer。
 
-- [ ] 7.1 Runtime installer 依赖分析
-- [ ] 7.2 installer 解耦方案设计
-- [ ] 7.3 runtime/ 降级标注方案
-- [ ] 7.4 D7 独立方案包骨架
-- [ ] 6.6 Discord 服务器（等有真实用户再建）
-- [ ] 6.7 GitHub Discussions 开启
-- [ ] 3.2 skill-standards-refactor.md 归档
-- [ ] 3.4 registry 不活跃条目清理
-- [ ] 3.5 [手工] GitHub repo metadata（description / topics / social preview）
-- [ ] 4.5 新 cover 图方案（场景图版）
+- [·] 7.1 Runtime installer 依赖分析 — **absorbed by P8 Wave 3 (S3.1)**
+- [·] 7.2 installer 解耦方案设计 — **absorbed by P8 Wave 3 (S3.1)**
+- [·] 7.3 runtime/ 降级标注方案 — **absorbed by P8 Wave 3 (S3.7 blueprint 回写)**
+- [·] 7.4 D7 独立方案包骨架 — **cancelled**（D7 并入 P8，不独立开包）
+- [-] 6.6 Discord 服务器 — deferred（等有真实用户再建）
+- [-] 6.7 GitHub Discussions 开启 — deferred（等有真实用户再开）
+- [-] 3.2 skill-standards-refactor.md 归档 — deferred（文件保留为 dormant，蓝图 README 仍引用）
+- [-] 3.4 registry 不活跃条目清理 — deferred（独立工具项）
+- [-] 3.5 [手工] GitHub repo metadata（description / topics / social preview） — deferred
+- [-] 4.5 新 cover 图方案（场景图版） — deferred
 
 ---
 
-## 执行波次总览
+## 归档日状态总览（2026-06-05）
 
-| 波次 | 方向 | 待执行 | 优先级 | 并行关系 |
-|------|------|--------|--------|---------|
-| Wave A | 首次触达 | 5 | 🔴 P0 | 可立即开始 |
-| Wave B | Docs + 打磨 | 10 | 🟡 P1 | 与 A/C 并行 |
-| Wave C | 输出增强 | 4 | 🟡 P1 | 与 A/B 并行 |
-| Wave D | 推广文章 | 5 | 🟡 P1 | 等 A+B 完成 |
-| Wave E | 延后 | 10 | 🟢 P2 | 推广后 |
-| **合计** | | **34** | | 已完成 20/54 |
+| 波次 | 方向 | 归档日状态 | 处置 |
+|------|------|------------|------|
+| D1 / D3 / D5-3B | README / 命令面 / 安全 | ✅ done | 主航道完成 |
+| Wave A | 首次触达 | ✅ done | |
+| Wave B | Docs + 打磨 | ✅ done | |
+| Wave C | 输出增强 | ✅ done（PR #54） | 归档日状态回写 |
+| Wave D | 推广文章 | drafts prepared | 草稿本地就绪（`docs/articles/` 已删除）；发布 deferred |
+| Wave E | 延后项 | absorbed / deferred | runtime 线迁 P8 Wave 3；手工项 defer |
+
+详细处置见 [`receipt.md`](./receipt.md)。
 
 ## 依赖关系
 
@@ -146,12 +154,3 @@ Wave B D1 4.3/4.4: README 一次性完整重写
         ↓
 Wave D 6.1-6.5: 推广文章（引用 README 截图 / 链接）
 ```
-
-
-## 推广就绪门槛
-
-| 门槛 | 包含波次 | 待执行数 | 说明 |
-|------|---------|----------|------|
-| 🔴 **最小可推广** | Wave A | **5** | 首次触达就绪，即可开始推广 |
-| 🟡 **推荐推广集** | Wave A + B + C + D | **24** | 全面打磨 + 文章就绪 |
-| 🟢 **完整集** | 全部 | **34** | 含推广后迭代项 |

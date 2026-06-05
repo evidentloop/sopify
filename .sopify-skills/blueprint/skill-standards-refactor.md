@@ -1,6 +1,7 @@
 # Skill 标准对齐蓝图
 
 状态: 专项归档候选（原"已收口"）
+**status: deferred**（2026-06-05 拍板：保留为 dormant，后续再评估；不阻断 pre_launch_consolidation 归档）
 创建日期: 2026-03-19
 定位: 面向 `Anthropic Agent Skills + Gemini CLI Agent Skills` 的专项重构蓝图
 

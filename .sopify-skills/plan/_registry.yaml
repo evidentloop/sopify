@@ -73,3 +73,26 @@ plans:
     meta:
       source: "manual"
       updated_at: "2026-05-27T23:00:00+08:00"
+  - plan_id: "20260529_pre_launch_consolidation"
+    snapshot:
+      path: ".sopify-skills/history/2026-06/20260529_pre_launch_consolidation"
+      title: "推广前收口整合"
+      level: "standard"
+      topic_key: "pre_launch_consolidation"
+      lifecycle_state: "archived"
+      created_at: "2026-05-29T00:00:00+08:00"
+    governance:
+      priority: "p1"
+      priority_source: "user"
+      priority_confirmed_at: "2026-06-05T00:00:00+08:00"
+      status: "archived"
+      note: "outcome: partial_done。D1/D3/D5-3B/A/B/C 完成；Wave D 草稿就绪（发布 deferred / docs/articles 已删除）；Wave E runtime 线被 P8 吸收；手工项 defer。2026-06-05 归档"
+    advice:
+      suggested_priority: "p1"
+      suggested_source: "user_confirmed"
+      suggested_reason:
+        - "推广前必须收口的多方向整合包"
+      suggested_at: "2026-05-29T00:00:00+08:00"
+    meta:
+      source: "manual"
+      updated_at: "2026-06-05T00:00:00+08:00"
