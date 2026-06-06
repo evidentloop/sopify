@@ -90,14 +90,23 @@ created: 2026-06-05
 - [ ] Verify: `_registry.yaml` 不在 must-freeze 列表
 - [ ] Verify: host 入口读顺序不包含 registry
 
-### W1.5b Rewrite persistence_red_line and promise surface
+### W1.5b Blueprint Interim Sync + persistence_red_line + promise surface
 
 - [ ] Depends: W1.1 / W1.2
-- [ ] Input: `.sopify-skills/blueprint/design.md` keep-list / persistence_red_line / 对外承诺分层表
+- [ ] Input: `.sopify-skills/blueprint/design.md` keep-list / persistence_red_line / 对外承诺分层表 / ADR-013 / ADR-017
 - [ ] Output: P8 design 明确 blueprint `persistence_red_line` 将从 pre-P8 runtime state 集合切到 post-P8 persistence model
 - [ ] Output: P8 design 明确 ExecutionAuthorizationReceipt / current_gate_receipt 在 P8 中 retire，而不是静默丢失
 - [ ] Output: W3 blueprint sync 需要同步更新对外承诺分层表（EAR 从 Now/✅ 退场，receipts/history receipt 写入新的审计承诺面）
+- [ ] Output: ADR-013 正文加注 P8 Scope Clarification（authorization 语义收窄为 protocol admission / receipt validity / archive admission；不再指 pre-execution side-effect approval；实操层拆为 write admission + archive admission 两个准入点）
+- [ ] Output: ADR-017 ExecutionAuthorizationReceipt 标注 [SUPERSEDED by P8]
+- [ ] Output: 蓝图 design.md 收敛链从 produce→verify→authorize→settle 改为 produce→verify→record evidence→settle
+- [ ] Output: 蓝图 design.md Core State Files target 6→2
+- [ ] Output: 蓝图 design.md 宿主能力治理段落加注 interim disclaimer（deep_verified / 审计增强 / EAR 相关表述在 P8 后失效，W3.6 全量重定义）
+- [ ] Output: 蓝图 design.md “Validator 是唯一授权者” 表述收窄为 protocol admission / receipt validity / archive admission
 - [ ] Verify: P8 不再只写 “Core state files 6 → 2”，还明确 red-line / keep-list / promise surface 的同步回写要求
+- [ ] Verify: 蓝图 design.md 中 EAR 不再标记为 Now/✅/normative
+- [ ] Verify: 蓝图 design.md 中 “Validator 是唯一授权者” 表述已收窄
+- [ ] Verify: ADR-017 ExecutionAuthorizationReceipt 已标注 [SUPERSEDED by P8]
 
 ### W1.6 Build Runtime-Free Compliance Smoke
 
@@ -140,6 +149,12 @@ created: 2026-06-05
 - [ ] Verify: `rg "runtime_gate|current_run|current_plan|_registry" .sopify-skills/blueprint/protocol.md` only returns legacy notes marked retired or no matches
 - [ ] Verify: protocol.md §8 已完成整节替换；旧 deep runtime gate 正文不存在
 - [ ] Verify: host prompt entry summary exists and does not reintroduce runtime routing
+- [ ] Verify: ADR-013 正文已加注 P8 Scope Clarification（authorization 语义收窄）
+- [ ] Verify: ADR-017 ExecutionAuthorizationReceipt 已标注 [SUPERSEDED by P8]
+- [ ] Verify: 蓝图 design.md 收敛链已改为 produce → verify → record evidence → settle
+- [ ] Verify: 蓝图 design.md 宿主能力治理段落已加注 interim disclaimer
+- [ ] Verify: 蓝图 design.md 中 EAR 不再标记为 Now/✅/normative
+- [ ] Verify: 蓝图 design.md 中 "Validator 是唯一授权者" 表述已收窄为 protocol admission / receipt validity / archive admission
 - [ ] Stop: W1 gate must pass before W2 starts
 
 ---
@@ -310,7 +325,7 @@ created: 2026-06-05
 - [ ] Verify: transcript includes active_plan plan_id, plan.md Plan Snapshot or full-plan fallback, plan/task decision context, handoff required_host_action, latest receipt
 - [ ] Verify: no command invokes runtime
 
-### W3.4 Docs Narrative Cutover
+### W3.5 Docs Narrative Cutover
 
 - [ ] Depends: W3.3
 - [ ] Input: README / README.zh-CN / docs/how-sopify-works(.en).md / docs/getting-started.md
@@ -325,23 +340,35 @@ created: 2026-06-05
 - [ ] Verify: docs do not describe Plan Snapshot as a directory index, registry, or authoritative audit evidence
 - [ ] Verify: `rg "runtime gate|runtime/|_registry|current_run|current_plan" README.md README.zh-CN.md docs` returns no active legacy docs
 
-### W3.5 Blueprint Sync
+### W3.6 Blueprint Sync（全量叙事收口 — 11 项显式回写清单）
 
-- [ ] Depends: W3.4
+- [ ] Depends: W3.5
 - [ ] Input: `.sopify-skills/blueprint/README.md`, `design.md`, `tasks.md`, `protocol.md`
+- [ ] Output: ADR-013 scope clarification 从 interim disclaimer 升级为 final 语义边界
+- [ ] Output: ADR-017 EAR 标注从 interim [SUPERSEDED] 升级为 final [RETIRED]
+- [ ] Output: 底层哲学收敛链 produce→verify→authorize→settle → produce→verify→record evidence→settle
+- [ ] Output: 实操协议层显式声明 write admission + archive admission 两个准入点
+- [ ] Output: Protocol-first / Runtime-optional 三层定位更新（runtime 层标 legacy reference 或删除）
+- [ ] Output: 核心管线 ActionProposal / Validator 表述（Validator 从"唯一授权者"收窄为 protocol admission）
+- [ ] Output: Runtime 五层架构段落标 legacy reference 或删除
+- [ ] Output: Core State Files / Persistence Surface / Mainline Keep-list 更新为 2 文件模型
+- [ ] Output: 外部消费面 Keep-list 全面更新（删除 EAR/gate_receipt/runtime-only 面）
+- [ ] Output: 宿主能力治理段落重定义（能力梯度、契约消费矩阵、官方接入画像、增强组合）
+- [ ] Output: Runtime 退场路线标记完成 + LOC 数据更新
 - [ ] Output: blueprint design state model updated to 2 files
-- [ ] Output: runtime retirement route marked complete
 - [ ] Output: registry retirement recorded
-- [ ] Output: blueprint persistence_red_line rewritten from pre-P8 runtime state set to post-P8 persistence model
-- [ ] Output: blueprint promise surface updated: ExecutionAuthorizationReceipt retired in P8; receipts/history receipt documented as post-P8 audit chain
 - [ ] Output: blueprint product model updated to protocol kernel + default workflow + skills/host adapters, with protocol kernel as the only truth/evidence layer
 - [ ] Output: blueprint tasks runtime retirement Phase 2 marked done
+- [ ] Output: protocol.md §8 / state file index / EAR section 同步更新
 - [ ] Verify: blueprint no longer calls runtime state files "运行期不可删"
 - [ ] Verify: blueprint does not imply default workflow or development skills were removed by runtime retirement
+- [ ] Verify: ADR-017 EAR 标注为 [RETIRED by P8]（非 [SUPERSEDED]）
+- [ ] Verify: 蓝图中 "Validator 是唯一授权者" 表述已收窄为 protocol admission / receipt validity / archive admission
+- [ ] Verify: 蓝图 Runtime 五层架构段落已标 legacy reference 或整体删除
 
 ### Wave 3 Gate
 
-- [ ] Depends: W3.1-W3.5
+- [ ] Depends: W3.1-W3.6
 - [ ] Verify: Qoder consumes active_plan to locate plan
 - [ ] Verify: Qoder reads plan.md to understand progress
 - [ ] Verify: Qoder writes handoff + receipts that another session can consume

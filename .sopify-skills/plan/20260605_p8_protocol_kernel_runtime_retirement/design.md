@@ -32,6 +32,15 @@ P8 后 Sopify 不是只剩一份协议文档，而是三层收口：
 
 **ActionProposal 保留为工作流层概念**：它用于 host/default workflow 做请求准入与分发，不再是 `runtime_gate.py` 的输入，也不进入 P8 5 件 must-freeze。P8 不冻结完整 ActionProposal schema，只要求宿主先判断用户请求意图，再决定是否进入接续读链。
 
+**P8 Scope Clarification — 授权语义显式收窄**：P8 后 Sopify 产品定位中"Authorization"的含义显式收窄：
+
+- **不再指** pre-execution side-effect approval（该职责退回宿主原生权限、sandbox、用户确认、工具审批）
+- **收窄为** protocol admission（sopify_writer schema/contract 校验，决定能否写 state/receipts）、receipt validity（证据链完整性）、archive admission（归档准入，finalize 前校验）
+- ADR-013 标题"Evidence & Authorization Layer"不改（不做品牌手术）；在 ADR-013 和 ADR-017 正文加注本段 scope clarification
+- ADR-017 ExecutionAuthorizationReceipt 标注 [SUPERSEDED by P8]（W1 中期同步）→ [RETIRED by P8]（W3.6 全量收口）
+- 收敛链从 produce → verify → authorize → settle 收窄为 produce → verify → record evidence → settle
+- 实操协议层拆为两个 admission 点：write admission（sopify_writer）+ archive admission（finalize），详见 §6.10
+
 **P8 不是**：
 
 - 不是 protocol.md v1 全面发布（只 freeze 5 件 must-freeze，draft 保留为 draft）
@@ -442,6 +451,24 @@ receipts/ 目录的读取不是"读 receipts/"，而是精确的 latest-only 查
 | 4 receipts/ | 写 receipts/exec_NNN.json 等 | 每次有可验证动作产生新凭证 |
 
 **关键不对称**：plan.md 是 "semantic entry"，**写频率低（进度变化时）但读是必需**。current_handoff 是 "live cache"，**写频率高（每次 turn）但读是补充**。
+
+### 6.10 Write Admission 与 Archive Admission（P8 后两层准入）
+
+P8 删除 runtime gate 后，原 Validator "唯一授权者"角色拆分为两层 admission，分布在协议层而非单一进程：
+
+| 准入点 | 时机 | 执行者 | 校验内容 |
+|---|---|---|---|
+| **Write admission** | 每次写 state/receipts | sopify_writer | schema 校验（字段合法、类型正确、required 齐全）；contract 合规（plan_id 有效、receipt 命名规范） |
+| **Archive admission** | finalize 时 | host + sopify_writer + compliance | plan 完整性（8 必备章节、tasks 闭合）；receipts 链完整（有 final.json）；history receipt 可生成 |
+
+**语义级 admission 由 host 承担**：host 通过读取 protocol 文件做语义一致性判断（plan_id 有效性、receipt 与 plan 一致性、handoff 与 plan.md 不冲突）。sopify_writer 只负责结构级 admission。compliance smoke 提供静态协议合规检查（文件结构完整、引用无断裂）。
+
+**与 pre-P8 模型的对应**：
+
+- pre-P8：Validator 进程承担所有 admission（schema + 语义 + 执行授权）
+- post-P8：结构级 → sopify_writer；语义级 → host prompt + LLM；静态合规 → compliance smoke；执行前授权 → 删除（退回宿主原生权限）
+
+这不是 validation 退场；Validator-as-process / pre-execution authorizer 退场，validation 逻辑分布到 sopify_writer（结构级）+ compliance smoke（静态合规）+ host prompt（语义级），避免 runtime 授权模型换壳复活。
 
 ## 7. Verifier Read-Only Contract
 
