@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sopify.dev/schemas/active_plan.schema.json",
+  "title": "Active Plan Pointer",
+  "description": "Minimal state file that points to the currently active plan. Host reads this first to locate the plan.",
+  "type": "object",
+  "required": ["plan_id"],
+  "additionalProperties": false,
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "description": "The directory name of the active plan package under plan/. Naming convention: date-prefixed underscore-separated (e.g. 20260605_p8_protocol_kernel_runtime_retirement). Hyphens not allowed.",
+      "minLength": 1,
+      "pattern": "^[a-zA-Z0-9_]+$"
+    }
+  }
+}
