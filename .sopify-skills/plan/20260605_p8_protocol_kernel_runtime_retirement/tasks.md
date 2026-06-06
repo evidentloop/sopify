@@ -17,54 +17,54 @@ created: 2026-06-05
 
 ### W1.1 Freeze 5 Must-Freeze Schemas
 
-- [ ] Depends: P6 writer 基础（当前 `canonical_writer`）+ sopify_contracts 已存在
-- [ ] Input: `design.md §2` / `protocol.md` 当前 Integration Contract / state 现状
-- [ ] Output: `sopify_contracts/schemas/active_plan.schema.json`
-- [ ] Output: `sopify_contracts/schemas/current_handoff.schema.json`
-- [ ] Output: `sopify_contracts/schemas/plan_md_sections.schema.json`
-- [ ] Output: `sopify_contracts/schemas/plan_receipt.schema.json`
-- [ ] Output: `sopify_contracts/schemas/history_receipt.schema.json`
-- [ ] Verify: schema 文件不 import `runtime`
-- [ ] Verify: `active_plan` schema 只允许 `plan_id`
-- [ ] Verify: `current_handoff.required_host_action` 只允许 canonical 5 值
-- [ ] Verify: `current_handoff` post-P8 required 字段集明确为 `schema_version` / `plan_id` / `required_host_action`
-- [ ] Output: `route_name` / `run_id` / `handoff_kind` / `resolution_id` 默认从 post-P8 `current_handoff` schema `properties` 中全删；未来如需 provenance 字段，必须另走 ADR 重加
-- [ ] Verify: `current_handoff.schema.json` 不再声明 `route_name` / `run_id` / `handoff_kind` / `resolution_id`
-- [ ] Note: schema draft files may exist locally before this task is completed; W1.1 is done only after protocol/compliance review closes the fields.
+- [x] Depends: P6 writer 基础（当前 `canonical_writer`）+ sopify_contracts 已存在
+- [x] Input: `design.md §2` / `protocol.md` 当前 Integration Contract / state 现状
+- [x] Output: `sopify_contracts/schemas/active_plan.schema.json`
+- [x] Output: `sopify_contracts/schemas/current_handoff.schema.json`
+- [x] Output: `sopify_contracts/schemas/plan_md_sections.schema.json`
+- [x] Output: `sopify_contracts/schemas/plan_receipt.schema.json`
+- [x] Output: `sopify_contracts/schemas/history_receipt.schema.json`
+- [x] Verify: schema 文件不 import `runtime`
+- [x] Verify: `active_plan` schema 只允许 `plan_id`
+- [x] Verify: `current_handoff.required_host_action` 只允许 canonical 5 值
+- [x] Verify: `current_handoff` post-P8 required 字段集明确为 `schema_version` / `plan_id` / `required_host_action`
+- [x] Output: `route_name` / `run_id` / `handoff_kind` / `resolution_id` 默认从 post-P8 `current_handoff` schema `properties` 中全删；未来如需 provenance 字段，必须另走 ADR 重加
+- [x] Verify: `current_handoff.schema.json` 不再声明 `route_name` / `run_id` / `handoff_kind` / `resolution_id`
+- [x] Note: schema draft files may exist locally before this task is completed; W1.1 is done only after protocol/compliance review closes the fields.
 
 ### W1.2 Rewrite protocol.md Kernel Sections
 
-- [ ] Depends: W1.1 schema 字段已确定
-- [ ] Input: `.sopify-skills/blueprint/protocol.md`
-- [ ] Output: protocol.md §2 plan package structure 改为 `plan.md` 唯一语义入口
-- [ ] Output: protocol.md §6 verifier read-only contract 升格为 MUST
-- [ ] Output: protocol.md §6 明确 ExecutionAuthorizationReceipt 为 `[RETIRED in P8]`，并把 post-P8 审计主链指向 `plan/<id>/receipts/*.json` + `history/<id>/receipt.md`
-- [ ] Output: protocol.md §8 Host Protocol Entry Contract：request admission、触发条件、4 步读顺序、读取预算、读后分叉、写回边界
-- [ ] Output: protocol.md §8 明确 ActionProposal 是 runtime-independent workflow/admission 概念，不是 P8 must-freeze schema，不再作为 runtime gate 输入
-- [ ] Output: protocol.md §8 用新的 Host Protocol Entry Contract 整节替换 pre-P8 deep runtime gate 正文，只保留一行 retirement note 指向历史背景
-- [ ] Output: host 在 ActionProposal 指向 managed plan / continuation / finalize 时，入口读顺序为 `active_plan → plan.md → current_handoff → receipts`
-- [ ] Output: protocol.md state file index 改为 2 文件
-- [ ] Verify: protocol.md 不再要求 `runtime_gate.py enter`
-- [ ] Verify: protocol.md 不要求所有用户请求都自动接续 active_plan
-- [ ] Verify: protocol.md 不再把 `current_run/current_plan/current_decision/current_clarification/current_archive_receipt` 作为主链必读
-- [ ] Verify: protocol.md §8 旧 gate-first normative 内容不存在；若有历史说明，仅允许 retirement note
-- [ ] Verify: protocol.md 明确 `_registry.yaml` 不属于 protocol kernel
-- [ ] Verify: protocol.md 明确 prompt asset 负责触发 protocol entry，但不得定义 runtime router
-- [ ] Verify: protocol.md 明确默认不得全量读取 protocol.md / design.md / receipts/
+- [x] Depends: W1.1 schema 字段已确定
+- [x] Input: `.sopify-skills/blueprint/protocol.md`
+- [x] Output: protocol.md §2 plan package structure 改为 `plan.md` 唯一语义入口
+- [x] Output: protocol.md §6 verifier read-only contract 升格为 MUST
+- [x] Output: protocol.md §6 明确 ExecutionAuthorizationReceipt 为 `[RETIRED in P8]`，并把 post-P8 审计主链指向 `plan/<id>/receipts/*.json` + `history/<id>/receipt.md`
+- [x] Output: protocol.md §8 Host Protocol Entry Contract：request admission、触发条件、4 步读顺序、读取预算、读后分叉、写回边界
+- [x] Output: protocol.md §8 明确 ActionProposal 是 runtime-independent workflow/admission 概念，不是 P8 must-freeze schema，不再作为 runtime gate 输入
+- [x] Output: protocol.md §8 用新的 Host Protocol Entry Contract 整节替换 pre-P8 deep runtime gate 正文，只保留一行 retirement note 指向历史背景
+- [x] Output: host 在 ActionProposal 指向 managed plan / continuation / finalize 时，入口读顺序为 `active_plan → plan.md → current_handoff → receipts`
+- [x] Output: protocol.md state file index 改为 2 文件
+- [x] Verify: protocol.md 不再要求 `runtime_gate.py enter`
+- [x] Verify: protocol.md 不要求所有用户请求都自动接续 active_plan
+- [x] Verify: protocol.md 不再把 `current_run/current_plan/current_decision/current_clarification/current_archive_receipt` 作为主链必读
+- [x] Verify: protocol.md §8 旧 gate-first normative 内容不存在；若有历史说明，仅允许 retirement note
+- [x] Verify: protocol.md 明确 `_registry.yaml` 不属于 protocol kernel
+- [x] Verify: protocol.md 明确 prompt asset 负责触发 protocol entry，但不得定义 runtime router
+- [x] Verify: protocol.md 明确默认不得全量读取 protocol.md / design.md / receipts/
 
 ### W1.3 Define Host Prompt Plan Snapshot
 
-- [ ] Depends: W1.2
-- [ ] Input: current host prompt assets / installer host payload patterns
-- [ ] Output: host prompt summary says: if `.sopify-skills/` exists, first form a runtime-independent ActionProposal for request admission
-- [ ] Output: prompt summary says: only managed plan / continuation / finalize ActionProposal enters the 4-step protocol entry
-- [ ] Output: prompt summary includes ActionProposal categories, 4-step entry order, read budget, and `sopify_writer` write boundary
-- [ ] Output: prompt summary explicitly states that default spec workflow (analyze → design → develop → finalize) is a prompt asset / skill layer function, not runtime logic
-- [ ] Output: prompt summary does not mention `runtime_gate.py`, route families, or `_registry.yaml`
-- [ ] Verify: Qoder prompt asset can be generated from the same Plan Snapshot rules
-- [ ] Verify: host prompt text is short enough to avoid becoming a second protocol.md
-- [ ] Verify: host prompt does not instruct LLM to load full protocol.md by default
-- [ ] Verify: host prompt does not imply consult / quick_fix must continue active_plan
+- [x] Depends: W1.2
+- [x] Input: current host prompt assets / installer host payload patterns
+- [x] Output: host prompt summary says: if `.sopify-skills/` exists, first form a runtime-independent ActionProposal for request admission
+- [x] Output: prompt summary says: only managed plan / continuation / finalize ActionProposal enters the 4-step protocol entry
+- [x] Output: prompt summary includes ActionProposal categories, 4-step entry order, read budget, and `sopify_writer` write boundary
+- [x] Output: prompt summary explicitly states that default spec workflow (analyze → design → develop → finalize) is a prompt asset / skill layer function, not runtime logic
+- [x] Output: prompt summary does not mention `runtime_gate.py`, route families, or `_registry.yaml`
+- [x] Verify: Qoder prompt asset can be generated from the same Plan Snapshot rules
+- [x] Verify: host prompt text is short enough to avoid becoming a second protocol.md
+- [x] Verify: host prompt does not instruct LLM to load full protocol.md by default
+- [x] Verify: host prompt does not imply consult / quick_fix must continue active_plan
 
 ### W1.4 Define Plan Package Required Sections
 

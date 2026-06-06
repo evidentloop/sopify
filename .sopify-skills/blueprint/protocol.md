@@ -35,7 +35,7 @@
 
 - 普通用户：读 README / docs/how-sopify-works，不需要本文
 - Host / LLM 日常运行：消费 prompt asset 中的 §8 摘要（4 步入口 + read budget + write boundary），不全量读本文
-- Host adapter / compliance 实现者：读本文全文 + schemas
+- Host adapter / tooling author：按需读相关章节 + schemas；全文 review 仅在协议变更或 compliance 实现时
 
 ## 1. 最小必备目录结构
 
