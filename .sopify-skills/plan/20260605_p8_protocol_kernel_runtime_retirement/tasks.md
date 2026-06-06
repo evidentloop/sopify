@@ -68,27 +68,27 @@ created: 2026-06-05
 
 ### W1.4 Define Plan Package Required Sections
 
-- [ ] Depends: W1.2
-- [ ] Input: current plan package examples under `.sopify-skills/plan/`
-- [ ] Output: plan.md recommended Plan Snapshot + 8 required sections documented: Plan Snapshot (Goal/Status/Next/Task; optional schema field `plan_snapshot`) + Context/Why / Scope / Approach / Waves / Key Decisions / Constraints / Status / Next
-- [ ] Output: Plan Snapshot is the default read window for LLM when present; host falls back to full plan.md when absent or conflicting
-- [ ] Output: Plan Snapshot is documented as user-readable derived status snapshot and continuation entry summary, not directory index, not `_registry.yaml` replacement, not a new state file, and not authoritative audit evidence
-- [ ] Verify: `plan_snapshot` schema 注释明确它只是 plan.md 顶部区块的 schema 抽象，不是独立 carrier，不是 machine truth，不覆盖正文或 receipts
-- [ ] Output: light / standard / architecture 三档文件矩阵
-- [ ] Output: receipts 条件必备规则
-- [ ] Verify: 不新增 `status.json`
-- [ ] Verify: 不新增 plan-level `README.md`
-- [ ] Verify: 不新增 `plan/<id>/handoff.json`
+- [x] Depends: W1.2
+- [x] Input: current plan package examples under `.sopify-skills/plan/`
+- [x] Output: plan.md recommended Plan Snapshot + 8 required sections documented: Plan Snapshot (Goal/Status/Next/Task; optional schema field `plan_snapshot`) + Context/Why / Scope / Approach / Waves / Key Decisions / Constraints / Status / Next
+- [x] Output: Plan Snapshot is the default read window for LLM when present; host falls back to full plan.md when absent or conflicting
+- [x] Output: Plan Snapshot is documented as user-readable derived status snapshot and continuation entry summary, not directory index, not `_registry.yaml` replacement, not a new state file, and not authoritative audit evidence
+- [x] Verify: `plan_snapshot` schema 注释明确它只是 plan.md 顶部区块的 schema 抽象，不是独立 carrier，不是 machine truth，不覆盖正文或 receipts
+- [x] Output: light / standard / architecture 三档文件矩阵
+- [x] Output: receipts 条件必备规则
+- [x] Verify: 不新增 `status.json`
+- [x] Verify: 不新增 plan-level `README.md`
+- [x] Verify: 不新增 `plan/<id>/handoff.json`
 
 ### W1.5 Define Registry Retirement Contract
 
-- [ ] Depends: W1.2
-- [ ] Input: `runtime/plan/registry.py` / `_registry.yaml` / registry tests
-- [ ] Output: protocol.md 明确 `_registry.yaml` deprecated by P8
-- [ ] Output: design.md 记录 registry 删除理由和后续替代原则
-- [ ] Output: compliance smoke 需要检查 host entry path 不读取 `_registry.yaml`
-- [ ] Verify: `_registry.yaml` 不在 must-freeze 列表
-- [ ] Verify: host 入口读顺序不包含 registry
+- [x] Depends: W1.2
+- [x] Input: `runtime/plan/registry.py` / `_registry.yaml` / registry tests
+- [x] Output: protocol.md 明确 `_registry.yaml` deprecated by P8
+- [x] Output: design.md 记录 registry 删除理由和后续替代原则
+- [x] Output: compliance smoke 需要检查 host entry path 不读取 `_registry.yaml`
+- [x] Verify: `_registry.yaml` 不在 must-freeze 列表
+- [x] Verify: host 入口读顺序不包含 registry
 
 ### W1.5b Blueprint Interim Sync + persistence_red_line + promise surface
 

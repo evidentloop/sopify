@@ -514,6 +514,8 @@ host MUST NOT 默认全量扫描 receipts/ 内容。
 
 P8 删除的 state 文件：`current_run.json`、`current_plan.json`、`current_clarification.json`、`current_decision.json`、`current_gate_receipt.json`、`current_archive_receipt.json`、`last_route.json`。
 
+`plan/_registry.yaml` [DEPRECATED by P8]：P8 显式退场。不属于协议内核，不作为 host 接续入口，不作为 active plan pointer。compliance smoke MUST fail if `_registry.yaml` appears in host entry path。删除理由和未来替代方案见 P8 design.md §4.3。
+
 `required_host_action` canonical 值域（5 个）：
 
 | 值 | 语义 |

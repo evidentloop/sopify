@@ -9,7 +9,7 @@
   "properties": {
     "plan_snapshot": {
       "type": "object",
-      "description": "Optional internal schema field for the visible Plan Snapshot. Lightweight continuation entry block that the host reads by default when present. LLM falls back to full plan.md when missing or conflicting. This is not a directory index, registry, state file, or authoritative audit fact.",
+      "description": "Optional schema abstraction of the visible Plan Snapshot block at the top of plan.md. Not an independent carrier, not machine truth, and does not override plan.md body or receipts. Host reads this by default when present; falls back to full plan.md when missing or conflicting.",
       "required": ["goal", "status", "next", "task"],
       "additionalProperties": false,
       "properties": {
