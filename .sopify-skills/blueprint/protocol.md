@@ -1,14 +1,14 @@
 # Sopify 宿主接入规范 (Protocol v0)
 
-本文定位: 宿主接入 Sopify 的规范入口。Convention 最小合规（§1–§5）+ Runtime 深度集成（§8）均在本文覆盖。
+本文定位: 宿主接入 Sopify 的规范入口。Convention 最小合规（§1–§5）+ Host Protocol Entry Contract（§8）均在本文覆盖。
 
 **阅读地图：**
 
 | 宿主能力 | 需要阅读的章节 |
 |---|---|
 | **convention_only** — 只按目录约定读写 blueprint/plan/receipt | §1–§5 |
-| **payload_capable** — 已安装 payload bundle，可消费 manifest | §1–§5 + prompt asset |
-| **deep_verified** — 完整 runtime gate / handoff / checkpoint | §1–§5 + §8 + prompt asset |
+| **payload_capable** — 已安装 payload bundle，可消费 prompt asset | §1–§5 + §8 + prompt asset |
+| **deep_verified** — ~~完整 runtime gate / handoff / checkpoint~~ | [RETIRED in P8] 原 deep runtime 集成路径退场；§8 替换为 Host Protocol Entry Contract |
 
 > **术语解耦**：本文承载文档披露梯度的入口定义，以 protocol 章节为主轴，后续层级衔接 prompt asset 与架构参考。KB SKILL 中的 L0/L1/L2/L3 是知识持久化分层（index → stable → active → archive），描述 AI 运行时的上下文消费顺序，两者不是同一套模型。
 
@@ -18,10 +18,10 @@
 |-------|------|------|------|
 | **0** | Protocol | §1–§3 | 协议基础：目录约定、必备文件、宿主义务 |
 | **1** | Lifecycle | §4–§5 | 理解验证：生命周期样例、合规自检 |
-| **2** | Integration | §6–§8 + prompt asset | 集成能力：外部契约、主体身份、deep host runtime |
+| **2** | Integration | §6–§8 + prompt asset | 集成能力：外部契约、主体身份、Host Protocol Entry Contract |
 | **3** | Reference | design.md · ADR-016 · ADR-017 | 架构参考：不进 prompt，不面向接入者 |
 
-与宿主能力梯度的对应：convention_only 读完 Layer 0–1（§1–§5）；payload_capable 在 Layer 0–1 基础上加 prompt asset；deep_verified 完整读至 Layer 0–2（§1–§8 + prompt）。Prompt asset 是 payload/deep 的能力附加面，不单独改变章节阅读层级。
+与宿主能力梯度的对应：convention_only 读完 Layer 0–1（§1–§5）；payload_capable 在 Layer 0–1 基础上加 prompt asset + §8；deep_verified ~~完整读至 Layer 0–2~~ [RETIRED in P8]，原 deep runtime 集成路径退场，新宿主走 §8 Host Protocol Entry Contract。Prompt asset 是 payload 的能力附加面，不单独改变章节阅读层级。
 
 **权限边界：**
 
@@ -30,6 +30,12 @@
 - `ADR-016` 负责 Protocol-first 决策理据与演进路线
 - `ADR-017` 负责 ActionProposal / Receipt 字段定义（含 ExecutionAuthorizationReceipt 字段规范）
 - 本文不重复上述内容，只定义"宿主能不能只看这一页就接入"
+
+**Reader Contract（读者定位）：**
+
+- 普通用户：读 README / docs/how-sopify-works，不需要本文
+- Host / LLM 日常运行：消费 prompt asset 中的 §8 摘要（4 步入口 + read budget + write boundary），不全量读本文
+- Host adapter / compliance 实现者：读本文全文 + schemas
 
 ## 1. 最小必备目录结构
 
@@ -52,17 +58,36 @@
 
 ## 2. 最小必备文件与字段
 
-### plan 方案包（Convention 模式最小示例 / light 下界）
+### Plan 方案包（P8 post-cutover 结构）
 
-> 以下是 Convention 模式的最小方案包结构，等同于现有 plan scaffold 的 **light** 级别。Standard 和 full 级别需额外包含 background.md / design.md 等，见 runtime plan scaffold 约定。本文不覆盖 standard/full 正式分级。
+> plan.md 是唯一语义入口。方案包分三档（Progressive Disclosure），receipts 条件必备。
 
-每个方案包是一个目录 `plan/YYYYMMDD_slug/`，light 下界至少包含：
+每个方案包是一个目录 `plan/<plan_id>/`，`plan_id` 命名规范：日期前缀 + 下划线分隔（如 `20260605_p8_protocol_kernel_runtime_retirement`），不允许连字符。
 
-| 文件 | 必需字段 | 说明 |
-|------|---------|------|
-| `plan.md` | title, scope, approach | 方案正文（light 级将 tasks/status 内联在 plan.md 末尾） |
+**三档分级：**
 
-`status` 值域：`pending` / `in_progress` / `done` / `blocked`。Light 模式下 task 和 status 内联在 `plan.md`，不要求单独 `tasks.md`。
+| 级 | 必备文件 | 适用场景 |
+|---|---|---|
+| **light** | plan.md | 小任务、单步修复、探索性提案 |
+| **standard** | plan.md + tasks.md | 多任务、需逐项验收 |
+| **architecture** | plan.md + design.md + tasks.md + receipts/ + assets/ | 架构级、协议级、状态模型变更 |
+
+**plan.md 结构**：顶部推荐有 Plan Snapshot 区块（Goal / Status / Next / Task），然后是 8 必备章节（顺序固定）：
+
+1. **Context / Why** — 触发条件、输入来源、为什么新包、为什么不做 X
+2. **Scope** — 做什么
+3. **Approach** — 怎么做
+4. **Waves / Steps** — 分几步
+5. **Key Decisions** — 关键决策（引用 design.md 章节）
+6. **Constraints / Not-in-scope** — 硬约束 + 延后项
+7. **Status / Progress** — 当前进度（任务多时拆到 tasks.md）
+8. **Next** — 下一步动作
+
+Plan Snapshot 缺失不阻断审计和接续；host 回退读取完整 plan.md。Plan Snapshot 不是目录索引、不是 state 文件、不是权威审计事实。
+
+**receipts/ 规则（条件必备）**：managed plan 产生执行/验证事件时必须写到 `receipts/*.json`；finalize 时必须生成 `receipts/final.json`；light plan 如无 managed execution 可无 receipts/。命名规范 `exec_NNN / verify_NNN / final`。
+
+**不加**：status.json / plan-level README.md / plan/\<id\>/handoff.json（handoff 单态，只在 state/）。
 
 ### blueprint 知识层
 
@@ -206,6 +231,20 @@ Sopify 接收后由 Validator 授权，不由生产器自行决定执行。
 
 **source**：**MUST** 标识验证器来源，供 Validator 和宿主解释 evidence provenance。是否基于 source 做差异化处理不在当前 normative scope。
 
+#### Verifier Read-Only Contract（P8 升格）
+
+P8 新增 Verifier 写入边界约束：
+
+| 规则 | RFC 2119 |
+|---|---|
+| Verifier **MUST** emit verdict + evidence + source | MUST |
+| Verifier **MUST** be read-only: true | MUST |
+| Verifier **MUST NOT** write `state/**`, `plan/**`, `blueprint/**` | MUST NOT |
+| Verifier **MUST NOT** invoke `execute_command` or `modify_files` | MUST NOT |
+| Verifier verdict **MUST NOT** be treated as self-authorization | MUST NOT |
+
+违反 read-only 约束的 Verifier verdict 降级为 advisory（不自授权）。具体 bridge enforcement 不在 P8 必须范围，后续由 cross-review 独立 slice 实现。
+
 ### Knowledge Provider（外部知识工具）
 
 外部知识工具（graphify、摘要生成器等）沉淀给 Sopify 的是 **artifact + reference**：
@@ -230,9 +269,12 @@ Sopify 把上述三类输入统一收敛为：
 | `history` | 归档事实：outcome + key_decisions + verification_evidence |
 | `blueprint` | 长期知识：只有稳定结论（via knowledge_sync） |
 
-#### ExecutionAuthorizationReceipt — *normative*
+#### ExecutionAuthorizationReceipt — *[RETIRED in P8]*
 
-> **升格状态**：本节从 informative/方向 升格为 **normative**（P1.5-B 升格）。字段语义使用 RFC 2119 表述。
+> **P8 退场声明**：ExecutionAuthorizationReceipt 在 P8 中显式退场。pre-execution authorization model（runtime gate 在执行前生成的机器授权回执）不再适用；P8 删除 runtime gate 后，不存在稳定的"执行前授权时刻"。post-P8 审计主链改由 `plan/<id>/receipts/*.json`（过程审计资产）+ `history/<id>/receipt.md`（最终审计收据）承担。这不是 EAR 的同义替代，而是产品承诺切换：从 pre-execution authorization proof 切到 post-execution evidence chain。详见 P8 plan.md 决策 #15 / #18 和 design.md §4.7。
+
+<details>
+<summary>Legacy 字段规范（保留为历史参考）</summary>
 
 ExecutionAuthorizationReceipt 是 execute_existing_plan 授权通过后生成的机器事实，回答"这次执行被谁、基于哪个 revision、通过什么授权"。
 
@@ -258,6 +300,8 @@ ExecutionAuthorizationReceipt 是 execute_existing_plan 授权通过后生成的
 - Stale receipt MUST NOT 降级为 consult，MUST NOT 自动 re-authorize
 
 **命名对齐注释**：`plan_revision_digest`（receipt 字段）是通用 Subject Identity 中 `revision_digest` 在 plan subject 场景的特化命名，不是独立概念。两者 MUST NOT 长期并存为不同语义。
+
+</details>
 
 ## 7. Subject Identity & Review Wire Contract
 
@@ -372,94 +416,121 @@ ExecutionAuthorizationReceipt 是 execute_existing_plan 授权通过后生成的
 
 审查记录作为 evidence 进入 handoff 或 plan metadata，归档时纳入 receipt 的 verification_evidence。evidence 挂载的 normative 消费规则见 §6 Verifier 消费路径。evidence attachment 的 wire format（字段 schema、路径约定）为 deferred，不属于当前 normative scope。
 
-## 8. Deep Host 运行时集成协议
+## 8. Host Protocol Entry Contract（P8 post-cutover）
 
-> 本节是 §3 宿主最小义务中 Runtime 模式的详细展开，适用于 `deep_verified` 宿主。`payload_capable` 和 `convention_only` 宿主按 §3 义务表操作，不承担本节定义的 deep runtime 宿主义务。
->
-> `payload_capable` 宿主可在 §3 最小义务之上叠加 P4c 定义的增强消费面（如 continuation / interaction / audit），但这不等同于进入本节的 deep runtime 集成路径。
->
-> Prompt asset（AGENTS.md / CLAUDE.md）只保留高层义务摘要，本节是 deep runtime 集成的唯一规范入口。
+> 本节替代 pre-P8 "Deep Host 运行时集成协议"。P8 删除 runtime gate 后，入口约束由 host prompt asset + 本协议共同承担，不新造 CLI 或 state 文件。原 §8.1–§8.5 deep runtime 集成内容退场，保留一行 retirement note 指向历史背景。
 
-### 8.1 Gate-First 义务
+### 8.1 Request Admission Before Continuation
 
-每次进入新的 Sopify LLM 回合前，宿主必须先执行 runtime gate 并消费返回的 JSON contract。
+宿主/LLM 在 workspace 中检测到 `.sopify-skills/sopify.json` 或 `.sopify-skills/` 时，MUST 先形成 runtime-independent ActionProposal，判断用户请求属于以下哪类：
 
-**入口解析**：
-- Repo-local 开发态：`scripts/runtime_gate.py enter --workspace-root <cwd> --request "<raw user request>"`
-- Vendored 模式：工作区 `.sopify-skills/sopify.json` 是唯一 workspace activation marker（声明 `bundle_version / locator_mode / ignore_mode / capabilities`）；宿主结合 `~/.codex/sopify/payload-manifest.json` 解析 selected global bundle，从 bundle contract 或 workspace-preflight contract 消费 `runtime_gate_entry`
-- 若工作区缺少兼容 manifest，宿主先调 `~/.codex/sopify/helpers/bootstrap_workspace.py --workspace-root <cwd>`
-
-**Gate 通过条件**：仅当 `status == ready` ∧ `gate_passed == true` ∧ `evidence.handoff_found == true` ∧ `evidence.strict_runtime_entry == true` 时，宿主才可进入后续阶段。
-
-**`allowed_response_mode` 值域**：
-
-| 值 | 宿主行为 |
+| 用户意图 | Host 行为 |
 |---|---|
-| `checkpoint_only` | 只允许 checkpoint 响应 |
-| `error_visible_retry` | 只允许短错误摘要 + 重试提示 |
-| `action_proposal_retry` | 必须读 `action_proposal_schema`，生成 ActionProposal JSON，以 `--action-proposal-json` 重试 |
+| consult（问问题、澄清、解释、代码阅读） | 不读取 active_plan 接续链；必要时只读 blueprint/project 轻上下文 |
+| quick_fix（unmanaged 单步修复） | 不切 active_plan，不强制写 receipts |
+| new_plan（新建 managed plan） | 创建方案包；如已有 active_plan，先确认切换/合并/暂停 |
+| continue_plan（继续当前/上次 plan） | 执行 4 步 protocol entry（§8.3） |
+| finalize（归档） | 进入 finalize 工作流 |
+| ask_user | 响应用户，不自动接续 |
 
-**ActionProposal capability**：首次 gate 调用应声明 `--action-proposal-capability`；提供 `--action-proposal-json` 时隐含声明。不声明的宿主走 legacy fallback。Schema 由 gate 动态返回，不得硬编码。
+**关键约束**：protocol 不要求所有用户请求都自动接续 active_plan。consult / unmanaged quick_fix 默认不进入 4 步 protocol entry。
 
-**Gate 验证时效**：必须在当前消息回合的 tool call 中执行，不得复用上一轮 `current_gate_receipt.json`。
+### 8.2 触发条件
 
-**首次激活 `ROOT_CONFIRM_REQUIRED`**：宿主必须停在 root 选择（推荐当前目录 / 备选仓库根 / 允许手动指定），确认后以 `activation_root` 重试。`allowed_response_mode` 为 `checkpoint_only`。`~go init` 不得绕过此步骤。
+4 步 protocol entry 仅在以下条件全部满足时执行：
 
-### 8.2 Post-Run Handoff 消费
+1. workspace 存在 `.sopify-skills/sopify.json` 或 `.sopify-skills/`
+2. ActionProposal 指向 managed plan / continuation / finalize
+3. 非 consult / unmanaged quick_fix 路径
 
-runtime 执行后，若 `.sopify-skills/state/current_handoff.json` 存在，宿主必须优先按其中的 `required_host_action`、`artifacts` 及当前 `current_*` machine truth 决定下一步。渲染层 `Next:` 行仅为人类摘要，不作为唯一机器依据。
+### 8.3 入口读顺序（4 步）
 
-> **Mainline-only 解释**：宿主的最小接续主链是 `gate → current_* machine truth → handoff → host consume rule`。`route` 是 runtime 内部分流实现；`checkpoint` 只在 clarification / decision 暂停时出现，是主链分叉，不是每轮必经步骤。宿主需要稳定消费的是 gate/handoff/state contract，而不是 runtime 内部模块划分。
+```
+1. state/active_plan.json         → 定位 plan_id（如无 → consult / new-plan）
+2. plan/<id>/plan.md              → 语义入口：做什么 + 进度（真相源）
+3. state/current_handoff.json     → 恢复提示 + 是否等用户（required_host_action）
+4. plan/<id>/receipts/            → 取最新 1-3 个 receipt，知道"哪些被验证过"
+```
 
-**`required_host_action` 值域**：
+**顺序设计原则**：active_plan 定位后**先读 plan.md 建立语义真相**，再读 current_handoff 作为恢复提示——避免 handoff 反过来变成第二真相源。
 
-| 值 | 宿主行为 |
+### 8.4 读取预算红线
+
+| 资产 | 默认读取 | 何时扩展 |
+|---|---|---|
+| `state/active_plan.json` | 全量（应只有 plan_id） | 进入 managed plan / continuation / finalize 时 |
+| `state/current_handoff.json` | 全量（必须保持短小） | active_plan 存在时 |
+| `plan/<id>/plan.md` | 优先读 Plan Snapshot 区 | 评审方案/执行任务/状态冲突时展开完整 plan.md |
+| `plan/<id>/tasks.md` | 默认不读 | 执行 standard/architecture 任务时 |
+| `plan/<id>/design.md` | 默认不读 | 架构取舍/schema/风险判断需要时 |
+| `plan/<id>/receipts/` | 最新 1-3 个 receipt 或 final.json | 审计/回滚/争议时 |
+| `assets/` | 默认不读 | 当前任务明确需要时 |
+| `blueprint/protocol.md` | 默认不全量读 | 协议实现/合规检查时 |
+
+**MUST NOT**：protocol entry 默认不得全量读 protocol.md / design.md / receipts/ 目录。compliance smoke 必须检查此约束。
+
+### 8.5 Receipts Latest-Only 算法
+
+receipts/ 目录的读取是精确的 latest-only 查找，不是全量扫描：
+
+1. 列出 `plan/<id>/receipts/` 目录
+2. 如果存在 `final.json`，始终包含（不受 N 限制）
+3. 其余 receipt 按 timestamp 降序取最新 1-3 个
+4. timestamp 缺失时按 provenance.receipt_id 数字部分兜底排序
+5. 只读 verdict / evidence / provenance / timestamp 字段
+
+host MUST NOT 默认全量扫描 receipts/ 内容。
+
+### 8.6 写回边界
+
+写 `state/active_plan.json`、`state/current_handoff.json`、`plan/<id>/receipts/*.json` 时 MUST 走 `sopify_writer`。Host prompt 负责 request admission 与默认 spec workflow 入口，不负责生成机器真相、不生成计划优先级、不执行验证。
+
+### 8.7 链路失败模式（fail-open）
+
+| 步 | 文件缺失时 host 行为 |
 |---|---|
-| `answer_questions` | 读 `.sopify-skills/state/current_clarification.json`，向用户展示 `missing_facts` / `questions`，等待补充后重入 default runtime entry。不得自行物化 plan 或直接跳到执行 |
-| `confirm_decision` | 优先读 `current_handoff.json.artifacts.decision_checkpoint` + `decision_submission_state`；回退到 `.sopify-skills/state/current_decision.json`。展示 `question` / `options` / `recommended_option_id`，等待用户确认后重入。不得自行生成 plan |
-| `continue_host_develop` | 宿主继续代码修改。develop_callback 回调机制已退役（mainline-only slimming），宿主不再支持中途回调 runtime 触发 clarification/decision 分叉 |
-| `continue_host_consult` | 在已消费当前回合 gate contract 前提下继续问答；不得自行路由，不得重判 consult / 非 consult |
+| 1 active_plan 缺失 | 进入 consult 模式或提示 new-plan；不阻断 |
+| 2 plan.md 缺失 | 异常 → 提示用户 state 不一致 |
+| 3 current_handoff 缺失 | 正常 → 仅按 plan.md 进度接续 |
+| 4 receipts/ 缺失或空 | 正常 → 不假设任何动作已验证 |
 
-**execution_gate**：若 `current_handoff.json.artifacts.execution_gate` 存在，结合 `.sopify-skills/state/current_run.json.stage` 判断 plan 状态（已生成 vs `ready_for_execution`）。
+### 8.8 读后分叉
 
-**偏好注入**：gate 内部执行 preferences preload（通过 `preferences_preload_entry`）。宿主只消费 gate 暴露的 `preferences` 结果，不得自行拼装。优先级固定为：当前任务明确要求 > `preferences.md` > 默认规则。
-
-**跨宿主接续最小读取集**：
-
-- 必读：`current_gate_receipt.json`（当前回合）、`current_handoff.json`
-- 接续配套：`current_run.json`、`current_plan.json`
-- 仅在挂起交互时读取：`current_clarification.json`、`current_decision.json`
-- 审计补强：`ExecutionAuthorizationReceipt`、`current_archive_receipt.json`
-
-### 8.3 宿主行为边界
-
-- 宿主不得在 gate 前自行路由
-- 宿主不得绕过 checkpoint 约束（`clarification_pending` / `decision_pending`）
-- 宿主不得手写 `current_decision.json` / `current_handoff.json` 等 machine truth
-- bare `~go` 在有活动 plan 时自动路由到 exec_plan；无活动 plan 时进入 workflow
-- Prompt asset 是 prompt 层指引，不是 vendored runtime 的 machine contract
-
-### 8.4 Runtime Helper 索引
-
-| Helper | 说明 |
+| 读到的事实 | Host 行为 |
 |---|---|
-| `scripts/sopify_runtime.py` | 默认 repo-local raw-input entry |
-| `scripts/runtime_gate.py enter` | runtime gate，宿主第一跳 |
-| `~/.codex/sopify/payload-manifest.json` | 全局 payload metadata |
-| `~/.codex/sopify/helpers/bootstrap_workspace.py` | workspace bootstrap helper |
-| `.sopify-skills/sopify.json` | workspace activation marker (唯一 stub) |
+| 无 active_plan | consult / new-plan |
+| 用户请求不指向当前 active_plan | 不自动接续；按 ActionProposal 处理 |
+| active_plan 存在且 continue_plan | 按 plan.md + tasks.md 继续 |
+| required_host_action = answer_questions | 只展示问题并等待回答 |
+| required_host_action = confirm_decision | 只展示选项并等待确认 |
+| plan.md 与 handoff 冲突 | 以 plan.md 为准；提示 state conflict |
 
-### 8.5 State 文件索引
+### 8.9 State 文件索引（P8 post-cutover: 2 文件）
 
-| 文件 | 说明 |
+| 文件 | 说明 | Git |
+|---|---|---|
+| `state/active_plan.json` | 定位：当前 plan_id | ignored |
+| `state/current_handoff.json` | 恢复：上次停哪 + required_host_action | ignored |
+
+P8 删除的 state 文件：`current_run.json`、`current_plan.json`、`current_clarification.json`、`current_decision.json`、`current_gate_receipt.json`、`current_archive_receipt.json`、`last_route.json`。
+
+`required_host_action` canonical 值域（5 个）：
+
+| 值 | 语义 |
 |---|---|
-| `.sopify-skills/state/current_handoff.json` | 运行时交接事实，宿主执行后优先消费 |
-| `.sopify-skills/state/current_run.json` | 活跃 run 状态（stage, execution_gate） |
-| `.sopify-skills/state/current_plan.json` | 活动 plan 绑定（跨宿主接续锚点） |
-| `.sopify-skills/state/current_clarification.json` | 澄清 checkpoint 状态 |
-| `.sopify-skills/state/current_decision.json` | 决策 checkpoint 回退状态 |
-| `.sopify-skills/state/current_gate_receipt.json` | gate receipt（仅当轮有效） |
-| `.sopify-skills/state/current_archive_receipt.json` | archive receipt（审计补强；非每轮主链必读） |
+| `continue_host_develop` | 宿主继续代码修改 |
+| `answer_questions` | 宿主展示缺失事实，等待用户补充 |
+| `confirm_decision` | 宿主展示设计分叉，等待用户选择 |
+| `continue_host_consult` | 宿主继续问答 |
+| `resolve_state_conflict` | 状态冲突，需宿主介入 |
+
+### 8.10 Retirement Note
+
+本节（§8）在 P8 中整体替换。pre-P8 §8 "Deep Host 运行时集成协议"定义了 gate-first 义务、runtime gate entry、deep host adapter、runtime helper 索引等内容，适用于 deep_verified 宿主。P8 删除 runtime gate 和 deep host adapter 后，原 §8.1–§8.5 全部退场。原 deep runtime 集成的历史背景见 git history。
+
+### 8.11 ActionProposal 角色声明
+
+ActionProposal 是 runtime-independent workflow/admission 层概念，用于 host/default workflow 做请求准入与分发。它不是 P8 must-freeze schema，不作为 runtime gate 输入（runtime gate 已在 P8 退场），不新增核心 schema 文件。P8 不冻结完整 ActionProposal schema，只要求宿主先判断用户请求意图，再决定是否进入接续读链。
 
 ## 非目标
 
