@@ -1,0 +1,6 @@
+{
+  "schema_version": "1",
+  "plan_id": "test_minimal_001",
+  "required_host_action": "continue_host_develop",
+  "notes": ["Minimal fixture for P8 protocol check"]
+}

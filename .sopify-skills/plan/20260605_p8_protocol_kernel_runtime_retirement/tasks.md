@@ -110,52 +110,52 @@ created: 2026-06-05
 
 ### W1.6 Build Runtime-Free Compliance Smoke
 
-- [ ] Depends: W1.1 / W1.2 / W1.3 / W1.4 / W1.5 / W1.5b
-- [ ] Input: schema files + filesystem fixture
-- [ ] Output: `scripts/sopify_compliance.py`
-- [ ] Output: CLI: `sopify_compliance check --scenario <new-plan|continuation|finalize> --fixture <path>`
-- [ ] Output: JSON report with scenario, verdict, failures, evidence
-- [ ] Output: CLI is dev/CI smoke only; not a `sopify run/finalize/route` replacement
-- [ ] Verify: `rg "from runtime|import runtime" scripts/sopify_compliance.py` returns no matches
-- [ ] Verify: new-plan scenario writes/validates `state/active_plan.json` + `plan/<id>/plan.md`
-- [ ] Verify: continuation scenario reads 4-step entry order
-- [ ] Verify: continuation scenario fails if prompt/protocol entry references `runtime_gate.py`
-- [ ] Verify: continuation scenario fails if prompt/protocol entry requires active_plan continuation for every user request
-- [ ] Verify: prompt/protocol entry explicitly states consult / unmanaged quick_fix does not enter active_plan continuation by default
-- [ ] Verify: continuation scenario fails if protocol.md §8 still contains pre-P8 gate-first normative body text
-- [ ] Verify: continuation scenario fails if protocol.md still lists `current_run/current_plan/current_clarification/current_decision/current_gate_receipt` as主链必读
-- [ ] Verify: continuation scenario fails if prompt/protocol entry requires full protocol.md/design.md/receipts directory reads by default
-- [ ] Verify: finalize scenario checks `receipts/final.json`, history receipt, and cleared state
-- [ ] Verify: any `_registry.yaml` in entry path fails compliance
+- [x] Depends: W1.1 / W1.2 / W1.3 / W1.4 / W1.5 / W1.5b
+- [x] Input: schema files + filesystem fixture
+- [x] Output: `scripts/sopify_protocol_check.py`
+- [x] Output: CLI: `python3 scripts/sopify_protocol_check.py check --scenario <new-plan|continuation|finalize> --fixture <path>`
+- [x] Output: JSON report with scenario, verdict, failures, evidence
+- [x] Output: CLI is dev/CI smoke only; not a `sopify run/finalize/route` replacement
+- [x] Verify: `rg "from runtime|import runtime" scripts/sopify_protocol_check.py` returns no matches
+- [x] Verify: new-plan scenario writes/validates `state/active_plan.json` + `plan/<id>/plan.md`
+- [x] Verify: continuation scenario reads 4-step entry order
+- [x] Verify: continuation scenario fails if prompt/protocol entry references `runtime_gate.py`
+- [x] Verify: continuation scenario fails if prompt/protocol entry requires active_plan continuation for every user request
+- [x] Verify: prompt/protocol entry explicitly states consult / unmanaged quick_fix does not enter active_plan continuation by default
+- [x] Verify: continuation scenario fails if protocol.md §8 still contains pre-P8 gate-first normative body text
+- [x] Verify: continuation scenario fails if protocol.md still lists `current_run/current_plan/current_clarification/current_decision/current_gate_receipt` as主链必读
+- [x] Verify: continuation scenario fails if prompt/protocol entry requires full protocol.md/design.md/receipts directory reads by default
+- [x] Verify: finalize scenario checks `receipts/final.json`, history receipt, and no non-P8/legacy state files
+- [x] Verify: any `_registry.yaml` in entry path fails compliance
 
 ### W1.7 Create Minimal Fixtures
 
-- [ ] Depends: W1.6
-- [ ] Input: current repo + minimal external fixture directory
-- [ ] Output: current repo dogfood fixture
-- [ ] Output: minimal external repo fixture under tests/fixtures or temporary generated path
-- [ ] Output: consult/quick_fix admission fixture: active_plan exists, user request is unrelated consult or unmanaged quick_fix, expected behavior does not enter 4-step continuation
-- [ ] Verify: fixtures do not need runtime process
-- [ ] Verify: compliance passes all 3 scenarios on current repo
-- [ ] Verify: compliance passes continuation scenario on external fixture
-- [ ] Verify: consult/quick_fix admission fixture is represented as text-level expected behavior or compliance assertion; no LLM behavior test required
+- [x] Depends: W1.6
+- [x] Input: repo-hosted minimal fixture + minimal external fixture directory
+- [x] Output: repo-hosted minimal fixture dogfood
+- [x] Output: minimal external repo fixture under tests/fixtures or temporary generated path
+- [x] Output: consult/quick_fix admission fixture: active_plan exists, user request is unrelated consult or unmanaged quick_fix, expected behavior does not enter 4-step continuation
+- [x] Verify: fixtures do not need runtime process
+- [x] Verify: protocol check passes all 3 scenarios on repo-hosted minimal fixture (`tests/fixtures/minimal_plan`)
+- [x] Verify: compliance passes continuation scenario on external fixture
+- [x] Verify: consult/quick_fix admission fixture is represented as text-level expected behavior or compliance assertion; no LLM behavior test required
 
 ### Wave 1 Gate
 
-- [ ] Depends: W1.1-W1.7
-- [ ] Verify: `python3 scripts/sopify_compliance.py check --scenario new-plan --fixture <current>`
-- [ ] Verify: `python3 scripts/sopify_compliance.py check --scenario continuation --fixture <current>`
-- [ ] Verify: `python3 scripts/sopify_compliance.py check --scenario finalize --fixture <current>`
-- [ ] Verify: `rg "runtime_gate|current_run|current_plan|_registry" .sopify-skills/blueprint/protocol.md` only returns legacy notes marked retired or no matches
-- [ ] Verify: protocol.md §8 已完成整节替换；旧 deep runtime gate 正文不存在
-- [ ] Verify: host prompt entry summary exists and does not reintroduce runtime routing
-- [ ] Verify: ADR-013 正文已加注 P8 Scope Clarification（authorization 语义收窄）
-- [ ] Verify: ADR-017 ExecutionAuthorizationReceipt 已标注 [SUPERSEDED by P8]
-- [ ] Verify: 蓝图 design.md 收敛链已改为 produce → verify → record evidence → settle
-- [ ] Verify: 蓝图 design.md 宿主能力治理段落已加注 interim disclaimer
-- [ ] Verify: 蓝图 design.md 中 EAR 不再标记为 Now/✅/normative
-- [ ] Verify: 蓝图 design.md 中 "Validator 是唯一授权者" 表述已收窄为 protocol admission / receipt validity / archive admission
-- [ ] Stop: W1 gate must pass before W2 starts
+- [x] Depends: W1.1-W1.7
+- [x] Verify: `python3 scripts/sopify_protocol_check.py check --scenario new-plan --fixture tests/fixtures/minimal_plan`
+- [x] Verify: `python3 scripts/sopify_protocol_check.py check --scenario continuation --fixture tests/fixtures/minimal_plan`
+- [x] Verify: `python3 scripts/sopify_protocol_check.py check --scenario finalize --fixture tests/fixtures/minimal_plan`
+- [x] Verify: `rg "runtime_gate|current_run|current_plan|_registry" .sopify-skills/blueprint/protocol.md` only returns legacy notes marked retired or no matches
+- [x] Verify: protocol.md §8 已完成整节替换；旧 deep runtime gate 正文不存在
+- [x] Verify: host prompt entry summary exists and does not reintroduce runtime routing
+- [x] Verify: ADR-013 正文已加注 P8 Scope Clarification（authorization 语义收窄）
+- [x] Verify: ADR-017 ExecutionAuthorizationReceipt 已标注 [SUPERSEDED by P8]
+- [x] Verify: 蓝图 design.md 收敛链已改为 produce → verify → record evidence → settle
+- [x] Verify: 蓝图 design.md 宿主能力治理段落已加注 interim disclaimer
+- [x] Verify: 蓝图 design.md 中 EAR 不再标记为 Now/✅/normative
+- [x] Verify: 蓝图 design.md 中 "Validator 是唯一授权者" 表述已收窄为 protocol admission / receipt validity / archive admission
+- [x] Stop: W1 gate must pass before W2 starts
 
 ---
 
@@ -264,7 +264,7 @@ created: 2026-06-05
 - [ ] Output: delete `runtime/`
 - [ ] Verify: `test ! -d runtime`
 - [ ] Verify: `rg "from runtime|import runtime|runtime\\." . -g '!**/__pycache__/**'` returns no active code imports
-- [ ] Verify: `python3 scripts/sopify_compliance.py check --scenario continuation --fixture <current>` passes
+- [ ] Verify: `python3 scripts/sopify_protocol_check.py check --scenario continuation --fixture <current>` passes
 
 ### W2.11 Dogfood Mainline
 

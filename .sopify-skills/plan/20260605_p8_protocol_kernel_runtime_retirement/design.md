@@ -502,7 +502,7 @@ verifier_contract:
 
 ## 8. Compliance Smoke（最小可校验）
 
-**不做完整测试平台，不做三档 fixture 矩阵**。只做一个可独立运行的 compliance smoke 脚本（Python，挂在 `scripts/sopify_compliance.py`），验证主链 3 场景：
+**不做完整测试平台，不做三档 fixture 矩阵**。只做一个可独立运行的 compliance smoke 脚本（Python，挂在 `scripts/sopify_protocol_check.py`），验证主链 3 场景：
 
 | 场景 | 检查项 |
 |---|---|
@@ -518,7 +518,7 @@ verifier_contract:
 
 **fixture 策略**：
 
-- 当前 repo 作为主 fixture（dogfood）
+- repo-hosted minimal fixture 作为 W1 主 fixture（dogfood）
 - 1 个最小 external repo 作为辅助 fixture
 - **不做 convention/payload/deep 三档全矩阵**——过度验证
 
@@ -531,7 +531,7 @@ P8 里的 CLI 不是新 runtime，只是少量辅助入口：
 | `scripts/sopify_init.py` | 初始化/修复 workspace 结构与激活标记 | 只写初始化资产 |
 | `scripts/sopify_status.py` | 展示 active plan、handoff health、latest receipt | 否 |
 | `scripts/sopify_doctor.py` | 检查安装、payload、schema、host asset 健康度 | 否 |
-| `scripts/sopify_compliance.py` | 开发/CI smoke：new-plan / continuation / finalize | 只写 fixture 或校验目标 |
+| `scripts/sopify_protocol_check.py` | 开发/CI smoke：new-plan / continuation / finalize | 只写 fixture 或校验目标 |
 
 明确不做：`sopify run` / `sopify route` / `sopify finalize` / `sopify gate`。这些会把 Sopify 带回 runtime/workflow engine，不进 P8。
 
