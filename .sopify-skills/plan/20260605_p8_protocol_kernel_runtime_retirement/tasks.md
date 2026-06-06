@@ -92,21 +92,21 @@ created: 2026-06-05
 
 ### W1.5b Blueprint Interim Sync + persistence_red_line + promise surface
 
-- [ ] Depends: W1.1 / W1.2
-- [ ] Input: `.sopify-skills/blueprint/design.md` keep-list / persistence_red_line / 对外承诺分层表 / ADR-013 / ADR-017
-- [ ] Output: P8 design 明确 blueprint `persistence_red_line` 将从 pre-P8 runtime state 集合切到 post-P8 persistence model
-- [ ] Output: P8 design 明确 ExecutionAuthorizationReceipt / current_gate_receipt 在 P8 中 retire，而不是静默丢失
-- [ ] Output: W3 blueprint sync 需要同步更新对外承诺分层表（EAR 从 Now/✅ 退场，receipts/history receipt 写入新的审计承诺面）
-- [ ] Output: ADR-013 正文加注 P8 Scope Clarification（authorization 语义收窄为 protocol admission / receipt validity / archive admission；不再指 pre-execution side-effect approval；实操层拆为 write admission + archive admission 两个准入点）
-- [ ] Output: ADR-017 ExecutionAuthorizationReceipt 标注 [SUPERSEDED by P8]
-- [ ] Output: 蓝图 design.md 收敛链从 produce→verify→authorize→settle 改为 produce→verify→record evidence→settle
-- [ ] Output: 蓝图 design.md Core State Files target 6→2
-- [ ] Output: 蓝图 design.md 宿主能力治理段落加注 interim disclaimer（deep_verified / 审计增强 / EAR 相关表述在 P8 后失效，W3.6 全量重定义）
-- [ ] Output: 蓝图 design.md “Validator 是唯一授权者” 表述收窄为 protocol admission / receipt validity / archive admission
-- [ ] Verify: P8 不再只写 “Core state files 6 → 2”，还明确 red-line / keep-list / promise surface 的同步回写要求
-- [ ] Verify: 蓝图 design.md 中 EAR 不再标记为 Now/✅/normative
-- [ ] Verify: 蓝图 design.md 中 “Validator 是唯一授权者” 表述已收窄
-- [ ] Verify: ADR-017 ExecutionAuthorizationReceipt 已标注 [SUPERSEDED by P8]
+- [x] Depends: W1.1 / W1.2
+- [x] Input: `.sopify-skills/blueprint/design.md` keep-list / persistence_red_line / 对外承诺分层表 / ADR-013 / ADR-017
+- [x] Output: P8 design 明确 blueprint `persistence_red_line` 将从 pre-P8 runtime state 集合切到 post-P8 persistence model
+- [x] Output: P8 design 明确 ExecutionAuthorizationReceipt / current_gate_receipt 在 P8 中 retire，而不是静默丢失
+- [x] Output: W3 blueprint sync 需要同步更新对外承诺分层表（EAR 从 Now/✅ 退场，receipts/history receipt 写入新的审计承诺面）
+- [x] Output: ADR-013 正文加注 P8 Scope Clarification（authorization 语义收窄为 protocol admission / receipt validity / archive admission；不再指 pre-execution side-effect approval；实操层拆为 write admission + archive admission 两个准入点）
+- [x] Output: ADR-017 ExecutionAuthorizationReceipt 标注 [SUPERSEDED by P8]
+- [x] Output: 蓝图 design.md 收敛链从 produce→verify→authorize→settle 改为 produce→verify→record evidence→settle
+- [x] Output: 蓝图 design.md Core State Files target 6→2
+- [x] Output: 蓝图 design.md 宿主能力治理段落加注 interim disclaimer（deep_verified / 审计增强 / EAR 相关表述在 P8 后失效，W3.6 全量重定义）
+- [x] Output: 蓝图 design.md “Validator 是唯一授权者” 表述收窄为 protocol admission / receipt validity / archive admission
+- [x] Verify: P8 不再只写 “Core state files 6 → 2”，还明确 red-line / keep-list / promise surface 的同步回写要求
+- [x] Verify: 蓝图 design.md 中 EAR 不再标记为 Now/✅/normative
+- [x] Verify: 蓝图 design.md 中 “Validator 是唯一授权者” 表述已收窄
+- [x] Verify: ADR-017 ExecutionAuthorizationReceipt 已标注 [SUPERSEDED by P8]
 
 ### W1.6 Build Runtime-Free Compliance Smoke
 
