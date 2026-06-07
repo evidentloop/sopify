@@ -33,7 +33,7 @@ jobs:
         run: |
           tmp="$(mktemp)"
           python3 scripts/generate-builtin-catalog.py --output "$tmp" >/dev/null
-          python3 - runtime/builtin_catalog.generated.json "$tmp" <<'PY'
+          python3 - skills/catalog/builtin_catalog.generated.json "$tmp" <<'PY'
           import difflib
           import json
           from pathlib import Path

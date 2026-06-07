@@ -1,5 +1,5 @@
 <!-- bootstrap: lang=zh-CN; encoding=UTF-8 -->
-<!-- SOPIFY_VERSION: 2026-05-31.142150 -->
+<!-- SOPIFY_VERSION: 2026-06-07.141426 -->
 <!-- ARCHITECTURE: Adaptive Workflow + Layered Rules -->
 
 # Sopify - 自适应 AI 编程助手
@@ -348,7 +348,7 @@ Next: 请验证功能
 | `kb` | 知识库操作 | 初始化、更新策略 |
 | `templates` | 创建文档 | 所有模板定义 |
 
-**读取方式：** 以上为当前全部 builtin skill，均为 runtime 管理的工作流技能，由运行引擎按需加载，不支持独立调用。权威技能清单以 `builtin_catalog.generated.json` 为准。
+**读取方式：** 以上为当前全部 builtin skill，均为 host 消费的工作流 prompt/skill 资产，不支持独立调用。权威技能清单以 `skills/catalog/builtin_catalog.generated.json` 为准。
 
 ---
 

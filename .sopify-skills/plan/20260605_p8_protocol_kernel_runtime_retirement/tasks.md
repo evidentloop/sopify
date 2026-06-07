@@ -172,21 +172,21 @@ created: 2026-06-05
 
 ### W2.0b Catalog Relocation + Generator Runtime-Free
 
-- [ ] Depends: W1 gate
-- [ ] Input: `runtime/builtin_skill_packages/*/skill.yaml`（5 个 builtin skill YAML 源）
-- [ ] Input: `runtime/builtin_catalog.generated.json`
-- [ ] Input: `runtime/skill_schema.py` / `runtime/_yaml.py`
-- [ ] Output: 迁移 YAML 源 → `skills/catalog/<skill_id>/skill.yaml`（扁平路径，去掉 `builtin_skill_packages/` 中间层）
-- [ ] Output: 迁移生成产物 → `skills/catalog/builtin_catalog.generated.json`
-- [ ] Output: 迁移 `runtime/skill_schema.py` → `sopify_contracts/skill_schema.py`（保留旧名，不改为 skill_manifest.py）
-- [ ] Output: 创建 `scripts/_yaml_subset.py`：仅 `load_yaml` 最小解析子集，不含 `dump_yaml` / 写逻辑
-- [ ] Output: 改造 `scripts/generate-builtin-catalog.py`：import 改为 `sopify_contracts.skill_schema` + `_yaml_subset`；输入路径改为 `skills/catalog/*/skill.yaml`；输出路径改为 `skills/catalog/builtin_catalog.generated.json`
-- [ ] Output: 从 skill schema normalizer（`normalize_skill_manifest`）和 generated JSON 删除 `runtime_entry` + `entry_kind` + `supports_routes` 字段
-- [ ] Output: 更新 CI drift check 路径（`ci.yml:36` + `scripts/release-preflight.sh:28,70`）
-- [ ] Output: 更新 `skills/{en,zh}/header.md.template:351` 对 generated JSON 路径的引用
-- [ ] Verify: `python3 scripts/generate-builtin-catalog.py` 成功输出 `skills/catalog/builtin_catalog.generated.json`
-- [ ] Verify: generated JSON 不含 `runtime_entry` / `entry_kind` / `supports_routes` 字段
-- [ ] Verify: `rg "from runtime|import runtime" scripts/generate-builtin-catalog.py` returns no matches
+- [x] Depends: W1 gate
+- [x] Input: `runtime/builtin_skill_packages/*/skill.yaml`（5 个 builtin skill YAML 源）
+- [x] Input: `runtime/builtin_catalog.generated.json`
+- [x] Input: `runtime/skill_schema.py` / `runtime/_yaml.py`
+- [x] Output: 迁移 YAML 源 → `skills/catalog/<skill_id>/skill.yaml`（扁平路径，去掉 `builtin_skill_packages/` 中间层）
+- [x] Output: 迁移生成产物 → `skills/catalog/builtin_catalog.generated.json`
+- [x] Output: 迁移 `runtime/skill_schema.py` → `sopify_contracts/skill_schema.py`（保留旧名，不改为 skill_manifest.py）
+- [x] Output: 创建 `scripts/_yaml_subset.py`：仅 `load_yaml` 最小解析子集，不含 `dump_yaml` / 写逻辑
+- [x] Output: 改造 `scripts/generate-builtin-catalog.py`：import 改为 `sopify_contracts.skill_schema` + `_yaml_subset`；输入路径改为 `skills/catalog/*/skill.yaml`；输出路径改为 `skills/catalog/builtin_catalog.generated.json`
+- [x] Output: 从 skill schema normalizer（`normalize_skill_manifest`）和 generated JSON 删除 `runtime_entry` + `entry_kind` + `supports_routes` 字段
+- [x] Output: 更新 CI drift check 路径（`ci.yml:36` + `scripts/release-preflight.sh:28,70`）
+- [x] Output: 更新 `skills/{en,zh}/header.md.template:351` 对 generated JSON 路径的引用
+- [x] Verify: `python3 scripts/generate-builtin-catalog.py` 成功输出 `skills/catalog/builtin_catalog.generated.json`
+- [x] Verify: generated JSON 不含 `runtime_entry` / `entry_kind` / `supports_routes` 字段
+- [x] Verify: `rg "from runtime|import runtime" scripts/generate-builtin-catalog.py` returns no matches
 
 ### W2.1 Extract/Keep Minimal CLI Entrypoints
 

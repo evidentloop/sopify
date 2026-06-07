@@ -29,7 +29,7 @@ check_builtin_catalog_drift() {
   local tmp
   tmp="$(mktemp)"
   python3 "$ROOT_DIR/scripts/generate-builtin-catalog.py" --output "$tmp" >/dev/null
-  if ! python3 - "$ROOT_DIR/runtime/builtin_catalog.generated.json" "$tmp" <<'PY'; then
+  if ! python3 - "$ROOT_DIR/skills/catalog/builtin_catalog.generated.json" "$tmp" <<'PY'; then
 import difflib
 import json
 from pathlib import Path

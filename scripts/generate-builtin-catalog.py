@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate runtime/builtin_catalog.generated.json from skill packages."""
+"""Generate skills/catalog/builtin_catalog.generated.json from skill packages."""
 
 from __future__ import annotations
 
@@ -14,8 +14,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from runtime._yaml import load_yaml  # noqa: E402
-from runtime.skill_schema import SkillManifestError, normalize_skill_manifest  # noqa: E402
+from scripts._yaml_subset import load_yaml  # noqa: E402
+from sopify_contracts.skill_schema import SkillManifestError, normalize_skill_manifest  # noqa: E402
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -27,12 +27,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--package-root",
-        default="runtime/builtin_skill_packages",
+        default="skills/catalog",
         help="Relative package root under repo root.",
     )
     parser.add_argument(
         "--output",
-        default="runtime/builtin_catalog.generated.json",
+        default="skills/catalog/builtin_catalog.generated.json",
         help="Relative output path under repo root.",
     )
     return parser.parse_args(argv)
@@ -87,11 +87,8 @@ def _collect_skill_specs(package_root: Path) -> list[dict[str, Any]]:
                 "names": names,
                 "descriptions": descriptions,
                 "mode": manifest.get("mode") or "advisory",
-                "runtime_entry": manifest.get("runtime_entry"),
-                "entry_kind": manifest.get("entry_kind"),
                 "handoff_kind": manifest.get("handoff_kind"),
                 "contract_version": manifest.get("contract_version") or "1",
-                "supports_routes": list(manifest.get("supports_routes") or ()),
                 "triggers": list(manifest.get("triggers") or ()),
                 "metadata": dict(manifest.get("metadata") or {}),
                 "tools": list(manifest.get("tools") or ()),

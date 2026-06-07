@@ -1,5 +1,5 @@
 <!-- bootstrap: lang=en-US; encoding=UTF-8 -->
-<!-- SOPIFY_VERSION: 2026-05-31.142150 -->
+<!-- SOPIFY_VERSION: 2026-06-07.141426 -->
 <!-- ARCHITECTURE: Adaptive Workflow + Layered Rules -->
 
 # Sopify - Adaptive AI Programming Assistant
@@ -348,7 +348,7 @@ Next: Please verify the functionality
 | `kb` | Knowledge base operations | Init, update strategies |
 | `templates` | Create documents | All template definitions |
 
-**Loading:** The above are all current builtin skills — runtime-managed workflow skills loaded on-demand by the runtime engine. Standalone invocation is not supported. The authoritative skill catalog is `builtin_catalog.generated.json`.
+**Loading:** The above are all current builtin skills — workflow skills consumed as prompt/skill assets by the host. Standalone invocation is not supported. The authoritative skill catalog is `skills/catalog/builtin_catalog.generated.json`.
 
 ---
 
