@@ -165,10 +165,10 @@ created: 2026-06-05
 
 ### W2.0a Registry Snapshot
 
-- [ ] Depends: W1 gate
-- [ ] Input: `.sopify-skills/plan/_registry.yaml`（当前全部 registry entries，当前预期 4 条）
-- [ ] Output: 导出当前全部 registry entries 为人类可读摘要，存入当前 P8 plan 的 `assets/registry-lifecycle-snapshot.md`（随 P8 归档时一起进 history）
-- [ ] Verify: 快照文件存在于 `assets/` 且包含全部 plan 的 id + lifecycle_state + 关键时间戳
+- [x] Depends: W1 gate
+- [x] Input: `.sopify-skills/plan/_registry.yaml`（当前全部 registry entries，当前预期 4 条）
+- [x] Output: 导出当前全部 registry entries 为人类可读摘要，存入当前 P8 plan 的 `assets/registry-lifecycle-snapshot.md`（随 P8 归档时一起进 history）
+- [x] Verify: 快照文件存在于 `assets/` 且包含全部 plan 的 id + lifecycle_state + 关键时间戳
 
 ### W2.0b Catalog Relocation + Generator Runtime-Free
 
