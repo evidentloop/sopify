@@ -163,6 +163,31 @@ created: 2026-06-05
 
 目标：硬切到 protocol kernel。线上用户少，不做 shadow writer，不保留 runtime compatibility layer。
 
+### W2.0a Registry Snapshot
+
+- [ ] Depends: W1 gate
+- [ ] Input: `.sopify-skills/plan/_registry.yaml`（当前全部 registry entries，当前预期 4 条）
+- [ ] Output: 导出当前全部 registry entries 为人类可读摘要，存入当前 P8 plan 的 `assets/registry-lifecycle-snapshot.md`（随 P8 归档时一起进 history）
+- [ ] Verify: 快照文件存在于 `assets/` 且包含全部 plan 的 id + lifecycle_state + 关键时间戳
+
+### W2.0b Catalog Relocation + Generator Runtime-Free
+
+- [ ] Depends: W1 gate
+- [ ] Input: `runtime/builtin_skill_packages/*/skill.yaml`（5 个 builtin skill YAML 源）
+- [ ] Input: `runtime/builtin_catalog.generated.json`
+- [ ] Input: `runtime/skill_schema.py` / `runtime/_yaml.py`
+- [ ] Output: 迁移 YAML 源 → `skills/catalog/<skill_id>/skill.yaml`（扁平路径，去掉 `builtin_skill_packages/` 中间层）
+- [ ] Output: 迁移生成产物 → `skills/catalog/builtin_catalog.generated.json`
+- [ ] Output: 迁移 `runtime/skill_schema.py` → `sopify_contracts/skill_schema.py`（保留旧名，不改为 skill_manifest.py）
+- [ ] Output: 创建 `scripts/_yaml_subset.py`：仅 `load_yaml` 最小解析子集，不含 `dump_yaml` / 写逻辑
+- [ ] Output: 改造 `scripts/generate-builtin-catalog.py`：import 改为 `sopify_contracts.skill_schema` + `_yaml_subset`；输入路径改为 `skills/catalog/*/skill.yaml`；输出路径改为 `skills/catalog/builtin_catalog.generated.json`
+- [ ] Output: 从 skill schema normalizer（`normalize_skill_manifest`）和 generated JSON 删除 `runtime_entry` + `entry_kind` + `supports_routes` 字段
+- [ ] Output: 更新 CI drift check 路径（`ci.yml:36` + `scripts/release-preflight.sh:28,70`）
+- [ ] Output: 更新 `skills/{en,zh}/header.md.template:351` 对 generated JSON 路径的引用
+- [ ] Verify: `python3 scripts/generate-builtin-catalog.py` 成功输出 `skills/catalog/builtin_catalog.generated.json`
+- [ ] Verify: generated JSON 不含 `runtime_entry` / `entry_kind` / `supports_routes` 字段
+- [ ] Verify: `rg "from runtime|import runtime" scripts/generate-builtin-catalog.py` returns no matches
+
 ### W2.1 Extract/Keep Minimal CLI Entrypoints
 
 - [ ] Depends: W1 gate
@@ -184,6 +209,16 @@ created: 2026-06-05
 - [ ] Verify: `rg "runtime_gate|sopify_runtime|runtime/" installer scripts/install_sopify.py` has no active dependency except retired docs/tests slated for deletion
 - [ ] Verify: install smoke still installs payload assets
 
+### W2.2b Catalog Payload Resource
+
+- [ ] Depends: W2.2, W2.0b
+- [ ] Input: `skills/catalog/builtin_catalog.generated.json` / `installer/payload.py` / `installer/inspection.py`
+- [ ] Output: `installer/payload.py` 安装时拷贝 `builtin_catalog.generated.json` 到 payload
+- [ ] Output: `payload-manifest.json` 记录 catalog 路径
+- [ ] Output: `sopify_doctor` 检查 catalog 文件存在性
+- [ ] Verify: install smoke 安装后 payload 目录包含 catalog JSON
+- [ ] Verify: `sopify_doctor` 报告 catalog 健康状态
+
 ### W2.3 Rename and Scope sopify_writer
 
 - [ ] Depends: W1 schemas
@@ -194,6 +229,28 @@ created: 2026-06-05
 - [ ] Output: writer must not route, choose plan priority, call AI, execute tasks, or orchestrate hosts
 - [ ] Verify: no new writer CLI is introduced by default
 - [ ] Verify: old `canonical_writer` import path is removed; no compatibility alias by default
+
+### W2.3b CI Runtime Detachment
+
+- [ ] Depends: W2.3, W2.0b
+- [ ] Input: `.github/workflows/ci.yml` / `scripts/release-preflight.sh`
+- [ ] Output: restructure `runtime-tests` job 为 `protocol-tests` job：删除 runtime-only test steps，保留 catalog drift / protocol smoke / installer-payload smoke / 非 runtime 测试
+- [ ] Output: 删除 `check-bundle-smoke.sh` step
+- [ ] Output: 删除 `check-prompt-runtime-gate-smoke.py` step
+- [ ] Output: 替换为 `sopify_protocol_check` smoke（W1.6 已建）
+- [ ] Output: 保留 catalog drift check（路径已更新 by W2.0b）+ installer/payload smoke
+- [ ] Verify: CI pipeline 绿；无 runtime-only test step
+- [ ] Verify: catalog drift check 和 protocol smoke 在 CI 中正常运行
+
+### W2.3c Host Prompt / Copilot Instructions Cutover
+
+- [ ] Depends: W2.3b
+- [ ] Input: `.github/copilot-instructions.md`
+- [ ] Output: 清理 runtime-first 措辞（runtime gate / sopify_runtime 引用）
+- [ ] Output: 删除不存在的 `go_plan_runtime.py` 引用
+- [ ] Output: 替换为 protocol-first 入口（protocol.md + sopify_protocol_check + sopify_writer）
+- [ ] Verify: `rg "runtime_gate|sopify_runtime|go_plan_runtime" .github/copilot-instructions.md` returns no matches
+- [ ] Verify: copilot-instructions.md 不再引用 runtime-first 入口
 
 ### W2.4 Migrate StateStore to 2-File Model
 
@@ -231,7 +288,7 @@ created: 2026-06-05
 
 ### W2.7 Reclassify Tests
 
-- [ ] Depends: W2.1-W2.6
+- [ ] Depends: W2.0b, W2.1-W2.3, W2.2b, W2.3b-W2.3c, W2.4-W2.6
 - [ ] Input: all tests importing runtime
 - [ ] Output: keep protocol / contracts / sopify_writer / installer / compliance tests
 - [ ] Output: delete runtime router/engine/gate/output tests
@@ -259,7 +316,7 @@ created: 2026-06-05
 
 ### W2.10 Delete runtime/ Directory
 
-- [ ] Depends: W2.1-W2.9
+- [ ] Depends: W2.0b, W2.1-W2.3, W2.2b, W2.3b-W2.3c, W2.4-W2.9
 - [ ] Input: `runtime/` all files
 - [ ] Output: delete `runtime/`
 - [ ] Verify: `test ! -d runtime`
@@ -280,7 +337,7 @@ created: 2026-06-05
 
 ### Wave 2 Gate
 
-- [ ] Depends: W2.1-W2.11
+- [ ] Depends: W2.0a-W2.0b, W2.1-W2.3, W2.2b, W2.3b-W2.3c, W2.4-W2.11
 - [ ] Verify: runtime directory absent
 - [ ] Verify: registry absent
 - [ ] Verify: no runtime imports in active code/tests
