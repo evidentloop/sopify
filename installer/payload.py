@@ -12,7 +12,7 @@ from typing import Any
 
 from installer.hosts.base import HostAdapter, read_sopify_version, HEADER_TEMPLATE_NAME, render_single_file
 from installer.models import BootstrapResult, InstallError, InstallPhaseResult
-from installer.sopify_bundle import sync_runtime_bundle
+from installer.sopify_bundle import sync_payload_bundle
 from installer.validate import _normalize_payload_bundle_version, resolve_payload_bundle_root, validate_payload_install
 from canonical_writer import iso_now
 
@@ -25,8 +25,6 @@ _REQUIRED_BUNDLE_CAPABILITIES = {
     "bundle_role": "control_plane",
     "manifest_first": True,
     "writes_handoff_file": True,
-    "runtime_gate": True,
-    "runtime_entry_guard": True,
 }
 
 
@@ -51,7 +49,7 @@ def install_global_payload(
         )
 
     action = "updated" if payload_root.exists() else "installed"
-    bundle_root = _install_versioned_runtime_bundle(
+    bundle_root = _install_versioned_payload_bundle(
         repo_root=repo_root,
         host_root=host_root,
         desired_bundle_version=desired_version,
@@ -91,7 +89,7 @@ def run_workspace_bootstrap(payload_root: Path, workspace_root: Path) -> Bootstr
         raise InstallError(
             "Workspace prewarm requires explicit activation-root selection for this nested repository path. "
             "The internal installer `--workspace` flow does not handle that choice; omit `--workspace` and let "
-            "runtime gate ask whether to enable the current directory or the repository root on first project trigger."
+            "the workspace bootstrap flow ask whether to enable the current directory or the repository root on first project trigger."
         )
     if completed.returncode != 0 or result.action == "failed":
         details = result.message or completed.stderr.strip() or stdout or "unknown bootstrap failure"
@@ -212,14 +210,15 @@ def _ensure_workspace_instruction_resources(*, repo_root: Path, payload_root: Pa
     return changed
 
 
-def _install_versioned_runtime_bundle(
+def _install_versioned_payload_bundle(
     *,
     repo_root: Path,
     host_root: Path,
     desired_bundle_version: str | None,
 ) -> Path:
+    """Install a versioned payload bundle containing protocol-kernel assets only."""
     initial_version = _normalize_payload_bundle_version(desired_bundle_version) or "0.0.0-dev"
-    bundle_root = sync_runtime_bundle(
+    bundle_root = sync_payload_bundle(
         repo_root,
         host_root,
         bundle_dirname=str(Path(PAYLOAD_DIRNAME) / PAYLOAD_BUNDLES_RELATIVE_PATH / initial_version),
@@ -251,9 +250,10 @@ def _write_payload_manifest(*, payload_root: Path, bundle_root: Path, payload_ve
         "active_version": bundle_version,
         "generated_at": iso_now(),
         "bundles_dir": str(PAYLOAD_BUNDLES_RELATIVE_PATH),
-        "default_bundle_dir": ".sopify-runtime",
+        "default_bundle_dir": ".sopify-payload",
         "bundle_manifest": str(bundle_manifest_path),
         "bundle_template_dir": str(bundle_manifest_path.parent),
+        "catalog_path": str(bundle_manifest_path.parent / (bundle_manifest.get("catalog_path") or "")),
         "helper_entry": str(PAYLOAD_HELPER_RELATIVE_PATH),
         "dependency_model": bundle_manifest.get("dependency_model")
         or {

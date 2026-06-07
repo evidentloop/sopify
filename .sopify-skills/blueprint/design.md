@@ -365,6 +365,8 @@ ActionProposal 的标量 `side_effect` 字段表达粗粒度权限层级（`none
 
 **P8 关键变化**：主链机器真相从 6 个 runtime state 文件收窄为 2 个协议文件（active_plan + current_handoff）。不再存在 runtime gate/router 作为消费者；宿主通过 protocol entry 4 步读顺序消费。
 
+**P8 偏好能力退场**：`user/preferences.md` 文件保留（persistence red-line 不可删），但旧 `preferences_preload` installer/doctor capability 在 P8 退场（runtime gate 删除后无自动预加载实现承接）。未来由 protocol entry 重新定义消费方式（TBD）。
+
 ### Legacy Mapping（P8 退场）
 
 | 旧层级 | 旧文件 | P8 处置 |

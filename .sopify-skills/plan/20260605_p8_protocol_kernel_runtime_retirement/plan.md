@@ -13,9 +13,9 @@ depends_on: [P7 (payload_only_onboarding_mainline), P6 (writer_cutover), P5 (con
 ## Plan Snapshot
 
 - **Goal**: 把 AI 开发过程中的方案、决策、交接、执行/验证证据收敛为可追溯审计资产；真相源从 runtime 切到 protocol.md + sopify_writer，并用 Qoder 证明这些资产可跨宿主接续
-- **Status**: pending
-- **Next**: W1.1 — Freeze 5 Must-Freeze Schemas
-- **Task**: 从 W1.1 开始，串行执行三波次
+- **Status**: W1 完成 / W2 进行中（W2.0a-W2.2b done，W2.3 next）
+- **Next**: W2.3 — Rename and Scope sopify_writer（canonical_writer → sopify_writer）
+- **Task**: W2.3 writer 命名与职责收敛，然后串行 W2.3b → ...
 
 ## Context / Why
 

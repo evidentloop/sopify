@@ -21,7 +21,6 @@ from installer.models import HostCapability, InstallError
 from installer.outcome_contract import annotate_outcome_payload, diagnostic_identifiers_from_evidence, render_outcome_summary
 from installer.validate import (
     resolve_payload_bundle_root,
-    run_bundle_smoke_check,
     validate_bundle_install,
     validate_host_install,
     validate_payload_install,
@@ -142,7 +141,6 @@ class HostInspection:
     payload_bundle: PayloadBundleResolution
     workspace_bundle: InspectionCheck
     handoff_first: InspectionCheck
-    preferences_preload: InspectionCheck
     smoke: InspectionCheck
 
     @property
@@ -188,8 +186,6 @@ class HostInspection:
             self.payload_bundle.to_check(host_id=self.capability.host_id),
             self.workspace_bundle,
             self.handoff_first,
-            self.preferences_preload,
-            self.smoke,
         )
 
 
@@ -260,12 +256,6 @@ def inspect_host(
                 status=CHECK_SKIP,
                 reason_code=REASON_OK,
             ),
-            preferences_preload=InspectionCheck(
-                host_id=capability.host_id,
-                check_id="workspace_preferences_preload",
-                status=CHECK_SKIP,
-                reason_code=REASON_OK,
-            ),
             smoke=InspectionCheck(
                 host_id=capability.host_id,
                 check_id="bundle_smoke",
@@ -291,13 +281,6 @@ def inspect_host(
             reason_code=REASON_WORKSPACE_NOT_REQUESTED,
             recommendation="Trigger Sopify in a project workspace to bootstrap on demand.",
         )
-        preferences_preload = InspectionCheck(
-            host_id=capability.host_id,
-            check_id="workspace_preferences_preload",
-            status=CHECK_SKIP,
-            reason_code=REASON_WORKSPACE_NOT_REQUESTED,
-            recommendation="Trigger Sopify in a project workspace to bootstrap on demand.",
-        )
         smoke = _inspect_smoke(
             adapter=adapter,
             capability=capability,
@@ -311,7 +294,6 @@ def inspect_host(
             payload_bundle=payload_bundle,
             workspace_bundle=workspace_bundle,
             handoff_first=handoff_first,
-            preferences_preload=preferences_preload,
             smoke=smoke,
         )
     workspace_bundle = _inspect_workspace_bundle(
@@ -334,14 +316,6 @@ def inspect_host(
         manifest_key="writes_handoff_file",
         recommendation="Refresh the workspace bundle so handoff-first runtime contracts stay available.",
     )
-    preferences_preload = _inspect_workspace_capability(
-        capability=capability,
-        workspace_bundle=workspace_bundle,
-        capability_manifest=capability_manifest,
-        check_id="workspace_preferences_preload",
-        manifest_key="preferences_preload",
-        recommendation="Refresh the workspace bundle so preferences preload stays available.",
-    )
     smoke = _inspect_smoke(
         adapter=adapter,
         capability=capability,
@@ -355,7 +329,6 @@ def inspect_host(
         payload_bundle=payload_bundle,
         workspace_bundle=workspace_bundle,
         handoff_first=handoff_first,
-        preferences_preload=preferences_preload,
         smoke=smoke,
     )
 
@@ -877,37 +850,14 @@ def _inspect_smoke(
     home_root: Path,
     include_smoke: bool,
 ) -> InspectionCheck:
-    if not include_smoke:
-        return InspectionCheck(
-            host_id=capability.host_id,
-            check_id="bundle_smoke",
-            status=CHECK_SKIP,
-            reason_code=REASON_OK,
-        )
-
-    try:
-        bundle_root = resolve_payload_bundle_root(adapter.payload_root(home_root))
-        stdout = run_bundle_smoke_check(
-            bundle_root,
-            payload_manifest_path=adapter.payload_root(home_root) / "payload-manifest.json",
-        )
-        evidence = (stdout.splitlines()[0],) if stdout else ()
-        return InspectionCheck(
-            host_id=capability.host_id,
-            check_id="bundle_smoke",
-            status=CHECK_PASS,
-            reason_code=REASON_OK,
-            evidence=evidence,
-        )
-    except InstallError as exc:
-        return InspectionCheck(
-            host_id=capability.host_id,
-            check_id="bundle_smoke",
-            status=CHECK_FAIL,
-            reason_code=_reason_code_from_install_error(exc, default="UNEXPECTED_ERROR"),
-            evidence=_paths_from_error(exc),
-            recommendation=f"Refresh the {capability.host_id} payload bundle and rerun the bundled smoke check.",
-        )
+    # P8: bundle smoke check retired — check-bundle-smoke.sh no longer ships
+    # in the payload bundle. Doctor/status reports the check as skipped.
+    return InspectionCheck(
+        host_id=capability.host_id,
+        check_id="bundle_smoke",
+        status=CHECK_SKIP,
+        reason_code=REASON_OK,
+    )
 
 
 def _build_status_summary(hosts: list[dict[str, object]]) -> dict[str, object]:

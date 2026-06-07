@@ -73,6 +73,29 @@ plans:
     meta:
       source: "manual"
       updated_at: "2026-05-27T23:00:00+08:00"
+  - plan_id: "20260605_p8_protocol_kernel_runtime_retirement"
+    snapshot:
+      path: ".sopify-skills/plan/20260605_p8_protocol_kernel_runtime_retirement"
+      title: "P8 Protocol Kernel & Runtime Retirement"
+      level: "architecture"
+      topic_key: "p8_protocol_kernel_runtime_retirement"
+      lifecycle_state: "active"
+      created_at: "2026-06-05T00:00:00+08:00"
+    governance:
+      priority: "p0"
+      priority_source: "explicit"
+      priority_confirmed_at: "2026-06-05T00:00:00+08:00"
+      status: "in_progress"
+      note: "W1 完成，W2 进行中（W2.0a-W2.1 done）；W2.6 将删除本 registry"
+    advice:
+      suggested_priority: "p0"
+      suggested_source: "explicit"
+      suggested_reason:
+        - "架构级 cutover：runtime 退场 + 协议内核 freeze + 状态模型极简"
+      suggested_at: "2026-06-05T00:00:00+08:00"
+    meta:
+      source: "manual"
+      updated_at: "2026-06-05T00:00:00+08:00"
   - plan_id: "20260529_pre_launch_consolidation"
     snapshot:
       path: ".sopify-skills/history/2026-06/20260529_pre_launch_consolidation"

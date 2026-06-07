@@ -97,10 +97,7 @@ _REQUIRED_BUNDLE_FILES = (
     Path("manifest.json"),
     Path("sopify_contracts") / "__init__.py",
     Path("canonical_writer") / "__init__.py",
-    Path("runtime") / "__init__.py",
-    Path("runtime") / "gate.py",
-    Path("scripts") / "sopify_runtime.py",
-    Path("scripts") / "runtime_gate.py",
+    Path("catalog") / "builtin_catalog.generated.json",
 )
 _IGNORE_PATTERNS = shutil.ignore_patterns(".DS_Store", "Thumbs.db", "__pycache__")
 _VERSION_TOKEN_RE = re.compile(r"[0-9]+|[A-Za-z]+")
@@ -114,7 +111,7 @@ _SOPIFY_JSON_FILENAME = "sopify.json"
 _SOPIFY_MANAGED_IGNORE_BEGIN = "# BEGIN sopify-managed"
 _SOPIFY_MANAGED_IGNORE_END = "# END sopify-managed"
 _SOPIFY_MANAGED_IGNORE_ENTRIES = (
-    ".sopify-runtime/",
+    ".sopify-payload/",
     ".sopify-skills/state/",
     ".sopify-skills/plan/_registry.yaml",
 )
@@ -133,7 +130,7 @@ DIAGNOSTIC_INVALID_ANCESTOR_MARKER = "INVALID_ANCESTOR_MARKER"
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Bootstrap a workspace-local Sopify runtime bundle.")
+    parser = argparse.ArgumentParser(description="Bootstrap a workspace-local Sopify payload bundle.")
     parser.add_argument("--workspace-root", required=True, help="Target project root that should receive Sopify workspace metadata.")
     parser.add_argument("--activation-root", default=None, help="Optional explicit activation root override.")
     parser.add_argument("--request", default="", help="Raw user request routed through host ingress.")
@@ -169,7 +166,7 @@ def main(argv: list[str] | None = None) -> int:
                     "state": "INCOMPATIBLE",
                     "reason_code": "UNEXPECTED_ERROR",
                     "workspace_root": str(Path(args.workspace_root).expanduser().resolve()),
-                    "bundle_root": str(Path(args.workspace_root).expanduser().resolve() / ".sopify-runtime"),
+                    "bundle_root": str(Path(args.workspace_root).expanduser().resolve() / ".sopify-payload"),
                     "from_version": None,
                     "to_version": None,
                     "message": str(exc),
@@ -209,7 +206,7 @@ def bootstrap_workspace(
     if not payload_manifest:
         raise ValueError(f"Missing or invalid payload manifest: {payload_manifest_path}")
 
-    target_bundle_dir = str(payload_manifest.get("default_bundle_dir") or ".sopify-runtime")
+    target_bundle_dir = str(payload_manifest.get("default_bundle_dir") or ".sopify-payload")
     bundle_root = resolved_activation_root / target_bundle_dir
     current_manifest_path = resolved_activation_root / _SOPIFY_SKILLS_DIR / _SOPIFY_JSON_FILENAME
     current_manifest = _read_json(current_manifest_path) if current_manifest_path.is_file() else {}

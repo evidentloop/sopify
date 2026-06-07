@@ -162,10 +162,7 @@ def expected_bundle_paths(bundle_root: Path) -> tuple[Path, ...]:
         bundle_root / "manifest.json",
         bundle_root / "sopify_contracts" / "__init__.py",
         bundle_root / "canonical_writer" / "__init__.py",
-        bundle_root / "runtime" / "__init__.py",
-        bundle_root / "runtime" / "gate.py",
-        bundle_root / "scripts" / "sopify_runtime.py",
-        bundle_root / "scripts" / "runtime_gate.py",
+        bundle_root / "catalog" / "builtin_catalog.generated.json",
     )
 
 

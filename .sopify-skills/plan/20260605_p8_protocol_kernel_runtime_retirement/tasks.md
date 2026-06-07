@@ -202,22 +202,29 @@ created: 2026-06-05
 
 ### W2.2 Decouple Installer Core
 
-- [ ] Depends: W2.1
-- [ ] Input: `installer/validate.py` / `installer/bootstrap_workspace.py` / `scripts/install_sopify.py`
-- [ ] Output: installer consumes sopify_contracts / installer models, not runtime
-- [ ] Output: runtime bundle references removed from installer validation
-- [ ] Verify: `rg "runtime_gate|sopify_runtime|runtime/" installer scripts/install_sopify.py` has no active dependency except retired docs/tests slated for deletion
-- [ ] Verify: install smoke still installs payload assets
+- [x] Depends: W2.1
+- [x] Input: `installer/sopify_bundle.py` / `installer/validate.py` / `installer/bootstrap_workspace.py` / `installer/payload.py` / `scripts/install_sopify.py` / `runtime/manifest.py`
+- [x] Output: runtime bundle 概念收缩退场——installer 不再打包 `runtime/` 目录，不再引用 `scripts/sopify_runtime.py`、`scripts/runtime_gate.py`、`scripts/check-bundle-smoke.sh`
+- [x] Sub-step 2.2a: 删除或空化 `installer/sopify_bundle.py`（移除 `_DIRECTORY_ASSETS` 中的 `"runtime"` 条目、`_SCRIPT_ASSETS` 中的 `sopify_runtime.py` / `runtime_gate.py` / `check-bundle-smoke.sh`、`from runtime.manifest import write_bundle_manifest` import）；如果 bundle 整体概念退场，直接删除此文件
+- [x] Sub-step 2.2b: 更新 `installer/validate.py` 的 `expected_bundle_paths()`——移除 `runtime/__init__.py`、`runtime/gate.py`、`scripts/sopify_runtime.py`、`scripts/runtime_gate.py` 必备路径
+- [x] Sub-step 2.2c: 更新 `installer/bootstrap_workspace.py` 的 `_REQUIRED_BUNDLE_FILES`——移除上述 runtime 必备文件
+- [x] Sub-step 2.2d: 检查 `installer/payload.py` 中 bundle 同步调用链——如引用 `sopify_bundle.sync_runtime_bundle`，移除或替换为仅同步 `sopify_contracts/` + `canonical_writer/`（或后续 `sopify_writer/`）
+- [x] Sub-step 2.2e: 更新 `scripts/install_sopify.py` 中对 bundle 路径的校验——不再要求 runtime 文件存在
+- [x] Sub-step 2.2f: 去 runtime 化 `installer/payload.py` 中的 payload manifest 能力字段和路径——移除 `"runtime_gate": True`、`"runtime_entry_guard": True` capability 字段（line 28-29）；重命名 `_install_versioned_runtime_bundle` 函数（去 runtime 前缀）；更新 `"default_bundle_dir": ".sopify-runtime"` 路径为 post-P8 payload 目录名；清理 `sync_runtime_bundle` import（line 15）
+- [x] Verify: `rg "runtime_gate|sopify_runtime|runtime/|write_bundle_manifest|runtime_entry_guard|_install_versioned_runtime|sopify-runtime|sync_runtime_bundle" installer scripts/install_sopify.py` returns no active dependency（仅允许注释/docstring 中的 retired 说明）
+- [x] Verify: install smoke 仍能安装 payload assets（sopify_contracts + canonical_writer/sopify_writer）
+- [x] Verify: installer 不再依赖 `runtime/manifest.py` 的传递 import（builtin_catalog / entry_guard / clarification / decision / handoff / knowledge_layout / router）
+- [x] Note: 额外完成项——`preferences_preload` / `SMOKE_VERIFIED` capability 从 FeatureId enum + host adapter declared/verified features + doctor_checks + inspection 全链路退场；bundle manifest 补写 capabilities 字段对齐 `_REQUIRED_BUNDLE_CAPABILITIES`；doctor_checks() 不再输出 bundle_smoke；蓝图 design.md persistence red-line 补 preferences_preload retirement note
 
 ### W2.2b Catalog Payload Resource
 
-- [ ] Depends: W2.2, W2.0b
-- [ ] Input: `skills/catalog/builtin_catalog.generated.json` / `installer/payload.py` / `installer/inspection.py`
-- [ ] Output: `installer/payload.py` 安装时拷贝 `builtin_catalog.generated.json` 到 payload
-- [ ] Output: `payload-manifest.json` 记录 catalog 路径
-- [ ] Output: `sopify_doctor` 检查 catalog 文件存在性
-- [ ] Verify: install smoke 安装后 payload 目录包含 catalog JSON
-- [ ] Verify: `sopify_doctor` 报告 catalog 健康状态
+- [x] Depends: W2.2, W2.0b
+- [x] Input: `skills/catalog/builtin_catalog.generated.json` / `installer/payload.py` / `installer/inspection.py`
+- [x] Output: `installer/sopify_bundle.py` 安装时拷贝 `builtin_catalog.generated.json` 到 payload bundle `catalog/` 子目录
+- [x] Output: bundle manifest 和 `payload-manifest.json` 均记录 `catalog_path`
+- [x] Output: `sopify_doctor` 通过 `expected_bundle_paths` + `_REQUIRED_BUNDLE_FILES` 检查 catalog 文件存在性（payload_present check 链路覆盖）
+- [x] Verify: `sync_payload_bundle` 输出目录包含 `catalog/builtin_catalog.generated.json`（4 entries）
+- [x] Verify: bundle manifest `catalog_path` 字段指向正确路径
 
 ### W2.3 Rename and Scope sopify_writer
 
@@ -237,6 +244,8 @@ created: 2026-06-05
 - [ ] Output: restructure `runtime-tests` job 为 `protocol-tests` job：删除 runtime-only test steps，保留 catalog drift / protocol smoke / installer-payload smoke / 非 runtime 测试
 - [ ] Output: 删除 `check-bundle-smoke.sh` step
 - [ ] Output: 删除 `check-prompt-runtime-gate-smoke.py` step
+- [ ] Output: 改写 `check-install-payload-bundle-smoke.py` 为 payload/catalog smoke（移除 runtime bundle 校验，只验证 sopify_contracts + sopify_writer/canonical_writer + catalog 安装完整性）
+- [ ] Output: 更新 `scripts/release-preflight.sh`——移除 runtime bundle / runtime gate smoke 相关步骤，保留 catalog drift + protocol smoke
 - [ ] Output: 替换为 `sopify_protocol_check` smoke（W1.6 已建）
 - [ ] Output: 保留 catalog drift check（路径已更新 by W2.0b）+ installer/payload smoke
 - [ ] Verify: CI pipeline 绿；无 runtime-only test step
@@ -294,8 +303,25 @@ created: 2026-06-05
 - [ ] Output: delete runtime router/engine/gate/output tests
 - [ ] Output: migrate useful state invariant tests to sopify_writer
 - [ ] Output: migrate plan lookup/scaffold tests if the code survives outside runtime
+- [ ] Output: **显式删除清单**（审计确认，以下文件必须删除）：
+  - `tests/runtime_test_support.py`（269 行共享 helper，import 20+ runtime 模块，是 15+ 测试文件的 import 根）
+  - `test_runtime_engine.py` / `test_runtime_gate.py` / `test_runtime_router.py` / `test_runtime_orchestration.py` / `test_runtime_execution_gate.py`
+  - `test_runtime_kb.py` / `test_runtime_knowledge_layout.py` / `test_runtime_config.py` / `test_runtime_output_rendering.py` / `test_runtime_state.py`
+  - `test_runtime_decision.py` / `test_runtime_plan_reuse.py` / `test_runtime_plan_intent.py` / `test_runtime_plan_lookup.py` / `test_runtime_plan_registry.py` / `test_runtime_plan_scaffold.py` / `test_runtime_preferences.py`
+  - `test_bundle_smoke.py`
+  - `test_action_intent.py`（2561 行，测试 runtime.action_intent / runtime.gate / runtime.engine）
+- [ ] Output: **显式外科手术清单**（以下文件保留但需局部修改）：
+  - `tests/test_installer.py`：删除第 46-47 行 `from runtime.engine import run_runtime` / `from runtime.output import render_runtime_output`；重写或移除 `HostPromptContractTests._assert_installed_footer_contract`（~1193 行）中的 `run_runtime()` 调用
+  - `tests/test_release_hooks.py`：更新 `_init_release_hook_fixture` 中合成仓库 fixture 的 `runtime/gate.py` 文件路径
+  - `tests/test_installer_status_doctor.py`：更新 bundle copy 操作中 `runtime` 目录名引用
+  - `tests/test_installer_validate.py`：删除或改写全部 `run_bundle_smoke_check` / `check-bundle-smoke.sh` 相关测试方法（line 16 import + line 24/37/48/61/73/87/92/98 共 9 处引用）；W2.8 删除 smoke 脚本后这些测试必须同步清理
+- [ ] Output: **Fixture 清理清单**：
+  - `tests/fixtures/p4d_smoke/`：检查是否仍被活跃测试引用；如无引用则整体删除（含 `current_decision.json` / `current_run.json` / `current_gate_receipt.json` 等已退役 state 文件）
+  - `tests/fixtures/sample_invariant_gate_matrix.yaml`：删除（引用 runtime gate 概念）
+- [ ] Output: 清理 `tests/conftest.py` 中 `implementation_mirror` marker 注册（仅被 `test_runtime_router.py` 使用，已删除）
 - [ ] Verify: `rg "from runtime|import runtime|runtime\\." tests` returns no active imports
 - [ ] Verify: retained test names reflect new modules, not runtime
+- [ ] Verify: `runtime_test_support.py` 不存在；无 test 文件 import 它
 
 ### W2.8 Remove Runtime Entrypoints and Bundle
 
@@ -303,7 +329,18 @@ created: 2026-06-05
 - [ ] Input: `scripts/runtime_gate.py`, `scripts/sopify_runtime.py`, `scripts/check-prompt-runtime-gate-smoke.py`, `installer/sopify_bundle.py`
 - [ ] Output: delete runtime gate/default runtime entry/bundle smoke scripts
 - [ ] Output: remove bundle manifest fields that point to runtime entry
+- [ ] Output: **显式脚本删除清单**：
+  - `scripts/runtime_gate.py`
+  - `scripts/sopify_runtime.py`
+  - `scripts/check-prompt-runtime-gate-smoke.py`
+  - `scripts/check-bundle-smoke.sh`
+  - `installer/sopify_bundle.py`（如 W2.2 未整体删除）
+- [ ] Output: **CI / release-preflight 同步清单**（与 W2.3b 协同）：
+  - `.github/workflows/ci.yml`：移除 `check-bundle-smoke.sh` / `check-prompt-runtime-gate-smoke.py` step；改写 `check-install-payload-bundle-smoke.py` step 为 payload/catalog smoke
+  - `scripts/release-preflight.sh`：移除 runtime bundle / runtime gate smoke 相关步骤
+  - `scripts/check-install-payload-bundle-smoke.py`：改写为 payload/catalog smoke（或整体替换为新脚本）
 - [ ] Verify: `rg "runtime_gate.py|sopify_runtime.py|default_runtime_entry|runtime_gate_entry" installer scripts tests docs README.md README.zh-CN.md .sopify-skills/blueprint` returns no active dependency
+- [ ] Verify: `scripts/check-bundle-smoke.sh` 和 `scripts/check-prompt-runtime-gate-smoke.py` 不存在
 
 ### W2.9 Remove Deep Host Adapters
 
@@ -319,6 +356,7 @@ created: 2026-06-05
 - [ ] Depends: W2.0b, W2.1-W2.3, W2.2b, W2.3b-W2.3c, W2.4-W2.9
 - [ ] Input: `runtime/` all files
 - [ ] Output: delete `runtime/`
+- [ ] Output: 确认 W2.7 fixture 清理清单已执行（`tests/fixtures/p4d_smoke/`、`tests/fixtures/sample_invariant_gate_matrix.yaml`）
 - [ ] Verify: `test ! -d runtime`
 - [ ] Verify: `rg "from runtime|import runtime|runtime\\." . -g '!**/__pycache__/**'` returns no active code imports
 - [ ] Verify: `python3 scripts/sopify_protocol_check.py check --scenario continuation --fixture <current>` passes

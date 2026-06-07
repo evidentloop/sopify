@@ -32,7 +32,7 @@ from installer.models import InstallError
 from installer.outcome_contract import annotate_outcome_payload
 from installer.payload import (
     _REQUIRED_BUNDLE_CAPABILITIES,
-    _install_versioned_runtime_bundle,
+    _install_versioned_payload_bundle,
     _payload_is_current,
     install_global_payload,
 )
@@ -297,7 +297,7 @@ class PayloadInstallTests(unittest.TestCase):
             )
             self.assertFalse(result)
 
-    def test_install_versioned_runtime_bundle_rejects_invalid_manifest_bundle_version_before_rename(self) -> None:
+    def test_install_versioned_payload_bundle_rejects_invalid_manifest_bundle_version_before_rename(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             host_root = Path(temp_dir)
             bundle_root = host_root / "sopify" / "bundles" / "2026-02-13"
@@ -310,9 +310,9 @@ class PayloadInstallTests(unittest.TestCase):
                 },
             )
 
-            with patch("installer.payload.sync_runtime_bundle", return_value=bundle_root):
+            with patch("installer.payload.sync_payload_bundle", return_value=bundle_root):
                 with self.assertRaisesRegex(InstallError, "bundle_version"):
-                    _install_versioned_runtime_bundle(
+                    _install_versioned_payload_bundle(
                         repo_root=REPO_ROOT,
                         host_root=host_root,
                         desired_bundle_version="2026-02-13",
@@ -321,19 +321,19 @@ class PayloadInstallTests(unittest.TestCase):
             self.assertTrue(bundle_root.exists())
             self.assertFalse((host_root / "sopify" / "escape").exists())
 
-    def test_install_versioned_runtime_bundle_rejects_invalid_desired_bundle_version_before_sync(self) -> None:
+    def test_install_versioned_payload_bundle_rejects_invalid_desired_bundle_version_before_sync(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             host_root = Path(temp_dir)
 
-            with patch("installer.payload.sync_runtime_bundle") as sync_runtime_bundle:
+            with patch("installer.payload.sync_payload_bundle") as sync_payload_bundle:
                 with self.assertRaisesRegex(InstallError, "bundle_version"):
-                    _install_versioned_runtime_bundle(
+                    _install_versioned_payload_bundle(
                         repo_root=REPO_ROOT,
                         host_root=host_root,
                         desired_bundle_version="../escape",
                     )
 
-            sync_runtime_bundle.assert_not_called()
+            sync_payload_bundle.assert_not_called()
 
 
 class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):

@@ -21,7 +21,6 @@ CLAUDE_CAPABILITY = HostCapability(
         FeatureId.PROMPT_INSTALL,
         FeatureId.PAYLOAD_INSTALL,
         FeatureId.WORKSPACE_BOOTSTRAP,
-        FeatureId.PREFERENCES_PRELOAD,
         FeatureId.HANDOFF_FIRST,
         FeatureId.HOST_BRIDGE,
     ),
@@ -29,10 +28,8 @@ CLAUDE_CAPABILITY = HostCapability(
         FeatureId.PROMPT_INSTALL,
         FeatureId.PAYLOAD_INSTALL,
         FeatureId.WORKSPACE_BOOTSTRAP,
-        FeatureId.PREFERENCES_PRELOAD,
         FeatureId.HANDOFF_FIRST,
         FeatureId.HOST_BRIDGE,
-        FeatureId.SMOKE_VERIFIED,
     ),
     declared_enhancements=(
         EnhancementGroup.CONTINUATION,
@@ -45,10 +42,8 @@ CLAUDE_CAPABILITY = HostCapability(
         "payload_present",
         "workspace_bundle_manifest",
         "workspace_handoff_first",
-        "workspace_preferences_preload",
-        "bundle_smoke",
     ),
-    smoke_targets=("bundle_runtime_smoke",),
+    smoke_targets=(),
 )
 
 CLAUDE_HOST = HostRegistration(adapter=CLAUDE_ADAPTER, capability=CLAUDE_CAPABILITY)
