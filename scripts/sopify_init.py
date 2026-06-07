@@ -26,7 +26,7 @@ if str(REPO_ROOT) not in sys.path:
 
 _SOPIFY_SKILLS_DIR = ".sopify-skills"
 _SOPIFY_JSON_FILENAME = "sopify.json"
-_WORKSPACE_CAPABILITIES = ["runtime_gate"]
+_WORKSPACE_CAPABILITIES: list[str] = []
 
 _LOGO_LINES = [
     "███████╗ █████╗ ██████╗ ██╗███████╗██╗   ██╗",
@@ -43,7 +43,6 @@ _MANAGED_IGNORE_BEGIN = "# BEGIN sopify-managed"
 _MANAGED_IGNORE_END = "# END sopify-managed"
 _MANAGED_IGNORE_ENTRIES = (
     ".sopify-skills/state/",
-    ".sopify-skills/plan/_registry.yaml",
 )
 
 _INSTRUCTION_BLOCK_BEGIN = "<!-- BEGIN SOPIFY MANAGED BLOCK -->"

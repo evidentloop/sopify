@@ -15,7 +15,7 @@ from installer.models import InstallError
 
 _STUB_LOCATOR_MODES = {"global_first", "global_only"}
 _STUB_IGNORE_MODES = {"exclude", "gitignore", "noop"}
-_STUB_REQUIRED_CAPABILITIES = {"runtime_gate"}
+_STUB_REQUIRED_CAPABILITIES: set[str] = set()
 _EXACT_BUNDLE_VERSION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 _DEFAULT_VERSIONED_BUNDLES_DIR = Path("bundles")
 
@@ -358,16 +358,15 @@ def _normalize_bundle_version(value: Any) -> str | None:
 
 def _normalize_required_capabilities(value: Any) -> list[str]:
     if value in (None, ""):
-        return ["runtime_gate"]
+        return []
     if not isinstance(value, (list, tuple)):
         raise InstallError("Stub verification failed: required_capabilities")
     normalized: list[str] = []
     for item in value:
         capability = str(item or "").strip()
-        if capability not in _STUB_REQUIRED_CAPABILITIES or capability in normalized:
-            raise InstallError("Stub verification failed: required_capabilities")
-        normalized.append(capability)
-    return normalized or ["runtime_gate"]
+        if capability and capability not in normalized:
+            normalized.append(capability)
+    return normalized
 
 
 def _normalize_ignore_mode(value: Any, *, workspace_root: Path) -> str:

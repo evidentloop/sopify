@@ -106,7 +106,7 @@ _IGNORE_PATTERNS = shutil.ignore_patterns(".DS_Store", "Thumbs.db", "__pycache__
 _VERSION_TOKEN_RE = re.compile(r"[0-9]+|[A-Za-z]+")
 _EXACT_BUNDLE_VERSION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 _PRERELEASE_RANK = {"dev": -4, "alpha": -3, "beta": -2, "rc": -1}
-_WORKSPACE_STUB_REQUIRED_CAPABILITIES = ("runtime_gate",)
+_WORKSPACE_STUB_REQUIRED_CAPABILITIES: tuple[str, ...] = ()
 _WORKSPACE_STUB_LOCATOR_MODES = {"global_first", "global_only"}
 _WORKSPACE_STUB_IGNORE_MODES = {"exclude", "gitignore", "noop"}
 _SOPIFY_SKILLS_DIR = ".sopify-skills"
@@ -890,16 +890,15 @@ def _coerce_workspace_bundle_version(value: Any) -> str | None:
 
 def _normalize_required_capabilities(value: Any) -> list[str]:
     if value in (None, ""):
-        return list(_WORKSPACE_STUB_REQUIRED_CAPABILITIES)
+        return []
     if not isinstance(value, (list, tuple)):
         raise ValueError("Workspace stub contract is invalid: required_capabilities.")
     normalized: list[str] = []
     for item in value:
         capability = str(item or "").strip()
-        if capability not in _WORKSPACE_STUB_REQUIRED_CAPABILITIES or capability in normalized:
-            raise ValueError("Workspace stub contract is invalid: required_capabilities.")
-        normalized.append(capability)
-    return normalized or list(_WORKSPACE_STUB_REQUIRED_CAPABILITIES)
+        if capability and capability not in normalized:
+            normalized.append(capability)
+    return normalized
 
 
 def _normalize_ignore_mode(value: Any, *, workspace_root: Path) -> str:

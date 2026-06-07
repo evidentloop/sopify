@@ -190,15 +190,15 @@ created: 2026-06-05
 
 ### W2.1 Extract/Keep Minimal CLI Entrypoints
 
-- [ ] Depends: W1 gate
-- [ ] Input: `scripts/sopify_init.py` / `scripts/sopify_status.py` / `scripts/sopify_doctor.py` / `installer/inspection.py`
-- [ ] Output: `sopify_init.py` only bootstraps/fixes workspace layout and activation marker
-- [ ] Output: `sopify_status.py` is read-only: active plan pointer, handoff health, latest receipt
-- [ ] Output: `sopify_doctor.py` is read-only: install/payload/schema/host asset health
-- [ ] Output: helper names and user-facing CLI args preserved only where still relevant
-- [ ] Output: no new `sopify run/route/finalize/gate` CLI
-- [ ] Verify: `rg "from runtime|import runtime" scripts/sopify_init.py scripts/sopify_status.py scripts/sopify_doctor.py installer/inspection.py` returns no matches
-- [ ] Verify: status/doctor still report workspace activation, plan pointer, handoff health
+- [x] Depends: W1 gate
+- [x] Input: `scripts/sopify_init.py` / `scripts/sopify_status.py` / `scripts/sopify_doctor.py` / `installer/inspection.py`
+- [x] Output: `sopify_init.py` only bootstraps/fixes workspace layout and activation marker
+- [x] Output: `sopify_status.py` is read-only: active plan pointer, handoff health, protocol state file health
+- [x] Output: `sopify_doctor.py` is read-only: install/payload/schema/host asset health
+- [x] Output: helper names and user-facing CLI args preserved only where still relevant
+- [x] Output: no new `sopify run/route/finalize/gate` CLI
+- [x] Verify: `rg "from runtime|import runtime" scripts/sopify_init.py scripts/sopify_status.py scripts/sopify_doctor.py installer/inspection.py` returns no matches
+- [x] Verify: status/doctor still report workspace activation, plan pointer, handoff health
 
 ### W2.2 Decouple Installer Core
 
