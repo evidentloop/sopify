@@ -240,17 +240,17 @@ created: 2026-06-05
 
 ### W2.3b CI Runtime Detachment
 
-- [ ] Depends: W2.3, W2.0b
-- [ ] Input: `.github/workflows/ci.yml` / `scripts/release-preflight.sh`
-- [ ] Output: restructure `runtime-tests` job 为 `protocol-tests` job：删除 runtime-only test steps，保留 catalog drift / protocol smoke / installer-payload smoke / 非 runtime 测试
-- [ ] Output: 删除 `check-bundle-smoke.sh` step
-- [ ] Output: 删除 `check-prompt-runtime-gate-smoke.py` step
-- [ ] Output: 改写 `check-install-payload-bundle-smoke.py` 为 payload/catalog smoke（移除 runtime bundle 校验，只验证 sopify_contracts + sopify_writer + catalog 安装完整性）
-- [ ] Output: 更新 `scripts/release-preflight.sh`——移除 runtime bundle / runtime gate smoke 相关步骤，保留 catalog drift + protocol smoke
-- [ ] Output: 替换为 `sopify_protocol_check` smoke（W1.6 已建）
-- [ ] Output: 保留 catalog drift check（路径已更新 by W2.0b）+ installer/payload smoke
-- [ ] Verify: CI pipeline 绿；无 runtime-only test step
-- [ ] Verify: catalog drift check 和 protocol smoke 在 CI 中正常运行
+- [x] Depends: W2.3, W2.0b
+- [x] Input: `.github/workflows/ci.yml` / `scripts/release-preflight.sh`
+- [x] Output: restructure `runtime-tests` job 为 `protocol-tests` job：删除 runtime-only test steps，保留 catalog drift / protocol smoke / installer-payload smoke / 非 runtime 测试
+- [x] Output: 删除 `check-bundle-smoke.sh` step
+- [x] Output: 删除 `check-prompt-runtime-gate-smoke.py` step
+- [x] Output: 改写 `check-install-payload-bundle-smoke.py` 为 payload/catalog smoke（移除 runtime bundle 校验，只验证 sopify_contracts + sopify_writer + catalog 安装完整性）
+- [x] Output: 更新 `scripts/release-preflight.sh`——移除 runtime bundle / runtime gate smoke 相关步骤，保留 catalog drift + protocol smoke
+- [x] Output: 替换为 `sopify_protocol_check` smoke（W1.6 已建）
+- [x] Output: 保留 catalog drift check（路径已更新 by W2.0b）+ installer/payload smoke
+- [x] Verify: CI pipeline 绿；无 runtime-only test step
+- [x] Verify: catalog drift check 和 protocol smoke 在 CI 中正常运行
 
 ### W2.3c Host Prompt / Copilot Instructions Cutover
 

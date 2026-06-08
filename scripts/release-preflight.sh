@@ -9,7 +9,7 @@ Usage: scripts/release-preflight.sh
 
 Run release preflight checks before bumping Sopify version:
   1) Verify version consistency and golden snapshots
-  2) Run runtime unit tests + installer/runtime smoke checks
+  2) Run protocol + payload smoke checks
 EOF
 }
 
@@ -69,16 +69,18 @@ else
 fi
 run_step "Check builtin catalog drift" check_builtin_catalog_drift
 run_step "Check context checkpoints" python3 "$ROOT_DIR/scripts/check-context-checkpoints.py" repo --root "$ROOT_DIR"
-run_step "Run hard gate tests (contract + smoke + distribution)" python3 -m pytest "$ROOT_DIR/tests" -m "not implementation_mirror" -v
-
-echo "[release-preflight] Running implementation-mirror tests (advisory, non-blocking)..."
-if python3 -m pytest "$ROOT_DIR/tests" -m "implementation_mirror" -v; then
-  echo "[release-preflight] Implementation-mirror tests passed."
-else
-  echo "[release-preflight] WARNING: Implementation-mirror tests failed (advisory, not blocking release)."
-fi
+run_step "Run hard gate tests (protocol + smoke + distribution)" python3 -m pytest \
+  "$ROOT_DIR/tests/protocol/test_convention_compliance.py" \
+  "$ROOT_DIR/tests/test_check_readme_links.py" \
+  "$ROOT_DIR/tests/test_context_checkpoints.py" \
+  "$ROOT_DIR/tests/test_distribution.py" \
+  "$ROOT_DIR/tests/test_golden_snapshots.py" \
+  "$ROOT_DIR/tests/test_release_hooks.py" \
+  "$ROOT_DIR/tests/test_sopify_init_smoke.py" \
+  -v
+run_step "Run protocol smoke — new-plan" python3 "$ROOT_DIR/scripts/sopify_protocol_check.py" check --scenario new-plan --fixture "$ROOT_DIR/tests/fixtures/minimal_plan"
+run_step "Run protocol smoke — continuation" python3 "$ROOT_DIR/scripts/sopify_protocol_check.py" check --scenario continuation --fixture "$ROOT_DIR/tests/fixtures/minimal_plan"
+run_step "Run protocol smoke — finalize" python3 "$ROOT_DIR/scripts/sopify_protocol_check.py" check --scenario finalize --fixture "$ROOT_DIR/tests/fixtures/minimal_plan"
 run_step "Run install/payload bootstrap smoke" python3 "$ROOT_DIR/scripts/check-install-payload-bundle-smoke.py"
-run_step "Run prompt runtime gate smoke" python3 "$ROOT_DIR/scripts/check-prompt-runtime-gate-smoke.py"
-run_step "Run bundle runtime smoke check" bash "$ROOT_DIR/scripts/check-bundle-smoke.sh"
 
 echo "[release-preflight] All checks passed."
