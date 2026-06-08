@@ -28,12 +28,6 @@ from .kb import ensure_blueprint_index, ensure_blueprint_scaffold
 from sopify_contracts.artifacts import KbArtifact, PlanArtifact
 from sopify_contracts.core import ExecutionGate, RouteDecision, RunState, RuntimeConfig
 from sopify_contracts.decision import ClarificationState, DecisionState
-from .plan.registry import (
-    PlanRegistryError,
-    encode_priority_note_event,
-    priority_note_for_plan,
-    upsert_plan_entry,
-)
 from .plan.scaffold import create_plan_scaffold
 from .plan.lookup import find_plan_by_request_reference
 from .plan.intent import request_explicitly_wants_new_plan
@@ -918,14 +912,6 @@ def _advance_planning_route(
         level=level,
         decision_state=confirmed_decision,
     )
-    try:
-        upsert_plan_entry(
-            config=config,
-            artifact=created,
-            request_text=decision.request_text,
-        )
-    except PlanRegistryError:
-        pass
     state_store.set_current_plan(created)
     kb_artifact = _merge_kb_artifacts(kb_artifact, ensure_blueprint_index(config), config=config)
     notes.extend(
@@ -1037,15 +1023,7 @@ def _resolve_plan_for_request(
 
 
 def _created_plan_notes(created: PlanArtifact, *, config: RuntimeConfig, base_note: str) -> list[str]:
-    notes = [base_note]
-    priority_note = priority_note_for_plan(
-        config=config,
-        plan_id=created.plan_id,
-        language=config.language,
-    )
-    if priority_note:
-        notes.append(encode_priority_note_event(priority_note))
-    return notes
+    return [base_note]
 
 
 def _created_plan_base_note(plan_path: str, reason_note: str) -> str:

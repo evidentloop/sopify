@@ -1924,8 +1924,6 @@ class EngineIntegrationTests(unittest.TestCase):
             self.assertTrue(manifest["capabilities"]["writes_clarification_file"])
             self.assertTrue(manifest["capabilities"]["decision_checkpoint"])
             self.assertTrue(manifest["capabilities"]["execution_gate"])
-            self.assertTrue(manifest["capabilities"]["plan_registry"])
-            self.assertTrue(manifest["capabilities"]["plan_registry_priority_confirm"])
             self.assertTrue(manifest["capabilities"]["preferences_preload"])
             self.assertTrue(manifest["capabilities"]["runtime_gate"])
             self.assertTrue(manifest["capabilities"]["runtime_entry_guard"])

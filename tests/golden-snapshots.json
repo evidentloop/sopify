@@ -8,13 +8,13 @@
   },
   "protocol_version": "1.0",
   "snapshots": {
-    "codex:zh-CN:header": "037c7805526578222e27291604c9ae2daa7095c86193b6e8fdde5a3f714cec6c",
-    "codex:en-US:header": "4fa9efd7b72c2ed5e783cfec6c18e1c25e880c4e6757b196ce49c9125e574c6a",
-    "claude:zh-CN:header": "45509aba67ba7b3fbc84615ebfa45231f78e6f71e9b17f6032d2cc50a7bf4eec",
-    "claude:en-US:header": "03f4e7e85486519ac1dd6615f2ad954ba20a1feda4779980acc5e1055848e11b",
-    "copilot:zh-CN:managed_block_payload": "b0ab09c9326af88fb1c1b5e7679615022f4e33b8fa1b45ab4cf56077a8a873a0",
+    "codex:zh-CN:header": "dc98ef4c61f2e35da3acaf221e088371ef3a3ce40e9282c74578c11ccd30b2a9",
+    "codex:en-US:header": "4f56779537828bec0d10e747a6b34ab109f8c83a91aaf6152d5a612e372e8c94",
+    "claude:zh-CN:header": "5ca541bd5a2d750ee07614be5875e153aaa4de59f2bbb32ecbfcacd581800724",
+    "claude:en-US:header": "61cd56a3d6ce7d04745c7e0df21ef36aa68e0cd246e5ad6e9c0ee5654687ccde",
+    "copilot:zh-CN:managed_block_payload": "dfba7b9e929da4cebee0d21d93d5199554e4b51a8409ab02e2f0cd3722428888",
     "skills:zh-CN:tree": "5a1c3ab3cc4074c7781c62fa791a22c3e77dc409ba714bc59e50290a62d90d3a",
-    "copilot:en-US:managed_block_payload": "5df6e7bc0a40ad6959ac769c4a1c8524726c22d5ef910f73229556e86290ea4b",
+    "copilot:en-US:managed_block_payload": "67702f3487b4c3bebc53bd32b9e28b5aaa69be2311bf211cfe1e175d5d36b7c6",
     "skills:en-US:tree": "2032d4e523daedd74cda8b848031065703a1c5daec6bbcc70fcb792d05d93e5f"
   }
 }

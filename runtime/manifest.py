@@ -136,8 +136,6 @@ def build_bundle_manifest(
             "decision_checkpoint": True,
             "clarification_checkpoint": True,
             "execution_gate": True,
-            "plan_registry": True,
-            "plan_registry_priority_confirm": True,
             "preferences_preload": True,
             "runtime_gate": True,
             "runtime_entry_guard": True,

@@ -26,11 +26,6 @@ from sopify_contracts.artifacts import PlanArtifact
 from sopify_contracts.core import RouteDecision, RunState, RuntimeConfig, SkillMeta
 from sopify_contracts.decision import ClarificationState, DecisionState
 from sopify_contracts.handoff import RuntimeHandoff, RuntimeResult, SkillActivation
-from .plan.registry import (
-    PlanRegistryError,
-    get_plan_entry,
-    registry_relative_path,
-)
 from .router import Router
 from .action_intent import (
     ActionProposal,
@@ -258,41 +253,7 @@ def _augment_generated_files(
     notes: tuple[str, ...],
     registry_changed_hint: bool = False,
 ) -> tuple[str, ...]:
-    items = list(generated_files)
-    if _registry_file_should_be_reported(
-        config=config,
-        route_name=route_name,
-        plan_artifact=plan_artifact,
-        notes=notes,
-        registry_changed_hint=registry_changed_hint,
-    ):
-        registry_file = registry_relative_path(config)
-        if registry_file not in items:
-            items.append(registry_file)
-    return tuple(items)
-
-
-def _registry_file_should_be_reported(
-    *,
-    config: RuntimeConfig,
-    route_name: str,
-    plan_artifact: PlanArtifact | None,
-    notes: tuple[str, ...],
-    registry_changed_hint: bool,
-) -> bool:
-    if route_name == "archive_lifecycle":
-        return registry_changed_hint
-    if plan_artifact is None:
-        return False
-    if not any(note.startswith("Plan scaffold created at ") for note in notes):
-        return False
-    try:
-        # Only surface the registry as a changed artifact when the new plan entry
-        # is actually observable after the scaffold step.
-        entry_result = get_plan_entry(config=config, plan_id=plan_artifact.plan_id)
-    except PlanRegistryError:
-        return False
-    return entry_result.entry is not None
+    return generated_files
 
 
 def _build_skill_activation(

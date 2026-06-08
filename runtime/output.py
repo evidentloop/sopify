@@ -9,7 +9,6 @@ from .clarification import CURRENT_CLARIFICATION_RELATIVE_PATH
 from .decision import CURRENT_DECISION_RELATIVE_PATH
 from .handoff import CURRENT_HANDOFF_RELATIVE_PATH
 from sopify_contracts.handoff import RuntimeResult
-from .plan.registry import extract_priority_note_event
 
 _PHASE_LABELS = {
     "zh-CN": {
@@ -282,9 +281,6 @@ def _core_lines(result: RuntimeResult, language: str) -> list[str]:
             f"{labels['plan']}: {result.plan_artifact.path}",
             f"{labels['summary']}: {result.plan_artifact.summary}",
         ]
-        priority_note = _priority_note(result)
-        if priority_note is not None:
-            lines.append(priority_note)
         lines.extend(
             [
                 f"{labels['stage']}: {current_run.stage if current_run is not None else labels['missing']}",
@@ -356,9 +352,6 @@ def _core_lines(result: RuntimeResult, language: str) -> list[str]:
             f"{labels['plan']}: {result.plan_artifact.path}",
             f"{labels['summary']}: {result.plan_artifact.summary}",
         ]
-        priority_note = _priority_note(result)
-        if priority_note is not None:
-            lines.append(priority_note)
         lines.extend(
             [
                 f"{labels['stage']}: {current_run.stage if current_run is not None else labels['missing']}",
@@ -541,16 +534,6 @@ def _execution_gate(result: RuntimeResult):
         return None
     execution_gate = result.handoff.artifacts.get("execution_gate")
     return execution_gate if isinstance(execution_gate, dict) else None
-
-
-def _priority_note(result: RuntimeResult) -> str | None:
-    for note in result.notes:
-        structured = extract_priority_note_event(note)
-        if structured is not None:
-            return structured
-        if note.startswith("优先级:") or note.startswith("Priority:"):
-            return note
-    return None
 
 
 def _execution_gate_line(result: RuntimeResult, language: str) -> str:

@@ -13,9 +13,9 @@ depends_on: [P7 (payload_only_onboarding_mainline), P6 (writer_cutover), P5 (con
 ## Plan Snapshot
 
 - **Goal**: 把 AI 开发过程中的方案、决策、交接、执行/验证证据收敛为可追溯审计资产；真相源从 runtime 切到 protocol.md + sopify_writer，并用 Qoder 证明这些资产可跨宿主接续
-- **Status**: W1 完成 / W2 进行中（W2.0a-W2.5 done，W2.6 next）
-- **Next**: W2.6 — Retire Registry Chain
-- **Task**: W2.6 删除 registry chain + _registry.yaml，然后串行 W2.7 → ...
+- **Status**: W1 完成 / W2 进行中（W2.0a-W2.6 done，W2.7 next）
+- **Next**: W2.7 — Reclassify Tests
+- **Task**: W2.7 重分类测试（删 runtime 测试，修 installer 测试），然后串行 W2.8 → ...
 
 ## Context / Why
 

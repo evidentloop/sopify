@@ -190,7 +190,6 @@ Complex: Files > 5, architectural changes, new features
 │   ├── design.md
 │   └── tasks.md
 ├── plan/                    # Current plans, tracked in git
-│   ├── _registry.yaml       # Local machine registry, still ignored
 │   └── YYYYMMDD_feature/
 ├── history/                 # Completed plan archives, tracked in git
 ├── state/                   # Runtime state, always ignored

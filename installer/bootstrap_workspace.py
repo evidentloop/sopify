@@ -113,7 +113,6 @@ _SOPIFY_MANAGED_IGNORE_END = "# END sopify-managed"
 _SOPIFY_MANAGED_IGNORE_ENTRIES = (
     ".sopify-payload/",
     ".sopify-skills/state/",
-    ".sopify-skills/plan/_registry.yaml",
 )
 _SOPIFY_INSTRUCTION_BLOCK_BEGIN = "<!-- BEGIN SOPIFY MANAGED BLOCK -->"
 _SOPIFY_INSTRUCTION_BLOCK_END = "<!-- END SOPIFY MANAGED BLOCK -->"

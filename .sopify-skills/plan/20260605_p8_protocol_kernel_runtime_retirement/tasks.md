@@ -286,15 +286,15 @@ created: 2026-06-05
 
 ### W2.6 Retire Registry Chain
 
-- [ ] Depends: W1.4
-- [ ] Input: `runtime/plan/registry.py`, registry tests, output renderer priority notes, `_registry.yaml`
-- [ ] Output: delete `runtime/plan/registry.py`
-- [ ] Output: remove registry upsert/recommend/inspect callers
-- [ ] Output: remove `_registry.yaml` from active plan directory
-- [ ] Output: remove registry tests or migrate only non-registry plan lookup behavior
-- [ ] Output: remove registry mention from docs
-- [ ] Verify: `find .sopify-skills/plan -name _registry.yaml` returns no files
-- [ ] Verify: `rg "plan.registry|_registry|registry_is_observe_only|suggested_priority" runtime sopify_writer sopify_contracts installer scripts tests docs README.md README.zh-CN.md` returns no active code/docs
+- [x] Depends: W1.4
+- [x] Input: `runtime/plan/registry.py`, registry tests, output renderer priority notes, `_registry.yaml`
+- [x] Output: delete `runtime/plan/registry.py`
+- [x] Output: remove registry upsert/recommend/inspect callers
+- [x] Output: remove `_registry.yaml` from active plan directory
+- [x] Output: remove registry tests or migrate only non-registry plan lookup behavior
+- [x] Output: remove registry mention from docs
+- [x] Verify: `find .sopify-skills/plan -name _registry.yaml` returns no files
+- [x] Verify: `rg "plan.registry|_registry|registry_is_observe_only|suggested_priority" runtime sopify_writer sopify_contracts installer scripts tests docs README.md README.zh-CN.md` returns no active code/docs
 
 ### W2.7 Reclassify Tests
 

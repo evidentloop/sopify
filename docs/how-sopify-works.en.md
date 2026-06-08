@@ -39,7 +39,6 @@ The workflow diagram includes checkpoint nodes that pause execution in two scena
 │   ├── design.md
 │   └── tasks.md
 ├── plan/                        # L2 active plans (git tracked)
-│   ├── _registry.yaml           # local machine registry (still ignored)
 │   └── YYYYMMDD_feature/
 ├── history/                     # L3 archived plans (git tracked)
 │   ├── index.md
@@ -60,7 +59,7 @@ The workflow diagram includes checkpoint nodes that pause execution in two scena
 Layer notes:
 
 - `blueprint/` stores durable knowledge and stable contracts
-- `plan/` stores active work packages, not long-lived blueprint state; the directory is tracked, but `_registry.yaml` remains locally ignored
+- `plan/` stores active work packages, not long-lived blueprint state; the directory is tracked
 - `history/` stores closed-out plans and is tracked
 - `state/` is the local runtime data layer ignored by git
 

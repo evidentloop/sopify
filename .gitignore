@@ -10,7 +10,6 @@ __pycache__/
 
 .sopify-skills/state/
 .sopify-skills/replay/
-.sopify-skills/plan/_registry.yaml
 
 evals/skill_eval_report.json
 

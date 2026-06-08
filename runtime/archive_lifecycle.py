@@ -15,7 +15,6 @@ from .knowledge_layout import resolve_path
 from .knowledge_sync import KNOWLEDGE_SYNC_KEYS, knowledge_sync_targets, parse_knowledge_sync
 from sopify_contracts.artifacts import KbArtifact, PlanArtifact
 from sopify_contracts.core import RuntimeConfig
-from .plan.registry import PlanRegistryError, remove_plan_entry
 from sopify_writer.store import StateStore
 from sopify_writer import iso_now
 
@@ -65,7 +64,6 @@ class ArchiveApplyResult:
     archived_plan: PlanArtifact | None
     kb_artifact: KbArtifact | None
     notes: tuple[str, ...]
-    registry_updated: bool = False
     state_cleared: bool = False
     knowledge_sync_result: dict[str, object] | None = None
 
@@ -87,7 +85,6 @@ class _ArchiveWriteResult:
     archived_plan: PlanArtifact | None
     kb_artifact: KbArtifact | None
     notes: tuple[str, ...]
-    registry_updated: bool = False
     knowledge_sync_result: dict[str, object] | None = None
 
 
@@ -222,7 +219,6 @@ def apply_archive_subject(
         archived_plan=result.archived_plan,
         kb_artifact=result.kb_artifact,
         notes=result.notes,
-        registry_updated=result.registry_updated,
         state_cleared=state_cleared,
         knowledge_sync_result=result.knowledge_sync_result,
     )
@@ -373,13 +369,6 @@ def _apply_managed_archive(
     ensure_blueprint_index(config)
     readme_path = resolve_path(config=config, key="blueprint_index")
 
-    registry_notes: tuple[str, ...] = ()
-    registry_updated = False
-    try:
-        registry_updated = remove_plan_entry(config=config, plan_id=current_plan.plan_id)
-    except PlanRegistryError:
-        registry_notes = (_text(config.language, "registry_sync_failed"),)
-
     if clear_state:
         state_store.reset_active_flow()
 
@@ -396,12 +385,10 @@ def _apply_managed_archive(
     ]
     if clear_state:
         notes.append(_text(config.language, "state_cleared"))
-    notes.extend(registry_notes)
     return _ArchiveWriteResult(
         archived_plan=archived_plan,
         kb_artifact=KbArtifact(mode=config.kb_init, files=kb_files, created_at=iso_now()),
         notes=tuple(notes),
-        registry_updated=registry_updated,
         knowledge_sync_result=sync_result,
     )
 
@@ -809,7 +796,6 @@ def _text(language: str, key: str, **kwargs: str) -> str:
             "archive_exists": "Archive target already exists: {path}",
             "archived": "Plan archived to {path}",
             "state_cleared": "Active runtime state cleared",
-            "registry_sync_failed": "The plan was archived, but the plan registry could not be updated automatically",
             "knowledge_sync_updated": "Detected knowledge_sync document updates after plan creation: {paths}",
             "knowledge_sync_review_warning": "Knowledge_sync review reminder: review items were not updated after plan creation: {paths}",
             "knowledge_sync_required_blocked": "Archive blocked: required knowledge_sync documents were not updated after plan creation: {paths}",
@@ -822,7 +808,6 @@ def _text(language: str, key: str, **kwargs: str) -> str:
             "archive_exists": "归档目标已存在：{path}",
             "archived": "方案已归档到 {path}",
             "state_cleared": "已清理活动运行时状态",
-            "registry_sync_failed": "plan 已归档，但 plan registry 未能自动同步更新",
             "knowledge_sync_updated": "已检测到 plan 创建后的 knowledge_sync 文档更新：{paths}",
             "knowledge_sync_review_warning": "knowledge_sync 复核提醒：以下 review 文档在 plan 创建后尚未更新：{paths}",
             "knowledge_sync_required_blocked": "归档被阻断：以下 knowledge_sync.required 文档在 plan 创建后尚未更新：{paths}",

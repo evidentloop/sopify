@@ -190,7 +190,6 @@ Next: {下一步提示}
 │   ├── design.md
 │   └── tasks.md
 ├── plan/                    # 当前方案，纳入版本管理
-│   ├── _registry.yaml       # 本地 machine registry，继续忽略
 │   └── YYYYMMDD_feature/
 ├── history/                 # 已完成方案归档，纳入版本管理
 ├── state/                   # 运行态状态，始终忽略
