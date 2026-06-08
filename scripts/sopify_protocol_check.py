@@ -164,6 +164,25 @@ def check_current_handoff(state_dir: Path, expected_plan_id: str | None = None) 
             failures.append(f"current_handoff.json has retired field '{f}' (move to observability.provenance)")
     if expected_plan_id and data.get("plan_id") != expected_plan_id:
         failures.append(f"current_handoff.json plan_id mismatch: '{data.get('plan_id')}' != '{expected_plan_id}'")
+    # W2.5: artifact conventions for folded clarification/decision
+    if action == "answer_questions":
+        artifacts = data.get("artifacts")
+        if not isinstance(artifacts, dict):
+            artifacts = {}
+        questions = artifacts.get("questions")
+        if not isinstance(questions, list) or len(questions) == 0:
+            failures.append(
+                "current_handoff.json: answer_questions requires artifacts.questions (non-empty list)"
+            )
+    elif action == "confirm_decision":
+        artifacts = data.get("artifacts")
+        if not isinstance(artifacts, dict):
+            artifacts = {}
+        options = artifacts.get("decision_options")
+        if not isinstance(options, list) or len(options) == 0:
+            failures.append(
+                "current_handoff.json: confirm_decision requires artifacts.decision_options (non-empty list)"
+            )
     return data, failures
 
 

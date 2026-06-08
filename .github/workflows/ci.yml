@@ -75,6 +75,12 @@ jobs:
       - name: Run protocol smoke — continuation
         run: python3 scripts/sopify_protocol_check.py check --scenario continuation --fixture tests/fixtures/minimal_plan
 
+      - name: Run protocol smoke — continuation (clarification pending)
+        run: python3 scripts/sopify_protocol_check.py check --scenario continuation --fixture tests/fixtures/clarification_pending
+
+      - name: Run protocol smoke — continuation (decision pending)
+        run: python3 scripts/sopify_protocol_check.py check --scenario continuation --fixture tests/fixtures/decision_pending
+
       - name: Run protocol smoke — finalize
         run: python3 scripts/sopify_protocol_check.py check --scenario finalize --fixture tests/fixtures/minimal_plan
 

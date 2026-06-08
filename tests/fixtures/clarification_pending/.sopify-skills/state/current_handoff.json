@@ -1,0 +1,12 @@
+{
+  "schema_version": "1",
+  "plan_id": "test_clarification_001",
+  "required_host_action": "answer_questions",
+  "artifacts": {
+    "questions": [
+      "Which database engine should be used?",
+      "Should the API be REST or GraphQL?"
+    ]
+  },
+  "notes": ["Clarification pending: host must answer questions before continuing"]
+}

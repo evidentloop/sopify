@@ -276,13 +276,13 @@ created: 2026-06-05
 
 ### W2.5 Fold Clarification/Decision Into Handoff
 
-- [ ] Depends: W2.4
-- [ ] Input: current ClarificationState / DecisionState semantics
-- [ ] Output: handoff artifacts convention for questions/options/submission state
-- [ ] Output: `required_host_action=answer_questions` replaces current_clarification
-- [ ] Output: `required_host_action=confirm_decision` replaces current_decision
-- [ ] Verify: compliance fixture can represent clarification pending with only current_handoff
-- [ ] Verify: compliance fixture can represent decision pending with only current_handoff
+- [x] Depends: W2.4
+- [x] Input: current ClarificationState / DecisionState semantics
+- [x] Output: handoff artifacts convention for questions/options/submission state
+- [x] Output: `required_host_action=answer_questions` replaces current_clarification
+- [x] Output: `required_host_action=confirm_decision` replaces current_decision
+- [x] Verify: compliance fixture can represent clarification pending with only current_handoff
+- [x] Verify: compliance fixture can represent decision pending with only current_handoff
 
 ### W2.6 Retire Registry Chain
 
