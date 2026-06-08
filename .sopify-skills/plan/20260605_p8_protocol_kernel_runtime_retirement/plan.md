@@ -13,9 +13,9 @@ depends_on: [P7 (payload_only_onboarding_mainline), P6 (writer_cutover), P5 (con
 ## Plan Snapshot
 
 - **Goal**: 把 AI 开发过程中的方案、决策、交接、执行/验证证据收敛为可追溯审计资产；真相源从 runtime 切到 protocol.md + sopify_writer，并用 Qoder 证明这些资产可跨宿主接续
-- **Status**: W1 完成 / W2 进行中（W2.0a-W2.3b done，W2.3c next）
-- **Next**: W2.3c — Host Prompt / Copilot Instructions Cutover
-- **Task**: W2.3c 清理 copilot-instructions runtime-first 措辞，然后串行 W2.4 → ...
+- **Status**: W1 完成 / W2 进行中（W2.0a-W2.3c done，W2.4 next）
+- **Next**: W2.4 — Migrate StateStore to 2-File Model
+- **Task**: W2.4 把 StateStore 迁到 active_plan + current_handoff 2 文件模型，然后串行 W2.5 → ...
 
 ## Context / Why
 

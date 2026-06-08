@@ -128,13 +128,11 @@ Complex Task (full 3 phases):
 | `~go plan` | Plan only, no execution |
 | `~go finalize` | Close out the current metadata-managed plan |
 
-Note: Before every Sopify turn, the host must execute the runtime gate and validate its JSON contract. Continue into normal stages only when the gate passes. See `.sopify-skills/blueprint/protocol.md §8.1` for the full gate entry protocol, `allowed_response_mode` values, and ActionProposal capability.
+Note: On each Sopify turn, the host first classifies the user request (consult / quick_fix / new_plan / continue_plan / finalize). Only managed plan / continuation / finalize enter the 4-step protocol entry; consult / quick_fix do not auto-resume active_plan by default. See `.sopify-skills/blueprint/protocol.md §8`.
 
-Note: After runtime execution, the host must consume `.sopify-skills/state/current_handoff.json` structured fields to decide the next step. Respect any pending checkpoint before continuing. See `.sopify-skills/blueprint/protocol.md §8.2` for the full handoff protocol and `required_host_action` values.
+Note: The 4-step entry order for managed plan / continuation / finalize is `state/active_plan.json` → `plan/<id>/plan.md` → `state/current_handoff.json` → `plan/<id>/receipts/`. Read plan.md first for semantic truth, then handoff as a resumption hint; handoff is not a second truth source. Respect any pending checkpoint before continuing.
 
-Note: The host must not self-route before the gate, bypass checkpoint constraints, or write machine truth directly. Routing and state management are owned by the runtime. See `.sopify-skills/blueprint/protocol.md §8.3` for boundaries.
-
-**Host Integration Contract:** See `.sopify-skills/blueprint/protocol.md §8` for the full host runtime integration protocol, including gate entry, handoff consumption, checkpoint handling, runtime helper index, and state file index.
+Note: The host must not bypass checkpoint constraints or write machine truth directly. Protocol state writes (active_plan / current_handoff / receipts) go through `sopify_writer`. See `.sopify-skills/blueprint/protocol.md §8`: Host Protocol Entry Contract.
 
 ---
 
@@ -361,7 +359,7 @@ Next: Please verify the functionality
 ~go finalize     # Explicitly close out the current metadata-managed plan
 ```
 
-**Runtime helpers and state files:** See `.sopify-skills/blueprint/protocol.md §8.4–8.5` for the full runtime helper index and state file index.
+**Protocol state files:** See `.sopify-skills/blueprint/protocol.md §8`.
 
 **Configuration File:** `sopify.config.yaml` (project root)
 

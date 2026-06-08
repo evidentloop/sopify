@@ -254,13 +254,13 @@ created: 2026-06-05
 
 ### W2.3c Host Prompt / Copilot Instructions Cutover
 
-- [ ] Depends: W2.3b
-- [ ] Input: `.github/copilot-instructions.md`
-- [ ] Output: 清理 runtime-first 措辞（runtime gate / sopify_runtime 引用）
-- [ ] Output: 删除不存在的 `go_plan_runtime.py` 引用
-- [ ] Output: 替换为 protocol-first 入口（protocol.md + sopify_protocol_check + sopify_writer）
-- [ ] Verify: `rg "runtime_gate|sopify_runtime|go_plan_runtime" .github/copilot-instructions.md` returns no matches
-- [ ] Verify: copilot-instructions.md 不再引用 runtime-first 入口
+- [x] Depends: W2.3b
+- [x] Input: `.github/copilot-instructions.md`
+- [x] Output: 清理 runtime-first 措辞（runtime gate / sopify_runtime 引用）
+- [x] Output: 删除不存在的 `go_plan_runtime.py` 引用
+- [x] Output: 替换为 protocol-first 入口（protocol.md + sopify_writer）；sopify_protocol_check 是 CI/preflight 验证项（W2.3b 已接入），不进入宿主 prompt
+- [x] Verify: `rg "runtime_gate|sopify_runtime|go_plan_runtime" .github/copilot-instructions.md` returns no matches
+- [x] Verify: copilot-instructions.md 不再引用 runtime-first 入口
 
 ### W2.4 Migrate StateStore to 2-File Model
 

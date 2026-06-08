@@ -174,7 +174,7 @@ Stage B `code_quality` 至少检查：
 - 执行失败或结果 `inconclusive` 不阻断主流程。
 - `concerns` / `needs_human_triage` 只展示并等待用户决定，不自动写 checkpoint、不自动改代码。
 - 若前置条件不满足（如 CLI 未安装），跳过并记录原因，不阻断。
-- 注释：Phase 4a 仅采用 Convention 模式；这里不引入 `bridge.py`、`pipeline_hooks` 或 runtime lifecycle hook。
+- 注释：Phase 4a 仅采用 Convention 模式；这里不引入 `bridge.py` 或 `pipeline_hooks`。
 
 ## 步骤 4：知识库同步
 

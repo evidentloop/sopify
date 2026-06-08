@@ -174,7 +174,7 @@ Execution constraints:
 - Execution failure or `inconclusive` verdict does not block the main flow.
 - `concerns` / `needs_human_triage` are shown to the user and await their decision; do not auto-write checkpoints or auto-modify code.
 - If prerequisites are not met (e.g. CLI not installed), skip and log the reason without blocking.
-- Note: Phase 4a stays in Convention mode; this does not introduce `bridge.py`, `pipeline_hooks`, or a runtime lifecycle hook.
+- Note: Phase 4a stays in Convention mode; this does not introduce `bridge.py` or `pipeline_hooks`.
 
 ## Step 4: Sync the knowledge base
 

@@ -71,15 +71,9 @@ Task markers:
   - `~go plan`: stop after rendering the plan summary.
 - If the user gives plan feedback, stay in this phase, update the files, and render again.
 
-## Runtime helper boundaries
+## Protocol entry boundary
 
-When the repo contains `scripts/sopify_runtime.py` and the input is the raw request:
-
-1. Prefer the default runtime entry; do not rewrite it manually into `~go plan`.
-2. When the intent is explicitly `~go plan`, prefer `scripts/go_plan_runtime.py`.
-3. `go_plan_runtime.py` is plan-only and not a generic default entry.
-
-Generate plan files manually only when the runtime helpers are absent.
+Plan structure and task splitting are owned by this skill; protocol state writes (active_plan / current_handoff / receipts) go through `sopify_writer`, not this skill directly.
 
 ## Naming rules
 

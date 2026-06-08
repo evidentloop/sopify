@@ -49,4 +49,4 @@ python3 skills/zh/skills/sopify/analyze/scripts/score_requirement.py \
 ## 边界
 
 - 不在本技能直接生成方案包（交给 `design`）。
-- 不在本技能直接执行代码修改（交给 `develop` 或 runtime 路由）。
+- 不在本技能直接执行代码修改（交给 `develop`）。

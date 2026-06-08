@@ -44,4 +44,4 @@ python3 skills/zh/skills/sopify/design/scripts/select_plan_level.py \
 ## 边界
 
 - 不直接执行代码任务（交给 `develop`）。
-- 不替代 runtime 的路由决策，仅提供方案结构与任务拆分契约。
+- 不负责路由或协议状态写入，仅提供方案结构与任务拆分契约。
