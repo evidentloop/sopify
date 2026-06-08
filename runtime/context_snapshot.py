@@ -9,13 +9,13 @@ from types import MappingProxyType
 from typing import Any, Mapping
 from uuid import uuid4
 
-from canonical_writer._resume import develop_resume_context_issue
+from sopify_writer._resume import develop_resume_context_issue
 from sopify_contracts.artifacts import PlanArtifact
 from sopify_contracts.core import RouteDecision, RunState, RuntimeConfig
 from sopify_contracts.decision import ClarificationState, DecisionState
 from sopify_contracts.handoff import RuntimeHandoff
-from canonical_writer import StateStore
-from canonical_writer.invariants import is_supported_phase
+from sopify_writer.store import StateStore
+from sopify_writer.invariants import is_supported_phase
 
 _NEGOTIATION_RUN_STAGE_ACTIONS = {
     "clarification_pending": "answer_questions",

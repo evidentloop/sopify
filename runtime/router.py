@@ -11,7 +11,7 @@ from .entry_guard import DIRECT_EDIT_BLOCKED_RUNTIME_REQUIRED_REASON_CODE
 from sopify_contracts.core import RouteDecision, RuntimeConfig
 from .action_intent import ActionProposal
 from sopify_contracts.decision import ClarificationState, DecisionState
-from canonical_writer import StateStore
+from sopify_writer.store import StateStore
 
 _COMMAND_PATTERNS = (
     (re.compile(r"^~go\s+plan(?:\s+(?P<body>.+))?$", re.IGNORECASE), "~go plan"),

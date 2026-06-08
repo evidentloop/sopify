@@ -37,7 +37,8 @@ from .plan.registry import (
 from .plan.scaffold import create_plan_scaffold
 from .plan.lookup import find_plan_by_request_reference
 from .plan.intent import request_explicitly_wants_new_plan
-from canonical_writer import StateStore, iso_now
+from sopify_writer.store import StateStore
+from sopify_writer import iso_now
 from .state import (
     make_run_id,
     make_run_state,

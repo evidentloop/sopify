@@ -13,7 +13,7 @@ from .identity import derive_topic_key
 from sopify_contracts.artifacts import PlanArtifact
 from sopify_contracts.core import RuntimeConfig
 from sopify_contracts.decision import DecisionState
-from canonical_writer import iso_now
+from sopify_writer import iso_now
 
 
 def create_plan_scaffold(

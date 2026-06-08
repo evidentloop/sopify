@@ -8,7 +8,7 @@ import re
 
 from typing import Any, Mapping, Sequence
 
-from canonical_writer._time import iso_now as _iso_now
+from sopify_writer._time import iso_now as _iso_now
 from .checkpoint_request import (
     CHECKPOINT_REASON_MISSING_BUT_TRADEOFF_DETECTED,
     checkpoint_request_from_clarification_state,

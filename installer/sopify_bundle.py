@@ -2,7 +2,7 @@
 
 P8 (Protocol Kernel & Runtime Retirement): the "runtime bundle" concept has
 been retired. This module now syncs only the protocol-kernel assets
-(sopify_contracts + canonical_writer) into a versioned payload bundle.
+(sopify_contracts + sopify_writer) into a versioned payload bundle.
 The runtime/ directory, runtime scripts, and runtime manifest are no longer
 shipped. The bundle manifest is written inline without importing from
 runtime.manifest.
@@ -20,7 +20,7 @@ from installer.models import InstallError
 DEFAULT_PAYLOAD_BUNDLE_DIRNAME = ".sopify-payload"
 
 # P8: runtime removed — only protocol-kernel packages remain
-_DIRECTORY_ASSETS = ("sopify_contracts", "canonical_writer")
+_DIRECTORY_ASSETS = ("sopify_contracts", "sopify_writer")
 _CATALOG_SOURCE_RELATIVE = Path("skills") / "catalog" / "builtin_catalog.generated.json"
 _CATALOG_BUNDLE_RELATIVE = Path("catalog") / "builtin_catalog.generated.json"
 _COPY_IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc")
@@ -63,7 +63,7 @@ def sync_payload_bundle(
     required_paths = (
         bundle_root / "manifest.json",
         bundle_root / "sopify_contracts" / "__init__.py",
-        bundle_root / "canonical_writer" / "__init__.py",
+        bundle_root / "sopify_writer" / "__init__.py",
         bundle_root / _CATALOG_BUNDLE_RELATIVE,
     )
     missing = [path for path in required_paths if not path.exists()]
@@ -79,7 +79,7 @@ def _write_payload_bundle_manifest(*, bundle_root: Path, source_root: Path) -> N
     runtime submodules) with this inline writer that captures only the
     protocol-kernel metadata needed by the installer and bootstrap helper.
     """
-    from canonical_writer import iso_now
+    from sopify_writer import iso_now
 
     version_path = source_root / "sopify_contracts" / "__init__.py"
     bundle_version = "0.0.0-dev"

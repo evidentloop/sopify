@@ -96,7 +96,7 @@ PAYLOAD_MANIFEST_FILENAME = "payload-manifest.json"
 _REQUIRED_BUNDLE_FILES = (
     Path("manifest.json"),
     Path("sopify_contracts") / "__init__.py",
-    Path("canonical_writer") / "__init__.py",
+    Path("sopify_writer") / "__init__.py",
     Path("catalog") / "builtin_catalog.generated.json",
 )
 _IGNORE_PATTERNS = shutil.ignore_patterns(".DS_Store", "Thumbs.db", "__pycache__")

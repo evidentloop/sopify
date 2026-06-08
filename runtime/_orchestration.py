@@ -40,8 +40,9 @@ from .context_snapshot import (
 from .handoff import build_runtime_handoff
 from .router import Router
 from .state import make_run_id, stable_request_sha1, summarize_request_text
-from canonical_writer import StateStore, iso_now
-from canonical_writer.invariants import stamp_handoff_resolution_id
+from sopify_writer.store import StateStore
+from sopify_writer import iso_now
+from sopify_writer.invariants import stamp_handoff_resolution_id
 from sopify_contracts.artifacts import KbArtifact, PlanArtifact
 from sopify_contracts.core import (
     ExecutionGate, RouteDecision, RunState, RuntimeConfig, SkillMeta,

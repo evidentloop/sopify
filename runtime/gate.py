@@ -30,7 +30,8 @@ from .action_intent import (
     resolve_action_proposal,
 )
 from .preferences import PreferencesPreloadResult, preload_preferences
-from canonical_writer import StateStore, iso_now, normalize_session_id
+from sopify_writer.store import StateStore, normalize_session_id
+from sopify_writer import iso_now
 from .state import cleanup_expired_session_state, stable_request_sha1, summarize_request_text
 from .workspace_preflight import WorkspacePreflightError, preflight_workspace_runtime
 
@@ -891,7 +892,7 @@ def _build_action_proposal_retry_contract(
     """Build the gate retry response for a new host that omitted the proposal."""
     # Use config-aware state paths when config is available.
     if config is not None:
-        from canonical_writer import StateStore
+        from sopify_writer.store import StateStore
         store = StateStore(config, session_id=session_id)
         store.ensure()
         state_contract = _build_state_contract(store=store)

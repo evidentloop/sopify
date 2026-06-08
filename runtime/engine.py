@@ -35,7 +35,8 @@ from .router import Router
 from .action_intent import (
     ActionProposal,
 )
-from canonical_writer import StateStore, iso_now
+from sopify_writer.store import StateStore
+from sopify_writer import iso_now
 from .state import (
     local_day_now,
     local_display_now,

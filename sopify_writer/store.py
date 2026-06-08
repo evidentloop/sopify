@@ -72,7 +72,7 @@ class StateStore:
         payload["observability"] = {
             "state_kind": "current_run",
             "state_scope": self.scope,
-            "writer": "canonical_writer",
+            "writer": "sopify_writer",
             "written_at": iso_now(),
             "workspace_root": str(self.config.workspace_root),
             "runtime_root": str(self.config.runtime_root.relative_to(self.config.workspace_root)),
@@ -239,7 +239,7 @@ class StateStore:
             {
                 "state_kind": state_kind,
                 "state_scope": self.scope,
-                "writer": "canonical_writer",
+                "writer": "sopify_writer",
                 "written_at": iso_now(),
                 "workspace_root": str(self.config.workspace_root),
                 "runtime_root": str(self.config.runtime_root.relative_to(self.config.workspace_root)),

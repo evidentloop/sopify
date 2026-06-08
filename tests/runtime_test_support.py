@@ -17,7 +17,7 @@ if str(REPO_ROOT) not in sys.path:
 from runtime.config import ConfigError, load_runtime_config
 from runtime._yaml import load_yaml
 from runtime.checkpoint_materializer import materialize_checkpoint_request
-from canonical_writer._resume import (
+from sopify_writer._resume import (
     CheckpointRequestError,
     DEVELOP_RESUME_CONTEXT_REQUIRED_FIELDS,
 )
@@ -51,8 +51,9 @@ from runtime.plan.intent import request_explicitly_wants_new_plan
 from runtime.output import render_runtime_output
 from runtime.preferences import preload_preferences, preload_preferences_for_workspace
 from runtime.router import Router
-from canonical_writer import StateStore, iso_now
-from canonical_writer.invariants import HOST_FACING_TRUTH_WRITE_KINDS, InvariantViolationError
+from sopify_writer.store import StateStore
+from sopify_writer import iso_now
+from sopify_writer.invariants import HOST_FACING_TRUTH_WRITE_KINDS, InvariantViolationError
 from runtime.state import local_day_now, stable_request_sha1
 from sopify_contracts.artifacts import PlanArtifact
 from sopify_contracts.core import ExecutionGate, RouteDecision, RunState, SkillMeta
@@ -177,7 +178,7 @@ def _prepare_ready_plan_state(
 
 def _enter_active_develop_context(workspace: Path) -> None:
     """Put workspace into active develop state: run at develop_pending with handoff."""
-    from canonical_writer.invariants import stamp_handoff_resolution_id
+    from sopify_writer.invariants import stamp_handoff_resolution_id
     from runtime.entry_guard import build_entry_guard_contract
     from runtime.state import make_run_id
 

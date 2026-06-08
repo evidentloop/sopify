@@ -12,7 +12,8 @@ from typing import Any, Mapping, Sequence
 from .._yaml import YamlParseError, dump_yaml, load_yaml
 from sopify_contracts.artifacts import PlanArtifact
 from sopify_contracts.core import RuntimeConfig
-from canonical_writer import StateStore, iso_now
+from sopify_writer.store import StateStore
+from sopify_writer import iso_now
 
 REGISTRY_FILENAME = "_registry.yaml"
 REGISTRY_VERSION = 1

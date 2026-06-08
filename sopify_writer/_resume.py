@@ -1,6 +1,6 @@
-"""Checkpoint resume validation for canonical writer state writes.
+"""Checkpoint resume validation for sopify_writer state writes.
 
-Extracted from runtime.checkpoint_request to break the runtime → canonical_writer
+Extracted from runtime.checkpoint_request to break the runtime → sopify_writer
 dependency cycle.  Only the validation contract needed by StateStore lives here;
 the full CheckpointRequest schema and projection logic stays in runtime.
 """

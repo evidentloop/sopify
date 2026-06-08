@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 from sopify_contracts.core import ExecutionSummary, RuntimeConfig
 from sopify_contracts.decision import ClarificationState, DecisionCheckpoint, DecisionField, DecisionRecommendation, DecisionState
-from canonical_writer import iso_now
+from sopify_writer import iso_now
 from .checkpoint_request import CheckpointRequest, normalize_checkpoint_request
 
 

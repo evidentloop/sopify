@@ -9,7 +9,7 @@ from .knowledge_layout import materialization_stage
 from sopify_contracts.artifacts import KbArtifact
 from sopify_contracts.core import RuntimeConfig
 from .preferences import preferences_have_confirmed_entries, resolve_feedback_path, resolve_preferences_path
-from canonical_writer import iso_now
+from sopify_writer import iso_now
 
 _STANDARD_BLUEPRINT_FILENAMES = frozenset({"README.md", "background.md", "design.md", "tasks.md"})
 

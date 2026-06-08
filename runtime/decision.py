@@ -7,7 +7,7 @@ from hashlib import sha1
 import re
 from typing import Any, Optional
 
-from canonical_writer._time import iso_now
+from sopify_writer._time import iso_now
 from .checkpoint_cancel import is_checkpoint_cancel_intent
 from .decision_policy import match_decision_policy, should_trigger_decision_policy
 from .decision_templates import PRIMARY_OPTION_FIELD_ID, build_strategy_pick_template

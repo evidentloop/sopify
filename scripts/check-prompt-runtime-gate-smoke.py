@@ -29,7 +29,8 @@ if str(REPO_ROOT) not in sys.path:
 from runtime.entry_guard import DIRECT_EDIT_BLOCKED_RUNTIME_REQUIRED_REASON_CODE
 from runtime.gate import CURRENT_GATE_RECEIPT_FILENAME
 from runtime.config import load_runtime_config
-from canonical_writer import StateStore, iso_now
+from sopify_writer.store import StateStore
+from sopify_writer import iso_now
 from sopify_contracts.artifacts import PlanArtifact
 from installer.hosts.codex import CODEX_ADAPTER
 from installer.payload import install_global_payload

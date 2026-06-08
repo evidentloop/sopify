@@ -1,7 +1,8 @@
 """Filesystem-backed state storage for Sopify runtime.
 
-Runtime-specific helpers that do not belong in canonical_writer.
-StateStore, iso_now and normalize_session_id live in canonical_writer.
+Runtime-specific helpers that do not belong in sopify_writer.
+StateStore, normalize_session_id and SESSIONS_DIRNAME live in sopify_writer.store;
+iso_now lives in sopify_writer.
 """
 
 from __future__ import annotations
@@ -13,8 +14,8 @@ from pathlib import Path
 import shutil
 from typing import Any, Mapping, Optional
 
-from canonical_writer.store import SESSIONS_DIRNAME
-from canonical_writer import iso_now
+from sopify_writer.store import SESSIONS_DIRNAME
+from sopify_writer import iso_now
 
 from sopify_contracts.artifacts import PlanArtifact
 from sopify_contracts.core import ExecutionGate, RouteDecision, RunState, RuntimeConfig

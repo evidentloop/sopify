@@ -228,14 +228,15 @@ created: 2026-06-05
 
 ### W2.3 Rename and Scope sopify_writer
 
-- [ ] Depends: W1 schemas
-- [ ] Input: `canonical_writer/` / `sopify_contracts/*`
-- [ ] Output: package/module surface becomes `sopify_writer`
-- [ ] Output: public writer role documented as "the writer for Sopify protocol state and receipts"
-- [ ] Output: writer allowed writes: `state/active_plan.json`, `state/current_handoff.json`, `plan/<id>/receipts/*.json`, `history/<id>/receipt.md`
-- [ ] Output: writer must not route, choose plan priority, call AI, execute tasks, or orchestrate hosts
-- [ ] Verify: no new writer CLI is introduced by default
-- [ ] Verify: old `canonical_writer` import path is removed; no compatibility alias by default
+- [x] Depends: W1 schemas
+- [x] Input: `canonical_writer/` / `sopify_contracts/*`
+- [x] Output: package/module surface becomes `sopify_writer`
+- [x] Output: public writer role documented as "the writer for Sopify protocol state and receipts"
+- [x] Output: writer allowed writes: `state/active_plan.json`, `state/current_handoff.json`, `plan/<id>/receipts/*.json`, `history/<id>/receipt.md`
+- [x] Output: writer must not route, choose plan priority, call AI, execute tasks, or orchestrate hosts
+- [x] Verify: no new writer CLI is introduced by default
+- [x] Verify: old `canonical_writer` import path is removed; no compatibility alias by default
+- [x] Note: W2.3 完成 public surface scope（`__all__` 只导出 `iso_now`；StateStore 降级为 `sopify_writer.store` 内部临时实现，runtime/ 通过 `from sopify_writer.store import StateStore` 访问）；具体 2-file writer API / StateStore method migration 归 W2.4
 
 ### W2.3b CI Runtime Detachment
 
@@ -244,7 +245,7 @@ created: 2026-06-05
 - [ ] Output: restructure `runtime-tests` job 为 `protocol-tests` job：删除 runtime-only test steps，保留 catalog drift / protocol smoke / installer-payload smoke / 非 runtime 测试
 - [ ] Output: 删除 `check-bundle-smoke.sh` step
 - [ ] Output: 删除 `check-prompt-runtime-gate-smoke.py` step
-- [ ] Output: 改写 `check-install-payload-bundle-smoke.py` 为 payload/catalog smoke（移除 runtime bundle 校验，只验证 sopify_contracts + sopify_writer/canonical_writer + catalog 安装完整性）
+- [ ] Output: 改写 `check-install-payload-bundle-smoke.py` 为 payload/catalog smoke（移除 runtime bundle 校验，只验证 sopify_contracts + sopify_writer + catalog 安装完整性）
 - [ ] Output: 更新 `scripts/release-preflight.sh`——移除 runtime bundle / runtime gate smoke 相关步骤，保留 catalog drift + protocol smoke
 - [ ] Output: 替换为 `sopify_protocol_check` smoke（W1.6 已建）
 - [ ] Output: 保留 catalog drift check（路径已更新 by W2.0b）+ installer/payload smoke

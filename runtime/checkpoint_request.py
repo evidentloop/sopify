@@ -15,7 +15,7 @@ from sopify_contracts.artifacts import PlanArtifact
 from sopify_contracts.core import ExecutionSummary, RouteDecision, RuntimeConfig
 from sopify_contracts.decision import ClarificationState, DecisionCheckpoint, DecisionOption, DecisionRecommendation, DecisionState
 
-from canonical_writer._resume import CheckpointRequestError, validate_develop_resume_context
+from sopify_writer._resume import CheckpointRequestError, validate_develop_resume_context
 
 CHECKPOINT_REQUEST_SCHEMA_VERSION = "1"
 CHECKPOINT_KINDS = ("clarification", "decision")

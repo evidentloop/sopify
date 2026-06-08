@@ -7,7 +7,7 @@ from hashlib import sha1
 import re
 from typing import Any, Mapping, Optional
 
-from canonical_writer._time import iso_now
+from sopify_writer._time import iso_now
 from .knowledge_layout import resolve_context_profile
 from sopify_contracts.core import RouteDecision, RuntimeConfig
 from sopify_contracts.decision import ClarificationState

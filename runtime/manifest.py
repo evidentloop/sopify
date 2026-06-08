@@ -21,7 +21,7 @@ from .decision import CURRENT_DECISION_RELATIVE_PATH
 from .handoff import CURRENT_HANDOFF_RELATIVE_PATH
 from .knowledge_layout import CONTEXT_PROFILES, KB_LAYOUT_VERSION, KNOWLEDGE_PATHS
 from .router import SUPPORTED_ROUTE_NAMES, build_runtime_first_hints
-from canonical_writer import iso_now
+from sopify_writer import iso_now
 
 MANIFEST_SCHEMA_VERSION = "1"
 DEFAULT_MANIFEST_FILENAME = "manifest.json"

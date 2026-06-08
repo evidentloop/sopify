@@ -16,7 +16,8 @@ from .knowledge_sync import KNOWLEDGE_SYNC_KEYS, knowledge_sync_targets, parse_k
 from sopify_contracts.artifacts import KbArtifact, PlanArtifact
 from sopify_contracts.core import RuntimeConfig
 from .plan.registry import PlanRegistryError, remove_plan_entry
-from canonical_writer import StateStore, iso_now
+from sopify_writer.store import StateStore
+from sopify_writer import iso_now
 
 ARCHIVE_STATUS_COMPLETED = "completed"
 ARCHIVE_STATUS_BLOCKED = "blocked"

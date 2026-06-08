@@ -40,7 +40,8 @@ from sopify_contracts.core import RouteDecision, RunState
 from sopify_contracts.decision import ClarificationState, DecisionOption, DecisionState
 from sopify_contracts.handoff import RuntimeHandoff
 from runtime.plan.scaffold import create_plan_scaffold
-from canonical_writer import StateStore, iso_now
+from sopify_writer.store import StateStore
+from sopify_writer import iso_now
 from runtime.state import stable_request_sha1
 from runtime.workspace_preflight import _drop_cli_arg_pairs
 from runtime.workspace_preflight import preflight_workspace_runtime

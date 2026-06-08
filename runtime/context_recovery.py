@@ -8,7 +8,7 @@ from typing import Dict, List
 from .context_snapshot import ContextResolvedSnapshot, resolve_context_snapshot
 from sopify_contracts.core import RouteDecision, RuntimeConfig
 from sopify_contracts.handoff import RecoveredContext
-from canonical_writer import StateStore
+from sopify_writer.store import StateStore
 
 _SUMMARY_CANDIDATES = ("README.md", "plan.md", "tasks.md")
 
