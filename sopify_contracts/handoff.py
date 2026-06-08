@@ -48,33 +48,25 @@ class RecoveredContext:
 
 @dataclass(frozen=True)
 class RuntimeHandoff:
-    """Structured machine handoff for downstream host execution."""
+    """Structured handoff for downstream host execution (P8 2-file model)."""
 
     schema_version: str
-    route_name: str
-    run_id: str
-    plan_id: Optional[str] = None
-    plan_path: Optional[str] = None
-    handoff_kind: str = "default"
+    plan_id: str
     required_host_action: str = "continue_host_develop"
+    plan_path: Optional[str] = None
     artifacts: Mapping[str, Any] = field(default_factory=dict)
     notes: tuple[str, ...] = ()
     observability: Mapping[str, Any] = field(default_factory=dict)
-    resolution_id: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema_version": self.schema_version,
-            "route_name": self.route_name,
-            "run_id": self.run_id,
             "plan_id": self.plan_id,
             "plan_path": self.plan_path,
-            "handoff_kind": self.handoff_kind,
             "required_host_action": self.required_host_action,
             "artifacts": dict(self.artifacts),
             "notes": list(self.notes),
             "observability": _json_mapping(self.observability),
-            "resolution_id": self.resolution_id,
         }
 
     @classmethod
@@ -82,16 +74,12 @@ class RuntimeHandoff:
         artifacts = data.get("artifacts")
         return cls(
             schema_version=str(data.get("schema_version") or "1"),
-            route_name=str(data.get("route_name") or "consult"),
-            run_id=str(data.get("run_id") or ""),
-            plan_id=data.get("plan_id") or None,
-            plan_path=data.get("plan_path") or None,
-            handoff_kind=str(data.get("handoff_kind") or "default"),
+            plan_id=str(data.get("plan_id") or ""),
             required_host_action=str(data.get("required_host_action") or "continue_host_develop"),
+            plan_path=data.get("plan_path") or None,
             artifacts=dict(artifacts) if isinstance(artifacts, Mapping) else {},
             notes=tuple(data.get("notes") or ()),
             observability=_json_mapping(data.get("observability")),
-            resolution_id=str(data.get("resolution_id") or ""),
         )
 
 

@@ -264,15 +264,15 @@ created: 2026-06-05
 
 ### W2.4 Migrate StateStore to 2-File Model
 
-- [ ] Depends: W2.3
-- [ ] Input: `sopify_writer/store.py` / `sopify_contracts/*`
-- [ ] Output: `StateStore.get/set/clear_active_plan`
-- [ ] Output: `StateStore.get/set/clear_current_handoff`
-- [ ] Output: removed writer methods for current_run/current_plan/current_clarification/current_decision/current_archive_receipt/last_route
-- [ ] Verify: `state/active_plan.json` contains only `plan_id`
-- [ ] Verify: current_handoff carries plan_id, plan_path, required_host_action, artifacts, notes, observability
-- [ ] Verify: post-P8 writer/schema 不再要求 `route_name` / `run_id` 作为 current_handoff 主链 required 字段
-- [ ] Verify: no sopify_writer code writes removed state files
+- [x] Depends: W2.3
+- [x] Input: `sopify_writer/store.py` / `sopify_contracts/*`
+- [x] Output: `StateStore.get/set/clear_active_plan`
+- [x] Output: `StateStore.get/set/clear_current_handoff`
+- [x] Output: removed writer methods for current_run/current_plan/current_clarification/current_decision/current_archive_receipt/last_route
+- [x] Verify: `state/active_plan.json` contains only `plan_id`
+- [x] Verify: current_handoff carries plan_id, plan_path, required_host_action, artifacts, notes, observability
+- [x] Verify: post-P8 writer/schema 不再要求 `route_name` / `run_id` 作为 current_handoff 主链 required 字段
+- [x] Verify: no sopify_writer code writes removed state files
 
 ### W2.5 Fold Clarification/Decision Into Handoff
 
