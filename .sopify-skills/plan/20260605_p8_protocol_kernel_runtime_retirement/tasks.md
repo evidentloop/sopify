@@ -388,8 +388,8 @@ created: 2026-06-05
 - [x] Output: add ProtocolStore.write_history_receipt (keyword-only, Markdown rendering, outcome/summary/key_decisions validation)
 - [x] Output: add ProtocolStore.finalize_plan (keyword-only, writes final.json + history receipt.md + clears state)
 - [x] Output: update sopify_writer/__init__.py to export ProtocolStore + InvariantViolationError
-- [x] Verify: 30 writer tests pass (state + receipt + history + finalize + invariant + retired file guard)
-- [x] Verify: pytest tests/ -q → 181 passed / 0 failed
+- [x] Verify: 33 writer tests pass (state + receipt + history + finalize + invariant + retired file guard)
+- [x] Verify: pytest tests/ -q → 184 passed / 0 failed
 - [x] Verify: protocol smoke 3 scenarios (new-plan / continuation / finalize) all PASS
 - [x] Verify: state/ only contains active_plan.json + current_handoff.json during active flow
 - [x] Verify: finalize clears active_plan/current_handoff
@@ -397,12 +397,13 @@ created: 2026-06-05
 
 ### Wave 2 Gate
 
-- [ ] Depends: W2.0a-W2.0b, W2.1-W2.3, W2.2b, W2.3b-W2.3c, W2.4-W2.11
-- [ ] Verify: runtime directory absent
-- [ ] Verify: registry absent
-- [ ] Verify: no runtime imports in active code/tests
-- [ ] Verify: compliance 3 scenarios pass
-- [ ] Stop: W2 gate must pass before W3 starts
+- [x] Depends: W2.0a-W2.0b, W2.1-W2.3, W2.2b, W2.3b-W2.3c, W2.4-W2.11
+- [x] Verify: runtime directory absent
+- [x] Verify: registry absent
+- [x] Verify: no runtime imports in active code/tests（仅 docstring retirement notes 残留，已标注 W3.6 清理）
+- [x] Verify: compliance 3 scenarios pass（new-plan / continuation / finalize 全 PASS）
+- [x] Stop: W2 gate must pass before W3 starts — **PASSED**
+- Wave 2 independent audit accepted; residuals assigned to W3.5/W3.6
 
 ---
 

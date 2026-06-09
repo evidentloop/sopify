@@ -13,7 +13,7 @@
 ## 当前焦点
 
 <!-- sopify:auto:focus:start -->
-- 当前活动 plan：`../plan/20260605_p8_protocol_kernel_runtime_retirement`（P8 Protocol 内核 & Runtime 退场；W1 完成，W2 进行中）。
+- 当前活动 plan：`../plan/20260605_p8_protocol_kernel_runtime_retirement`（P8 Protocol 内核 & Runtime 退场；W1 完成，W2 完成，Wave 2 Gate 通过，W3 next）。
 - history 归档：已可用；最近归档为 `../history/2026-06/20260529_pre_launch_consolidation`。
 <!-- sopify:auto:focus:end -->
 
