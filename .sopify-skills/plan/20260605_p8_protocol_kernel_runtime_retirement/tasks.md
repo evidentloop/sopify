@@ -379,17 +379,21 @@ created: 2026-06-05
 - [x] Verify: protocol smoke + payload smoke PASS
 - [x] Note: `scripts/check-context-checkpoints.py` Plan A scope 仍含旧 runtime 路径名（`runtime/state.py`、`runtime/handoff.py`、`tests/test_runtime_engine.py`），当前不影响功能（Plan A tasks 文件不存在，repo mode 跳过）；留 W3.6 治理叙事收口时统一清理
 
-### W2.11 Dogfood Mainline
+### W2.11 Writer Finalize API + Dogfood Mainline
 
-- [ ] Depends: W2.10
-- [ ] Input: current repo
-- [ ] Output: create/update active plan through sopify_writer
-- [ ] Output: write current_handoff through sopify_writer
-- [ ] Output: finalize to history with final receipt
-- [ ] Verify: state/ only contains `active_plan.json` and `current_handoff.json` during active flow
-- [ ] Verify: finalize clears active_plan/current_handoff
-- [ ] Verify: no `_registry.yaml`
-- [ ] Verify: compliance 3 scenarios all pass
+- [x] Depends: W2.10
+- [x] Input: sopify_writer StateStore (2-file model only)
+- [x] Output: rename StateStore → ProtocolStore(sopify_root)
+- [x] Output: add ProtocolStore.write_plan_receipt (keyword-only, receipt_id pattern validation, plan_id/receipt_id conflict detection)
+- [x] Output: add ProtocolStore.write_history_receipt (keyword-only, Markdown rendering, outcome/summary/key_decisions validation)
+- [x] Output: add ProtocolStore.finalize_plan (keyword-only, writes final.json + history receipt.md + clears state)
+- [x] Output: update sopify_writer/__init__.py to export ProtocolStore + InvariantViolationError
+- [x] Verify: 30 writer tests pass (state + receipt + history + finalize + invariant + retired file guard)
+- [x] Verify: pytest tests/ -q → 181 passed / 0 failed
+- [x] Verify: protocol smoke 3 scenarios (new-plan / continuation / finalize) all PASS
+- [x] Verify: state/ only contains active_plan.json + current_handoff.json during active flow
+- [x] Verify: finalize clears active_plan/current_handoff
+- [x] Verify: no _registry.yaml, no runtime/ directory
 
 ### Wave 2 Gate
 

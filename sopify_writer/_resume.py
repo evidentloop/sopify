@@ -1,7 +1,7 @@
 """Checkpoint resume validation for sopify_writer state writes.
 
 Extracted from runtime.checkpoint_request during P8 runtime retirement.
-Only the validation subset needed by StateStore lives here; the original
+Only the validation subset needed by ProtocolStore lives here; the original
 CheckpointRequest schema was retired with runtime/.
 """
 
