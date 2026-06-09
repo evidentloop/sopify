@@ -13,14 +13,14 @@
 
 - `skills/{zh,en}` 是 prompt-layer 真源。每个语言目录包含 `header.md.template`（宿主无关模板）和 `skills/sopify/`（skill 包）。
 - `Codex/Skills/{CN,EN}` 和 `Claude/Skills/{CN,EN}` 已被 git 忽略。可通过 `bash scripts/sync-skills.sh` 本地生成，用于调试或查看传统宿主目录结构，但不参与发版、CI 或 pre-commit。
-- `runtime/builtin_skill_packages/*/skill.yaml` 是 builtin machine metadata 真源。
+- `skills/catalog/builtin_catalog.generated.json` 是生成的 builtin catalog；源 skill 定义通过 `scripts/generate-builtin-catalog.py` 维护。
 - Skill package 变更时，参考 [skills/zh/skills/sopify/](./skills/zh/skills/sopify/) / [skills/en/skills/sopify/](./skills/en/skills/sopify/) 下各自的 `SKILL.md`。
 
 关键约束：
 
 - route 绑定优先使用 `supports_routes`
-- `skill.yaml` 统一经 `runtime/skill_schema.py` 校验
-- `tools / disallowed_tools / allowed_paths / requires_network` 当前仍以声明字段为主，除非 runtime 显式强制
+- `skill.yaml` 统一经 `sopify_contracts/skill_schema.py` 校验
+- `tools / disallowed_tools / allowed_paths / requires_network` 当前为声明字段
 - builtin catalog 通过脚本再生成，不手改生成产物
 
 ## Payload Bundle 与宿主接入

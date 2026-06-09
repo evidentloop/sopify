@@ -13,14 +13,14 @@ Thanks for your interest in contributing to Sopify.
 
 - `skills/{zh,en}` is the prompt-layer source of truth. Each language directory contains `header.md.template` (host-agnostic template) and `skills/sopify/` (skill packages).
 - `Codex/Skills/{CN,EN}` and `Claude/Skills/{CN,EN}` are gitignored. They can be generated locally via `bash scripts/sync-skills.sh` for debugging or inspecting the traditional host layout, but are not part of release, CI, or pre-commit.
-- `runtime/builtin_skill_packages/*/skill.yaml` is the source of truth for builtin machine metadata.
+- `skills/catalog/builtin_catalog.generated.json` is the generated builtin catalog, maintained via `scripts/generate-builtin-catalog.py`.
 - For skill package changes, follow the `SKILL.md` files under [skills/zh/skills/sopify/](./skills/zh/skills/sopify/) / [skills/en/skills/sopify/](./skills/en/skills/sopify/).
 
 Key constraints:
 
 - Prefer `supports_routes` for route binding.
-- Validate `skill.yaml` through `runtime/skill_schema.py`.
-- `tools / disallowed_tools / allowed_paths / requires_network` are currently declarative fields unless runtime explicitly enforces them.
+- Validate `skill.yaml` through `sopify_contracts/skill_schema.py`.
+- `tools / disallowed_tools / allowed_paths / requires_network` are currently declarative fields.
 - Regenerate the builtin catalog instead of editing generated metadata manually.
 
 ## Payload Bundle and Host Integration

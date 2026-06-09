@@ -367,13 +367,17 @@ created: 2026-06-05
 
 ### W2.10 Delete runtime/ Directory
 
-- [ ] Depends: W2.0b, W2.1-W2.3, W2.2b, W2.3b-W2.3c, W2.4-W2.9
-- [ ] Input: `runtime/` all files
-- [ ] Output: delete `runtime/`
-- [ ] Output: 确认 W2.7 fixture 清理清单已执行（`tests/fixtures/p4d_smoke/`、`tests/fixtures/sample_invariant_gate_matrix.yaml`）
-- [ ] Verify: `test ! -d runtime`
-- [ ] Verify: `rg "from runtime|import runtime|runtime\\." . -g '!**/__pycache__/**'` returns no active code imports
-- [ ] Verify: `python3 scripts/sopify_protocol_check.py check --scenario continuation --fixture <current>` passes
+- [x] Depends: W2.0b, W2.1-W2.3, W2.2b, W2.3b-W2.3c, W2.4-W2.9
+- [x] Input: `runtime/` all files (46 tracked files / ~15.6K LOC)
+- [x] Output: delete `runtime/`
+- [x] Output: 确认 W2.7 fixture 清理清单已执行（`tests/fixtures/p4d_smoke/`、`tests/fixtures/sample_invariant_gate_matrix.yaml`）
+- [x] Output: CONTRIBUTING.md/CN builtin catalog 真源从 `runtime/builtin_skill_packages/` 改为 `skills/catalog/` + `scripts/generate-builtin-catalog.py`；schema 校验从 `runtime/skill_schema.py` 改为 `sopify_contracts/skill_schema.py`
+- [x] Output: `sopify_writer/_resume.py` docstring 修正——"stays in runtime" 改为 "retired with runtime/"
+- [x] Verify: `test ! -d runtime`
+- [x] Verify: `rg "from runtime|import runtime|runtime\\." . -g '!**/__pycache__/**'` — 仅允许 retirement 注释和 docstring origin notes
+- [x] Verify: `pytest tests/ -q` → 163 passed / 0 failed
+- [x] Verify: protocol smoke + payload smoke PASS
+- [x] Note: `scripts/check-context-checkpoints.py` Plan A scope 仍含旧 runtime 路径名（`runtime/state.py`、`runtime/handoff.py`、`tests/test_runtime_engine.py`），当前不影响功能（Plan A tasks 文件不存在，repo mode 跳过）；留 W3.6 治理叙事收口时统一清理
 
 ### W2.11 Dogfood Mainline
 
@@ -469,11 +473,13 @@ created: 2026-06-05
 - [ ] Output: blueprint product model updated to protocol kernel + default workflow + skills/host adapters, with protocol kernel as the only truth/evidence layer
 - [ ] Output: blueprint tasks runtime retirement Phase 2 marked done
 - [ ] Output: protocol.md §8 / state file index / EAR section 同步更新
+- [ ] Output: 清理 Plan A checkpoint governance legacy runtime scope（`scripts/check-context-checkpoints.py` / `tests/test_context_checkpoints.py` / `CONTRIBUTING.md` Plan A hook 描述 / `.githooks/pre-commit` release-managed dead patterns）
 - [ ] Verify: blueprint no longer calls runtime state files "运行期不可删"
 - [ ] Verify: blueprint does not imply default workflow or development skills were removed by runtime retirement
 - [ ] Verify: ADR-017 EAR 标注为 [RETIRED by P8]（非 [SUPERSEDED]）
 - [ ] Verify: 蓝图中 "Validator 是唯一授权者" 表述已收窄为 protocol admission / receipt validity / archive admission
 - [ ] Verify: 蓝图 Runtime 五层架构段落已标 legacy reference 或整体删除
+- [ ] Verify: active governance scripts no longer reference deleted `runtime/` paths except explicit historical/retirement notes
 
 ### Wave 3 Gate
 
@@ -508,3 +514,25 @@ created: 2026-06-05
 - [ ] Output: CHANGELOG entry
 - [ ] Output: README headline reflects protocol kernel target state
 - [ ] Verify: install/getting-started path matches post-P8 architecture
+
+---
+
+## P8 Extension Candidates (post-W3, 非 P8 硬验收)
+
+> 以下工作不在 P8 主线验收范围内。依赖 W2.10 + W3 Qoder proof 完成后启动。
+
+### W4.0 Copilot Workspace Protocol Uplift
+
+- [ ] Depends: W2.10 / W3 Qoder hard proof
+- [ ] Input: `installer/hosts/copilot.py` (当前 `BASELINE_SUPPORTED`, `PROMPT_ONLY`, doctor 只有 `host_prompt_present`)
+- [ ] Output: 目标 tier `WORKSPACE_PROTOCOL_VERIFIED` — workspace instruction surface 已验证完整 protocol continuation + writer evidence
+- [ ] Output: 如 Copilot 宿主限制导致无法证明 writer/receipt/finalize，fallback 到 `BASELINE_SUPPORTED` 或引入 `WORKSPACE_PROTOCOL_SUPPORTED` 作为中间态
+- [ ] Output: 不现在新增 SupportTier 枚举值，W4 执行时再加
+- [ ] Output: 扩展 Copilot doctor_checks（不止 `host_prompt_present`）
+- [ ] Output: 扩展 Copilot verified_features（当前只有 `PROMPT_INSTALL`）
+- [ ] Verify: Copilot instructions 消费 protocol.md §8 四步链（active_plan → plan.md → current_handoff → receipts）
+- [ ] Verify: 可通过 sopify_writer 或明确批准的 thin wrapper 写 current_handoff 和 receipts
+- [ ] Verify: 不声明 `PAYLOAD_INSTALL`，除非 Copilot 路径真的安装 payload
+- [ ] Verify: CONTINUATION 是 EnhancementGroup，不是 FeatureId
+- [ ] Note: 注册表保留形态差异 — Codex/Claude/Qoder = protocol_verified / payload host; Copilot = workspace_protocol_verified / workspace host
+- [ ] Note: W3.6 文档收口不等待本任务；如 W4 在文档前完成则同步纳入，否则按当前状态写 Copilot = baseline_supported
