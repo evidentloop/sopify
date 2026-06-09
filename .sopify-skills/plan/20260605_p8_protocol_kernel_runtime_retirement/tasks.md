@@ -326,22 +326,27 @@ created: 2026-06-05
 
 ### W2.8 Remove Runtime Entrypoints and Bundle
 
-- [ ] Depends: W2.1-W2.7
-- [ ] Input: `scripts/runtime_gate.py`, `scripts/sopify_runtime.py`, `scripts/check-prompt-runtime-gate-smoke.py`, `installer/sopify_bundle.py`
-- [ ] Output: delete runtime gate/default runtime entry/bundle smoke scripts
-- [ ] Output: remove bundle manifest fields that point to runtime entry
-- [ ] Output: **显式脚本删除清单**：
-  - `scripts/runtime_gate.py`
-  - `scripts/sopify_runtime.py`
-  - `scripts/check-prompt-runtime-gate-smoke.py`
-  - `scripts/check-bundle-smoke.sh`
-  - `installer/sopify_bundle.py`（如 W2.2 未整体删除）
-- [ ] Output: **CI / release-preflight 同步清单**（与 W2.3b 协同）：
-  - `.github/workflows/ci.yml`：移除 `check-bundle-smoke.sh` / `check-prompt-runtime-gate-smoke.py` step；改写 `check-install-payload-bundle-smoke.py` step 为 payload/catalog smoke
-  - `scripts/release-preflight.sh`：移除 runtime bundle / runtime gate smoke 相关步骤
-  - `scripts/check-install-payload-bundle-smoke.py`：改写为 payload/catalog smoke（或整体替换为新脚本）
-- [ ] Verify: `rg "runtime_gate.py|sopify_runtime.py|default_runtime_entry|runtime_gate_entry" installer scripts tests docs README.md README.zh-CN.md .sopify-skills/blueprint` returns no active dependency
-- [ ] Verify: `scripts/check-bundle-smoke.sh` 和 `scripts/check-prompt-runtime-gate-smoke.py` 不存在
+- [x] Depends: W2.1-W2.7
+- [x] Input: `scripts/runtime_gate.py`, `scripts/sopify_runtime.py`, `scripts/check-prompt-runtime-gate-smoke.py`, `scripts/check-bundle-smoke.sh`
+- [x] Output: delete runtime gate/default runtime entry/bundle smoke scripts
+- [x] Output: clean `installer/validate.py` — remove `run_bundle_smoke_check()` + 5 private helpers + smoke-only imports (os/shlex/subprocess)
+- [x] Output: fix `installer/distribution.py` — "handoff-first runtime" → "handoff-first protocol"
+- [x] Output: **显式脚本删除清单**：
+  - `scripts/runtime_gate.py` ✅
+  - `scripts/sopify_runtime.py` ✅
+  - `scripts/check-prompt-runtime-gate-smoke.py` ✅
+  - `scripts/check-bundle-smoke.sh` ✅
+  - `installer/sopify_bundle.py` **保留**（已是 post-P8 protocol-kernel syncer，`payload.py:15` 依赖其 `sync_payload_bundle`）
+- [x] Output: **CI / release-preflight 同步清单**（与 W2.3b 协同）：
+  - `.github/workflows/ci.yml`：已无 `check-bundle-smoke.sh` / `check-prompt-runtime-gate-smoke.py` step（W2.3b 已清理）
+  - `scripts/release-preflight.sh`：已无 runtime smoke step（W2.3b 已清理）
+  - `scripts/check-install-payload-bundle-smoke.py`：已是 payload/catalog smoke，保留
+- [x] Output: **文档清理清单**：
+  - `CONTRIBUTING.md`：Runtime Bundle section → Payload Bundle section，删除 runtime 验证命令
+  - `CONTRIBUTING_CN.md`：同上中文版
+  - `.sopify-skills/blueprint/skill-standards-refactor.md`：runtime-first → protocol-first
+- [x] Verify: `scripts/check-bundle-smoke.sh` 和 `scripts/check-prompt-runtime-gate-smoke.py` 不存在
+- [x] Verify: `installer/validate.py` 无 `run_bundle_smoke_check` / `subprocess` / `shlex` 引用
 
 ### W2.9 Remove Deep Host Adapters
 

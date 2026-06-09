@@ -314,7 +314,7 @@ def inspect_host(
         capability_manifest=capability_manifest,
         check_id="workspace_handoff_first",
         manifest_key="writes_handoff_file",
-        recommendation="Refresh the workspace bundle so handoff-first runtime contracts stay available.",
+        recommendation="Refresh the workspace bundle so handoff-first protocol contracts stay available.",
     )
     smoke = _inspect_smoke(
         adapter=adapter,

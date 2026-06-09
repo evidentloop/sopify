@@ -23,29 +23,24 @@ Key constraints:
 - `tools / disallowed_tools / allowed_paths / requires_network` are currently declarative fields unless runtime explicitly enforces them.
 - Regenerate the builtin catalog instead of editing generated metadata manually.
 
-## Runtime Bundle and Host Integration
+## Payload Bundle and Host Integration
 
-Use these commands when you need maintainer-level control over the vendored runtime bundle:
+Use these commands when you need maintainer-level control over the payload bundle:
 
 ```bash
-# Sync runtime assets into a target workspace (maintainer command)
-python3 -c "from installer.sopify_bundle import sync_runtime_bundle; from pathlib import Path; sync_runtime_bundle(Path('.'), Path('/path/to/project'))"
+# Validate install + payload bundle + workspace stub in isolation
+python3 scripts/check-install-payload-bundle-smoke.py --target codex:zh-CN
 
-# Validate the raw input entry in the target workspace
-python3 /path/to/project/.sopify-runtime/scripts/sopify_runtime.py \
-  --workspace-root /path/to/project "Refactor the database layer"
-
-# Optional: portable smoke checks in the target workspace
-python3 -m pytest /path/to/project/.sopify-runtime/tests/test_runtime.py -v
-bash /path/to/project/.sopify-runtime/scripts/check-bundle-smoke.sh
+# Run protocol compliance check
+python3 scripts/sopify_protocol_check.py check --scenario new-plan --fixture tests/fixtures/minimal_plan
 ```
 
 Bundle rules:
 
 - The global payload lives under `~/.codex/sopify/` or `~/.claude/sopify/`.
 - Hosts must read `.sopify-skills/sopify.json` to detect workspace activation and resolve the selected global bundle.
-- The first host hop goes through the selected bundle's `runtime_gate_entry`; only repo-local development calls `scripts/runtime_gate.py enter` directly.
-- All checkpoint helpers (clarification, decision) are internal to the runtime gate; hosts do not call them directly.
+- The host follows the 4-step protocol entry contract (active_plan → plan.md → current_handoff → receipts) defined in `.sopify-skills/blueprint/protocol.md §8`.
+- Protocol state writes go through `sopify_writer`; hosts do not write state files directly.
 
 ### Installer Entry Points and Release Assets
 
@@ -105,14 +100,12 @@ python3 scripts/generate-builtin-catalog.py
 python3 -m pytest tests -v
 ```
 
-Repo-local runtime validation:
+Protocol and payload validation:
 
 ```bash
-python3 scripts/sopify_runtime.py "Refactor the database layer"
-python3 scripts/runtime_gate.py enter --workspace-root . --request "Refactor the database layer"
-python3 scripts/sopify_runtime.py "~go plan Refactor the database layer"
-python3 scripts/sopify_runtime.py "~go finalize"
-bash scripts/check-bundle-smoke.sh
+python3 scripts/sopify_protocol_check.py check --scenario new-plan --fixture tests/fixtures/minimal_plan
+python3 scripts/check-install-payload-bundle-smoke.py --target codex:zh-CN
+python3 -m pytest tests -v
 ```
 
 Documentation and release validation:

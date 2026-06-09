@@ -203,7 +203,7 @@ host_support:
 2. 纯文案润色/排版/链接修复，不涉及状态文件与流程资产
 3. 用户明确指定“只改某文件文本”，且目标不在受保护路径
 
-### runtime-first（必须经 `scripts/sopify_runtime.py`）
+### protocol-first（须经 protocol.md §8 入口）
 
 1. 命中 `plan/design/develop/decision/checkpoint/handoff` 任一流程语义
 2. 命中 `~go/~go plan/~go finalize/~compare` 任一命令语义
