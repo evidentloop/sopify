@@ -46,8 +46,8 @@ class HostCapabilityRegistryTests(unittest.TestCase):
         codex = get_host_capability("codex")
         claude = get_host_capability("claude")
 
-        self.assertEqual(codex.support_tier.value, "deep_verified")
-        self.assertEqual(claude.support_tier.value, "deep_verified")
+        self.assertEqual(codex.support_tier.value, "protocol_verified")
+        self.assertEqual(claude.support_tier.value, "protocol_verified")
         self.assertTrue(codex.install_enabled)
         self.assertTrue(claude.install_enabled)
         self.assertIn("handoff_first", [feature.value for feature in claude.verified_features])

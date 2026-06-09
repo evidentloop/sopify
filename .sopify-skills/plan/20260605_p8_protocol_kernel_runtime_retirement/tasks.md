@@ -348,14 +348,22 @@ created: 2026-06-05
 - [x] Verify: `scripts/check-bundle-smoke.sh` 和 `scripts/check-prompt-runtime-gate-smoke.py` 不存在
 - [x] Verify: `installer/validate.py` 无 `run_bundle_smoke_check` / `subprocess` / `shlex` 引用
 
-### W2.9 Remove Deep Host Adapters
+### W2.9 Reclassify Protocol-Verified Hosts
 
-- [ ] Depends: W2.2 / W2.8
-- [ ] Input: `installer/hosts/{codex,claude}.py`
-- [ ] Output: delete deep adapters for Codex/Claude
-- [ ] Output: keep payload-capable host path, including Copilot if still useful
-- [ ] Output: installer host exports updated
-- [ ] Verify: `rg "deep_verified|hosts.codex|hosts.claude|runtime gate" installer docs README.md README.zh-CN.md` returns no active deep path
+- [x] Depends: W2.2 / W2.8
+- [x] Input: `SupportTier.DEEP_VERIFIED` enum value + all references
+- [x] Output: rename `DEEP_VERIFIED` / `"deep_verified"` → `PROTOCOL_VERIFIED` / `"protocol_verified"` in 5 files:
+  - `installer/models.py` (enum definition)
+  - `installer/hosts/codex.py` (support_tier reference)
+  - `installer/hosts/claude.py` (support_tier reference)
+  - `scripts/check-enhancement-declaration.py` (TIER_EXPECTATIONS + warning string)
+  - `tests/test_installer_status_doctor.py` (assertion strings)
+- [x] Output: preserve `installer/hosts/codex.py` and `installer/hosts/claude.py` — Codex/Claude remain installable targets
+- [x] Output: preserve 5 verified_features (PROMPT_INSTALL, PAYLOAD_INSTALL, WORKSPACE_BOOTSTRAP, HANDOFF_FIRST, HOST_BRIDGE) and 3 declared_enhancements unchanged
+- [x] Output: 边界说明 — PROTOCOL_VERIFIED 验证 protocol entry + payload + bootstrap + handoff-first 能力，不承诺 receipt/finalize write API；writer API 属 W2.9b/W3 scope，不在本波新增 FeatureId
+- [x] Verify: `rg "deep_verified|DEEP_VERIFIED" installer scripts tests` returns 0 active hits
+- [x] Verify: Codex/Claude still installable (`install-sopify --target codex:zh-CN` does not error)
+- [x] Verify: `pytest tests -q` → 163 passed / 0 failed
 
 ### W2.10 Delete runtime/ Directory
 

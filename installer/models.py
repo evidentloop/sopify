@@ -37,7 +37,7 @@ class InstallError(RuntimeError):
 class SupportTier(StrEnum):
     """Stable product-support tiers for host registry declarations."""
 
-    DEEP_VERIFIED = "deep_verified"
+    PROTOCOL_VERIFIED = "protocol_verified"
     BASELINE_SUPPORTED = "baseline_supported"
     DOCUMENTED_ONLY = "documented_only"
     EXPERIMENTAL = "experimental"

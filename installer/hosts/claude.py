@@ -15,7 +15,7 @@ CLAUDE_ADAPTER = HostAdapter(
 
 CLAUDE_CAPABILITY = HostCapability(
     host_id="claude",
-    support_tier=SupportTier.DEEP_VERIFIED,
+    support_tier=SupportTier.PROTOCOL_VERIFIED,
     install_enabled=True,
     declared_features=(
         FeatureId.PROMPT_INSTALL,
