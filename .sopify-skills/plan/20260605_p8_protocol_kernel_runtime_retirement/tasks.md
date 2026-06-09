@@ -298,31 +298,31 @@ created: 2026-06-05
 
 ### W2.7 Reclassify Tests
 
-- [ ] Depends: W2.0b, W2.1-W2.3, W2.2b, W2.3b-W2.3c, W2.4-W2.6
-- [ ] Input: all tests importing runtime
-- [ ] Output: keep protocol / contracts / sopify_writer / installer / compliance tests
-- [ ] Output: delete runtime router/engine/gate/output tests
-- [ ] Output: migrate useful state invariant tests to sopify_writer
-- [ ] Output: migrate plan lookup/scaffold tests if the code survives outside runtime
-- [ ] Output: **显式删除清单**（审计确认，以下文件必须删除）：
+- [x] Depends: W2.0b, W2.1-W2.3, W2.2b, W2.3b-W2.3c, W2.4-W2.6
+- [x] Input: all tests importing runtime
+- [x] Output: keep protocol / contracts / sopify_writer / installer / compliance tests
+- [x] Output: delete runtime router/engine/gate/output tests
+- [x] Output: migrate useful state invariant tests to sopify_writer
+- [x] Output: migrate plan lookup/scaffold tests if the code survives outside runtime
+- [x] Output: **显式删除清单**（审计确认，以下文件必须删除）：
   - `tests/runtime_test_support.py`（269 行共享 helper，import 20+ runtime 模块，是 15+ 测试文件的 import 根）
   - `test_runtime_engine.py` / `test_runtime_gate.py` / `test_runtime_router.py` / `test_runtime_orchestration.py` / `test_runtime_execution_gate.py`
   - `test_runtime_kb.py` / `test_runtime_knowledge_layout.py` / `test_runtime_config.py` / `test_runtime_output_rendering.py` / `test_runtime_state.py`
   - `test_runtime_decision.py` / `test_runtime_plan_reuse.py` / `test_runtime_plan_intent.py` / `test_runtime_plan_lookup.py` / `test_runtime_plan_registry.py` / `test_runtime_plan_scaffold.py` / `test_runtime_preferences.py`
   - `test_bundle_smoke.py`
   - `test_action_intent.py`（2561 行，测试 runtime.action_intent / runtime.gate / runtime.engine）
-- [ ] Output: **显式外科手术清单**（以下文件保留但需局部修改）：
+- [x] Output: **显式外科手术清单**（以下文件保留但需局部修改）：
   - `tests/test_installer.py`：删除第 46-47 行 `from runtime.engine import run_runtime` / `from runtime.output import render_runtime_output`；重写或移除 `HostPromptContractTests._assert_installed_footer_contract`（~1193 行）中的 `run_runtime()` 调用
   - `tests/test_release_hooks.py`：更新 `_init_release_hook_fixture` 中合成仓库 fixture 的 `runtime/gate.py` 文件路径
   - `tests/test_installer_status_doctor.py`：更新 bundle copy 操作中 `runtime` 目录名引用
   - `tests/test_installer_validate.py`：删除或改写全部 `run_bundle_smoke_check` / `check-bundle-smoke.sh` 相关测试方法（line 16 import + line 24/37/48/61/73/87/92/98 共 9 处引用）；W2.8 删除 smoke 脚本后这些测试必须同步清理
-- [ ] Output: **Fixture 清理清单**：
+- [x] Output: **Fixture 清理清单**：
   - `tests/fixtures/p4d_smoke/`：检查是否仍被活跃测试引用；如无引用则整体删除（含 `current_decision.json` / `current_run.json` / `current_gate_receipt.json` 等已退役 state 文件）
   - `tests/fixtures/sample_invariant_gate_matrix.yaml`：删除（引用 runtime gate 概念）
-- [ ] Output: 清理 `tests/conftest.py` 中 `implementation_mirror` marker 注册（仅被 `test_runtime_router.py` 使用，已删除）
-- [ ] Verify: `rg "from runtime|import runtime|runtime\\." tests` returns no active imports
-- [ ] Verify: retained test names reflect new modules, not runtime
-- [ ] Verify: `runtime_test_support.py` 不存在；无 test 文件 import 它
+- [x] Output: 清理 `tests/conftest.py` 中 `implementation_mirror` marker 注册（仅被 `test_runtime_router.py` 使用，已删除）
+- [x] Verify: `rg "from runtime|import runtime|runtime\\." tests` returns no active imports
+- [x] Verify: retained test names reflect new modules, not runtime
+- [x] Verify: `runtime_test_support.py` 不存在；无 test 文件 import 它
 
 ### W2.8 Remove Runtime Entrypoints and Bundle
 

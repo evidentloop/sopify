@@ -50,7 +50,7 @@ class HostCapabilityRegistryTests(unittest.TestCase):
         self.assertEqual(claude.support_tier.value, "deep_verified")
         self.assertTrue(codex.install_enabled)
         self.assertTrue(claude.install_enabled)
-        self.assertIn("smoke_verified", [feature.value for feature in claude.verified_features])
+        self.assertIn("handoff_first", [feature.value for feature in claude.verified_features])
 
         retired_host = "tr" + "ae-cn"
         with self.assertRaisesRegex(ValueError, f"Unsupported host capability: {retired_host}"):
@@ -234,7 +234,7 @@ class StatusDoctorContractTests(unittest.TestCase):
             self.assertEqual(payload["workspace_state"]["active_plan"], "20260320_helloagents_integration_enhancements")
             self.assertEqual(payload["workspace_state"]["pending_checkpoint"], "continue_host_develop")
             self.assertEqual(payload["state"]["overall_status"], "partial")
-            self.assertEqual(payload["hosts"][0]["verified_features"], ["prompt_install", "payload_install", "workspace_bootstrap", "preferences_preload", "handoff_first", "host_bridge", "smoke_verified"])
+            self.assertEqual(payload["hosts"][0]["verified_features"], ["prompt_install", "payload_install", "workspace_bootstrap", "handoff_first", "host_bridge"])
             self.assertEqual(
                 set(payload["hosts"][0]["state"].keys()),
                 {"installed", "configured", "workspace_bundle_healthy"},
@@ -291,7 +291,7 @@ class StatusDoctorContractTests(unittest.TestCase):
             run_workspace_bootstrap(CODEX_ADAPTER.payload_root(home_root), workspace_root)
 
             bundle_root = workspace_root / ".sopify-skills"
-            for name in ("sopify_contracts", "sopify_writer", "runtime", "scripts", "tests"):
+            for name in ("sopify_contracts", "sopify_writer"):
                 target = bundle_root / name
                 if target.exists():
                     import shutil
@@ -337,15 +337,8 @@ class StatusDoctorContractTests(unittest.TestCase):
                 for check in doctor_payload["checks"]
                 if check["host_id"] == "codex" and check["check_id"] == "workspace_handoff_first"
             )
-            preload_check = next(
-                check
-                for check in doctor_payload["checks"]
-                if check["host_id"] == "codex" and check["check_id"] == "workspace_preferences_preload"
-            )
             self.assertEqual(handoff_check["status"], "pass")
             self.assertEqual(handoff_check["reason_code"], "ok")
-            self.assertEqual(preload_check["status"], "pass")
-            self.assertEqual(preload_check["reason_code"], "ok")
 
     def test_doctor_fail_closes_when_selected_global_bundle_is_missing(self) -> None:
         with tempfile.TemporaryDirectory() as home_dir, tempfile.TemporaryDirectory() as workspace_dir:
@@ -373,11 +366,6 @@ class StatusDoctorContractTests(unittest.TestCase):
                 for check in doctor_payload["checks"]
                 if check["host_id"] == "codex" and check["check_id"] == "workspace_handoff_first"
             )
-            preload_check = next(
-                check
-                for check in doctor_payload["checks"]
-                if check["host_id"] == "codex" and check["check_id"] == "workspace_preferences_preload"
-            )
             payload_bundle_check = next(
                 check
                 for check in doctor_payload["checks"]
@@ -387,8 +375,6 @@ class StatusDoctorContractTests(unittest.TestCase):
             self.assertEqual(workspace_check["reason_code"], "GLOBAL_BUNDLE_MISSING")
             self.assertEqual(handoff_check["status"], "fail")
             self.assertEqual(handoff_check["reason_code"], "GLOBAL_BUNDLE_MISSING")
-            self.assertEqual(preload_check["status"], "fail")
-            self.assertEqual(preload_check["reason_code"], "GLOBAL_BUNDLE_MISSING")
             self.assertEqual(payload_bundle_check["reason_code"], "GLOBAL_BUNDLE_MISSING")
 
     def test_doctor_recommends_on_demand_bootstrap_without_public_workspace_flag(self) -> None:
@@ -423,9 +409,8 @@ class StatusDoctorContractTests(unittest.TestCase):
             payload_manifest = json.loads((payload_root / "payload-manifest.json").read_text(encoding="utf-8"))
             active_version = payload_manifest["active_version"]
             bundle_root = workspace_root / ".sopify-skills"
-            for name in ("sopify_contracts", "sopify_writer", "runtime", "scripts", "tests"):
+            for name in ("sopify_contracts", "sopify_writer"):
                 shutil.copytree(payload_root / "bundles" / active_version / name, bundle_root / name)
-            (bundle_root / "scripts" / "runtime_gate.py").unlink()
 
             doctor_payload = build_doctor_payload(home_root=home_root, workspace_root=workspace_root)
             workspace_check = next(

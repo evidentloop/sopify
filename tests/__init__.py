@@ -1,1 +1,1 @@
-"""Test package for Sopify runtime and installer coverage."""
+"""Test package for Sopify protocol-kernel, writer, and installer coverage."""

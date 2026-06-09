@@ -166,8 +166,8 @@ def _init_release_hook_fixture(root: Path, *, inject_sync_failure: bool = False)
     _write(root / "skills/zh/skills/sopify/SKILL.md", "# skill\n")
     _write(root / "skills/en/skills/sopify/SKILL.md", "# skill\n")
 
-    _write(root / "runtime/gate.py", "print('baseline')\n")
-    _write(root / "tests/test_runtime_gate.py", "print('baseline test')\n")
+    _write(root / "installer/payload.py", "print('baseline')\n")
+    _write(root / "sopify_contracts/__init__.py", "print('baseline test')\n")
 
     _run_git(root, "init")
     _run_git(root, "config", "user.name", "Test User", capture_output=False, text=False)
@@ -175,9 +175,9 @@ def _init_release_hook_fixture(root: Path, *, inject_sync_failure: bool = False)
     _run_git(root, "add", ".", capture_output=False, text=False)
     _run_git(root, "commit", "-m", "baseline")
 
-    _write(root / "runtime/gate.py", "print('changed')\n")
-    _write(root / "tests/test_runtime_gate.py", "print('changed test')\n")
-    _run_git(root, "add", "runtime/gate.py", "tests/test_runtime_gate.py", capture_output=False, text=False)
+    _write(root / "installer/payload.py", "print('changed')\n")
+    _write(root / "sopify_contracts/__init__.py", "print('changed test')\n")
+    _run_git(root, "add", "installer/payload.py", "sopify_contracts/__init__.py", capture_output=False, text=False)
 
 
 class ReleaseHookTests(unittest.TestCase):
@@ -240,8 +240,8 @@ class ReleaseHookTests(unittest.TestCase):
             root = Path(temp_dir)
             _init_release_hook_fixture(root)
 
-            _write(root / "runtime/state.py", "print('scope change')\n")
-            _run_git(root, "add", "runtime/state.py", capture_output=False, text=False)
+            _write(root / "CONTRIBUTING.md", "# scope change\n")
+            _run_git(root, "add", "CONTRIBUTING.md", capture_output=False, text=False)
 
             message_file = root / "COMMIT_EDITMSG"
             _write(message_file, "feat: tighten scope guard\n")
@@ -263,8 +263,8 @@ class ReleaseHookTests(unittest.TestCase):
             root = Path(temp_dir)
             _init_release_hook_fixture(root)
 
-            _write(root / "runtime/deterministic_guard.py", "print('scope change')\n")
-            _run_git(root, "add", "runtime/deterministic_guard.py", capture_output=False, text=False)
+            _write(root / "sopify_contracts/core.py", "print('scope change')\n")
+            _run_git(root, "add", "sopify_contracts/core.py", capture_output=False, text=False)
 
             message_file = root / "COMMIT_EDITMSG"
             _write(
@@ -302,11 +302,11 @@ class ReleaseHookTests(unittest.TestCase):
                     "--root",
                     str(root),
                     "--file",
-                    "runtime/gate.py",
+                    "installer/payload.py",
                     "--file",
                     "scripts/release-sync.sh",
                     "--file",
-                    "tests/test_runtime_gate.py",
+                    "sopify_contracts/__init__.py",
                 ],
                 capture_output=True,
                 text=True,
@@ -319,9 +319,9 @@ class ReleaseHookTests(unittest.TestCase):
             self.assertIn("### Summary", unreleased)
             self.assertIn("Changes across:", unreleased)
             self.assertIn("### Changed", unreleased)
-            self.assertIn("**Runtime**", unreleased)
             self.assertIn("**Scripts**", unreleased)
-            self.assertIn("**Tests**", unreleased)
+            self.assertNotIn("**Runtime**", unreleased)
+            self.assertNotIn("**Tests**", unreleased)
             self.assertNotIn("<details>", unreleased)
 
     def test_release_sync_auto_drafts_unreleased_before_version_bump(self) -> None:
@@ -344,8 +344,8 @@ class ReleaseHookTests(unittest.TestCase):
             self.assertIn("## [2026-03-21.010203] - 2026-03-21", changelog)
             self.assertIn("### Summary", release_body)
             self.assertIn("### Changed", release_body)
-            self.assertIn("**Runtime**", release_body)
-            self.assertIn("**Tests**", release_body)
+            self.assertIn("**Changed**", release_body)
+            self.assertNotIn("**Runtime**", release_body)
             self.assertNotIn("<details>", release_body)
             self.assertIn("badge/version-2026--03--21.010203-orange.svg", (root / "README.md").read_text(encoding="utf-8"))
             self.assertIn("<!-- SOPIFY_VERSION: 2026-03-21.010203 -->", (root / "skills/zh/header.md.template").read_text(encoding="utf-8"))
@@ -366,7 +366,7 @@ class ReleaseHookTests(unittest.TestCase):
                     "--file",
                     "README.md",
                     "--file",
-                    "tests/test_runtime_gate.py",
+                    "sopify_contracts/__init__.py",
                 ],
                 capture_output=True,
                 text=True,
@@ -378,7 +378,7 @@ class ReleaseHookTests(unittest.TestCase):
             unreleased = _unreleased_body(text)
             self.assertIn("### Summary", unreleased)
             self.assertIn("Docs", unreleased)
-            self.assertIn("Tests", unreleased)
+            self.assertIn("Changed", unreleased)
             self.assertNotIn("**Runtime**", unreleased)
             self.assertNotIn("**Scripts**", unreleased)
             self.assertNotIn("**Skills**", unreleased)
@@ -401,7 +401,7 @@ class ReleaseHookTests(unittest.TestCase):
                     "--file",
                     ".sopify-skills/plan/20260324_task/tasks.md",
                     "--file",
-                    "runtime/gate.py",
+                    "installer/payload.py",
                 ],
                 capture_output=True,
                 text=True,
@@ -412,7 +412,7 @@ class ReleaseHookTests(unittest.TestCase):
             unreleased = _unreleased_body(changelog.read_text(encoding="utf-8"))
             # Plan package path is now included for attribution
             self.assertIn("`20260324_task`", unreleased)
-            self.assertIn("**Runtime**", unreleased)
+            self.assertIn("**Changed**", unreleased)
             # Non-package .sopify-skills/ paths still excluded
             self.assertNotIn("history/index.md", unreleased)
             # Blueprint internals still excluded
@@ -437,7 +437,7 @@ class ReleaseHookTests(unittest.TestCase):
                     "--file",
                     ".sopify-skills/blueprint/design.md",
                     "--file",
-                    ".sopify-skills/state/current_run.json",
+                    ".sopify-skills/state/current_handoff.json",
                 ],
                 capture_output=True,
                 text=True,
