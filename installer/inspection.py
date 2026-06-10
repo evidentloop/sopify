@@ -576,7 +576,7 @@ def _inspect_host_prompt(*, adapter: HostAdapter, capability: HostCapability, ho
             status=CHECK_FAIL,
             reason_code=_reason_code_from_install_error(exc),
             evidence=_paths_from_error(exc),
-            recommendation=f"Run python3 scripts/install_sopify.py --target {capability.host_id}:zh-CN to install the host prompt layer.",
+            recommendation=f"Run python3 scripts/install_sopify.py --target {_recommend_target(capability.host_id)} to install the host prompt layer.",
         )
 
 
@@ -598,7 +598,7 @@ def _inspect_payload(*, adapter: HostAdapter, capability: HostCapability, home_r
             status=CHECK_FAIL,
             reason_code=_reason_code_from_install_error(exc),
             evidence=_paths_from_error(exc),
-            recommendation=f"Run python3 scripts/install_sopify.py --target {capability.host_id}:zh-CN to refresh the host payload.",
+            recommendation=f"Run python3 scripts/install_sopify.py --target {_recommend_target(capability.host_id)} to refresh the host payload.",
         )
 
 
@@ -973,8 +973,18 @@ def _reason_code_from_install_error(exc: InstallError, *, default: str = "MISSIN
 
 
 
+def _recommend_target(host_id: str) -> str:
+    """Return the recommended --target value for doctor/status messages."""
+    for reg in iter_host_registrations():
+        if reg.capability.host_id == host_id:
+            if reg.adapter.default_language is not None:
+                return host_id
+            break
+    return f"{host_id}:zh-CN"
+
+
 def _payload_bundle_recommendation(host_id: str, reason_code: str) -> str | None:
-    refresh_command = f"python3 scripts/install_sopify.py --target {host_id}:zh-CN"
+    refresh_command = f"python3 scripts/install_sopify.py --target {_recommend_target(host_id)}"
     if reason_code == REASON_GLOBAL_BUNDLE_MISSING:
         return f"Refresh the {host_id} payload because the selected global bundle is missing: {refresh_command}"
     if reason_code == REASON_GLOBAL_BUNDLE_INCOMPATIBLE:

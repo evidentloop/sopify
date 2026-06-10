@@ -1,7 +1,7 @@
 ---
 title: P8 Protocol Kernel & Runtime Retirement — Tasks
 plan_id: 20260605_p8_protocol_kernel_runtime_retirement
-status: in_progress (W1 ✅ / W2 ✅ / Phase 0 ✅ / W3 next)
+status: in_progress (W1 ✅ / W2 ✅ / Phase 0 ✅ / W3.1 ✅ / W3.2 next)
 created: 2026-06-05
 ---
 
@@ -478,19 +478,24 @@ created: 2026-06-05
 
 ### W3.1 Build Qoder PROTOCOL_VERIFIED Adapter
 
-- [ ] Depends: Phase 0 gate
-- [ ] Input: existing Codex/Claude PROTOCOL_VERIFIED host patterns (`installer/hosts/codex.py`, `installer/hosts/claude.py`), Copilot workspace-scope adapter (`installer/hosts/copilot.py`)
-- [ ] Output: `installer/hosts/qoder.py`（home-scope hybrid adapter：`destination_dirname=".qoder"`, `header_filename="AGENTS.md"`, `config_dir="~/.qoder"`）
-- [ ] Output: Qoder 注册进 `installer/hosts/__init__.py`（`QODER_HOST` + `QODER_ADAPTER`）
-- [ ] Output: `HostCapability` 声明 `SupportTier.PROTOCOL_VERIFIED` + 5 verified_features（PROMPT_INSTALL, PAYLOAD_INSTALL, WORKSPACE_BOOTSTRAP, HANDOFF_FIRST, HOST_BRIDGE）+ CONTINUATION/INTERACTION/AUDIT enhancements
-- [ ] Output: Qoder prompt asset 消费 Host Protocol Entry Contract（request admission + 4 步续接 + 读取预算 + sopify_writer 写回边界）
-- [ ] Output: prompt asset 明确 consult / quick_fix **不**自动接续 active plan
-- [ ] Output: `install.sh --target qoder` 安装路径
-- [ ] Verify: adapter does not import runtime
-- [ ] Verify: adapter does not depend on `_registry.yaml`
-- [ ] Verify: `.qoder/settings.local.json` / `.qoder/rules/` 不被当作 Sopify state
-- [ ] Verify: prompt asset does not instruct LLM to run `runtime_gate.py` or always auto-continue active plan
-- [ ] Verify: `install.sh --target qoder:zh-CN` does not error
+- [x] Depends: Phase 0 gate
+- [x] Input: existing Codex/Claude PROTOCOL_VERIFIED host patterns (`installer/hosts/codex.py`, `installer/hosts/claude.py`), Copilot workspace-scope adapter (`installer/hosts/copilot.py`)
+- [x] Output: `installer/hosts/qoder.py`（home-scope hybrid adapter：`destination_dirname=".qoder"`, `header_filename="AGENTS.md"`, `config_dir="~/.qoder"`, `default_language="zh-CN"`）
+- [x] Output: Qoder 注册进 `installer/hosts/__init__.py`（`QODER_HOST` + `QODER_ADAPTER`）
+- [x] Output: `HostCapability` 声明 `SupportTier.PROTOCOL_VERIFIED` + 5 verified_features（PROMPT_INSTALL, PAYLOAD_INSTALL, WORKSPACE_BOOTSTRAP, HANDOFF_FIRST, HOST_BRIDGE）+ CONTINUATION/INTERACTION/AUDIT enhancements
+- [x] Output: Qoder prompt asset 消费 Host Protocol Entry Contract（request admission + 4 步续接 + 读取预算 + sopify_writer 写回边界）— 复用共享 header.md.template，已是 post-P8 口径
+- [x] Output: prompt asset 明确 consult / quick_fix **不**自动接续 active plan — 模板 §8.1 已包含此约束
+- [x] Output: `install.sh --target qoder` 安装路径（bare target 支持 via default_language）
+- [x] Output: `skills/hosts.yaml` 补 Qoder 元数据
+- [x] Output: `installer/distribution.py` _host_display_name 补 "qoder": "Qoder"
+- [x] Output: 工具映射表补 Qoder 列（skills/{zh,en}/header.md.template A2 节）
+- [x] Output: `tests/test_installer_status_doctor.py` + `tests/golden-snapshots.json` 同步更新
+- [x] Verify: adapter does not import runtime
+- [x] Verify: adapter does not depend on `_registry.yaml`
+- [x] Verify: `.qoder/settings.local.json` / `.qoder/rules/` 不被当作 Sopify state
+- [x] Verify: prompt asset does not instruct LLM to run `runtime_gate.py` or always auto-continue active plan
+- [x] Verify: `install.sh --target qoder:zh-CN` does not error（adapter 注册验证通过）
+- [x] Verify: `pytest tests/ -q` → 180 passed / 0 failed
 
 ### W3.2 Qoder Continuation Writer Path（Installed Payload Proof）
 

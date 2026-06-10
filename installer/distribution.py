@@ -731,6 +731,7 @@ def _host_display_name(host_id: str) -> str:
         "codex": "Codex",
         "claude": "Claude",
         "copilot": "Copilot",
+        "qoder": "Qoder",
     }.get(host_id, host_id)
 
 

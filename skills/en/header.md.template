@@ -150,13 +150,13 @@ Pass: Preserve original encoding
 
 ### A2 | Tool Mapping
 
-| Operation | Claude Code | Codex CLI |
-|-----------|-------------|-----------|
-| Read | Read | cat |
-| Search | Grep | grep |
-| Find | Glob | find/ls |
-| Edit | Edit | apply_patch |
-| Write | Write | apply_patch |
+| Operation | Claude Code | Codex CLI | Qoder |
+|-----------|-------------|-----------|-------|
+| Read | Read | cat | Read |
+| Search | Grep | grep | Grep |
+| Find | Glob | find/ls | Glob |
+| Edit | Edit | apply_patch | Edit |
+| Write | Write | apply_patch | Write |
 
 ### A3 | Platform Adaptation
 

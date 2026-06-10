@@ -150,13 +150,13 @@ Next: {下一步提示}
 
 ### A2 | 工具映射
 
-| 操作 | Claude Code | Codex CLI |
-|-----|-------------|-----------|
-| 读取 | Read | cat |
-| 搜索 | Grep | grep |
-| 查找 | Glob | find/ls |
-| 编辑 | Edit | apply_patch |
-| 写入 | Write | apply_patch |
+| 操作 | Claude Code | Codex CLI | Qoder |
+|-----|-------------|-----------|-------|
+| 读取 | Read | cat | Read |
+| 搜索 | Grep | grep | Grep |
+| 查找 | Glob | find/ls | Glob |
+| 编辑 | Edit | apply_patch | Edit |
+| 写入 | Write | apply_patch | Write |
 
 ### A3 | 平台适配
 

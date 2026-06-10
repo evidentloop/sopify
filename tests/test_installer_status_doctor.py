@@ -56,12 +56,32 @@ class HostCapabilityRegistryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, f"Unsupported host capability: {retired_host}"):
             get_host_capability(retired_host)
 
+    def test_qoder_capability_contract(self) -> None:
+        from installer.hosts import get_host_adapter
+
+        qoder = get_host_capability("qoder")
+        adapter = get_host_adapter("qoder")
+
+        self.assertEqual(qoder.support_tier.value, "protocol_verified")
+        self.assertTrue(qoder.install_enabled)
+
+        verified = {f.value for f in qoder.verified_features}
+        self.assertEqual(verified, {"prompt_install", "payload_install", "workspace_bootstrap", "handoff_first", "host_bridge"})
+
+        enhancements = {e.value for e in qoder.declared_enhancements}
+        self.assertEqual(enhancements, {"continuation", "interaction", "audit"})
+
+        self.assertEqual(adapter.default_language, "zh-CN")
+        self.assertEqual(adapter.destination_dirname, ".qoder")
+        self.assertEqual(adapter.header_filename, "AGENTS.md")
+        self.assertEqual(adapter.config_dir, "~/.qoder")
+
     def test_installable_hosts_only_return_install_enabled_entries(self) -> None:
         installable = [capability.host_id for capability in iter_installable_hosts()]
         declared = [capability.host_id for capability in iter_declared_hosts()]
 
-        self.assertEqual(set(installable), {"codex", "claude", "copilot"})
-        self.assertEqual(set(declared), {"codex", "claude", "copilot"})
+        self.assertEqual(set(installable), {"codex", "claude", "copilot", "qoder"})
+        self.assertEqual(set(declared), {"codex", "claude", "copilot", "qoder"})
 
 
 class StatusDoctorContractTests(unittest.TestCase):
