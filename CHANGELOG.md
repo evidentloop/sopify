@@ -6,6 +6,8 @@ Format: Summary → Changed → Plan Packages. File-level details live in `git l
 
 ## [Unreleased]
 
+## [2026-06-10.191940] - 2026-06-10
+
 ### Summary
 
 P8 Protocol Kernel & Runtime Retirement: deleted runtime (~15.6K LOC), renamed canonical root to `.sopify`, simplified state to 2 files, onboarded Qoder as PROTOCOL_VERIFIED host, aligned all docs to "development process protocol layer" positioning.
