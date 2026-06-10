@@ -13,8 +13,9 @@
 ## 当前焦点
 
 <!-- sopify:auto:focus:start -->
-- 当前活动 plan：`../plan/20260605_p8_protocol_kernel_runtime_retirement`（P8 Protocol 内核 & Runtime 退场；W1 完成，W2 完成，Wave 2 Gate 通过，W3 next）。
-- history 归档：已可用；最近归档为 `../history/2026-06/20260529_pre_launch_consolidation`。
+- 当前活动 plan：无（P8 已归档）。
+- P8 Protocol Kernel & Runtime Retirement 已归档至 `../history/2026-06/20260605_p8_protocol_kernel_runtime_retirement`（runtime 删除 + canonical root .sopify + Qoder host proof + 蓝图全量对齐）。
+- history 归档：已可用；最近归档为 `../history/2026-06/20260605_p8_protocol_kernel_runtime_retirement`。
 <!-- sopify:auto:focus:end -->
 
 ## 深入阅读入口
@@ -27,5 +28,5 @@
 - [Sopify 宿主接入规范 (Protocol v0)](./protocol.md)
 - [Skill 标准对齐蓝图](./skill-standards-refactor.md)
 - [变更历史](../history/index.md)
-- 最近归档：`../history/2026-06/20260529_pre_launch_consolidation`
+- 最近归档：`../history/2026-06/20260605_p8_protocol_kernel_runtime_retirement`
 <!-- sopify:auto:read-next:end -->

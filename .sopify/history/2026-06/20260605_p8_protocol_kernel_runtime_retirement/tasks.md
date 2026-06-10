@@ -1,7 +1,7 @@
 ---
 title: P8 Protocol Kernel & Runtime Retirement — Tasks
 plan_id: 20260605_p8_protocol_kernel_runtime_retirement
-status: in_progress (W1 ✅ / W2 ✅ / Phase 0 ✅ / W3.1 ✅ / W3.2 ✅ / W3.3 ✅ / W3.4 ✅ / W3.5 ✅ / W3.6 ✅ / Wave 3 Gate ✅ / Finalize next)
+status: in_progress (W1 ✅ / W2 ✅ / Phase 0 ✅ / W3.1 ✅ / W3.2 ✅ / W3.3 ✅ / W3.4 ✅ / W3.5 ✅ / W3.6 ✅ / Wave 3 Gate ✅ / Finalize ✅ / archived)
 created: 2026-06-05
 ---
 
@@ -672,25 +672,28 @@ created: 2026-06-05
 
 ### F1 Final Receipts
 
-- [ ] Depends: W3 gate
-- [ ] Output: `plan/<id>/receipts/final.json`
-- [ ] Output: final receipt includes outcome, verification commands, key decisions, deleted surfaces
-- [ ] Verify: final receipt validates against schema
+- [x] Depends: W3 gate
+- [x] Output: `receipts/final.json`（含 scope / key_decisions / verification_commands / deleted_surfaces / follow_ups）
+- [x] Output: final receipt includes outcome, verification commands, key decisions, deleted surfaces
+- [x] Verify: final receipt validates against schema
 
 ### F2 Archive
 
-- [ ] Depends: F1
-- [ ] Output: move plan package to `history/2026-06/20260605_p8_protocol_kernel_runtime_retirement/`
-- [ ] Output: generate `history/.../receipt.md`
-- [ ] Output: clear active_plan/current_handoff
-- [ ] Verify: history receipt includes runtime deletion, registry deletion, Qoder proof, docs cutover
+- [x] Depends: F1
+- [x] Output: plan package archived to `history/2026-06/20260605_p8_protocol_kernel_runtime_retirement/`
+- [x] Output: `receipt.md` generated and enhanced (Wave status table, metrics, commit chain, follow-ups)
+- [x] Output: active_plan/current_handoff cleared
+- [x] Output: `sopify.json` updated (runtime_gate removed, workspace_kind → external)
+- [x] Output: `history/index.md` updated with P8 entry
+- [x] Output: `blueprint/README.md` updated (current focus → P8 archived)
+- [x] Verify: history receipt includes runtime deletion, registry deletion, Qoder proof, docs cutover
 
 ### F3 Release Notes
 
-- [ ] Depends: F2
-- [ ] Output: CHANGELOG entry
-- [ ] Output: README headline reflects protocol kernel target state
-- [ ] Verify: install/getting-started path matches post-P8 architecture
+- [x] Depends: F2
+- [x] Output: CHANGELOG entry under [Unreleased]
+- [x] Output: README public wording remains user-facing ("开发过程协议层 / 能停、能接、能查")
+- [x] Verify: install/getting-started path matches post-P8 architecture
 
 ---
 
