@@ -1,7 +1,7 @@
 ---
 title: P8 Protocol Kernel & Runtime Retirement — Tasks
 plan_id: 20260605_p8_protocol_kernel_runtime_retirement
-status: in_progress (W1 ✅ / W2 ✅ / Phase 0 ✅ / W3.1 ✅ / W3.2 ✅ / W3.3 ✅ / W3.4 ✅ / W3.5 next)
+status: in_progress (W1 ✅ / W2 ✅ / Phase 0 ✅ / W3.1 ✅ / W3.2 ✅ / W3.3 ✅ / W3.4 ✅ / W3.5 ✅ / W3.6 next)
 created: 2026-06-05
 ---
 
@@ -596,19 +596,31 @@ created: 2026-06-05
 
 ### W3.5 Docs Narrative Cutover
 
-- [ ] Depends: W3.4
-- [ ] Input: README / README.zh-CN / docs/how-sopify-works(.en).md / docs/getting-started.md
-- [ ] Output: main narrative becomes "host executes; Sopify preserves auditable AI development assets through protocol, file assets, sopify_writer, receipts"
-- [ ] Output: docs describe the post-P8 product stack as protocol kernel + default workflow + skills/host adapters
-- [ ] Output: docs clarify runtime retirement does not retire analyze/design/develop/kb/templates workflow or development skills; those layers consume protocol assets and write through sopify_writer
-- [ ] Output: docs describe Qoder as PROTOCOL_VERIFIED full-capability host (home-scope hybrid), with same 5-point capability criteria as Codex/Claude
-- [ ] Output: architecture diagrams reflect 2 state files + plan/history/receipts
-- [ ] Output: remove runtime gate first language
-- [ ] Output: remove `_registry.yaml` from user-facing docs
-- [ ] Verify: docs present cross-host continuation as a hard proof of asset portability, not the whole Sopify value proposition
-- [ ] Verify: docs do not describe protocol kernel as the whole product, and do not describe default workflow/skills as independent machine truth
-- [ ] Verify: docs do not describe Plan Snapshot as a directory index, registry, or authoritative audit evidence
-- [ ] Verify: `rg "runtime gate|runtime/|_registry|current_run|current_plan" README.md README.zh-CN.md docs` returns no active legacy docs
+- [x] Depends: W3.4
+- [x] Input: README / README.zh-CN / docs/how-sopify-works(.en).md / assets/*.svg
+- [x] Output: main narrative → "host executes; Sopify preserves auditable AI development assets"
+- [x] Output: docs describe post-P8 product stack as protocol kernel + default workflow + host adapters
+- [x] Output: "Runtime retired; workflow retained" — analyze/design/develop/finalize unchanged, rules in protocol files
+- [x] Output: host support matrix (Codex/Claude/Qoder = PROTOCOL_VERIFIED, Copilot = BASELINE_SUPPORTED)
+- [x] Output: architecture SVG updated (Validator → Protocol Entry, slogan → protocol-first)
+- [x] Output: workflow SVGs updated (Runtime Gate → Protocol Entry, Checkpoint-gated → Checkpoint-based)
+- [x] Output: 2-file state model in how-sopify-works (active_plan + current_handoff only)
+- [x] Output: 4-step protocol entry read chain documented
+- [x] Output: runtime gate / deterministic gate / Validator sole authorizer language removed
+- [x] Output: directory structure updated (removed runtime/, added sopify_writer/ + sopify_contracts/)
+- [x] Verify: docs present cross-host continuation as hard proof of asset portability
+- [x] Verify: docs do not describe protocol kernel as the whole product
+- [x] Output: architecture SVG deep fix (host layer + Qoder, propose→execute, ActionProposal→Work Request, fail-closed removed, verify→finalize)
+- [x] Output: getting-started.md runtime references cleaned (capabilities, state/ description, Qoder added)
+- [x] Output: sopify-harness PNG annotated with retirement note (EN + ZH)
+- [x] Output: README resume promise corrected ("persist in git" not "auto-resume")
+- [x] Output: fail-open behavior documented in how-sopify-works (EN + ZH)
+- [x] Output: architecture SVG regenerated (fireworks-tech-graph, clean post-P8 layout, user-friendly labels, no implementation jargon)
+- [x] Output: README intro simplified ("protocol layer" → "saves your AI development process"; "checkpoint" removed)
+- [x] Output: README architecture bullets simplified (no "4-step read chain", "protocol entry gates" jargon)
+- [x] Output: Chinese README synchronized (same simplification)
+- [x] Output: harness PNG retirement note moved BEFORE image (EN + ZH)
+- [x] Verify: 181 passed / 0 failed
 
 ### W3.6 Blueprint Sync（全量叙事收口 — 11 项显式回写清单）
 

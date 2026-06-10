@@ -1,7 +1,7 @@
 ---
 title: P8 Protocol Kernel & Runtime Retirement
 plan_id: 20260605_p8_protocol_kernel_runtime_retirement
-status: in_progress (W1 ✅ / W2 ✅ / Phase 0 ✅ / W3.1 ✅ / W3.2 ✅ / W3.3 ✅ / W3.4 ✅ / W3.5 next)
+status: in_progress (W1 ✅ / W2 ✅ / Phase 0 ✅ / W3.1 ✅ / W3.2 ✅ / W3.3 ✅ / W3.4 ✅ / W3.5 ✅ / W3.6 next)
 level: architecture
 created: 2026-06-05
 owner: sanze.li
@@ -13,9 +13,9 @@ depends_on: [P7 (payload_only_onboarding_mainline), P6 (writer_cutover), P5 (con
 ## Plan Snapshot
 
 - **Goal**: 把 AI 开发过程中的方案、决策、交接、执行/验证证据收敛为可追溯审计资产；真相源从 runtime 切到 protocol.md + sopify_writer，并用 Qoder 证明这些资产可跨宿主接续
-- **Status**: W1 完成 / W2 完成 / Phase 0 完成 / W3.1-W3.4 完成 — W3.5 待执行
-- **Next**: W3.5 Docs Narrative Cutover
-- **Task**: W3.5 → W3.6 → Finalize
+- **Status**: W1-W3.5 完成 — W3.6 Blueprint Sync 待执行
+- **Next**: W3.6 Blueprint Sync（全量叙事收口）
+- **Task**: W3.6 → Finalize
 
 ## Context / Why
 

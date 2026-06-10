@@ -10,11 +10,11 @@
 </defs>
 <rect width="960" height="920" fill="#ffffff"/>
 <text x="36" y="30" font-size="20" font-weight="700" fill="#1f2937">Sopify — 工作流与检查点</text>
-<text x="36" y="50" font-size="12" fill="#6b7280">(Evidence-driven · Checkpoint-gated)</text>
+<text x="36" y="50" font-size="12" fill="#6b7280">(Evidence-driven · Checkpoint-based)</text>
 <rect x="345" y="64" width="180" height="38" rx="19" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
 <text x="435" y="88" text-anchor="middle" font-size="14" font-weight="600" fill="#1d4ed8">用户输入</text>
 <rect x="345" y="132" width="180" height="40" rx="8" fill="#e0e7ff" stroke="#818cf8" stroke-width="1.5"/>
-<text x="435" y="157" text-anchor="middle" font-size="14" font-weight="600" fill="#4338ca">运行时门禁</text>
+<text x="435" y="157" text-anchor="middle" font-size="14" font-weight="600" fill="#4338ca">协议入口</text>
 <path d="M435,200 L469,232 L435,264 L401,232Z" fill="#f8fafc" stroke="#6366f1" stroke-width="1.5"/>
 <text x="435" y="237" text-anchor="middle" font-size="14" font-weight="600" fill="#4f46e5">路由</text>
 <rect x="95" y="306" width="180" height="40" rx="8" fill="#dcfce7" stroke="#86efac" stroke-width="1.5"/>

@@ -19,14 +19,14 @@ English · [简体中文](./README.zh-CN.md) · [Quick Start](#quick-start) · [
 
 ---
 
-AI coding tools are fast. But when they jump to code without understanding what's needed, speed becomes rework. Sopify is a protocol layer that stops when facts are missing, waits when a decision needs your sign-off, and resumes from the last checkpoint — even across different AI hosts.
+AI coding tools are fast. But when they jump to code without understanding what's needed, speed becomes rework. Sopify saves your AI development process — plans, decisions, handoffs, and verification records — so you can resume from where you left off, even on a different AI host.
 
-No new editor, no new CLI. Install into the host you already use — Codex, Claude, or Copilot.
+No new editor, no new CLI. Install into the host you already use — Codex, Claude, Qoder, or Copilot.
 
 **Design principles:**
 
 - **Stop when unsure** — score every requirement; ask before assuming
-- **Resume from anywhere** — checkpoint-based; switch hosts, machines, or teammates without re-explaining
+- **Resume from anywhere** — plans, decisions, and receipts persist in git; open the repo on any host and pick up where you left off
 - **Trace every decision** — plans, choices, and reviews persist in `.sopify/`
 
 **What Sopify prevents:**
@@ -67,18 +67,17 @@ A month later, someone asks why the cache key includes the user ID. The answer i
 ## Architecture
 
 <div align="center">
-<img src="./assets/sopify-architecture.svg" width="760" alt="Sopify Architecture — 3-layer protocol" />
+<img src="./assets/sopify-architecture.svg" width="760" alt="Sopify Architecture — protocol kernel + workflow + host adapters" />
 </div>
 
-The LLM is only a proposal source. The Validator is the sole authorizer — every action is proposed, validated, and receipted before it touches your code. Knowledge persists in `.sopify/`, accessible across sessions, hosts, and teammates.
+The host LLM executes. Sopify preserves auditable development assets — plans, decisions, handoffs, and verification evidence — in `.sopify/`, accessible across sessions, hosts, and teammates.
 
 How Sopify achieves stability and quality:
 
-- Workflow rules live outside model memory — hosts load the same Sopify rules, so switching between Claude, Codex, or Copilot does not reset the workflow
-- State persists to the repo — plans, decisions, and checkpoints live in `.sopify/`, so the next session resumes from project state, not chat history
-- Runtime checks gate execution — before code is written, Sopify verifies plan completeness, unresolved risks, and pending decisions; if something is missing, it stops and asks
-
-This isn't prompt-level advice — it's a deterministic gate. If the plan isn't complete, execution doesn't proceed.
+- **Same rules on every host** — Claude, Codex, Qoder, and Copilot load the same Sopify instructions, so switching hosts doesn't reset the workflow
+- **Everything persists in git** — plans, decisions, and verification records live in `.sopify/`, so the next session resumes from project state, not chat history
+- **Resumes from where you stopped** — the host reads the current plan, picks up the last handoff, and checks what's already been verified before continuing
+- **Runtime retired; workflow retained** — the analyze → design → develop → finalize workflow is unchanged; what changed is that rules live in files, not a runtime process
 
 ## Installation
 
@@ -98,13 +97,14 @@ Get-Content sopify-install.ps1 | more
 .\sopify-install.ps1 --target codex:en-US
 ```
 
-Install targets:
+Host support:
 
-| Host | Target | Status |
-|------|--------|--------|
-| Codex | `codex:en-US` / `codex:zh-CN` | Deep verified — suitable for daily use |
-| Claude | `claude:en-US` / `claude:zh-CN` | Deep verified — suitable for daily use |
-| Copilot | `copilot:en-US` / `copilot:zh-CN` | Baseline — feedback welcome |
+| Host | Tier | Target | Notes |
+|------|------|--------|-------|
+| Codex | PROTOCOL_VERIFIED | `codex:en-US` / `codex:zh-CN` | Full capability continuation |
+| Claude | PROTOCOL_VERIFIED | `claude:en-US` / `claude:zh-CN` | Full capability continuation |
+| Qoder | PROTOCOL_VERIFIED | `qoder` | Validated on Qoder CLI |
+| Copilot | BASELINE_SUPPORTED | `copilot:en-US` / `copilot:zh-CN` | Prompt-only; payload uplift planned |
 
 Pass `--workspace <path>` to target another repo, `--language <lang>` to control output language.
 
@@ -143,13 +143,14 @@ sopify/
 ├── scripts/               # install, diagnostics, and maintainer scripts
 ├── examples/              # configuration examples
 ├── docs/                  # workflow guides and developer references
-├── runtime/               # built-in runtime / skill packages
+├── sopify_writer/         # protocol asset writer library
+├── sopify_contracts/      # schema definitions and shared data structures
 ├── skills/                # prompt-layer source of truth
-├── .sopify/        # project knowledge base
-│   ├── blueprint/         # design baseline, reduction targets
-│   ├── plan/              # active plans
-│   └── history/           # archived plans
-└── installer/             # host adapters and install orchestration
+├── installer/             # host adapters and install orchestration
+└── .sopify/               # project protocol root
+    ├── blueprint/         # protocol spec, design baseline, reduction targets
+    ├── plan/              # active plans + receipts
+    └── history/           # archived plans + receipts
 ```
 
 See [How Sopify Works](./docs/how-sopify-works.en.md) for the full workflow, checkpoints, and knowledge layout.

@@ -15,7 +15,7 @@ Sopify adds resumable, traceable AI workflows to any project. After setup:
 
 - Git repository (local or remote)
 - Python 3.11+
-- An AI host: Copilot, Codex, or Claude
+- An AI host: Codex, Claude, Qoder, or Copilot
 
 ## Quick Setup (One Command)
 
@@ -95,9 +95,6 @@ Expected output:
 
 ```json
 {
-  "bundle_version": "2026-05-21.101226",
-  "capabilities": ["preferences_preload", "runtime_gate"],
-  "locator_mode": "global_first",
   "schema_version": "1",
   "workspace_kind": "external"
 }
@@ -140,14 +137,14 @@ As you work, Sopify creates project knowledge in `.sopify/`:
 .sopify/
 ├── sopify.json       # workspace marker (from bootstrap)
 ├── project.md        # technical conventions (auto-created)
-├── blueprint/        # design baseline
-├── plan/             # active work packages
-├── history/          # archived completed work
-└── state/            # transient runtime state (git-ignored)
+├── blueprint/        # design baseline and protocol spec
+├── plan/             # active work packages + receipts
+├── history/          # archived completed work + receipts
+└── state/            # protocol state (git-ignored, 2 files only)
 ```
 
 - `blueprint/`, `plan/`, `history/` are tracked by git — they are your project memory
-- `state/` is transient and git-ignored — it holds runtime session data
+- `state/` is git-ignored — it holds only `active_plan.json` (current plan pointer) and `current_handoff.json` (resume hint). If missing, the host falls back to browsing `plan/` to find active work
 
 ## Updating
 

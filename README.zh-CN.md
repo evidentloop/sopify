@@ -19,14 +19,14 @@
 
 ---
 
-AI 工具写代码很快。但没搞清楚需求就动手，快就变成了返工。Sopify 是一个协议层——缺事实时停下来问，需要拍板时等你确认，中断后从上次 checkpoint 恢复，即使切换到不同的 AI 宿主也能接力。
+AI 工具写代码很快。但没搞清楚需求就动手，快就变成了返工。Sopify 帮你保存 AI 编程的全过程——方案、决策、交接、验证记录——所以中断后能从上次停下的地方继续，即使换到不同的 AI 宿主也能接力。
 
-无需新编辑器、无需新 CLI。安装到你已有的宿主：Codex、Claude、Copilot 均支持。
+无需新编辑器、无需新 CLI。安装到你已有的宿主：Codex、Claude、Qoder、Copilot 均支持。
 
 **设计原则：**
 
 - **不确定就停下** — 需求不全时先追问，再动手
-- **随时恢复** — 基于 checkpoint；换宿主、换机器、换人接手都不用重新交代
+- **随时恢复** — 方案、决策、收据都持久保存在 git 里；换宿主、换机器、换人接手都能从项目状态继续
 - **决策留痕** — 方案、取舍、审查持久保存在 `.sopify/`
 
 **Sopify 主要在防什么：**
@@ -79,18 +79,17 @@ curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/instal
 ## 架构
 
 <div align="center">
-<img src="./assets/sopify-architecture.svg" width="760" alt="Sopify 架构 — 3 层协议" />
+<img src="./assets/sopify-architecture.svg" width="760" alt="Sopify 架构 — 协议内核 + 工作流 + 宿主适配" />
 </div>
 
-宿主 LLM 只是提议者，Validator 是唯一裁决者——每个操作都经历提议、校验、收据三步，才会触碰你的代码。知识（蓝图、方案、历史）持久保留在 `.sopify/` 中，跨 session、宿主和团队成员均可访问。
+宿主 LLM 负责执行。Sopify 把 AI 开发过程中的审计资产——方案、决策、交接、验证证据——持久保留在 `.sopify/` 中，跨 session、宿主和团队成员均可访问。
 
-Sopify 靠三件事做到稳定可控、质量可靠：
+Sopify 靠四件事做到稳定可控、质量可靠：
 
-- 规则不靠模型临场发挥 —— 不同宿主加载的是同一套 Sopify 工作流规则，切换 Claude、Codex 或 Copilot 不会把流程重置
-- 状态不靠聊天记忆 —— plan、decision 和 checkpoint 都落在 `.sopify/`，后续接手读的是项目状态，不是上一段对话
-- 执行前先过 runtime 门禁 —— 检查方案是否完整、风险是否化解、决策是否确认；缺一个就停下，不往下走
-
-这不是 prompt 层的建议，是确定性的门禁——方案不完整，执行就不放行。
+- **每个宿主同一套规则** — Claude、Codex、Qoder、Copilot 加载的是同一套 Sopify 指令，切换宿主不会把流程重置
+- **一切都持久保存在 git 里** — 方案、决策、验证记录都落在 `.sopify/`，后续接手读的是项目状态，不是上一段对话
+- **从上次停下的地方继续** — 宿主读取当前方案、上次交接记录和已验证内容，然后接着干
+- **Runtime 已退场；工作流保留** — analyze → design → develop → finalize 流程不变；变的是规则活在文件里，不再依赖 runtime 进程
 
 ## 安装说明
 
@@ -110,13 +109,14 @@ Get-Content sopify-install.ps1 | more
 .\sopify-install.ps1 --target codex:zh-CN
 ```
 
-安装 target：
+宿主支持：
 
-| 宿主 | Target | 状态 |
-|------|--------|------|
-| Codex | `codex:zh-CN` / `codex:en-US` | 深度验证 — 适合日常使用 |
-| Claude | `claude:zh-CN` / `claude:en-US` | 深度验证 — 适合日常使用 |
-| Copilot | `copilot:zh-CN` / `copilot:en-US` | 基础支持 — 欢迎反馈 |
+| 宿主 | Tier | Target | 说明 |
+|------|------|--------|------|
+| Codex | PROTOCOL_VERIFIED | `codex:zh-CN` / `codex:en-US` | 全能力接续 |
+| Claude | PROTOCOL_VERIFIED | `claude:zh-CN` / `claude:en-US` | 全能力接续 |
+| Qoder | PROTOCOL_VERIFIED | `qoder` | 已在 Qoder CLI 验证 |
+| Copilot | BASELINE_SUPPORTED | `copilot:zh-CN` / `copilot:en-US` | 仅 prompt；payload 升级计划中 |
 
 可用 `--workspace <path>` 指定目标仓库，`--language <lang>` 控制输出语言。
 
@@ -155,13 +155,14 @@ sopify/
 ├── scripts/               # 安装、诊断与维护脚本
 ├── examples/              # 配置示例
 ├── docs/                  # 工作流指南与开发者参考
-├── runtime/               # 内置 runtime / skill packages
+├── sopify_writer/         # 协议资产写入库
+├── sopify_contracts/      # schema 定义与共享数据结构
 ├── skills/                # prompt-layer 源码
-├── .sopify/        # 项目知识库
-│   ├── blueprint/         # 设计基线与削减目标
-│   ├── plan/              # 活跃方案
-│   └── history/           # 已归档方案
-└── installer/             # 宿主适配器与安装编排
+├── installer/             # 宿主适配器与安装编排
+└── .sopify/               # 项目协议根目录
+    ├── blueprint/         # 协议规范、设计基线与削减目标
+    ├── plan/              # 活跃方案 + receipts
+    └── history/           # 已归档方案 + receipts
 ```
 
 完整工作流、checkpoint 和知识库层级说明见 [工作流说明](./docs/how-sopify-works.md)。
