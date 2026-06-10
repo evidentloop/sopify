@@ -15,7 +15,7 @@ Install Sopify for a supported AI host.
 
 Use `--target copilot` to bootstrap the current workspace and write Copilot
 instruction files. For Codex / Claude, this installs the host prompt and
-Sopify runtime only; project files are initialized later when you run `~go`
+Sopify protocol kernel only; project files are initialized later when you run `~go`
 inside a workspace.
 
 Options:

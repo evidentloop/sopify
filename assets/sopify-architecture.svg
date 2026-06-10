@@ -74,7 +74,7 @@
   <text x="593" y="344" class="arrow-label" fill="#ea580c">resume</text>
   <rect x="60" y="362" width="840" height="100" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
   <text x="76" y="380" class="tier-label" fill="#059669">KNOWLEDGE LAYER</text>
-  <text x="250" y="380" class="node-desc">.sopify/ — persisted in git, accessible across sessions and hosts</text>
+  <text x="250" y="380" class="node-desc">.sopify/ — project assets tracked in git; local pointers (state/) gitignored</text>
   <rect x="80" y="392" width="140" height="48" rx="8" fill="#ffffff" stroke="#059669" stroke-width="1.2"/>
   <text x="150" y="413" text-anchor="middle" class="node-name" style="font-size:12px">Blueprint</text>
   <text x="150" y="429" text-anchor="middle" class="node-desc">Long-term baseline</text>
@@ -93,9 +93,9 @@
   <rect x="60" y="475" width="840" height="48" rx="6" fill="#f8fafc" stroke="#e5e7eb" stroke-width="1"/>
   <text x="76" y="494" class="tier-label" fill="#6b7280">PROTOCOL STATE</text>
   <text x="230" y="494" class="node-desc">2 files only (git-ignored) — active_plan.json (current plan pointer) + current_handoff.json (resume hint)</text>
-  <text x="230" y="510" class="node-desc">If missing on new machine: host browses plan/ to find active work. Plans and receipts are always in git.</text>
-  <text x="480" y="550" text-anchor="middle" class="slogan">Runtime retired; workflow retained — Protocol-first AI development</text>
-  <text x="480" y="566" text-anchor="middle" class="slogan">Host executes; Sopify saves — work resumes from project state, not chat history</text>
+  <text x="230" y="510" class="node-desc">If missing on new machine: host browses plan/ to find active work. Plans and receipts are tracked project assets.</text>
+  <text x="480" y="550" text-anchor="middle" class="slogan">Development process protocol layer — plans, decisions, handoffs, receipts as project assets</text>
+  <text x="480" y="566" text-anchor="middle" class="slogan">Same work, any host — stop, resume, and trace from project state, not chat history</text>
   <rect x="730" y="540" width="200" height="72" rx="6" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
   <text x="746" y="556" class="tier-label" fill="#6b7280">LEGEND</text>
   <line x1="746" y1="570" x2="770" y2="570" stroke="#2563eb" stroke-width="1.5"/>

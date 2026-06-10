@@ -83,10 +83,10 @@ trap on_exit EXIT
 is_release_relevant_file() {
   local path="$1"
   case "$path" in
-    runtime/*|installer/*|skills/*|README.md|README.zh-CN.md|CHANGELOG.md)
+    sopify_writer/*|sopify_contracts/*|installer/*|skills/*|README.md|README.zh-CN.md|CHANGELOG.md)
       return 0
       ;;
-    scripts/sopify_runtime.py|scripts/model_compare_runtime.py|scripts/check-bundle-smoke.sh|scripts/release-sync.sh|scripts/release-preflight.sh|scripts/sync-skills.sh|scripts/check-version-consistency.sh)
+    scripts/release-sync.sh|scripts/release-preflight.sh|scripts/sync-skills.sh|scripts/check-version-consistency.sh)
       return 0
       ;;
     *)

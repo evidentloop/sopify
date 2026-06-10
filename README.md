@@ -19,14 +19,14 @@ English · [简体中文](./README.zh-CN.md) · [Quick Start](#quick-start) · [
 
 ---
 
-AI coding tools are fast. But when they jump to code without understanding what's needed, speed becomes rework. Sopify saves your AI development process — plans, decisions, handoffs, and verification records — so you can resume from where you left off, even on a different AI host.
+AI coding tools are fast. But when they jump to code without understanding what's needed, speed becomes rework. Sopify is a development process protocol layer for AI coding — it turns plans, decisions, handoffs, and verification records into project assets, so work can stop, resume, and be traced.
 
 No new editor, no new CLI. Install into the host you already use — Codex, Claude, Qoder, or Copilot.
 
 **Design principles:**
 
 - **Stop when unsure** — score every requirement; ask before assuming
-- **Resume from anywhere** — plans, decisions, and receipts persist in git; open the repo on any host and pick up where you left off
+- **Resume from anywhere** — plans, decisions, and verification records are tracked in `.sopify/`; open the repo on any host and pick up where you left off
 - **Trace every decision** — plans, choices, and reviews persist in `.sopify/`
 
 **What Sopify prevents:**
@@ -75,7 +75,7 @@ The host LLM executes. Sopify preserves auditable development assets — plans, 
 How Sopify achieves stability and quality:
 
 - **Same rules on every host** — Claude, Codex, Qoder, and Copilot load the same Sopify instructions, so switching hosts doesn't reset the workflow
-- **Everything persists in git** — plans, decisions, and verification records live in `.sopify/`, so the next session resumes from project state, not chat history
+- **Project assets tracked in git** — plans, decisions, and verification records live in `.sopify/`; only the two local pointer files (`active_plan.json`, `current_handoff.json`) are gitignored
 - **Resumes from where you stopped** — the host reads the current plan, picks up the last handoff, and checks what's already been verified before continuing
 - **Runtime retired; workflow retained** — the analyze → design → develop → finalize workflow is unchanged; what changed is that rules live in files, not a runtime process
 

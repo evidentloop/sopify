@@ -4,7 +4,7 @@
 
 ## 产品方向
 
-> **对齐原则**：Sopify 总方向是 Protocol-first / Validator-centered / Runtime-optional。主航道的每一步都是"先 formalize protocol/validator 层契约，再让 runtime 作为参考实现消费"。不以 runtime 内部治理为驱动。蓝图变更优先做能强化证据与授权层的事，优先做能让外部宿主看懂、接入、被验证的事；AI + 单人维护应串行收敛，不同时开多条线。
+> **对齐原则**：Sopify 总方向是 Protocol-first / Protocol-admission-centered / Runtime-retired。主航道的每一步都是"先 formalize protocol 层契约，再让宿主消费"。不以 runtime 内部治理为驱动。蓝图变更优先做能强化证据与审计层的事，优先做能让外部宿主看懂、接入、被验证的事；AI + 单人维护应串行收敛，不同时开多条线。
 
 ## 后 P4c 执行规则
 
@@ -124,9 +124,9 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 
 ## 流程与工具项
 
-- [ ] Runtime retirement cutover（`target-state-first` 已于 2026-05-22 拍板）：先解耦 `installer/validate.py`、`installer/bootstrap_workspace.py`、`installer/inspection.py`、`scripts/install_sopify.py`、`scripts/sopify_init.py`，再同步删除 `runtime/`、`installer/sopify_bundle.py` 与 legacy deep path
-  - Phase 1 已完成（方案包 `20260522_runtime_slimming_kernel_extraction`）：contract 面清理 −6,400 LOC + engine 重构 + 34 退役测试块清理 −1,400 LOC + installer bundle 纯 Python 重写 + legacy workspace marker 退场。runtime/ 从 ~22K LOC 收至 37 文件 / 16,286 LOC
-  - Phase 2 未启动：installer 5 文件解耦 + runtime/ 全删 + legacy deep path 退场
+- [x] Runtime retirement cutover（`target-state-first` 已于 2026-05-22 拍板）：先解耦 installer 5 文件，再同步删除 `runtime/` 与 legacy deep path
+  - Phase 1 已完成（方案包 `20260522_runtime_slimming_kernel_extraction`）：contract 面清理 −6,400 LOC + engine 重构 + 34 退役测试块清理 −1,400 LOC + installer bundle 纯 Python 重写 + legacy workspace marker 退场
+  - Phase 2 已完成（P8 W2）：installer 5 文件解耦 + runtime/ 全删（46 文件 / ~15.6K LOC）+ legacy deep path 退场 + registry 退场 + state 2-file cutover
 - [ ] Plan intake checklist（后续新 plan 开包时手工回答以下问题）：
   1. 主命中哪个蓝图活跃分层？主线里程碑（P4d / P5 / P6）、证据型候选（Adoption Proof / Compliance Phase 2 / Convention 证明）、独立产品线（CrossReview）？若不命中以上任一，须显式标记为"流程工具项"或"延后项"，不强行归类
   2. 这次改动定义的是 contract acceptance boundary，还是 execution strategy / implementation wave？（前者进 blueprint，后者留方案包）
@@ -138,6 +138,7 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 - [ ] blueprint 索引摘要更细粒度自动刷新
 - [ ] history feature_key 聚合视图
 - [ ] Multi-host review contract 正式化（protocol.md §7 从 informative/draft 升级为 normative）
+- [ ] Protocol prose cleanup（post-P8 active wording normalization）：在不改变 §6/§7 normative contract 语义的前提下，清理 protocol.md 活跃说明段中的 pre-P8 术语残留。Scope: §1–§5 与 reader-facing prose 优先；§6/§7 仅做标题/注释/legacy 边界整理。Non-goal: 不重写 ActionProposal / Subject Identity / Verifier normative contract。Acceptance: active prose 不再把 state/ 说成 runtime 管理，不再把 deep_verified 作为当前能力层；旧 Validator/EAR/runtime 术语只出现在术语映射、legacy reference 或 retired 段落
 - [ ] 方案级收敛语义操作化（risk ladder + 验证深度规则 + 多审查者冲突解决）
 - [ ] 轻量化产品指标与 acceptance gate（首次上手步骤数、必需文件数、默认 workflow 必需 contract 数）
 - [ ] 产品层 ↔ 实现层 contract matrix 正式化（ownership / admission / lifecycle responsibilities）
@@ -145,8 +146,8 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 - [x] 测试套件健康基线（pass rate ≥ 99%；当前基线 619 tests / 619 passed = 100%，含 49 subtests；退役 124 测试后仍保持 100% pass rate）
 - [ ] Skill packaging / localization governance：skill 打包格式、多语言资产管理、bundle 内 i18n 分层规范
 - [ ] Stale stub 检测与错误可观测性：~~诊断信息~~（PR #49 已补 `_stale_stub_diagnostic`）；剩余：自动建议 `--target <host>` 重装或降级到已安装版本（layer 3 auto-fix，用户已明确延后为 opt-in）
-- [ ] Runtime output renderer scope audit：明确 `runtime/output.py` 是否仅保持 gate/handoff-summary 渲染，还是应承载 develop 结果表格渲染。若 yes，先定义 verification/review result 数据模型再实现；若 no，文档化 develop 最终输出归宿主/skill 所有。背景：develop 输出模板定义了验证摘要表格，但 renderer 从未消费这些模板（20260527_skill_writing_quality 设计盲区）
-- [ ] Post-runtime skeleton governance：runtime/ 目录最终形态治理（Phase 2 全删后遗留结构清理规范）
+- [x] Runtime output renderer scope audit：runtime/output.py 已随 P8 W2.10 退场，develop 输出归宿主/skill 所有
+- [x] Post-runtime skeleton governance：runtime/ 目录已在 P8 W2.10 物理删除，无需后续治理
 
 ## 已关闭 / 已吸收项
 

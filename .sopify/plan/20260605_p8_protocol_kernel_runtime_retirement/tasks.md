@@ -1,7 +1,7 @@
 ---
 title: P8 Protocol Kernel & Runtime Retirement — Tasks
 plan_id: 20260605_p8_protocol_kernel_runtime_retirement
-status: in_progress (W1 ✅ / W2 ✅ / Phase 0 ✅ / W3.1 ✅ / W3.2 ✅ / W3.3 ✅ / W3.4 ✅ / W3.5 ✅ / W3.6 next)
+status: in_progress (W1 ✅ / W2 ✅ / Phase 0 ✅ / W3.1 ✅ / W3.2 ✅ / W3.3 ✅ / W3.4 ✅ / W3.5 ✅ / W3.6 ✅ / Wave 3 Gate ✅ / Finalize next)
 created: 2026-06-05
 ---
 
@@ -471,7 +471,7 @@ created: 2026-06-05
 - [x] Verify: legacy state files 已清退（当前实例只剩 `current_handoff.json`，`active_plan.json` 待后续 managed plan 创建时生成）
 - [x] Verify: `rg "check.context.checkpoints\|plan.a.risk.adaptive\|runtime/models\|runtime_test_support" . -g '!**/__pycache__/**' -g '!**/history/**'` returns no active references（方案包文档内部历史描述除外）
 - [x] Verify: `pytest tests/ -q` → 180 passed / 0 failed
-- [ ] Note: 用户文档旧 state 结构图（`docs/how-sopify-works*.md`）待 W3.5 收口，不阻断 W3.1
+- [x] Note: 用户文档旧 state 结构图（`docs/how-sopify-works*.md`）已在 W3.5 收口
 - [x] Stop: Phase 0 gate must pass before W3.1 starts — **PASSED**
 
 ---
@@ -624,42 +624,47 @@ created: 2026-06-05
 
 ### W3.6 Blueprint Sync（全量叙事收口 — 11 项显式回写清单）
 
-- [ ] Depends: W3.5
-- [ ] Input: `.sopify/blueprint/README.md`, `design.md`, `tasks.md`, `protocol.md`
-- [ ] Output: ADR-013 scope clarification 从 interim disclaimer 升级为 final 语义边界
-- [ ] Output: ADR-017 EAR 标注从 interim [SUPERSEDED] 升级为 final [RETIRED]
-- [ ] Output: 底层哲学收敛链 produce→verify→authorize→settle → produce→verify→record evidence→settle
-- [ ] Output: 实操协议层显式声明 write admission + archive admission 两个准入点
-- [ ] Output: Protocol-first / Runtime-optional 三层定位更新（runtime 层标 legacy reference 或删除）
-- [ ] Output: 核心管线 ActionProposal / Validator 表述（Validator 从"唯一授权者"收窄为 protocol admission）
-- [ ] Output: Runtime 五层架构段落标 legacy reference 或删除
-- [ ] Output: Core State Files / Persistence Surface / Mainline Keep-list 更新为 2 文件模型
-- [ ] Output: 外部消费面 Keep-list 全面更新（删除 EAR/gate_receipt/runtime-only 面）
-- [ ] Output: 宿主能力治理段落重定义（能力梯度、契约消费矩阵、官方接入画像、增强组合）
-- [ ] Output: Runtime 退场路线标记完成 + LOC 数据更新
-- [ ] Output: blueprint design state model updated to 2 files
-- [ ] Output: registry retirement recorded
-- [ ] Output: blueprint product model updated to protocol kernel + default workflow + skills/host adapters, with protocol kernel as the only truth/evidence layer
-- [ ] Output: blueprint tasks runtime retirement Phase 2 marked done
-- [ ] Output: protocol.md §8 / state file index / EAR section 同步更新
-- [ ] Output: 清理 Plan A checkpoint governance legacy runtime scope（`scripts/check-context-checkpoints.py` / `tests/test_context_checkpoints.py` / `CONTRIBUTING.md` Plan A hook 描述 / `.githooks/pre-commit` release-managed dead patterns）
-- [ ] Verify: blueprint no longer calls runtime state files "运行期不可删"
-- [ ] Verify: blueprint does not imply default workflow or development skills were removed by runtime retirement
-- [ ] Verify: ADR-017 EAR 标注为 [RETIRED by P8]（非 [SUPERSEDED]）
-- [ ] Verify: 蓝图中 "Validator 是唯一授权者" 表述已收窄为 protocol admission / receipt validity / archive admission
-- [ ] Verify: 蓝图 Runtime 五层架构段落已标 legacy reference 或整体删除
-- [ ] Verify: active governance scripts no longer reference deleted `runtime/` paths except explicit historical/retirement notes
+- [x] Depends: W3.5
+- [x] Input: `.sopify/blueprint/README.md`, `design.md`, `tasks.md`, `protocol.md`
+- [x] Output: ADR-013 scope clarification 从 interim disclaimer 升级为 final 语义边界
+- [x] Output: ADR-017 EAR 标注从 interim [SUPERSEDED] 升级为 final [RETIRED]
+- [x] Output: 底层哲学收敛链 produce→verify→authorize→settle → produce→verify→record evidence→settle
+- [x] Output: 实操协议层显式声明 write admission + archive admission 两个准入点
+- [x] Output: Protocol-first 三层定位更新为 4 层（用户层/产品层/能力层/架构层），runtime 层已删除
+- [x] Output: 核心管线 Validator 表述收窄为 protocol admission（sopify_writer 结构级校验）
+- [x] Output: Runtime 五层架构段落标 [RETIRED by P8]
+- [x] Output: Core State Files / Persistence Surface / Mainline Keep-list 更新为 2 文件模型
+- [x] Output: 外部消费面 Keep-list 加 P8 Final disclaimer（EAR/gate_receipt/runtime-only 面标 RETIRED）
+- [x] Output: 宿主能力治理段落全量重定义（3 级梯度 + 宿主验证表 + 契约消费矩阵 + 增强组合）
+- [x] Output: Runtime 退场路线标记完成 + LOC 数据更新
+- [x] Output: blueprint design state model updated to 2 files
+- [x] Output: registry retirement recorded
+- [x] Output: blueprint product model updated to protocol kernel + default workflow + host/skill adapters
+- [x] Output: blueprint tasks runtime retirement Phase 2 marked done
+- [x] Output: protocol.md 加 P8 术语映射全局注释 + SUPERSEDED→RETIRED
+- [x] Output: 清理 Plan A checkpoint governance legacy runtime scope（check-context-checkpoints.py + test + pre-commit hook）
+- [x] Output: install.sh "runtime"→"protocol kernel"；.githooks/pre-commit runtime paths→sopify_writer/contracts
+- [x] Output: 产品定位表更新为用户层/产品层/能力层/架构层 4 层
+- [x] Output: Protocol prose cleanup 记为 blueprint/tasks.md 明确后续待办项
+- [x] Verify: blueprint no longer calls runtime state files "运行期不可删"
+- [x] Verify: blueprint does not imply default workflow or development skills were removed by runtime retirement
+- [x] Verify: ADR-017 EAR 标注为 [RETIRED by P8]（非 [SUPERSEDED]）
+- [x] Verify: 蓝图中 "Validator 是唯一授权者" 表述已收窄为 protocol admission / receipt validity / archive admission
+- [x] Verify: 蓝图 Runtime 五层架构段落已标 [RETIRED by P8]
+- [x] Verify: active governance scripts no longer reference deleted `runtime/` paths except explicit historical/retirement notes
 
 ### Wave 3 Gate
 
-- [ ] Depends: W3.1-W3.3, W3.5-W3.6
-- [ ] Verify: Qoder prompt 完成 request admission（consult / quick_fix 不自动接续 active plan）
-- [ ] Verify: Qoder 按 4 步读链恢复上下文（active_plan → plan.md → current_handoff → receipts）
-- [ ] Verify: Qoder 通过 sopify_writer（installed payload 路径）写 handoff + receipts
-- [ ] Verify: Qoder 新 session 仅通过 4 步读链恢复并继续写新 receipt（跨 session proof）
-- [ ] Verify: Qoder 能继续 Sopify 默认工作流（analyze / design / develop / finalize）
-- [ ] Verify: 整条链路不依赖 runtime 进程
-- [ ] Verify: installed payload 路径验证通过（不依赖 repo-local sys.path hack）
+- [x] Depends: W3.1-W3.3, W3.5-W3.6
+- [x] Verify: Qoder prompt 完成 request admission（consult / quick_fix 不自动接续 active plan）— W3.1 prompt asset 已验证
+- [x] Verify: Qoder 按 4 步读链恢复上下文（active_plan → plan.md → current_handoff → receipts）— W3.3 transcript Step 3a-3d
+- [x] Verify: Qoder 通过 sopify_writer（installed payload 路径）写 handoff + receipts — W3.2+W3.3 transcript
+- [x] Verify: Qoder 新 session 仅通过 4 步读链恢复并继续写新 receipt（跨 session proof）— W3.3 transcript Step 3e
+- [x] Verify: Qoder 能继续 Sopify 默认工作流（analyze / design / develop / finalize）— W3.1 capability declaration
+- [x] Verify: 整条链路不依赖 runtime 进程 — W3.2 sys.path isolation proof
+- [x] Verify: installed payload 路径验证通过（不依赖 repo-local sys.path hack）— W3.2 proof
+- [x] Verify: 181 passed / 0 failed / protocol smoke 3/3 PASS
+- [x] Stop: Wave 3 gate must pass before Finalize — **PASSED**
 
 ---
 
