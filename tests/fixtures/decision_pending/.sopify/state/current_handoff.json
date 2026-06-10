@@ -1,0 +1,12 @@
+{
+  "schema_version": "1",
+  "plan_id": "test_decision_001",
+  "required_host_action": "confirm_decision",
+  "artifacts": {
+    "decision_options": [
+      {"option_id": "A", "label": "Use PostgreSQL", "tradeoff": "Mature, well-supported"},
+      {"option_id": "B", "label": "Use SQLite", "tradeoff": "Simpler setup, limited concurrency"}
+    ]
+  },
+  "notes": ["Decision pending: host must select an option before continuing"]
+}

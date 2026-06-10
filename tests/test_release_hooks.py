@@ -135,7 +135,6 @@ def _init_release_hook_fixture(root: Path, *, inject_sync_failure: bool = False)
         "scripts/release-sync.sh",
         "scripts/release-draft-changelog.py",
         "scripts/release-preflight.sh",
-        "scripts/check-context-checkpoints.py",
         "scripts/sync-skills.sh",
         "scripts/check-version-consistency.sh",
         "scripts/render-host-skills.py",
@@ -166,8 +165,8 @@ def _init_release_hook_fixture(root: Path, *, inject_sync_failure: bool = False)
     _write(root / "skills/zh/skills/sopify/SKILL.md", "# skill\n")
     _write(root / "skills/en/skills/sopify/SKILL.md", "# skill\n")
 
-    _write(root / "runtime/gate.py", "print('baseline')\n")
-    _write(root / "tests/test_runtime_gate.py", "print('baseline test')\n")
+    _write(root / "installer/payload.py", "print('baseline')\n")
+    _write(root / "sopify_contracts/__init__.py", "print('baseline test')\n")
 
     _run_git(root, "init")
     _run_git(root, "config", "user.name", "Test User", capture_output=False, text=False)
@@ -175,9 +174,9 @@ def _init_release_hook_fixture(root: Path, *, inject_sync_failure: bool = False)
     _run_git(root, "add", ".", capture_output=False, text=False)
     _run_git(root, "commit", "-m", "baseline")
 
-    _write(root / "runtime/gate.py", "print('changed')\n")
-    _write(root / "tests/test_runtime_gate.py", "print('changed test')\n")
-    _run_git(root, "add", "runtime/gate.py", "tests/test_runtime_gate.py", capture_output=False, text=False)
+    _write(root / "installer/payload.py", "print('changed')\n")
+    _write(root / "sopify_contracts/__init__.py", "print('changed test')\n")
+    _run_git(root, "add", "installer/payload.py", "sopify_contracts/__init__.py", capture_output=False, text=False)
 
 
 class ReleaseHookTests(unittest.TestCase):
@@ -235,60 +234,6 @@ class ReleaseHookTests(unittest.TestCase):
             self.assertEqual(message.count("Co-authored-by: Claude <claude@anthropic.com>"), 1)
             self.assertEqual(message.count("Co-authored-by: ChatGPT <chatgpt@openai.com>"), 1)
 
-    def test_commit_msg_requires_context_checkpoint_for_plan_a_scoped_changes(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            _init_release_hook_fixture(root)
-
-            _write(root / "runtime/state.py", "print('scope change')\n")
-            _run_git(root, "add", "runtime/state.py", capture_output=False, text=False)
-
-            message_file = root / "COMMIT_EDITMSG"
-            _write(message_file, "feat: tighten scope guard\n")
-
-            completed = subprocess.run(
-                ["bash", str(root / ".githooks" / "commit-msg"), str(message_file)],
-                cwd=root,
-                capture_output=True,
-                text=True,
-                check=False,
-                env=_git_subprocess_env(),
-            )
-
-            self.assertNotEqual(completed.returncode, 0)
-            self.assertIn("Context-Checkpoint", completed.stderr)
-
-    def test_commit_msg_accepts_context_checkpoint_for_plan_a_scoped_changes(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            _init_release_hook_fixture(root)
-
-            _write(root / "runtime/deterministic_guard.py", "print('scope change')\n")
-            _run_git(root, "add", "runtime/deterministic_guard.py", capture_output=False, text=False)
-
-            message_file = root / "COMMIT_EDITMSG"
-            _write(
-                message_file,
-                textwrap.dedent(
-                    """\
-                    feat: tighten scope guard
-
-                    Context-Checkpoint: C
-                    """
-                ),
-            )
-
-            completed = subprocess.run(
-                ["bash", str(root / ".githooks" / "commit-msg"), str(message_file)],
-                cwd=root,
-                capture_output=True,
-                text=True,
-                check=False,
-                env=_git_subprocess_env(),
-            )
-
-            self.assertEqual(completed.returncode, 0, msg=completed.stderr)
-
     def test_release_draft_changelog_populates_empty_unreleased(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -302,11 +247,11 @@ class ReleaseHookTests(unittest.TestCase):
                     "--root",
                     str(root),
                     "--file",
-                    "runtime/gate.py",
+                    "installer/payload.py",
                     "--file",
                     "scripts/release-sync.sh",
                     "--file",
-                    "tests/test_runtime_gate.py",
+                    "sopify_contracts/__init__.py",
                 ],
                 capture_output=True,
                 text=True,
@@ -319,9 +264,9 @@ class ReleaseHookTests(unittest.TestCase):
             self.assertIn("### Summary", unreleased)
             self.assertIn("Changes across:", unreleased)
             self.assertIn("### Changed", unreleased)
-            self.assertIn("**Runtime**", unreleased)
             self.assertIn("**Scripts**", unreleased)
-            self.assertIn("**Tests**", unreleased)
+            self.assertNotIn("**Runtime**", unreleased)
+            self.assertNotIn("**Tests**", unreleased)
             self.assertNotIn("<details>", unreleased)
 
     def test_release_sync_auto_drafts_unreleased_before_version_bump(self) -> None:
@@ -344,8 +289,8 @@ class ReleaseHookTests(unittest.TestCase):
             self.assertIn("## [2026-03-21.010203] - 2026-03-21", changelog)
             self.assertIn("### Summary", release_body)
             self.assertIn("### Changed", release_body)
-            self.assertIn("**Runtime**", release_body)
-            self.assertIn("**Tests**", release_body)
+            self.assertIn("**Changed**", release_body)
+            self.assertNotIn("**Runtime**", release_body)
             self.assertNotIn("<details>", release_body)
             self.assertIn("badge/version-2026--03--21.010203-orange.svg", (root / "README.md").read_text(encoding="utf-8"))
             self.assertIn("<!-- SOPIFY_VERSION: 2026-03-21.010203 -->", (root / "skills/zh/header.md.template").read_text(encoding="utf-8"))
@@ -366,7 +311,7 @@ class ReleaseHookTests(unittest.TestCase):
                     "--file",
                     "README.md",
                     "--file",
-                    "tests/test_runtime_gate.py",
+                    "sopify_contracts/__init__.py",
                 ],
                 capture_output=True,
                 text=True,
@@ -378,13 +323,13 @@ class ReleaseHookTests(unittest.TestCase):
             unreleased = _unreleased_body(text)
             self.assertIn("### Summary", unreleased)
             self.assertIn("Docs", unreleased)
-            self.assertIn("Tests", unreleased)
+            self.assertIn("Changed", unreleased)
             self.assertNotIn("**Runtime**", unreleased)
             self.assertNotIn("**Scripts**", unreleased)
             self.assertNotIn("**Skills**", unreleased)
 
     def test_release_draft_ignores_sopify_kb_paths(self) -> None:
-        """Plan/history package paths are included for attribution; non-package .sopify-skills/ paths are excluded."""
+        """Plan/history package paths are included for attribution; non-package .sopify/ paths are excluded."""
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             changelog = root / "CHANGELOG.md"
@@ -397,11 +342,11 @@ class ReleaseHookTests(unittest.TestCase):
                     "--root",
                     str(root),
                     "--file",
-                    ".sopify-skills/history/index.md",
+                    ".sopify/history/index.md",
                     "--file",
-                    ".sopify-skills/plan/20260324_task/tasks.md",
+                    ".sopify/plan/20260324_task/tasks.md",
                     "--file",
-                    "runtime/gate.py",
+                    "installer/payload.py",
                 ],
                 capture_output=True,
                 text=True,
@@ -412,14 +357,14 @@ class ReleaseHookTests(unittest.TestCase):
             unreleased = _unreleased_body(changelog.read_text(encoding="utf-8"))
             # Plan package path is now included for attribution
             self.assertIn("`20260324_task`", unreleased)
-            self.assertIn("**Runtime**", unreleased)
-            # Non-package .sopify-skills/ paths still excluded
+            self.assertIn("**Changed**", unreleased)
+            # Non-package .sopify/ paths still excluded
             self.assertNotIn("history/index.md", unreleased)
             # Blueprint internals still excluded
-            self.assertNotIn(".sopify-skills/blueprint/", unreleased)
+            self.assertNotIn(".sopify/blueprint/", unreleased)
 
     def test_release_draft_skips_when_only_sopify_kb_paths_changed(self) -> None:
-        """Only non-package .sopify-skills/ paths → no eligible files."""
+        """Only non-package .sopify/ paths → no eligible files."""
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             changelog = root / "CHANGELOG.md"
@@ -433,11 +378,11 @@ class ReleaseHookTests(unittest.TestCase):
                     "--root",
                     str(root),
                     "--file",
-                    ".sopify-skills/history/index.md",
+                    ".sopify/history/index.md",
                     "--file",
-                    ".sopify-skills/blueprint/design.md",
+                    ".sopify/blueprint/design.md",
                     "--file",
-                    ".sopify-skills/state/current_run.json",
+                    ".sopify/state/current_handoff.json",
                 ],
                 capture_output=True,
                 text=True,

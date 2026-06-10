@@ -23,8 +23,7 @@ _CHECK_LABELS = {
     "payload_bundle_resolution": "payload bundle",
     "workspace_bundle_manifest": "workspace bundle",
     "workspace_ingress_proof": "workspace ingress proof",
-    "workspace_handoff_first": "handoff-first runtime",
-    "workspace_preferences_preload": "preferences preload",
+    "workspace_handoff_first": "handoff-first protocol",
     "bundle_smoke": "smoke",
 }
 
@@ -732,6 +731,7 @@ def _host_display_name(host_id: str) -> str:
         "codex": "Codex",
         "claude": "Claude",
         "copilot": "Copilot",
+        "qoder": "Qoder",
     }.get(host_id, host_id)
 
 

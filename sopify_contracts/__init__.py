@@ -1,7 +1,7 @@
 """Shared contract types for the Sopify runtime ecosystem.
 
 Migrated from runtime/_models/ as a top-level shared package.
-All runtime and canonical_writer modules import types from here.
+All runtime and sopify_writer modules import types from here.
 """
 
 from .artifacts import KbArtifact, PlanArtifact

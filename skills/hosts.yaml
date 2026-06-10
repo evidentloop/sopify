@@ -24,3 +24,10 @@ hosts:
     destination_dir: ".github"
     instruction_surface: copilot_instructions_md
     install_enabled: true
+  qoder:
+    host_id: qoder
+    config_dir: "~/.qoder"
+    header_filename: AGENTS.md
+    destination_dir: ".qoder"
+    instruction_surface: header_embedded
+    install_enabled: true

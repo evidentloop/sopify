@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sopify.dev/schemas/plan_receipt.schema.json",
+  "title": "Plan Receipt",
+  "description": "Process audit asset stored in plan/<id>/receipts/. Naming convention: exec_NNN.json, verify_NNN.json, final.json (NNN = zero-padded 3-digit).",
+  "type": "object",
+  "required": ["verdict", "evidence", "provenance", "timestamp"],
+  "additionalProperties": false,
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "description": "The verdict of this receipt (e.g. 'pass', 'fail', 'finalized')",
+      "minLength": 1
+    },
+    "evidence": {
+      "type": "object",
+      "description": "Machine-readable evidence supporting the verdict",
+      "additionalProperties": true
+    },
+    "provenance": {
+      "type": "object",
+      "description": "Origin information: which host/session/plan produced this receipt",
+      "required": ["plan_id"],
+      "additionalProperties": true,
+      "properties": {
+        "plan_id": {
+          "type": "string",
+          "description": "The plan this receipt belongs to",
+          "minLength": 1
+        },
+        "session_id": {
+          "type": "string",
+          "description": "Audit-only: the session that produced this receipt. Not used for continuation routing."
+        },
+        "host": {
+          "type": "string",
+          "description": "The host that produced this receipt"
+        },
+        "receipt_id": {
+          "type": "string",
+          "description": "Logical identifier for this receipt within the plan scope. Does not include .json extension. Matches the filename stem (e.g. exec_001, verify_002, final).",
+          "pattern": "^(exec_\\d{3}|verify_\\d{3}|final)$"
+        }
+      }
+    },
+    "timestamp": {
+      "type": "string",
+      "description": "ISO 8601 UTC timestamp when this receipt was generated",
+      "format": "date-time"
+    }
+  }
+}

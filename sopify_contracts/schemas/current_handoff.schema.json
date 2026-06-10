@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sopify.dev/schemas/current_handoff.schema.json",
+  "title": "Current Handoff",
+  "description": "Live recovery state written at the end of each turn. Host reads this as a recovery hint (not as a second source of truth). Post-P8 schema: runtime provenance fields (route_name, run_id, handoff_kind, resolution_id) removed; if needed for audit, place under observability.provenance.",
+  "type": "object",
+  "required": ["schema_version", "plan_id", "required_host_action"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Schema version of this handoff document"
+    },
+    "plan_id": {
+      "type": "string",
+      "description": "The active plan_id this handoff is associated with. Post-P8 continuation primary key. Must not be null — if no active plan exists, this file should not exist.",
+      "minLength": 1
+    },
+    "plan_path": {
+      "type": ["string", "null"],
+      "description": "Workspace-relative path to the plan package directory"
+    },
+    "required_host_action": {
+      "type": "string",
+      "description": "Canonical action the host must take. Replaces the old pending_clarification / pending_decision files.",
+      "enum": [
+        "continue_host_develop",
+        "answer_questions",
+        "confirm_decision",
+        "continue_host_consult",
+        "resolve_state_conflict"
+      ]
+    },
+    "artifacts": {
+      "type": "object",
+      "description": "Arbitrary artifacts attached to this handoff (e.g. questions, options, submission state)",
+      "additionalProperties": true
+    },
+    "notes": {
+      "type": "array",
+      "description": "Human-readable notes for recovery context",
+      "items": { "type": "string" }
+    },
+    "observability": {
+      "type": "object",
+      "description": "Observability metadata. May include provenance sub-object for audit tracing (session_id, host, runtime legacy fields).",
+      "additionalProperties": true
+    }
+  }
+}

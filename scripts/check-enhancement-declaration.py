@@ -23,7 +23,7 @@ from installer.models import EnhancementGroup, SupportTier
 ALL_GROUPS = frozenset(EnhancementGroup)
 
 TIER_EXPECTATIONS: dict[SupportTier, frozenset[EnhancementGroup]] = {
-    SupportTier.DEEP_VERIFIED: ALL_GROUPS,
+    SupportTier.PROTOCOL_VERIFIED: ALL_GROUPS,
     SupportTier.BASELINE_SUPPORTED: frozenset({EnhancementGroup.CONTINUATION}),
     SupportTier.EXPERIMENTAL: frozenset(),
     SupportTier.DOCUMENTED_ONLY: frozenset(),
@@ -40,9 +40,9 @@ def check_host(host_id: str, tier: SupportTier, declared: frozenset[EnhancementG
         labels = ", ".join(sorted(g.value for g in missing))
         warnings.append(f"[{host_id}] tier={tier.value} expects [{labels}] but not declared")
 
-    if tier == SupportTier.DEEP_VERIFIED and declared != ALL_GROUPS:
+    if tier == SupportTier.PROTOCOL_VERIFIED and declared != ALL_GROUPS:
         labels = ", ".join(sorted(g.value for g in ALL_GROUPS - declared))
-        warnings.append(f"[{host_id}] deep_verified should declare all groups; missing: [{labels}]")
+        warnings.append(f"[{host_id}] protocol_verified should declare all groups; missing: [{labels}]")
 
     return warnings
 

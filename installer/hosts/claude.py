@@ -15,14 +15,12 @@ CLAUDE_ADAPTER = HostAdapter(
 
 CLAUDE_CAPABILITY = HostCapability(
     host_id="claude",
-    support_tier=SupportTier.DEEP_VERIFIED,
+    support_tier=SupportTier.PROTOCOL_VERIFIED,
     install_enabled=True,
     declared_features=(
         FeatureId.PROMPT_INSTALL,
         FeatureId.PAYLOAD_INSTALL,
         FeatureId.WORKSPACE_BOOTSTRAP,
-        FeatureId.RUNTIME_GATE,
-        FeatureId.PREFERENCES_PRELOAD,
         FeatureId.HANDOFF_FIRST,
         FeatureId.HOST_BRIDGE,
     ),
@@ -30,11 +28,8 @@ CLAUDE_CAPABILITY = HostCapability(
         FeatureId.PROMPT_INSTALL,
         FeatureId.PAYLOAD_INSTALL,
         FeatureId.WORKSPACE_BOOTSTRAP,
-        FeatureId.RUNTIME_GATE,
-        FeatureId.PREFERENCES_PRELOAD,
         FeatureId.HANDOFF_FIRST,
         FeatureId.HOST_BRIDGE,
-        FeatureId.SMOKE_VERIFIED,
     ),
     declared_enhancements=(
         EnhancementGroup.CONTINUATION,
@@ -46,12 +41,9 @@ CLAUDE_CAPABILITY = HostCapability(
         "host_prompt_present",
         "payload_present",
         "workspace_bundle_manifest",
-        "workspace_ingress_proof",
         "workspace_handoff_first",
-        "workspace_preferences_preload",
-        "bundle_smoke",
     ),
-    smoke_targets=("bundle_runtime_smoke",),
+    smoke_targets=(),
 )
 
 CLAUDE_HOST = HostRegistration(adapter=CLAUDE_ADAPTER, capability=CLAUDE_CAPABILITY)

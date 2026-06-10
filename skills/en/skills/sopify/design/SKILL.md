@@ -44,4 +44,4 @@ The script returns JSON with the suggested level and explicit reasons.
 ## Boundaries
 
 - This skill does not execute code changes directly; hand off to `develop`.
-- This skill does not replace runtime routing; it defines the plan structure and task contract only.
+- This skill does not handle routing or protocol state writes; it defines the plan structure and task contract only.

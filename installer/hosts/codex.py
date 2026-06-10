@@ -15,14 +15,12 @@ CODEX_ADAPTER = HostAdapter(
 
 CODEX_CAPABILITY = HostCapability(
     host_id="codex",
-    support_tier=SupportTier.DEEP_VERIFIED,
+    support_tier=SupportTier.PROTOCOL_VERIFIED,
     install_enabled=True,
     declared_features=(
         FeatureId.PROMPT_INSTALL,
         FeatureId.PAYLOAD_INSTALL,
         FeatureId.WORKSPACE_BOOTSTRAP,
-        FeatureId.RUNTIME_GATE,
-        FeatureId.PREFERENCES_PRELOAD,
         FeatureId.HANDOFF_FIRST,
         FeatureId.HOST_BRIDGE,
     ),
@@ -30,11 +28,8 @@ CODEX_CAPABILITY = HostCapability(
         FeatureId.PROMPT_INSTALL,
         FeatureId.PAYLOAD_INSTALL,
         FeatureId.WORKSPACE_BOOTSTRAP,
-        FeatureId.RUNTIME_GATE,
-        FeatureId.PREFERENCES_PRELOAD,
         FeatureId.HANDOFF_FIRST,
         FeatureId.HOST_BRIDGE,
-        FeatureId.SMOKE_VERIFIED,
     ),
     declared_enhancements=(
         EnhancementGroup.CONTINUATION,
@@ -46,12 +41,9 @@ CODEX_CAPABILITY = HostCapability(
         "host_prompt_present",
         "payload_present",
         "workspace_bundle_manifest",
-        "workspace_ingress_proof",
         "workspace_handoff_first",
-        "workspace_preferences_preload",
-        "bundle_smoke",
     ),
-    smoke_targets=("bundle_runtime_smoke",),
+    smoke_targets=(),
 )
 
 CODEX_HOST = HostRegistration(adapter=CODEX_ADAPTER, capability=CODEX_CAPABILITY)

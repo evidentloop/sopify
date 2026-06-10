@@ -73,7 +73,7 @@ Diagnostics:
 **Codex / Claude** also create a workspace marker:
 
 ```bash
-cat .sopify-skills/sopify.json
+cat .sopify/sopify.json
 ```
 
 ```json
@@ -103,10 +103,10 @@ Once Sopify is active in your project:
 2. **Pause** — Sopify stops when facts are missing or a decision needs you
 3. **Resume** — work picks up from project state, even on a different host
 
-Project knowledge accumulates in `.sopify-skills/`:
+Project knowledge accumulates in `.sopify/`:
 
 ```
-.sopify-skills/
+.sopify/
 ├── sopify.json       # workspace marker (Codex/Claude only)
 ├── project.md        # technical conventions (created on first use)
 ├── blueprint/        # design baseline (created when needed)
@@ -120,7 +120,7 @@ Project knowledge accumulates in `.sopify-skills/`:
 To remove Sopify from your project:
 
 ```bash
-rm -rf .sopify-skills/ .sopify-runtime/
+rm -rf .sopify/ .sopify-runtime/
 rm -f .github/copilot-instructions.md
 # Then remove the sopify-managed block from .gitignore
 ```

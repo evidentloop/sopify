@@ -1,0 +1,6 @@
+{
+  "verdict": "pass",
+  "evidence": {"tests_run": 1, "tests_passed": 1},
+  "provenance": {"plan_id": "test_clarification_001", "host": "test"},
+  "timestamp": "2026-06-08T12:00:00Z"
+}

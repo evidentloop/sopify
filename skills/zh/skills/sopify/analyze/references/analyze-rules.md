@@ -19,12 +19,12 @@ Phase A (步骤 1-4) -> 检查评分 >= require_score?
 ### 步骤 1：检查知识库状态
 
 - 判定条件：存在项目代码，且需求不是“新项目初始化”。
-- 执行方式：检查 `.sopify-skills/` 是否存在。
+- 执行方式：检查 `.sopify/` 是否存在。
 - 异常标记：若不存在，标记需初始化知识库。
 
 ### 步骤 2：获取项目上下文
 
-- 优先读取 `.sopify-skills/user/preferences.md` 与知识库文件。
+- 优先读取 `.sopify/user/preferences.md` 与知识库文件。
 - 信息不足时再扫描代码。
 - 详细知识库策略以 `kb` skill 为准。
 

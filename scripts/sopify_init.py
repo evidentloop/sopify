@@ -2,7 +2,7 @@
 """Initialize a Sopify workspace in an external repository.
 
 Creates the minimal activation markers:
-  - .sopify-skills/sopify.json  (workspace marker)
+  - .sopify/sopify.json  (workspace marker)
   - .gitignore managed block    (ignore transient state)
   - Copilot instruction files   (if resources available)
 
@@ -24,9 +24,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-_SOPIFY_SKILLS_DIR = ".sopify-skills"
+_SOPIFY_DIR = ".sopify"
 _SOPIFY_JSON_FILENAME = "sopify.json"
-_WORKSPACE_CAPABILITIES = ["runtime_gate"]
+_WORKSPACE_CAPABILITIES: list[str] = []
 
 _LOGO_LINES = [
     "███████╗ █████╗ ██████╗ ██╗███████╗██╗   ██╗",
@@ -42,8 +42,7 @@ _LOGO_RESET = "\033[0m"
 _MANAGED_IGNORE_BEGIN = "# BEGIN sopify-managed"
 _MANAGED_IGNORE_END = "# END sopify-managed"
 _MANAGED_IGNORE_ENTRIES = (
-    ".sopify-skills/state/",
-    ".sopify-skills/plan/_registry.yaml",
+    ".sopify/state/",
 )
 
 _INSTRUCTION_BLOCK_BEGIN = "<!-- BEGIN SOPIFY MANAGED BLOCK -->"
@@ -114,8 +113,8 @@ def _ensure_trailing_newline(content: str) -> str:
 
 
 def _write_sopify_json(workspace_root: Path, *, source_version: str | None) -> bool:
-    """Create or update .sopify-skills/sopify.json, preserving existing fields."""
-    sopify_json_dir = workspace_root / _SOPIFY_SKILLS_DIR
+    """Create or update .sopify/sopify.json, preserving existing fields."""
+    sopify_json_dir = workspace_root / _SOPIFY_DIR
     sopify_json_path = sopify_json_dir / _SOPIFY_JSON_FILENAME
 
     # Preserve existing fields if sopify.json already exists
@@ -254,7 +253,7 @@ def init_workspace(
         else:
             results.append("workspace instructions unchanged")
 
-    sopify_json_path = workspace / _SOPIFY_SKILLS_DIR / _SOPIFY_JSON_FILENAME
+    sopify_json_path = workspace / _SOPIFY_DIR / _SOPIFY_JSON_FILENAME
     return {
         "action": "initialized",
         "workspace": str(workspace),
@@ -299,7 +298,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command")
     init_parser = subparsers.add_parser(
         "init",
-        help="Create workspace activation markers (.sopify-skills/sopify.json + .gitignore).",
+        help="Create workspace activation markers (.sopify/sopify.json + .gitignore).",
     )
     init_parser.add_argument(
         "--workspace", "-w",

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 from typing import Any, Mapping
@@ -21,7 +21,6 @@ from installer.models import HostCapability, InstallError
 from installer.outcome_contract import annotate_outcome_payload, diagnostic_identifiers_from_evidence, render_outcome_summary
 from installer.validate import (
     resolve_payload_bundle_root,
-    run_bundle_smoke_check,
     validate_bundle_install,
     validate_host_install,
     validate_payload_install,
@@ -29,9 +28,6 @@ from installer.validate import (
     validate_workspace_bundle_manifest,
     validate_workspace_stub_manifest,
 )
-from runtime.config import ConfigError, load_runtime_config
-from runtime.context_snapshot import resolve_context_snapshot
-from canonical_writer import StateStore
 
 STATUS_SCHEMA_VERSION = "2"
 DOCTOR_SCHEMA_VERSION = "1"
@@ -45,45 +41,15 @@ STATUS_NOT_REQUESTED = "not_requested"
 STATUS_NOT_APPLICABLE = "not_applicable"
 REASON_OK = "ok"
 REASON_WORKSPACE_NOT_REQUESTED = "WORKSPACE_NOT_REQUESTED"
-REASON_RUNTIME_STATE_CONFLICT = "RUNTIME_STATE_CONFLICT"
-REASON_QUARANTINED_RUNTIME_STATE = "QUARANTINED_RUNTIME_STATE"
-REASON_RUNTIME_INSPECTION_UNAVAILABLE = "RUNTIME_INSPECTION_UNAVAILABLE"
 REASON_PAYLOAD_BUNDLE_READY = "PAYLOAD_BUNDLE_READY"
 REASON_GLOBAL_BUNDLE_MISSING = "GLOBAL_BUNDLE_MISSING"
 REASON_GLOBAL_BUNDLE_INCOMPATIBLE = "GLOBAL_BUNDLE_INCOMPATIBLE"
 REASON_GLOBAL_INDEX_CORRUPTED = "GLOBAL_INDEX_CORRUPTED"
-REASON_INGRESS_PROOF_GATE_ENTER_OBSERVED = "INGRESS_PROOF_GATE_ENTER_OBSERVED"
-REASON_INGRESS_PROOF_DIRECT_ENTRY_BLOCK_OBSERVED = "INGRESS_PROOF_DIRECT_ENTRY_BLOCK_OBSERVED"
-REASON_INGRESS_PROOF_MISSING = "INGRESS_PROOF_MISSING"
-REASON_INGRESS_PROOF_STALE = "INGRESS_PROOF_STALE"
-REASON_INGRESS_PROOF_UNREADABLE = "INGRESS_PROOF_UNREADABLE"
 SOURCE_KIND_GLOBAL_ACTIVE = "global_active"
 SOURCE_KIND_LEGACY_LAYOUT = "legacy_layout"
 SOURCE_KIND_UNRESOLVED = "unresolved"
 STATUS_READY_STATES = {"READY", "NEWER_THAN_GLOBAL"}
 STATUS_WARN_STATES = {"MISSING", "OUTDATED_COMPATIBLE"}
-CURRENT_GATE_RECEIPT_FILENAME = "current_gate_receipt.json"
-INGRESS_PROOF_STALE_AFTER = timedelta(hours=24)
-_STATE_CONFLICT_EXPLANATIONS = {
-    "multiple_pending_checkpoints": "Multiple review checkpoints are simultaneously active and need manual cleanup.",
-    "pending_checkpoint_handoff_mismatch": "The active handoff points to one pending checkpoint type, but the persisted state contains another.",
-    "run_stage_handoff_mismatch": "The persisted run stage and handoff action disagree about the current checkpoint.",
-    "resolution_id_mismatch": "current_run and current_handoff were written by different resolution batches.",
-    "resolution_id_mixed_presence": "current_run and current_handoff disagree on whether resolution tracking is present.",
-    "proposal_missing_for_pending_handoff": "The handoff expects a plan proposal checkpoint, but no valid proposal state was found.",
-    "clarification_missing_for_pending_handoff": "The handoff expects a clarification checkpoint, but no valid clarification state was found.",
-    "decision_missing_for_pending_handoff": "The handoff expects a decision checkpoint, but no valid decision state was found.",
-}
-
-_STAGE_LABELS: dict[str, str] = {
-    "plan_generated": "plan ready",
-    "ready_for_execution": "awaiting execution",
-    "executing": "executing",
-    "completed": "completed",
-    "clarification_pending": "awaiting info",
-    "decision_pending": "awaiting decision",
-    "develop_pending": "awaiting host development",
-}
 
 _CHECKPOINT_LABELS: dict[str, str] = {
     "answer_questions": "awaiting supplemental info",
@@ -174,9 +140,7 @@ class HostInspection:
     payload: InspectionCheck
     payload_bundle: PayloadBundleResolution
     workspace_bundle: InspectionCheck
-    ingress_proof: InspectionCheck
     handoff_first: InspectionCheck
-    preferences_preload: InspectionCheck
     smoke: InspectionCheck
 
     @property
@@ -198,23 +162,19 @@ class HostInspection:
                     "installed": STATUS_YES if installed else STATUS_NO,
                     "configured": STATUS_YES if installed else STATUS_NO,
                     "workspace_bundle_healthy": STATUS_NOT_APPLICABLE,
-                    "workspace_ingress_proof": STATUS_NOT_APPLICABLE,
                 },
             }
         configured = self.payload.status == CHECK_PASS
         workspace_bundle_healthy = _check_state_value(self.workspace_bundle)
-        workspace_ingress_proof = _check_state_value(self.ingress_proof)
         return {
             **self.capability.to_dict(),
             "state": {
                 "installed": STATUS_YES if self.host_prompt.status == CHECK_PASS else STATUS_NO,
                 "configured": STATUS_YES if configured else STATUS_NO,
                 "workspace_bundle_healthy": workspace_bundle_healthy,
-                "workspace_ingress_proof": workspace_ingress_proof,
             },
             "payload_bundle": self.payload_bundle.to_status_dict(),
             "workspace_bundle": self.workspace_bundle.to_dict(),
-            "workspace_ingress_proof": self.ingress_proof.to_dict(),
         }
 
     def doctor_checks(self) -> tuple[InspectionCheck, ...]:
@@ -225,10 +185,7 @@ class HostInspection:
             self.payload,
             self.payload_bundle.to_check(host_id=self.capability.host_id),
             self.workspace_bundle,
-            self.ingress_proof,
             self.handoff_first,
-            self.preferences_preload,
-            self.smoke,
         )
 
 
@@ -293,22 +250,9 @@ def inspect_host(
                 reason_code=REASON_OK,
                 recommendation=f"Install Sopify for {capability.host_id} before checking workspace bundle health.",
             ),
-            ingress_proof=InspectionCheck(
-                host_id=capability.host_id,
-                check_id="workspace_ingress_proof",
-                status=CHECK_SKIP,
-                reason_code=REASON_OK,
-                recommendation=f"Install Sopify for {capability.host_id} before checking workspace ingress proof health.",
-            ),
             handoff_first=InspectionCheck(
                 host_id=capability.host_id,
                 check_id="workspace_handoff_first",
-                status=CHECK_SKIP,
-                reason_code=REASON_OK,
-            ),
-            preferences_preload=InspectionCheck(
-                host_id=capability.host_id,
-                check_id="workspace_preferences_preload",
                 status=CHECK_SKIP,
                 reason_code=REASON_OK,
             ),
@@ -337,20 +281,6 @@ def inspect_host(
             reason_code=REASON_WORKSPACE_NOT_REQUESTED,
             recommendation="Trigger Sopify in a project workspace to bootstrap on demand.",
         )
-        ingress_proof = InspectionCheck(
-            host_id=capability.host_id,
-            check_id="workspace_ingress_proof",
-            status=CHECK_SKIP,
-            reason_code=REASON_WORKSPACE_NOT_REQUESTED,
-            recommendation="Trigger Sopify in a project workspace to record workspace ingress proof.",
-        )
-        preferences_preload = InspectionCheck(
-            host_id=capability.host_id,
-            check_id="workspace_preferences_preload",
-            status=CHECK_SKIP,
-            reason_code=REASON_WORKSPACE_NOT_REQUESTED,
-            recommendation="Trigger Sopify in a project workspace to bootstrap on demand.",
-        )
         smoke = _inspect_smoke(
             adapter=adapter,
             capability=capability,
@@ -363,19 +293,13 @@ def inspect_host(
             payload=payload,
             payload_bundle=payload_bundle,
             workspace_bundle=workspace_bundle,
-            ingress_proof=ingress_proof,
             handoff_first=handoff_first,
-            preferences_preload=preferences_preload,
             smoke=smoke,
         )
     workspace_bundle = _inspect_workspace_bundle(
         adapter=adapter,
         capability=capability,
         home_root=home_root,
-        workspace_root=workspace_root,
-    )
-    ingress_proof = _inspect_workspace_ingress_proof(
-        capability=capability,
         workspace_root=workspace_root,
     )
     capability_manifest = _resolve_workspace_capability_manifest(
@@ -390,15 +314,7 @@ def inspect_host(
         capability_manifest=capability_manifest,
         check_id="workspace_handoff_first",
         manifest_key="writes_handoff_file",
-        recommendation="Refresh the workspace bundle so handoff-first runtime contracts stay available.",
-    )
-    preferences_preload = _inspect_workspace_capability(
-        capability=capability,
-        workspace_bundle=workspace_bundle,
-        capability_manifest=capability_manifest,
-        check_id="workspace_preferences_preload",
-        manifest_key="preferences_preload",
-        recommendation="Refresh the workspace bundle so preferences preload stays available.",
+        recommendation="Refresh the workspace bundle so handoff-first protocol contracts stay available.",
     )
     smoke = _inspect_smoke(
         adapter=adapter,
@@ -412,42 +328,32 @@ def inspect_host(
         payload=payload,
         payload_bundle=payload_bundle,
         workspace_bundle=workspace_bundle,
-        ingress_proof=ingress_proof,
         handoff_first=handoff_first,
-        preferences_preload=preferences_preload,
         smoke=smoke,
     )
 
 
 def inspect_workspace_state(workspace_root: Path | None) -> dict[str, object]:
-    """Return a lightweight, static view of current workspace runtime state."""
+    """Return a lightweight view of current workspace protocol state."""
     if workspace_root is None:
         return {
             "requested": False,
             "root": None,
             "bootstrap_mode": "on_first_project_trigger",
-            "sopify_skills_present": None,
+            "sopify_present": None,
             "active_plan": None,
-            "current_run_stage": None,
             "pending_checkpoint": None,
-            "quarantine_count": 0,
-            "quarantined_items": [],
-            "state_conflicts": [],
-            "runtime_notes": [],
         }
-    runtime_state = _inspect_runtime_workspace_state(workspace_root)
+    state_root = workspace_root / ".sopify" / "state"
+    active_plan_json = _read_json(state_root / "active_plan.json")
+    current_handoff_json = _read_json(state_root / "current_handoff.json")
     return {
         "requested": True,
         "root": str(workspace_root),
         "bootstrap_mode": "prewarmed",
-        "sopify_skills_present": (workspace_root / ".sopify-skills").is_dir(),
-        "active_plan": runtime_state["active_plan"],
-        "current_run_stage": runtime_state["current_run_stage"],
-        "pending_checkpoint": runtime_state["pending_checkpoint"],
-        "quarantine_count": runtime_state["quarantine_count"],
-        "quarantined_items": runtime_state["quarantined_items"],
-        "state_conflicts": runtime_state["state_conflicts"],
-        "runtime_notes": runtime_state["runtime_notes"],
+        "sopify_present": (workspace_root / ".sopify").is_dir(),
+        "active_plan": str(active_plan_json.get("plan_id") or "") or None,
+        "pending_checkpoint": current_handoff_json.get("required_host_action"),
     }
 
 
@@ -468,7 +374,7 @@ def build_doctor_payload(*, home_root: Path, workspace_root: Path | None) -> dic
     inspections = inspect_all_hosts(home_root=home_root, workspace_root=workspace_root, include_smoke=True)
     checks = [check.to_dict() for inspection in inspections for check in inspection.doctor_checks()]
     workspace_state = inspect_workspace_state(workspace_root)
-    checks.extend(check.to_dict() for check in _runtime_workspace_checks(workspace_state))
+    checks.extend(check.to_dict() for check in _protocol_state_checks(workspace_state))
     return {
         "schema_version": DOCTOR_SCHEMA_VERSION,
         "checks": checks,
@@ -498,15 +404,13 @@ def render_status_text(payload: dict[str, object]) -> str:
             continue
         payload_bundle = host.get("payload_bundle") or {}
         workspace_bundle = host.get("workspace_bundle") or {}
-        ingress_proof = host.get("workspace_ingress_proof") or {}
         lines.append(
-            "  - {host_id}: tier={support_tier}, installed={installed}, configured={configured}, workspace_bundle_healthy={workspace_bundle_healthy}, workspace_ingress_proof={workspace_ingress_proof}, payload_bundle={payload_source_kind} ({payload_reason_code})".format(
+            "  - {host_id}: tier={support_tier}, installed={installed}, configured={configured}, workspace_bundle_healthy={workspace_bundle_healthy}, payload_bundle={payload_source_kind} ({payload_reason_code})".format(
                 host_id=host["host_id"],
                 support_tier=host["support_tier"],
                 installed=state["installed"],
                 configured=state["configured"],
                 workspace_bundle_healthy=state["workspace_bundle_healthy"],
-                workspace_ingress_proof=state.get("workspace_ingress_proof", STATUS_NO),
                 payload_source_kind=payload_bundle.get("source_kind", SOURCE_KIND_UNRESOLVED),
                 payload_reason_code=payload_bundle.get("reason_code", REASON_GLOBAL_INDEX_CORRUPTED),
             )
@@ -514,20 +418,12 @@ def render_status_text(payload: dict[str, object]) -> str:
         workspace_summary = render_outcome_summary(workspace_bundle)
         if workspace_summary:
             lines.append(f"    workspace_outcome: {workspace_summary}")
-        ingress_summary = render_outcome_summary(ingress_proof)
-        if ingress_summary:
-            lines.append(f"    ingress_outcome: {ingress_summary}")
         payload_summary = render_outcome_summary(payload_bundle)
         if payload_summary:
             lines.append(f"    payload_outcome: {payload_summary}")
         warning_identifiers = diagnostic_identifiers_from_evidence(workspace_bundle.get("evidence") or ())
         if warning_identifiers:
             lines.append(f"    workspace_warning: {', '.join(warning_identifiers)}")
-        ingress_evidence = _displayable_evidence(ingress_proof.get("evidence") or ())
-        if ingress_evidence:
-            lines.append(f"    ingress_evidence: {', '.join(ingress_evidence)}")
-        if ingress_proof.get("recommendation"):
-            lines.append(f"    ingress_hint: {ingress_proof['recommendation']}")
         if payload_bundle.get("recommendation"):
             lines.append(f"    payload_hint: {payload_bundle['recommendation']}")
     workspace_state = payload["workspace_state"]
@@ -545,35 +441,11 @@ def render_status_text(payload: dict[str, object]) -> str:
             [
                 "  requested: yes",
                 f"  root: {workspace_state['root']}",
-                f"  sopify_skills_present: {workspace_state['sopify_skills_present']}",
+                f"  sopify_present: {workspace_state['sopify_present']}",
                 f"  active_plan: {workspace_state['active_plan'] or '(none)'}",
-                f"  current_run_stage: {_STAGE_LABELS.get(workspace_state['current_run_stage'], workspace_state['current_run_stage']) if workspace_state['current_run_stage'] else '(none)'}",
                 f"  pending_checkpoint: {_CHECKPOINT_LABELS.get(workspace_state['pending_checkpoint'], workspace_state['pending_checkpoint']) if workspace_state['pending_checkpoint'] else '(none)'}",
             ]
         )
-        if workspace_state["quarantine_count"]:
-            lines.append(f"  quarantine_count: {workspace_state['quarantine_count']}")
-            for item in workspace_state["quarantined_items"][:3]:
-                lines.append(
-                    "  quarantined: {state_kind} {path} ({reason})".format(
-                        state_kind=item.get("state_kind") or "unknown",
-                        path=item.get("path") or "(unknown)",
-                        reason=item.get("reason") or "unknown",
-                    )
-                )
-        if workspace_state["state_conflicts"]:
-            lines.append(f"  state_conflict_count: {len(workspace_state['state_conflicts'])}")
-            first_conflict = workspace_state["state_conflicts"][0]
-            conflict_explanation = str(first_conflict.get("explanation") or _describe_state_conflict(str(first_conflict.get("code") or ""))).strip()
-            lines.append(
-                "  state_conflict: {desc} @ {path}".format(
-                    desc=conflict_explanation or "unknown conflict",
-                    path=first_conflict.get("path") or "(unknown)",
-                )
-            )
-            explanation = str(first_conflict.get("explanation") or "").strip()
-            if explanation:
-                lines.append(f"  state_conflict_explanation: {explanation}")
     return "\n".join(lines)
 
 
@@ -629,122 +501,54 @@ def _render_structured_evidence_lines(evidence: object) -> tuple[str, ...]:
     return tuple(rendered)
 
 
-def _inspect_runtime_workspace_state(workspace_root: Path) -> dict[str, object]:
-    """Thin projection of current global machine truth for doctor/status."""
-    fallback_state_root = workspace_root / ".sopify-skills" / "state"
-    fallback_run = _read_json(fallback_state_root / "current_run.json")
-    fallback_handoff = _read_json(fallback_state_root / "current_handoff.json")
-    fallback_payload = {
-        "active_plan": str(fallback_run.get("plan_path") or fallback_run.get("plan_id") or "") or None,
-        "current_run_stage": fallback_run.get("stage"),
-        "pending_checkpoint": fallback_handoff.get("required_host_action"),
-        "quarantine_count": 0,
-        "quarantined_items": [],
-        "state_conflicts": [],
-        "runtime_notes": [],
-    }
-    try:
-        config = load_runtime_config(workspace_root)
-    except (ConfigError, ValueError) as exc:
-        fallback_payload["runtime_notes"] = [f"Runtime inspection unavailable: {exc}"]
-        return fallback_payload
-
-    global_store = StateStore(config)
-    snapshot = resolve_context_snapshot(
-        config=config,
-        review_store=global_store,
-        global_store=global_store,
-    )
-
-    quarantined_items = [item.to_dict() for item in snapshot.quarantined_items]
-    state_conflicts = []
-    for item in snapshot.conflict_items:
-        payload = item.to_dict()
-        payload["explanation"] = _describe_state_conflict(item.code)
-        state_conflicts.append(payload)
-
-    current_run = snapshot.current_run
-    current_plan = snapshot.current_plan
-    current_handoff = snapshot.current_handoff
-    active_plan = None
-    if current_run is not None:
-        active_plan = str(current_run.plan_path or current_run.plan_id or "") or None
-    elif current_plan is not None:
-        active_plan = str(current_plan.path or current_plan.plan_id or "") or None
-
-    return {
-        "active_plan": active_plan,
-        "current_run_stage": current_run.stage if current_run is not None else None,
-        "pending_checkpoint": current_handoff.required_host_action if current_handoff is not None else None,
-        "quarantine_count": len(quarantined_items),
-        "quarantined_items": quarantined_items,
-        "state_conflicts": state_conflicts,
-        "runtime_notes": list(snapshot.notes),
-    }
-
-
-def _runtime_workspace_checks(workspace_state: dict[str, object]) -> tuple[InspectionCheck, ...]:
-    checks: list[InspectionCheck] = []
-    quarantined_items = workspace_state.get("quarantined_items") or []
-    if isinstance(quarantined_items, list) and quarantined_items:
-        checks.append(
+def _protocol_state_checks(workspace_state: dict[str, object]) -> tuple[InspectionCheck, ...]:
+    if not workspace_state.get("requested"):
+        return ()
+    if not workspace_state.get("sopify_present"):
+        return (
             InspectionCheck(
-                check_id="workspace_runtime_quarantine",
+                check_id="workspace_protocol_state",
                 status=CHECK_WARN,
-                reason_code=REASON_QUARANTINED_RUNTIME_STATE,
-                evidence=tuple(
-                    "{path} ({reason})".format(
-                        path=item.get("path") or "(unknown)",
-                        reason=item.get("reason") or "unknown",
-                    )
-                    for item in quarantined_items[:5]
-                    if isinstance(item, dict)
-                ),
-                recommendation="Review the quarantined runtime files via status/doctor before resuming planning or execution.",
-            )
+                reason_code="SOPIFY_SKILLS_MISSING",
+                recommendation="Trigger Sopify in this workspace to bootstrap protocol state.",
+            ),
         )
-    state_conflicts = workspace_state.get("state_conflicts") or []
-    if isinstance(state_conflicts, list) and state_conflicts:
-        checks.append(
-            InspectionCheck(
-                check_id="workspace_runtime_state_conflict",
-                status=CHECK_FAIL,
-                reason_code=REASON_RUNTIME_STATE_CONFLICT,
-                evidence=tuple(
-                    "{explanation} @ {path}".format(
-                        path=item.get("path") or "(unknown)",
-                        explanation=item.get("explanation") or _describe_state_conflict(str(item.get("code") or "")),
-                    )
-                    for item in state_conflicts[:5]
-                    if isinstance(item, dict)
-                ),
-                recommendation="Clear the conflicting negotiation state before resuming runtime execution.",
-            )
-        )
-    runtime_notes = workspace_state.get("runtime_notes") or []
-    if not checks and isinstance(runtime_notes, list):
-        unavailable_notes = [note for note in runtime_notes if isinstance(note, str) and note.startswith("Runtime inspection unavailable:")]
-        if unavailable_notes:
-            checks.append(
-                InspectionCheck(
-                    check_id="workspace_runtime_inspection",
-                    status=CHECK_WARN,
-                    reason_code=REASON_RUNTIME_INSPECTION_UNAVAILABLE,
-                    evidence=tuple(unavailable_notes[:3]),
-                    recommendation="Fix the workspace runtime configuration so status/doctor can inspect runtime state health.",
-                )
-            )
+    checks: list[InspectionCheck] = []
+    workspace_root = Path(str(workspace_state["root"]))
+    state_root = workspace_root / ".sopify" / "state"
+    for filename, check_id in (
+        ("active_plan.json", "active_plan_health"),
+        ("current_handoff.json", "current_handoff_health"),
+    ):
+        file_path = state_root / filename
+        if not file_path.is_file():
+            checks.append(InspectionCheck(
+                check_id=check_id,
+                status=CHECK_WARN,
+                reason_code="STATE_FILE_MISSING",
+                evidence=(str(file_path),),
+            ))
+            continue
+        try:
+            payload = json.loads(file_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            checks.append(InspectionCheck(
+                check_id=check_id,
+                status=CHECK_WARN,
+                reason_code="STATE_FILE_INVALID",
+                evidence=(str(file_path),),
+            ))
+            continue
+        if not isinstance(payload, dict):
+            checks.append(InspectionCheck(
+                check_id=check_id,
+                status=CHECK_WARN,
+                reason_code="STATE_FILE_INVALID",
+                evidence=(str(file_path),),
+            ))
     return tuple(checks)
 
 
-def _describe_state_conflict(code: str) -> str:
-    normalized = str(code or "").strip()
-    if not normalized:
-        return "A runtime state conflict requires manual cleanup before execution can continue."
-    return _STATE_CONFLICT_EXPLANATIONS.get(
-        normalized,
-        "A runtime state conflict requires manual cleanup before execution can continue.",
-    )
 
 
 def _inspect_host_prompt(*, adapter: HostAdapter, capability: HostCapability, home_root: Path, workspace_root: Path | None = None) -> InspectionCheck:
@@ -772,7 +576,7 @@ def _inspect_host_prompt(*, adapter: HostAdapter, capability: HostCapability, ho
             status=CHECK_FAIL,
             reason_code=_reason_code_from_install_error(exc),
             evidence=_paths_from_error(exc),
-            recommendation=f"Run python3 scripts/install_sopify.py --target {capability.host_id}:zh-CN to install the host prompt layer.",
+            recommendation=f"Run python3 scripts/install_sopify.py --target {_recommend_target(capability.host_id)} to install the host prompt layer.",
         )
 
 
@@ -794,7 +598,7 @@ def _inspect_payload(*, adapter: HostAdapter, capability: HostCapability, home_r
             status=CHECK_FAIL,
             reason_code=_reason_code_from_install_error(exc),
             evidence=_paths_from_error(exc),
-            recommendation=f"Run python3 scripts/install_sopify.py --target {capability.host_id}:zh-CN to refresh the host payload.",
+            recommendation=f"Run python3 scripts/install_sopify.py --target {_recommend_target(capability.host_id)} to refresh the host payload.",
         )
 
 
@@ -872,7 +676,7 @@ def _inspect_workspace_bundle(
     workspace_root: Path,
 ) -> InspectionCheck:
     payload_root = adapter.payload_root(home_root)
-    bundle_root = workspace_root / ".sopify-skills"
+    bundle_root = workspace_root / ".sopify"
     try:
         current_manifest_path, current_manifest = validate_workspace_stub_manifest(bundle_root)
     except InstallError as exc:
@@ -1026,7 +830,7 @@ def _resolve_workspace_capability_manifest(
     if workspace_bundle.status != CHECK_PASS:
         return {}
 
-    bundle_root = workspace_root / ".sopify-skills"
+    bundle_root = workspace_root / ".sopify"
     try:
         _manifest_path, current_manifest = validate_workspace_stub_manifest(bundle_root)
         selected_bundle_version = current_manifest.get("bundle_version")
@@ -1046,37 +850,14 @@ def _inspect_smoke(
     home_root: Path,
     include_smoke: bool,
 ) -> InspectionCheck:
-    if not include_smoke:
-        return InspectionCheck(
-            host_id=capability.host_id,
-            check_id="bundle_smoke",
-            status=CHECK_SKIP,
-            reason_code=REASON_OK,
-        )
-
-    try:
-        bundle_root = resolve_payload_bundle_root(adapter.payload_root(home_root))
-        stdout = run_bundle_smoke_check(
-            bundle_root,
-            payload_manifest_path=adapter.payload_root(home_root) / "payload-manifest.json",
-        )
-        evidence = (stdout.splitlines()[0],) if stdout else ()
-        return InspectionCheck(
-            host_id=capability.host_id,
-            check_id="bundle_smoke",
-            status=CHECK_PASS,
-            reason_code=REASON_OK,
-            evidence=evidence,
-        )
-    except InstallError as exc:
-        return InspectionCheck(
-            host_id=capability.host_id,
-            check_id="bundle_smoke",
-            status=CHECK_FAIL,
-            reason_code=_reason_code_from_install_error(exc, default="UNEXPECTED_ERROR"),
-            evidence=_paths_from_error(exc),
-            recommendation=f"Refresh the {capability.host_id} payload bundle and rerun the bundled smoke check.",
-        )
+    # P8: bundle smoke check retired — check-bundle-smoke.sh no longer ships
+    # in the payload bundle. Doctor/status reports the check as skipped.
+    return InspectionCheck(
+        host_id=capability.host_id,
+        check_id="bundle_smoke",
+        status=CHECK_SKIP,
+        reason_code=REASON_OK,
+    )
 
 
 def _build_status_summary(hosts: list[dict[str, object]]) -> dict[str, object]:
@@ -1126,7 +907,7 @@ def _workspace_bundle_recommendation(host_id: str, workspace_root: Path, reason_
         return f"Sopify is not enabled in {workspace_root} yet. Trigger Sopify there to bootstrap on demand."
     if reason_code == REASON_STUB_INVALID:
         return (
-            f"The local `.sopify-skills/sopify.json` in {workspace_root} looks invalid. "
+            f"The local `.sopify/sopify.json` in {workspace_root} looks invalid. "
             f"Rerun Sopify bootstrap, or delete that file and retry."
         )
     if reason_code == REASON_STUB_SELECTED:
@@ -1145,9 +926,6 @@ def _workspace_bundle_recommendation(host_id: str, workspace_root: Path, reason_
         return _payload_bundle_recommendation(host_id, reason_code) or message
     return message
 
-
-def _looks_like_stub_only_workspace(bundle_root: Path) -> bool:
-    return all(not (bundle_root / name).exists() for name in ("sopify_contracts", "canonical_writer", "runtime", "scripts", "tests"))
 
 
 def _workspace_bundle_evidence(
@@ -1194,104 +972,19 @@ def _reason_code_from_install_error(exc: InstallError, *, default: str = "MISSIN
     return default
 
 
-def _inspect_workspace_ingress_proof(
-    *,
-    capability: HostCapability,
-    workspace_root: Path,
-) -> InspectionCheck:
-    receipt_path = workspace_root / ".sopify-skills" / "state" / CURRENT_GATE_RECEIPT_FILENAME
-    receipt_payload, read_error = _read_json_object(receipt_path)
-    if read_error == "missing":
-        return InspectionCheck(
-            host_id=capability.host_id,
-            check_id="workspace_ingress_proof",
-            status=CHECK_WARN,
-            reason_code=REASON_INGRESS_PROOF_MISSING,
-            evidence=(str(receipt_path),),
-            recommendation="Trigger Sopify through `scripts/runtime_gate.py enter ...` so the workspace records a fresh ingress proof.",
-        )
-    if read_error or receipt_payload is None:
-        return InspectionCheck(
-            host_id=capability.host_id,
-            check_id="workspace_ingress_proof",
-            status=CHECK_WARN,
-            reason_code=REASON_INGRESS_PROOF_UNREADABLE,
-            evidence=(str(receipt_path),),
-            recommendation="Refresh `.sopify-skills/state/current_gate_receipt.json` by entering Sopify through `scripts/runtime_gate.py enter ...` again.",
-        )
 
-    observability = receipt_payload.get("observability")
-    if not isinstance(observability, Mapping):
-        return InspectionCheck(
-            host_id=capability.host_id,
-            check_id="workspace_ingress_proof",
-            status=CHECK_WARN,
-            reason_code=REASON_INGRESS_PROOF_UNREADABLE,
-            evidence=(str(receipt_path),),
-            recommendation="Refresh `.sopify-skills/state/current_gate_receipt.json` by entering Sopify through `scripts/runtime_gate.py enter ...` again.",
-        )
-
-    ingress_mode = str(observability.get("ingress_mode") or "").strip()
-    written_at = str(observability.get("written_at") or "").strip()
-    written_at_dt = _parse_iso_datetime(written_at)
-    evidence = tuple(
-        item
-        for item in (
-            str(receipt_path),
-            f"ingress_mode={ingress_mode}" if ingress_mode else "",
-            f"written_at={written_at}" if written_at else "",
-        )
-        if item
-    )
-    if not ingress_mode or written_at_dt is None:
-        return InspectionCheck(
-            host_id=capability.host_id,
-            check_id="workspace_ingress_proof",
-            status=CHECK_WARN,
-            reason_code=REASON_INGRESS_PROOF_UNREADABLE,
-            evidence=evidence or (str(receipt_path),),
-            recommendation="Refresh `.sopify-skills/state/current_gate_receipt.json` by entering Sopify through `scripts/runtime_gate.py enter ...` again.",
-        )
-
-    if _utc_now() - written_at_dt > INGRESS_PROOF_STALE_AFTER:
-        return InspectionCheck(
-            host_id=capability.host_id,
-            check_id="workspace_ingress_proof",
-            status=CHECK_WARN,
-            reason_code=REASON_INGRESS_PROOF_STALE,
-            evidence=evidence,
-            recommendation="Trigger Sopify through `scripts/runtime_gate.py enter ...` again before relying on this workspace runtime state.",
-        )
-
-    if ingress_mode == "runtime_gate_enter":
-        return InspectionCheck(
-            host_id=capability.host_id,
-            check_id="workspace_ingress_proof",
-            status=CHECK_PASS,
-            reason_code=REASON_INGRESS_PROOF_GATE_ENTER_OBSERVED,
-            evidence=evidence,
-        )
-    if ingress_mode == "default_runtime_entry_blocked":
-        return InspectionCheck(
-            host_id=capability.host_id,
-            check_id="workspace_ingress_proof",
-            status=CHECK_WARN,
-            reason_code=REASON_INGRESS_PROOF_DIRECT_ENTRY_BLOCK_OBSERVED,
-            evidence=evidence,
-            recommendation="The last ingress proof recorded a blocked direct runtime entry. Re-enter Sopify through `scripts/runtime_gate.py enter ...` before continuing.",
-        )
-    return InspectionCheck(
-        host_id=capability.host_id,
-        check_id="workspace_ingress_proof",
-        status=CHECK_WARN,
-        reason_code=REASON_INGRESS_PROOF_UNREADABLE,
-        evidence=evidence,
-        recommendation="Refresh `.sopify-skills/state/current_gate_receipt.json` by entering Sopify through `scripts/runtime_gate.py enter ...` again.",
-    )
+def _recommend_target(host_id: str) -> str:
+    """Return the recommended --target value for doctor/status messages."""
+    for reg in iter_host_registrations():
+        if reg.capability.host_id == host_id:
+            if reg.adapter.default_language is not None:
+                return host_id
+            break
+    return f"{host_id}:zh-CN"
 
 
 def _payload_bundle_recommendation(host_id: str, reason_code: str) -> str | None:
-    refresh_command = f"python3 scripts/install_sopify.py --target {host_id}:zh-CN"
+    refresh_command = f"python3 scripts/install_sopify.py --target {_recommend_target(host_id)}"
     if reason_code == REASON_GLOBAL_BUNDLE_MISSING:
         return f"Refresh the {host_id} payload because the selected global bundle is missing: {refresh_command}"
     if reason_code == REASON_GLOBAL_BUNDLE_INCOMPATIBLE:
@@ -1326,34 +1019,6 @@ def _read_json(path: Path) -> dict[str, Any]:
         return {}
     return payload
 
-
-def _read_json_object(path: Path) -> tuple[dict[str, Any] | None, str | None]:
-    if not path.is_file():
-        return None, "missing"
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return None, "unreadable"
-    if not isinstance(payload, dict):
-        return None, "unreadable"
-    return payload, None
-
-
-def _parse_iso_datetime(raw: str) -> datetime | None:
-    normalized = str(raw or "").strip()
-    if not normalized:
-        return None
-    try:
-        parsed = datetime.fromisoformat(normalized.replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
-
-
-def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
 
 
 def _payload_evidence_paths(payload_root: Path) -> tuple[Path, ...]:

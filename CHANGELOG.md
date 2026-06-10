@@ -6,6 +6,26 @@ Format: Summary → Changed → Plan Packages. File-level details live in `git l
 
 ## [Unreleased]
 
+### Summary
+
+P8 Protocol Kernel & Runtime Retirement: deleted runtime (~15.6K LOC), renamed canonical root to `.sopify`, simplified state to 2 files, onboarded Qoder as PROTOCOL_VERIFIED host, aligned all docs to "development process protocol layer" positioning.
+
+### Changed
+
+- **Runtime deleted**: Removed `runtime/` directory (46 files / ~15.6K LOC). Protocol kernel (`sopify_writer` + `sopify_contracts` + `protocol.md`) is now the sole truth source.
+- **Canonical root**: Renamed `.sopify-skills` → `.sopify` across all layers (~481 replacements). Removed `plan.directory` configurable root.
+- **State model**: Simplified from 6 state files + sessions/ to 2 files (`active_plan.json` + `current_handoff.json`). Both gitignored.
+- **Host support**: Added Qoder as `PROTOCOL_VERIFIED` host (home-scope hybrid, bare `--target qoder`). Renamed `DEEP_VERIFIED` → `PROTOCOL_VERIFIED` for Codex/Claude.
+- **Product positioning**: Established "development process protocol layer" (开发过程协议层) with 4-layer model: 用户层/产品层/能力层/架构层.
+- **Blueprint**: Full narrative sync — ADR-013/017 updated, host capability governance rewritten, Runtime 五层架构 marked RETIRED, Validator → protocol admission.
+- **Docs**: README pair rewritten; architecture SVG regenerated; how-sopify-works fully updated to post-P8 model.
+- **Authorization**: EAR/gate_receipt retired. Audit chain now uses `plan/<id>/receipts/*.json` + `history/<id>/receipt.md`.
+- **Workspace marker**: `sopify.json` updated — removed `runtime_gate` capability, `workspace_kind` set to `external`.
+
+### Plan Packages
+
+- `20260605_p8_protocol_kernel_runtime_retirement` → archived to `history/2026-06/`
+
 ## [2026-05-31.142150] - 2026-05-31
 
 ### Summary
@@ -42,7 +62,7 @@ v1.0 包含的能力：
 - **可恢复工作流**：任务在任意时间点中断，下次会话从 project state 恢复，无需重新解释背景
 - **三段式结构化流程**：需求分析 → 方案设计 → 开发实施，每段均可单独触发或跳过
 - **Checkpoint 暂停机制**：事实缺失时 AI 停下追问，遇到分叉决策时等待用户确认，不猜测推进
-- **持久知识库**：项目约定、长期偏好、方案包跨会话保留在 `.sopify-skills/`，git-tracked
+- **持久知识库**：项目约定、长期偏好、方案包跨会话保留在 `.sopify/`，git-tracked
 - **三宿主支持**：Copilot、Codex、Claude（ZH/EN 双语），单行命令安装，无侵入性
 - **输出契约**：所有阶段输出遵循统一格式（状态符、验证摘要、Changes、Next），AI 不自行发明格式
 - **一行命令启动**：`~go` 自动检测活动 plan 并恢复执行，无需记住上次做到哪步

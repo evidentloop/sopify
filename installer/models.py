@@ -37,7 +37,7 @@ class InstallError(RuntimeError):
 class SupportTier(StrEnum):
     """Stable product-support tiers for host registry declarations."""
 
-    DEEP_VERIFIED = "deep_verified"
+    PROTOCOL_VERIFIED = "protocol_verified"
     BASELINE_SUPPORTED = "baseline_supported"
     DOCUMENTED_ONLY = "documented_only"
     EXPERIMENTAL = "experimental"
@@ -59,11 +59,8 @@ class FeatureId(StrEnum):
     PROMPT_INSTALL = "prompt_install"
     PAYLOAD_INSTALL = "payload_install"
     WORKSPACE_BOOTSTRAP = "workspace_bootstrap"
-    RUNTIME_GATE = "runtime_gate"
-    PREFERENCES_PRELOAD = "preferences_preload"
     HANDOFF_FIRST = "handoff_first"
     HOST_BRIDGE = "host_bridge"
-    SMOKE_VERIFIED = "smoke_verified"
 
 
 class EnhancementGroup(StrEnum):

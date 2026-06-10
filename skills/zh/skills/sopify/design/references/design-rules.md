@@ -71,15 +71,9 @@
   - `~go plan` 触发：只输出方案摘要并停止。
 - 用户反馈修改意见：留在本阶段，更新文件后再次输出摘要。
 
-## runtime helper 边界
+## 协议入口边界
 
-当仓库存在 `scripts/sopify_runtime.py` 且输入为原始请求时：
-
-1. 优先交给默认 runtime 入口，不手工强制改写为 `~go plan`。
-2. 明确是 `~go plan` 路径时，优先调用 `scripts/go_plan_runtime.py`。
-3. `go_plan_runtime.py` 仅用于 plan-only slice。
-
-入口缺失时，才按本技能模板手工生成方案文件。
+方案结构与任务拆分由本技能负责；协议状态写入（active_plan / current_handoff / receipts）统一走 `sopify_writer`，不在本技能直接写入。
 
 ## 命名规则
 

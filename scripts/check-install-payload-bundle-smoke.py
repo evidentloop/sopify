@@ -29,10 +29,10 @@ from installer.models import InstallError, parse_install_target
 from installer.outcome_contract import render_outcome_summary
 from installer.validate import (
     resolve_payload_bundle_root,
-    run_bundle_smoke_check,
     validate_bundle_install,
     validate_host_install,
     validate_payload_install,
+    validate_payload_manifests,
     validate_workspace_stub_manifest,
 )
 
@@ -107,7 +107,7 @@ def run_smoke(*, target_value: str, temp_root: Path) -> dict[str, Any]:
     install_stdout = _run_install_cli(target_value=target.value, temp_home=temp_home)
     host_root = adapter.destination_root(temp_home)
     payload_root = adapter.payload_root(temp_home)
-    marker_root = workspace_root / ".sopify-skills"
+    marker_root = workspace_root / ".sopify"
     helper_path = payload_root / "helpers" / "bootstrap_workspace.py"
 
     host_paths = validate_host_install(adapter, home_root=temp_home)
@@ -141,26 +141,21 @@ def run_smoke(*, target_value: str, temp_root: Path) -> dict[str, Any]:
     workspace_stub_path, workspace_manifest = validate_workspace_stub_manifest(marker_root)
     global_bundle_root = resolve_payload_bundle_root(payload_root)
     global_bundle_paths = validate_bundle_install(global_bundle_root)
-    smoke_stdout = run_bundle_smoke_check(
-        global_bundle_root,
-        payload_manifest_path=payload_root / "payload-manifest.json",
-    )
+
+    _pm_path, payload_manifest, _bm_path, _bm = validate_payload_manifests(payload_root)
+    catalog_rel_path = payload_manifest.get("catalog_path")
+    if not catalog_rel_path:
+        raise RuntimeError("payload-manifest.json missing catalog_path")
+    catalog_abs_path = (payload_root / catalog_rel_path).resolve()
+    if not catalog_abs_path.is_file():
+        raise RuntimeError(f"catalog_path does not point to an existing file: {catalog_abs_path}")
+
     status_payload = build_status_payload(home_root=temp_home, workspace_root=workspace_root)
     host_status = next(
         host for host in status_payload["hosts"] if host["host_id"] == target.host
     )
     workspace_bundle = host_status.get("workspace_bundle") or {}
-    bundle_manifest = json.loads((global_bundle_root / "manifest.json").read_text(encoding="utf-8"))
-    default_entry = str(bundle_manifest.get("default_entry") or "")
-    runtime_gate_entry = str(bundle_manifest.get("limits", {}).get("runtime_gate_entry") or "")
-    entry_guard = bundle_manifest.get("limits", {}).get("entry_guard", {})
 
-    if default_entry != "scripts/sopify_runtime.py":
-        raise RuntimeError(f"Unexpected default_entry: {default_entry!r}")
-    if runtime_gate_entry != "scripts/runtime_gate.py":
-        raise RuntimeError(f"Unexpected runtime_gate_entry: {runtime_gate_entry!r}")
-    if entry_guard.get("default_runtime_entry") != default_entry:
-        raise RuntimeError("Manifest limits.entry_guard.default_runtime_entry drifted from default_entry.")
     if workspace_bundle.get("reason_code") != "STUB_SELECTED":
         raise RuntimeError(
             "Unexpected workspace bundle reason_code after bootstrap: {!r}".format(
@@ -178,7 +173,7 @@ def run_smoke(*, target_value: str, temp_root: Path) -> dict[str, Any]:
         "workspace_root": str(workspace_root),
         "host_root": str(host_root),
         "payload_root": str(payload_root),
-        "bundle_root": str(workspace_root / ".sopify-skills"),
+        "bundle_root": str(workspace_root / ".sopify"),
         "global_bundle_root": str(global_bundle_root),
         "payload_bundle": payload_bundle.to_status_dict(),
         "workspace_bundle": workspace_bundle,
@@ -199,21 +194,14 @@ def run_smoke(*, target_value: str, temp_root: Path) -> dict[str, Any]:
         "checks": {
             "single_install_command_only": True,
             "workspace_bundle_absent_before_trigger": True,
-            "runtime_bootstrap_on_project_trigger": True,
-            "default_runtime_entry_preserved": True,
             "plan_only_helper_preserved": True,
-            "runtime_gate_entry_preserved": True,
             "workspace_stub_selected_after_bootstrap": True,
-            "bundle_smoke_passed": True,
+            "payload_bundle_verified": True,
+            "catalog_path_verified": True,
         },
-        "manifest": {
-            "default_entry": default_entry,
-            "runtime_gate_entry": runtime_gate_entry,
-            "entry_guard_default_runtime_entry": entry_guard.get("default_runtime_entry"),
-        },
+        "catalog_path": str(catalog_abs_path),
         "install_stdout": install_stdout,
         "bootstrap_stdout": bootstrap_stdout,
-        "bundle_smoke_stdout": smoke_stdout,
         "verified_paths": {
             "host": [str(path) for path in host_paths],
             "payload": [str(path) for path in payload_paths],

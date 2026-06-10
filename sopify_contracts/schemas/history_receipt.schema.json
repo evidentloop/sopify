@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sopify.dev/schemas/history_receipt.schema.json",
+  "title": "History Receipt",
+  "description": "Final auditable receipt generated at archive time. Lives in history/<plan_id>/receipt.md as Markdown. This schema defines the logical structure (outcome, summary, key_decisions) that a parser must extract from the Markdown — it is not applied directly to raw Markdown text.",
+  "type": "object",
+  "required": ["outcome", "summary", "key_decisions"],
+  "additionalProperties": false,
+  "properties": {
+    "outcome": {
+      "type": "string",
+      "description": "Final outcome of the plan (e.g. 'completed', 'partial_done', 'abandoned')",
+      "minLength": 1
+    },
+    "summary": {
+      "type": "string",
+      "description": "Brief summary of what was accomplished",
+      "minLength": 1
+    },
+    "key_decisions": {
+      "type": "array",
+      "description": "Key decisions made during the plan lifecycle",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

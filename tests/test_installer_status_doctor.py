@@ -1,14 +1,12 @@
 # Test classification: distribution
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
 import shutil
 import sys
 import tempfile
 import unittest
-from unittest import mock
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -31,45 +29,16 @@ def _write_json(path: Path, payload: dict[str, object]) -> None:
 
 
 def _seed_workspace_state(workspace_root: Path) -> None:
-    state_root = workspace_root / ".sopify-skills" / "state"
+    state_root = workspace_root / ".sopify" / "state"
     _write_json(
-        state_root / "current_run.json",
-        {
-            "run_id": "run-1",
-            "stage": "design",
-            "status": "active",
-            "plan_id": "20260320_helloagents_integration_enhancements",
-            "plan_path": ".sopify-skills/plan/20260320_helloagents_integration_enhancements",
-        },
+        state_root / "active_plan.json",
+        {"plan_id": "20260320_helloagents_integration_enhancements"},
     )
     _write_json(
         state_root / "current_handoff.json",
-        {
-            "run_id": "run-1",
-            "required_host_action": "continue_host_develop",
-        },
+        {"required_host_action": "continue_host_develop"},
     )
 
-
-
-def _write_gate_receipt(
-    workspace_root: Path,
-    *,
-    ingress_mode: str = "runtime_gate_enter",
-    written_at: str = "2026-04-13T00:00:00+00:00",
-    raw_payload: object | None = None,
-) -> None:
-    receipt_path = workspace_root / ".sopify-skills" / "state" / "current_gate_receipt.json"
-    receipt_path.parent.mkdir(parents=True, exist_ok=True)
-    payload = raw_payload
-    if payload is None:
-        payload = {
-            "observability": {
-                "ingress_mode": ingress_mode,
-                "written_at": written_at,
-            }
-        }
-    receipt_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 class HostCapabilityRegistryTests(unittest.TestCase):
@@ -77,23 +46,42 @@ class HostCapabilityRegistryTests(unittest.TestCase):
         codex = get_host_capability("codex")
         claude = get_host_capability("claude")
 
-        self.assertEqual(codex.support_tier.value, "deep_verified")
-        self.assertEqual(claude.support_tier.value, "deep_verified")
+        self.assertEqual(codex.support_tier.value, "protocol_verified")
+        self.assertEqual(claude.support_tier.value, "protocol_verified")
         self.assertTrue(codex.install_enabled)
         self.assertTrue(claude.install_enabled)
-        self.assertIn("runtime_gate", [feature.value for feature in codex.verified_features])
-        self.assertIn("smoke_verified", [feature.value for feature in claude.verified_features])
+        self.assertIn("handoff_first", [feature.value for feature in claude.verified_features])
 
         retired_host = "tr" + "ae-cn"
         with self.assertRaisesRegex(ValueError, f"Unsupported host capability: {retired_host}"):
             get_host_capability(retired_host)
 
+    def test_qoder_capability_contract(self) -> None:
+        from installer.hosts import get_host_adapter
+
+        qoder = get_host_capability("qoder")
+        adapter = get_host_adapter("qoder")
+
+        self.assertEqual(qoder.support_tier.value, "protocol_verified")
+        self.assertTrue(qoder.install_enabled)
+
+        verified = {f.value for f in qoder.verified_features}
+        self.assertEqual(verified, {"prompt_install", "payload_install", "workspace_bootstrap", "handoff_first", "host_bridge"})
+
+        enhancements = {e.value for e in qoder.declared_enhancements}
+        self.assertEqual(enhancements, {"continuation", "interaction", "audit"})
+
+        self.assertEqual(adapter.default_language, "zh-CN")
+        self.assertEqual(adapter.destination_dirname, ".qoder")
+        self.assertEqual(adapter.header_filename, "AGENTS.md")
+        self.assertEqual(adapter.config_dir, "~/.qoder")
+
     def test_installable_hosts_only_return_install_enabled_entries(self) -> None:
         installable = [capability.host_id for capability in iter_installable_hosts()]
         declared = [capability.host_id for capability in iter_declared_hosts()]
 
-        self.assertEqual(set(installable), {"codex", "claude", "copilot"})
-        self.assertEqual(set(declared), {"codex", "claude", "copilot"})
+        self.assertEqual(set(installable), {"codex", "claude", "copilot", "qoder"})
+        self.assertEqual(set(declared), {"codex", "claude", "copilot", "qoder"})
 
 
 class StatusDoctorContractTests(unittest.TestCase):
@@ -263,21 +251,17 @@ class StatusDoctorContractTests(unittest.TestCase):
             self.assertIn("hosts", payload)
             self.assertIn("state", payload)
             self.assertIn("workspace_state", payload)
-            self.assertEqual(payload["workspace_state"]["active_plan"], ".sopify-skills/plan/20260320_helloagents_integration_enhancements")
+            self.assertEqual(payload["workspace_state"]["active_plan"], "20260320_helloagents_integration_enhancements")
             self.assertEqual(payload["workspace_state"]["pending_checkpoint"], "continue_host_develop")
-            self.assertEqual(payload["workspace_state"]["quarantine_count"], 0)
-            self.assertEqual(payload["workspace_state"]["state_conflicts"], [])
             self.assertEqual(payload["state"]["overall_status"], "partial")
-            self.assertEqual(payload["hosts"][0]["verified_features"], ["prompt_install", "payload_install", "workspace_bootstrap", "runtime_gate", "preferences_preload", "handoff_first", "host_bridge", "smoke_verified"])
+            self.assertEqual(payload["hosts"][0]["verified_features"], ["prompt_install", "payload_install", "workspace_bootstrap", "handoff_first", "host_bridge"])
             self.assertEqual(
                 set(payload["hosts"][0]["state"].keys()),
-                {"installed", "configured", "workspace_bundle_healthy", "workspace_ingress_proof"},
+                {"installed", "configured", "workspace_bundle_healthy"},
             )
             self.assertIn("workspace_bundle", payload["hosts"][0])
-            self.assertIn("workspace_ingress_proof", payload["hosts"][0])
             self.assertEqual(payload["hosts"][0]["state"]["configured"], "yes")
             self.assertEqual(payload["hosts"][0]["state"]["workspace_bundle_healthy"], "no")
-            self.assertEqual(payload["hosts"][0]["state"]["workspace_ingress_proof"], "no")
             self.assertNotIn("verified", payload["hosts"][0]["state"])
 
     def test_doctor_json_contains_reason_codes_and_summary(self) -> None:
@@ -326,8 +310,8 @@ class StatusDoctorContractTests(unittest.TestCase):
             install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root)
             run_workspace_bootstrap(CODEX_ADAPTER.payload_root(home_root), workspace_root)
 
-            bundle_root = workspace_root / ".sopify-skills"
-            for name in ("sopify_contracts", "canonical_writer", "runtime", "scripts", "tests"):
+            bundle_root = workspace_root / ".sopify"
+            for name in ("sopify_contracts", "sopify_writer"):
                 target = bundle_root / name
                 if target.exists():
                     import shutil
@@ -363,8 +347,8 @@ class StatusDoctorContractTests(unittest.TestCase):
             install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root)
             run_workspace_bootstrap(CODEX_ADAPTER.payload_root(home_root), workspace_root)
 
-            workspace_manifest = json.loads((workspace_root / ".sopify-skills" / "sopify.json").read_text(encoding="utf-8"))
-            self.assertEqual(workspace_manifest["capabilities"], ["runtime_gate"])
+            workspace_manifest = json.loads((workspace_root / ".sopify" / "sopify.json").read_text(encoding="utf-8"))
+            self.assertEqual(workspace_manifest["capabilities"], [])
             self.assertNotIn("limits", workspace_manifest)
 
             doctor_payload = build_doctor_payload(home_root=home_root, workspace_root=workspace_root)
@@ -373,15 +357,8 @@ class StatusDoctorContractTests(unittest.TestCase):
                 for check in doctor_payload["checks"]
                 if check["host_id"] == "codex" and check["check_id"] == "workspace_handoff_first"
             )
-            preload_check = next(
-                check
-                for check in doctor_payload["checks"]
-                if check["host_id"] == "codex" and check["check_id"] == "workspace_preferences_preload"
-            )
             self.assertEqual(handoff_check["status"], "pass")
             self.assertEqual(handoff_check["reason_code"], "ok")
-            self.assertEqual(preload_check["status"], "pass")
-            self.assertEqual(preload_check["reason_code"], "ok")
 
     def test_doctor_fail_closes_when_selected_global_bundle_is_missing(self) -> None:
         with tempfile.TemporaryDirectory() as home_dir, tempfile.TemporaryDirectory() as workspace_dir:
@@ -409,11 +386,6 @@ class StatusDoctorContractTests(unittest.TestCase):
                 for check in doctor_payload["checks"]
                 if check["host_id"] == "codex" and check["check_id"] == "workspace_handoff_first"
             )
-            preload_check = next(
-                check
-                for check in doctor_payload["checks"]
-                if check["host_id"] == "codex" and check["check_id"] == "workspace_preferences_preload"
-            )
             payload_bundle_check = next(
                 check
                 for check in doctor_payload["checks"]
@@ -423,8 +395,6 @@ class StatusDoctorContractTests(unittest.TestCase):
             self.assertEqual(workspace_check["reason_code"], "GLOBAL_BUNDLE_MISSING")
             self.assertEqual(handoff_check["status"], "fail")
             self.assertEqual(handoff_check["reason_code"], "GLOBAL_BUNDLE_MISSING")
-            self.assertEqual(preload_check["status"], "fail")
-            self.assertEqual(preload_check["reason_code"], "GLOBAL_BUNDLE_MISSING")
             self.assertEqual(payload_bundle_check["reason_code"], "GLOBAL_BUNDLE_MISSING")
 
     def test_doctor_recommends_on_demand_bootstrap_without_public_workspace_flag(self) -> None:
@@ -458,10 +428,9 @@ class StatusDoctorContractTests(unittest.TestCase):
             payload_root = CODEX_ADAPTER.payload_root(home_root)
             payload_manifest = json.loads((payload_root / "payload-manifest.json").read_text(encoding="utf-8"))
             active_version = payload_manifest["active_version"]
-            bundle_root = workspace_root / ".sopify-skills"
-            for name in ("sopify_contracts", "canonical_writer", "runtime", "scripts", "tests"):
+            bundle_root = workspace_root / ".sopify"
+            for name in ("sopify_contracts", "sopify_writer"):
                 shutil.copytree(payload_root / "bundles" / active_version / name, bundle_root / name)
-            (bundle_root / "scripts" / "runtime_gate.py").unlink()
 
             doctor_payload = build_doctor_payload(home_root=home_root, workspace_root=workspace_root)
             workspace_check = next(
@@ -473,183 +442,6 @@ class StatusDoctorContractTests(unittest.TestCase):
             self.assertEqual(workspace_check["reason_code"], "STUB_SELECTED")
             self.assertIn("NON_GIT_WORKSPACE", workspace_check["evidence"])
             self.assertNotIn("recommendation", workspace_check)
-
-    def test_status_and_doctor_warn_when_workspace_ingress_proof_is_missing(self) -> None:
-        with tempfile.TemporaryDirectory() as home_dir, tempfile.TemporaryDirectory() as workspace_dir:
-            home_root = Path(home_dir)
-            workspace_root = Path(workspace_dir)
-
-            install_host_assets(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root, language_directory="CN")
-            install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root)
-
-            status_payload = build_status_payload(home_root=home_root, workspace_root=workspace_root)
-            ingress_status = status_payload["hosts"][0]["workspace_ingress_proof"]
-            self.assertEqual(status_payload["hosts"][0]["state"]["workspace_ingress_proof"], "no")
-            self.assertEqual(ingress_status["reason_code"], "INGRESS_PROOF_MISSING")
-            self.assertEqual(ingress_status["primary_code"], "ingress_proof_missing")
-            self.assertEqual(ingress_status["action_level"], "warn")
-            rendered = render_status_text(status_payload)
-            self.assertIn("workspace_ingress_proof=no", rendered)
-            self.assertIn("ingress_outcome: ingress_proof_missing [warn]", rendered)
-
-            doctor_payload = build_doctor_payload(home_root=home_root, workspace_root=workspace_root)
-            ingress_check = next(
-                check
-                for check in doctor_payload["checks"]
-                if check["host_id"] == "codex" and check["check_id"] == "workspace_ingress_proof"
-            )
-            self.assertEqual(ingress_check["status"], "warn")
-            self.assertEqual(ingress_check["reason_code"], "INGRESS_PROOF_MISSING")
-            self.assertEqual(ingress_check["primary_code"], "ingress_proof_missing")
-            self.assertEqual(ingress_check["action_level"], "warn")
-            self.assertIn("outcome: ingress_proof_missing [warn]", render_doctor_text(doctor_payload))
-
-    def test_status_and_doctor_pass_when_workspace_ingress_proof_records_fresh_gate_enter(self) -> None:
-        with tempfile.TemporaryDirectory() as home_dir, tempfile.TemporaryDirectory() as workspace_dir:
-            home_root = Path(home_dir)
-            workspace_root = Path(workspace_dir)
-            now = datetime(2026, 4, 13, 12, 0, tzinfo=timezone.utc)
-            _write_gate_receipt(
-                workspace_root,
-                ingress_mode="runtime_gate_enter",
-                written_at=(now - timedelta(hours=23, minutes=59)).isoformat(),
-            )
-
-            install_host_assets(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root, language_directory="CN")
-            install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root)
-
-            with mock.patch("installer.inspection._utc_now", return_value=now):
-                status_payload = build_status_payload(home_root=home_root, workspace_root=workspace_root)
-                ingress_status = status_payload["hosts"][0]["workspace_ingress_proof"]
-                self.assertEqual(status_payload["hosts"][0]["state"]["workspace_ingress_proof"], "yes")
-                self.assertEqual(ingress_status["reason_code"], "INGRESS_PROOF_GATE_ENTER_OBSERVED")
-                self.assertEqual(ingress_status["primary_code"], "ingress_proof_gate_enter_observed")
-                self.assertEqual(ingress_status["action_level"], "continue")
-                self.assertIn("ingress_outcome: ingress_proof_gate_enter_observed [continue]", render_status_text(status_payload))
-
-                doctor_payload = build_doctor_payload(home_root=home_root, workspace_root=workspace_root)
-                ingress_check = next(
-                    check
-                    for check in doctor_payload["checks"]
-                    if check["host_id"] == "codex" and check["check_id"] == "workspace_ingress_proof"
-                )
-                self.assertEqual(ingress_check["status"], "pass")
-                self.assertEqual(ingress_check["reason_code"], "INGRESS_PROOF_GATE_ENTER_OBSERVED")
-                self.assertEqual(ingress_check["primary_code"], "ingress_proof_gate_enter_observed")
-                self.assertEqual(ingress_check["action_level"], "continue")
-
-    def test_status_and_doctor_warn_when_workspace_ingress_proof_records_fresh_direct_entry_block(self) -> None:
-        with tempfile.TemporaryDirectory() as home_dir, tempfile.TemporaryDirectory() as workspace_dir:
-            home_root = Path(home_dir)
-            workspace_root = Path(workspace_dir)
-            now = datetime(2026, 4, 13, 12, 0, tzinfo=timezone.utc)
-            _write_gate_receipt(
-                workspace_root,
-                ingress_mode="default_runtime_entry_blocked",
-                written_at=now.isoformat(),
-            )
-
-            install_host_assets(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root, language_directory="CN")
-            install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root)
-
-            with mock.patch("installer.inspection._utc_now", return_value=now):
-                status_payload = build_status_payload(home_root=home_root, workspace_root=workspace_root)
-                ingress_status = status_payload["hosts"][0]["workspace_ingress_proof"]
-                self.assertEqual(status_payload["hosts"][0]["state"]["workspace_ingress_proof"], "no")
-                self.assertEqual(ingress_status["reason_code"], "INGRESS_PROOF_DIRECT_ENTRY_BLOCK_OBSERVED")
-                self.assertEqual(ingress_status["primary_code"], "ingress_proof_direct_entry_block_observed")
-                self.assertEqual(ingress_status["action_level"], "warn")
-
-                doctor_payload = build_doctor_payload(home_root=home_root, workspace_root=workspace_root)
-                ingress_check = next(
-                    check
-                    for check in doctor_payload["checks"]
-                    if check["host_id"] == "codex" and check["check_id"] == "workspace_ingress_proof"
-                )
-                self.assertEqual(ingress_check["status"], "warn")
-                self.assertEqual(ingress_check["reason_code"], "INGRESS_PROOF_DIRECT_ENTRY_BLOCK_OBSERVED")
-                self.assertIn("outcome: ingress_proof_direct_entry_block_observed [warn]", render_doctor_text(doctor_payload))
-
-    def test_status_and_doctor_apply_workspace_ingress_proof_stale_boundary(self) -> None:
-        with tempfile.TemporaryDirectory() as home_dir, tempfile.TemporaryDirectory() as workspace_dir:
-            home_root = Path(home_dir)
-            workspace_root = Path(workspace_dir)
-            now = datetime(2026, 4, 13, 12, 0, tzinfo=timezone.utc)
-
-            install_host_assets(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root, language_directory="CN")
-            install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root)
-
-            boundary_cases = (
-                ("fresh_at_24h", now - timedelta(hours=24), "INGRESS_PROOF_GATE_ENTER_OBSERVED", "yes"),
-                ("stale_after_24h", now - timedelta(hours=24, seconds=1), "INGRESS_PROOF_STALE", "no"),
-            )
-            for label, written_at, expected_reason, expected_state in boundary_cases:
-                with self.subTest(case=label), mock.patch("installer.inspection._utc_now", return_value=now):
-                    _write_gate_receipt(
-                        workspace_root,
-                        ingress_mode="runtime_gate_enter",
-                        written_at=written_at.isoformat(),
-                    )
-                    status_payload = build_status_payload(home_root=home_root, workspace_root=workspace_root)
-                    self.assertEqual(status_payload["hosts"][0]["state"]["workspace_ingress_proof"], expected_state)
-                    self.assertEqual(status_payload["hosts"][0]["workspace_ingress_proof"]["reason_code"], expected_reason)
-
-                    doctor_payload = build_doctor_payload(home_root=home_root, workspace_root=workspace_root)
-                    ingress_check = next(
-                        check
-                        for check in doctor_payload["checks"]
-                        if check["host_id"] == "codex" and check["check_id"] == "workspace_ingress_proof"
-                    )
-                    self.assertEqual(ingress_check["reason_code"], expected_reason)
-
-    def test_status_and_doctor_warn_when_workspace_ingress_proof_receipt_is_unreadable(self) -> None:
-        with tempfile.TemporaryDirectory() as home_dir, tempfile.TemporaryDirectory() as workspace_dir:
-            home_root = Path(home_dir)
-            workspace_root = Path(workspace_dir)
-            receipt_path = workspace_root / ".sopify-skills" / "state" / "current_gate_receipt.json"
-            receipt_path.parent.mkdir(parents=True, exist_ok=True)
-            receipt_path.write_text("{", encoding="utf-8")
-
-            install_host_assets(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root, language_directory="CN")
-            install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root)
-
-            status_payload = build_status_payload(home_root=home_root, workspace_root=workspace_root)
-            self.assertEqual(status_payload["hosts"][0]["workspace_ingress_proof"]["reason_code"], "INGRESS_PROOF_UNREADABLE")
-
-            doctor_payload = build_doctor_payload(home_root=home_root, workspace_root=workspace_root)
-            ingress_check = next(
-                check
-                for check in doctor_payload["checks"]
-                if check["host_id"] == "codex" and check["check_id"] == "workspace_ingress_proof"
-            )
-            self.assertEqual(ingress_check["reason_code"], "INGRESS_PROOF_UNREADABLE")
-            self.assertIn("outcome: ingress_proof_unreadable [warn]", render_doctor_text(doctor_payload))
-
-    def test_status_and_doctor_warn_when_workspace_ingress_proof_timestamp_is_missing_or_invalid(self) -> None:
-        with tempfile.TemporaryDirectory() as home_dir, tempfile.TemporaryDirectory() as workspace_dir:
-            home_root = Path(home_dir)
-            workspace_root = Path(workspace_dir)
-
-            install_host_assets(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root, language_directory="CN")
-            install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root)
-
-            receipt_payloads = (
-                {"observability": {"ingress_mode": "runtime_gate_enter"}},
-                {"observability": {"ingress_mode": "runtime_gate_enter", "written_at": "not-an-iso-timestamp"}},
-            )
-            for payload in receipt_payloads:
-                with self.subTest(payload=payload):
-                    _write_gate_receipt(workspace_root, raw_payload=payload)
-                    status_payload = build_status_payload(home_root=home_root, workspace_root=workspace_root)
-                    self.assertEqual(status_payload["hosts"][0]["workspace_ingress_proof"]["reason_code"], "INGRESS_PROOF_UNREADABLE")
-
-                    doctor_payload = build_doctor_payload(home_root=home_root, workspace_root=workspace_root)
-                    ingress_check = next(
-                        check
-                        for check in doctor_payload["checks"]
-                        if check["host_id"] == "codex" and check["check_id"] == "workspace_ingress_proof"
-                    )
-                    self.assertEqual(ingress_check["reason_code"], "INGRESS_PROOF_UNREADABLE")
 
     def test_status_cli_json_output_contains_hosts_and_workspace_state(self) -> None:
         with tempfile.TemporaryDirectory() as home_dir, tempfile.TemporaryDirectory() as workspace_dir:
@@ -705,14 +497,14 @@ class StatusDoctorContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as home_dir, tempfile.TemporaryDirectory() as workspace_dir:
             home_root = Path(home_dir)
             workspace_root = Path(workspace_dir)
-            state_root = workspace_root / ".sopify-skills" / "state"
+            state_root = workspace_root / ".sopify" / "state"
             _write_json(
-                state_root / "current_run.json",
-                {"run_id": "run-1", "stage": "clarification_pending", "status": "active", "plan_id": "p", "plan_path": ".sopify-skills/plan/p"},
+                state_root / "active_plan.json",
+                {"plan_id": "p"},
             )
             _write_json(
                 state_root / "current_handoff.json",
-                {"run_id": "run-1", "required_host_action": "answer_questions"},
+                {"required_host_action": "answer_questions"},
             )
 
             install_host_assets(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root, language_directory="CN")
@@ -721,9 +513,7 @@ class StatusDoctorContractTests(unittest.TestCase):
             status_payload = build_status_payload(home_root=home_root, workspace_root=workspace_root)
             rendered = render_status_text(status_payload)
 
-            self.assertIn("current_run_stage: awaiting info", rendered)
             self.assertIn("pending_checkpoint: awaiting supplemental info", rendered)
-            self.assertNotIn("clarification_pending", rendered)
             self.assertNotIn("answer_questions", rendered)
 
     def test_status_text_renders_mapped_checkpoint_labels(self) -> None:
@@ -740,67 +530,6 @@ class StatusDoctorContractTests(unittest.TestCase):
 
             self.assertIn("pending_checkpoint: ready to continue", rendered)
             self.assertNotIn("continue_host_develop", rendered)
-
-    def test_status_text_state_conflict_shows_explanation_not_raw_code(self) -> None:
-        payload: dict[str, object] = {
-            "schema_version": "2",
-            "hosts": [],
-            "state": {"overall_status": "partial"},
-            "workspace_state": {
-                "requested": True,
-                "root": "/tmp/ws",
-                "sopify_skills_present": True,
-                "active_plan": "some_plan",
-                "current_run_stage": "executing",
-                "pending_checkpoint": None,
-                "quarantine_count": 0,
-                "quarantined_items": [],
-                "state_conflicts": [
-                    {
-                        "code": "run_stage_handoff_mismatch",
-                        "path": "state/current_run.json",
-                        "explanation": "The persisted run stage and handoff action disagree about the current checkpoint.",
-                    }
-                ],
-                "runtime_notes": [],
-            },
-        }
-        rendered = render_status_text(payload)
-
-        self.assertIn("state_conflict_count: 1", rendered)
-        self.assertIn("The persisted run stage and handoff action disagree", rendered)
-        self.assertNotIn("run_stage_handoff_mismatch", rendered)
-
-    def test_doctor_text_state_conflict_evidence_shows_explanation_not_raw_code(self) -> None:
-        payload: dict[str, object] = {
-            "schema_version": "2",
-            "hosts": [],
-            "state": {"overall_status": "partial"},
-            "workspace_state": {
-                "requested": True,
-                "root": "/tmp/ws",
-                "sopify_skills_present": True,
-                "active_plan": "some_plan",
-                "current_run_stage": "executing",
-                "pending_checkpoint": None,
-                "quarantine_count": 0,
-                "quarantined_items": [],
-                "state_conflicts": [
-                    {
-                        "code": "run_stage_handoff_mismatch",
-                        "path": "state/current_run.json",
-                        "explanation": "The persisted run stage and handoff action disagree about the current checkpoint.",
-                    }
-                ],
-                "runtime_notes": [],
-            },
-        }
-        from installer.inspection import _runtime_workspace_checks
-        checks = _runtime_workspace_checks(payload["workspace_state"])
-        conflict_check = next(c for c in checks if c.check_id == "workspace_runtime_state_conflict")
-        for evidence_line in conflict_check.evidence:
-            self.assertNotRegex(evidence_line, r"^run_stage_handoff_mismatch")
-            self.assertIn("disagree about the current checkpoint", evidence_line)
 
 
 def _run_script(entrypoint, argv: list[str]) -> str:

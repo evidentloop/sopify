@@ -16,7 +16,7 @@ jobs:
       - name: Check version consistency
         run: bash scripts/check-version-consistency.sh
 
-  runtime-tests:
+  protocol-tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -33,7 +33,7 @@ jobs:
         run: |
           tmp="$(mktemp)"
           python3 scripts/generate-builtin-catalog.py --output "$tmp" >/dev/null
-          python3 - runtime/builtin_catalog.generated.json "$tmp" <<'PY'
+          python3 - skills/catalog/builtin_catalog.generated.json "$tmp" <<'PY'
           import difflib
           import json
           from pathlib import Path
@@ -53,24 +53,32 @@ jobs:
               raise SystemExit(1)
           PY
 
-      - name: Check context checkpoints
-        run: python3 scripts/check-context-checkpoints.py repo --root .
-
-      - name: Run hard gate tests (contract + smoke + distribution)
+      - name: Run hard gate tests (protocol + smoke + distribution)
         run: |
           pip install --quiet pytest
-          python3 -m pytest tests -m "not implementation_mirror" -v
+          python3 -m pytest \
+            tests/protocol/test_convention_compliance.py \
+            tests/test_check_readme_links.py \
+            tests/test_distribution.py \
+            tests/test_golden_snapshots.py \
+            tests/test_release_hooks.py \
+            tests/test_sopify_init_smoke.py \
+            -v
 
-      - name: Run implementation-mirror tests (advisory)
-        if: always()
-        continue-on-error: true
-        run: python3 -m pytest tests -m "implementation_mirror" -v
+      - name: Run protocol smoke — new-plan
+        run: python3 scripts/sopify_protocol_check.py check --scenario new-plan --fixture tests/fixtures/minimal_plan
 
-      - name: Run runtime smoke check
-        run: bash scripts/check-bundle-smoke.sh
+      - name: Run protocol smoke — continuation
+        run: python3 scripts/sopify_protocol_check.py check --scenario continuation --fixture tests/fixtures/minimal_plan
+
+      - name: Run protocol smoke — continuation (clarification pending)
+        run: python3 scripts/sopify_protocol_check.py check --scenario continuation --fixture tests/fixtures/clarification_pending
+
+      - name: Run protocol smoke — continuation (decision pending)
+        run: python3 scripts/sopify_protocol_check.py check --scenario continuation --fixture tests/fixtures/decision_pending
+
+      - name: Run protocol smoke — finalize
+        run: python3 scripts/sopify_protocol_check.py check --scenario finalize --fixture tests/fixtures/minimal_plan
 
       - name: Run install/payload bootstrap smoke
         run: python3 scripts/check-install-payload-bundle-smoke.py
-
-      - name: Run prompt runtime gate smoke
-        run: python3 scripts/check-prompt-runtime-gate-smoke.py

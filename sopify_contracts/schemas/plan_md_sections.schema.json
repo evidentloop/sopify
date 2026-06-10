@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sopify.dev/schemas/plan_md_sections.schema.json",
+  "title": "Plan.md Required Sections",
+  "description": "Defines the required structure of plan.md: optional visible Plan Snapshot backed by internal plan_snapshot fields (default continuation read window for LLM when present, not a directory index, state file, or authoritative audit fact) + 8 required sections in fixed order. Validation uses prefixItems for positional matching — each section must appear at its exact position.",
+  "type": "object",
+  "required": ["sections"],
+  "additionalProperties": false,
+  "properties": {
+    "plan_snapshot": {
+      "type": "object",
+      "description": "Optional schema abstraction of the visible Plan Snapshot block at the top of plan.md. Not an independent carrier, not machine truth, and does not override plan.md body or receipts. Host reads this by default when present; falls back to full plan.md when missing or conflicting.",
+      "required": ["goal", "status", "next", "task"],
+      "additionalProperties": false,
+      "properties": {
+        "goal": {
+          "type": "string",
+          "description": "1-2 line summary of the current goal",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "description": "Current plan status",
+          "enum": ["pending", "in_progress", "done", "blocked"]
+        },
+        "next": {
+          "type": "string",
+          "description": "Next immediate action to take",
+          "minLength": 1
+        },
+        "task": {
+          "type": "string",
+          "description": "Current wave/task pointer, e.g. 'W1.1 Freeze 5 Must-Freeze Schemas'",
+          "minLength": 1
+        }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "description": "The 8 required sections of plan.md, in fixed order. Validated via prefixItems — each position must match its expected section name.",
+      "prefixItems": [
+        {
+          "type": "object",
+          "required": ["name", "content"],
+          "additionalProperties": false,
+          "properties": {
+            "name": { "const": "Context / Why" },
+            "content": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["name", "content"],
+          "additionalProperties": false,
+          "properties": {
+            "name": { "const": "Scope" },
+            "content": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["name", "content"],
+          "additionalProperties": false,
+          "properties": {
+            "name": { "const": "Approach" },
+            "content": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["name", "content"],
+          "additionalProperties": false,
+          "properties": {
+            "name": { "const": "Waves / Steps" },
+            "content": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["name", "content"],
+          "additionalProperties": false,
+          "properties": {
+            "name": { "const": "Key Decisions" },
+            "content": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["name", "content"],
+          "additionalProperties": false,
+          "properties": {
+            "name": { "const": "Constraints / Not-in-scope" },
+            "content": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["name", "content"],
+          "additionalProperties": false,
+          "properties": {
+            "name": { "const": "Status / Progress" },
+            "content": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["name", "content"],
+          "additionalProperties": false,
+          "properties": {
+            "name": { "const": "Next" },
+            "content": { "type": "string", "minLength": 1 }
+          }
+        }
+      ],
+      "minItems": 8,
+      "maxItems": 8
+    }
+  }
+}

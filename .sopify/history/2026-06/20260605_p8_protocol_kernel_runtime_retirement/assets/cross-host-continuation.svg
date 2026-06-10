@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 800" font-family="'Comic Sans MS', 'Segoe Print', 'Kaiti SC', 'PingFang SC', cursive">
+  <defs>
+    <filter id="sketchy" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="5" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.2"/>
+    </filter>
+    <filter id="sketchy-light" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="2" seed="9" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.4"/>
+    </filter>
+    <marker id="arrow-step" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto">
+      <path d="M 0 1 L 10 6 L 0 11 z" fill="#2563eb" stroke="#1e40af" stroke-width="0.6"/>
+    </marker>
+    <marker id="arrow-write" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto">
+      <path d="M 0 1 L 10 6 L 0 11 z" fill="#059669" stroke="#065f46" stroke-width="0.6"/>
+    </marker>
+    <marker id="arrow-cross" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto">
+      <path d="M 0 1 L 10 6 L 0 11 z" fill="#7c3aed" stroke="#5b21b6" stroke-width="0.6"/>
+    </marker>
+  </defs>
+
+  <rect width="1280" height="800" fill="#fdf6e3"/>
+
+  <text x="640" y="42" text-anchor="middle" font-size="24" font-weight="bold" fill="#1f2937">
+    图 2 · Host 接续流程与跨宿主场景
+  </text>
+  <text x="640" y="66" text-anchor="middle" font-size="13" fill="#6b7280" font-style="italic">
+    4 步入口读顺序（语义优先）· handoff 单态 · 跨宿主接续
+  </text>
+
+  <!-- ================================================== -->
+  <!-- ROW 1: Host 入口 4 步读顺序 (top) -->
+  <!-- ================================================== -->
+  <g transform="translate(40,94)">
+    <rect x="0" y="0" width="1200" height="260" rx="10" fill="#eff6ff" stroke="#1e40af" stroke-width="1.4" stroke-dasharray="6,4" filter="url(#sketchy-light)"/>
+    <text x="20" y="24" font-size="14" font-weight="bold" fill="#1e3a8a">① Host 入口 · 4 步读顺序（语义优先于缓存）</text>
+    <text x="20" y="42" font-size="10" fill="#1e40af" font-style="italic">先建语义真相（plan.md），再读恢复提示（current_handoff）— 避免 handoff 反过来变成第二真相源</text>
+
+    <!-- Step 1 -->
+    <g transform="translate(30,64)">
+      <circle cx="20" cy="20" r="18" fill="#bfdbfe" stroke="#1e40af" stroke-width="2" filter="url(#sketchy-light)"/>
+      <text x="20" y="26" text-anchor="middle" font-size="16" font-weight="bold" fill="#1e3a8a">1</text>
+      <rect x="48" y="0" width="210" height="72" rx="8" fill="#ffffff" stroke="#1e40af" stroke-width="1.4" filter="url(#sketchy-light)"/>
+      <text x="153" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e3a8a" font-family="Menlo, monospace">state/active_plan.json</text>
+      <text x="153" y="36" text-anchor="middle" font-size="10" fill="#6b7280" font-style="italic">定位当前 plan_id</text>
+      <text x="153" y="52" text-anchor="middle" font-size="9" fill="#3b82f6">无 → consult / new-plan</text>
+      <text x="153" y="66" text-anchor="middle" font-size="9" fill="#1e3a8a" font-weight="bold">bootstrapping 锚</text>
+    </g>
+
+    <!-- Step 2 (semantic truth; emphasized) -->
+    <g transform="translate(298,64)">
+      <circle cx="20" cy="20" r="18" fill="#dbeafe" stroke="#1e3a8a" stroke-width="2.6" filter="url(#sketchy-light)"/>
+      <text x="20" y="26" text-anchor="middle" font-size="16" font-weight="bold" fill="#1e3a8a">2</text>
+      <rect x="48" y="0" width="238" height="72" rx="8" fill="#dbeafe" stroke="#1e3a8a" stroke-width="2.4" filter="url(#sketchy-light)"/>
+      <text x="167" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e3a8a" font-family="Menlo, monospace">plan/&lt;id&gt;/plan.md ★</text>
+      <text x="167" y="36" text-anchor="middle" font-size="10" fill="#1e40af" font-style="italic">语义入口：做什么 + 进度</text>
+      <text x="167" y="52" text-anchor="middle" font-size="9" fill="#1e3a8a" font-weight="bold">真相源（承担 background 职责）</text>
+      <text x="167" y="66" text-anchor="middle" font-size="9" fill="#1e3a8a">8 必备章节</text>
+    </g>
+
+    <!-- Step 3 -->
+    <g transform="translate(600,64)">
+      <circle cx="20" cy="20" r="18" fill="#fef3c7" stroke="#b45309" stroke-width="2" filter="url(#sketchy-light)"/>
+      <text x="20" y="26" text-anchor="middle" font-size="16" font-weight="bold" fill="#78350f">3</text>
+      <rect x="48" y="0" width="248" height="72" rx="8" fill="#ffffff" stroke="#b45309" stroke-width="1.4" filter="url(#sketchy-light)"/>
+      <text x="172" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#78350f" font-family="Menlo, monospace">state/current_handoff.json</text>
+      <text x="172" y="36" text-anchor="middle" font-size="10" fill="#6b7280" font-style="italic">恢复提示 + 是否等用户</text>
+      <text x="172" y="52" text-anchor="middle" font-size="9" fill="#b45309">required_host_action 表达最小动作集</text>
+      <text x="172" y="66" text-anchor="middle" font-size="9" fill="#78350f">continue_host_develop / answer_questions / confirm_decision / ...</text>
+    </g>
+
+    <!-- Step 4 -->
+    <g transform="translate(908,64)">
+      <circle cx="20" cy="20" r="18" fill="#dcfce7" stroke="#166534" stroke-width="2" filter="url(#sketchy-light)"/>
+      <text x="20" y="26" text-anchor="middle" font-size="16" font-weight="bold" fill="#14532d">4</text>
+      <rect x="48" y="0" width="220" height="72" rx="8" fill="#ffffff" stroke="#166534" stroke-width="1.4" filter="url(#sketchy-light)"/>
+      <text x="158" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#14532d" font-family="Menlo, monospace">plan/&lt;id&gt;/receipts/</text>
+      <text x="158" y="36" text-anchor="middle" font-size="10" fill="#6b7280" font-style="italic">按 timestamp 取最新</text>
+      <text x="158" y="52" text-anchor="middle" font-size="9" fill="#15803d">知道"哪些被验证过"</text>
+      <text x="158" y="66" text-anchor="middle" font-size="9" fill="#14532d" font-weight="bold">过程审计资产（条件必备）</text>
+    </g>
+
+    <!-- Arrows between steps -->
+    <path d="M 288 100 L 298 100" stroke="#2563eb" stroke-width="2" fill="none" marker-end="url(#arrow-step)"/>
+    <path d="M 584 100 L 600 100" stroke="#2563eb" stroke-width="2" fill="none" marker-end="url(#arrow-step)"/>
+    <path d="M 896 100 L 908 100" stroke="#2563eb" stroke-width="2" fill="none" marker-end="url(#arrow-step)"/>
+
+    <!-- Summary callout -->
+    <rect x="30" y="158" width="1140" height="90" rx="8" fill="#fff7ed" stroke="#c2410c" stroke-width="1.2" stroke-dasharray="4,3" filter="url(#sketchy-light)"/>
+    <text x="50" y="180" font-size="12" font-weight="bold" fill="#9a3412">设计原则</text>
+    <text x="50" y="200" font-size="11" fill="#78350f">• <tspan font-weight="bold" fill="#1e3a8a">语义优先于缓存</tspan>：先读 plan.md 建立真相，再读 current_handoff 作恢复提示</text>
+    <text x="50" y="218" font-size="11" fill="#78350f">• <tspan font-weight="bold" fill="#b45309">required_host_action</tspan> 表达"AI 等人"（answer_questions / confirm_decision），不新增 pending_* 文件</text>
+    <text x="50" y="236" font-size="11" fill="#78350f">• <tspan font-weight="bold" fill="#14532d">receipts/ 条件必备</tspan>：managed plan 产生执行/验证事件时必写；finalize 时必有 final.json</text>
+
+    <text x="700" y="180" font-size="12" font-weight="bold" fill="#9a3412">接续主键</text>
+    <text x="700" y="200" font-size="11" fill="#78350f">• <tspan font-weight="bold" fill="#1e3a8a">plan_id</tspan> = 工作单元身份（跨宿主接续主键）</text>
+    <text x="700" y="218" font-size="11" fill="#78350f">• <tspan font-weight="bold" fill="#6b7280">session_id</tspan> = 仅 provenance 审计（不参与接续定位）</text>
+    <text x="700" y="236" font-size="11" fill="#78350f">• handoff / receipt 的 provenance 字段才出现 session_id</text>
+  </g>
+
+  <!-- ================================================== -->
+  <!-- ROW 2: Handoff 单态 (middle) -->
+  <!-- ================================================== -->
+  <g transform="translate(40,378)">
+    <rect x="0" y="0" width="1200" height="170" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="1.4" stroke-dasharray="6,4" filter="url(#sketchy-light)"/>
+    <text x="20" y="24" font-size="14" font-weight="bold" fill="#78350f">② Handoff 单态 · 只在 state/ · 不新造 plan/&lt;id&gt;/handoff.json</text>
+    <text x="20" y="42" font-size="10" fill="#92400e" font-style="italic">current_handoff.json 是 live continuation state；最后交接事实体现在 receipts/final.json + history/receipt.md</text>
+
+    <!-- Single handoff state (emphasized) -->
+    <g transform="translate(60,70)">
+      <rect width="380" height="80" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="2.2" filter="url(#sketchy)"/>
+      <rect width="380" height="28" rx="10" fill="#fde68a" stroke="#b45309" stroke-width="2.2" filter="url(#sketchy)"/>
+      <text x="190" y="20" text-anchor="middle" font-size="13" font-weight="bold" fill="#78350f">state/current_handoff.json  (唯一 handoff 文件)</text>
+      <text x="190" y="48" text-anchor="middle" font-size="11" fill="#92400e" font-style="italic">gitignored · 每次 turn 重写</text>
+      <text x="190" y="66" text-anchor="middle" font-size="10" fill="#78350f">live continuation state + required_host_action</text>
+    </g>
+
+    <!-- "最后交接事实体现在" arrow -->
+    <path d="M 440 110 C 500 110, 520 110, 560 110"
+          stroke="#059669" stroke-width="2.2" fill="none"
+          marker-end="url(#arrow-write)" filter="url(#sketchy-light)"/>
+    <text x="500" y="100" text-anchor="middle" font-size="10" font-weight="bold" fill="#065f46">finalize 时体现</text>
+
+    <!-- receipts/final.json -->
+    <g transform="translate(560,70)">
+      <rect width="280" height="80" rx="10" fill="#dcfce7" stroke="#166534" stroke-width="1.8" filter="url(#sketchy)"/>
+      <rect width="280" height="28" rx="10" fill="#bbf7d0" stroke="#166534" stroke-width="1.8" filter="url(#sketchy)"/>
+      <text x="140" y="20" text-anchor="middle" font-size="12" font-weight="bold" fill="#14532d">plan/&lt;id&gt;/receipts/final.json</text>
+      <text x="140" y="48" text-anchor="middle" font-size="10" fill="#166534" font-style="italic">finalize 凭证</text>
+      <text x="140" y="66" text-anchor="middle" font-size="9" fill="#15803d">verdict / evidence / provenance</text>
+    </g>
+
+    <path d="M 840 110 C 880 110, 900 110, 920 110"
+          stroke="#059669" stroke-width="2.2" fill="none"
+          marker-end="url(#arrow-write)" filter="url(#sketchy-light)"/>
+    <text x="880" y="100" text-anchor="middle" font-size="10" font-weight="bold" fill="#065f46">整包搬入</text>
+
+    <!-- history/receipt.md -->
+    <g transform="translate(920,70)">
+      <rect width="240" height="80" rx="10" fill="#dcfce7" stroke="#166534" stroke-width="2.2" filter="url(#sketchy)"/>
+      <rect width="240" height="28" rx="10" fill="#bbf7d0" stroke="#166534" stroke-width="2.2" filter="url(#sketchy)"/>
+      <text x="120" y="20" text-anchor="middle" font-size="12" font-weight="bold" fill="#14532d">history/&lt;id&gt;/receipt.md ★</text>
+      <text x="120" y="48" text-anchor="middle" font-size="10" fill="#166534" font-style="italic">最终可审计收据</text>
+      <text x="120" y="66" text-anchor="middle" font-size="9" fill="#15803d">outcome / summary / key_decisions</text>
+    </g>
+  </g>
+
+  <!-- ================================================== -->
+  <!-- ROW 3: 跨宿主接续场景 (bottom) -->
+  <!-- ================================================== -->
+  <g transform="translate(40,572)">
+    <rect x="0" y="0" width="1200" height="170" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.4" stroke-dasharray="6,4" filter="url(#sketchy-light)"/>
+    <text x="20" y="24" font-size="14" font-weight="bold" fill="#5b21b6">③ 跨宿主接续场景 · 核心差异化能力</text>
+    <text x="20" y="42" font-size="10" fill="#7c3aed" font-style="italic">plan_id 是身份 · session_id 仅作 provenance · host 换工具不丢进度</text>
+
+    <!-- Host A (Codex) -->
+    <g transform="translate(40,60)">
+      <rect width="280" height="90" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.8" filter="url(#sketchy)"/>
+      <rect width="280" height="26" rx="10" fill="#c4b5fd" stroke="#7c3aed" stroke-width="1.8" filter="url(#sketchy)"/>
+      <text x="140" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="#5b21b6">Host A · Codex · session s1</text>
+      <text x="140" y="44" text-anchor="middle" font-size="10" fill="#5b21b6" font-style="italic">执行 task 3/5</text>
+      <text x="140" y="60" text-anchor="middle" font-size="10" fill="#5b21b6">写 receipts/exec_003.json</text>
+      <text x="140" y="76" text-anchor="middle" font-size="10" fill="#5b21b6" font-weight="bold">写 state/current_handoff.json</text>
+    </g>
+
+    <!-- Protocol files (middle) -->
+    <g transform="translate(420,60)">
+      <rect width="300" height="90" rx="10" fill="#ffffff" stroke="#6b7280" stroke-width="1.8" filter="url(#sketchy)"/>
+      <rect width="300" height="26" rx="10" fill="#f3f4f6" stroke="#6b7280" stroke-width="1.8" filter="url(#sketchy)"/>
+      <text x="150" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="#374151">.sopify/ 协议文件</text>
+      <text x="150" y="44" text-anchor="middle" font-size="10" fill="#374151" font-family="Menlo, monospace">state/active_plan.json</text>
+      <text x="150" y="60" text-anchor="middle" font-size="10" fill="#374151" font-family="Menlo, monospace">plan/&lt;plan_id&gt;/plan.md</text>
+      <text x="150" y="76" text-anchor="middle" font-size="10" fill="#374151" font-family="Menlo, monospace">state/current_handoff.json + receipts/</text>
+    </g>
+
+    <!-- Host B (Qoder) -->
+    <g transform="translate(820,60)">
+      <rect width="340" height="90" rx="10" fill="#fce7f3" stroke="#be185d" stroke-width="1.8" filter="url(#sketchy)"/>
+      <rect width="340" height="26" rx="10" fill="#fbcfe8" stroke="#be185d" stroke-width="1.8" filter="url(#sketchy)"/>
+      <text x="170" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="#831843">Host B · Qoder · session s2 (新)</text>
+      <text x="170" y="44" text-anchor="middle" font-size="10" fill="#831843" font-style="italic">按 4 步读顺序：</text>
+      <text x="170" y="60" text-anchor="middle" font-size="10" fill="#831843">1. active_plan → 2. plan.md →</text>
+      <text x="170" y="76" text-anchor="middle" font-size="10" fill="#831843">3. current_handoff → 4. receipts → 继续 task 4</text>
+    </g>
+
+    <!-- Cross-host arrows -->
+    <path d="M 320 105 C 360 105, 400 105, 420 105"
+          stroke="#7c3aed" stroke-width="2.4" fill="none"
+          marker-end="url(#arrow-cross)" filter="url(#sketchy-light)"/>
+    <text x="370" y="96" text-anchor="middle" font-size="10" font-weight="bold" fill="#5b21b6">写 handoff</text>
+
+    <path d="M 720 105 C 760 105, 800 105, 820 105"
+          stroke="#be185d" stroke-width="2.4" fill="none"
+          marker-end="url(#arrow-cross)" filter="url(#sketchy-light)"/>
+    <text x="770" y="96" text-anchor="middle" font-size="10" font-weight="bold" fill="#831843">读 handoff</text>
+  </g>
+
+  <!-- ================================================== -->
+  <!-- ROW 4: Host 写回路径（小条） -->
+  <!-- ================================================== -->
+  <g transform="translate(40,756)">
+    <rect x="0" y="0" width="1200" height="32" rx="8" fill="#dcfce7" stroke="#166534" stroke-width="1.2" filter="url(#sketchy-light)"/>
+    <text x="20" y="14" font-size="11" font-weight="bold" fill="#14532d">④ Host 原生执行后写回</text>
+    <text x="180" y="14" font-size="10" fill="#166534" font-style="italic">• plan.md 进度   • plan/&lt;id&gt;/receipts/exec_NNN.json   • state/current_handoff.json（每 turn）   • current_handoff.required_host_action（如有分叉）</text>
+    <text x="980" y="14" font-size="11" font-weight="bold" fill="#14532d">finalize 时：</text>
+    <text x="1080" y="14" font-size="10" fill="#166534" font-style="italic">整包搬入 history/ + 生成 receipt.md</text>
+  </g>
+
+  <text x="640" y="796" text-anchor="middle" font-size="10" fill="#6b7280" font-style="italic">
+    P8 Protocol Kernel &amp; Runtime Retirement · host 入口读顺序 + handoff 单态 + 跨宿主接续
+  </text>
+</svg>

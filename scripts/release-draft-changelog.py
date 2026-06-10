@@ -27,10 +27,10 @@ SECTION_DEFINITIONS = (
     ("Changed", "Updated project files"),
 )
 
-# .sopify-skills/ paths that ARE eligible for changelog (plan package attribution)
+# .sopify/ paths that ARE eligible for changelog (plan package attribution)
 _SOPIFY_WHITELIST_PREFIXES = (
-    ".sopify-skills/plan/",
-    ".sopify-skills/history/",
+    ".sopify/plan/",
+    ".sopify/history/",
 )
 
 # Paths to always exclude from changelog (noise)
@@ -38,9 +38,9 @@ _ALWAYS_EXCLUDE = {
     "CHANGELOG.md",
 }
 
-# Pattern to extract plan_id from whitelisted .sopify-skills/ paths
+# Pattern to extract plan_id from whitelisted .sopify/ paths
 _PLAN_ID_RE = re.compile(
-    r"^\.sopify-skills/(?:plan|history/\d{4}-\d{2})/(\d{8}_[^/]+)/"
+    r"^\.sopify/(?:plan|history/\d{4}-\d{2})/(\d{8}_[^/]+)/"
 )
 
 
@@ -222,7 +222,7 @@ def include_in_changelog(path: str) -> bool:
     normalized = path.strip().replace("\\", "/")
     if normalized in _ALWAYS_EXCLUDE:
         return False
-    if normalized.startswith(".sopify-skills/"):
+    if normalized.startswith(".sopify/"):
         # Only plan package paths (matching YYYYMMDD_slug pattern) are eligible
         return bool(_PLAN_ID_RE.match(normalized))
     return True
@@ -232,7 +232,7 @@ def _detect_plan_lifecycle(plan_id: str, path: str, root: Path) -> str:
     """Detect lifecycle state of a plan package: archived / active / unknown."""
     if "/history/" in path:
         return "archived"
-    plan_dir = root / ".sopify-skills" / "plan" / plan_id
+    plan_dir = root / ".sopify" / "plan" / plan_id
     if plan_dir.is_dir():
         for candidate in ("tasks.md", "plan.md"):
             meta_file = plan_dir / candidate
@@ -263,7 +263,7 @@ def classify_path(path: str) -> str:
 
 
 def _extract_plan_packages(files: list[str], root: Path) -> dict[str, dict]:
-    """Extract plan package info from whitelisted .sopify-skills/ paths."""
+    """Extract plan package info from whitelisted .sopify/ paths."""
     packages: dict[str, dict] = {}
     for path in files:
         m = _PLAN_ID_RE.match(path)
@@ -281,7 +281,7 @@ def render_draft(changed_files: list[str], root: Path) -> str:
 
     non_plan_files = [
         f for f in changed_files
-        if not f.startswith(".sopify-skills/")
+        if not f.startswith(".sopify/")
     ]
 
     grouped: dict[str, list[str]] = {title: [] for title, _ in SECTION_DEFINITIONS}

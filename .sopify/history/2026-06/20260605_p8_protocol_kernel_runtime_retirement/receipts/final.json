@@ -1,0 +1,47 @@
+{
+  "evidence": {
+    "outcome": "completed",
+    "scope": {
+      "runtime_deleted": "46 files / ~15.6K LOC (W2.10)",
+      "canonical_root_rename": ".sopify-skills → .sopify (W3.4, ~481 replacements)",
+      "state_model": "6 files → 2 files (active_plan + current_handoff)",
+      "qoder_host_proof": "PROTOCOL_VERIFIED, 3-session end-to-end transcript (W3.1-W3.3)",
+      "docs_narrative": "README/how-sopify-works/architecture SVG fully aligned to post-P8 (W3.5)",
+      "blueprint_sync": "design.md/protocol.md/ADR-013/ADR-017/tasks.md all updated (W3.6)"
+    },
+    "key_decisions": [
+      "Runtime physically deleted; protocol kernel is sole truth source",
+      "Canonical root fixed to .sopify; plan.directory config removed",
+      "State model: 2 files only (active_plan.json + current_handoff.json)",
+      "Qoder = PROTOCOL_VERIFIED (home-scope hybrid, bare target via default_language)",
+      "Product positioning: development process protocol layer (用户层/产品层/能力层/架构层)",
+      "Protocol prose cleanup deferred to explicit future task in blueprint/tasks.md"
+    ],
+    "verification_commands": [
+      "pytest tests/ -q → 181 passed, 26 subtests passed",
+      "sopify_protocol_check check --scenario new-plan → PASS",
+      "sopify_protocol_check check --scenario continuation → PASS",
+      "sopify_protocol_check check --scenario finalize → PASS"
+    ],
+    "deleted_surfaces": [
+      "runtime/ (46 files, ~15.6K LOC)",
+      "plan/_registry.yaml + registry code",
+      "state/current_run.json, current_plan.json, current_clarification.json, current_decision.json, current_gate_receipt.json, current_archive_receipt.json, last_route.json, sessions/",
+      "ExecutionAuthorizationReceipt (EAR)",
+      "scripts/check-context-checkpoints.py + tests/test_context_checkpoints.py",
+      "plan.directory configurable root"
+    ],
+    "follow_ups": [
+      "Protocol prose cleanup (post-P8 active wording normalization) — recorded in blueprint/tasks.md",
+      "Copilot Workspace Protocol Uplift (W4.0) — recorded as P8 Extension Candidate"
+    ]
+  },
+  "provenance": {
+    "plan_id": "20260605_p8_protocol_kernel_runtime_retirement",
+    "receipt_id": "final",
+    "session_id": "p8-finalize",
+    "host": "qoder"
+  },
+  "timestamp": "2026-06-10T10:24:59+00:00",
+  "verdict": "finalized"
+}

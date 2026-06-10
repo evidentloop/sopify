@@ -49,4 +49,4 @@ The script returns JSON with total score, threshold result, and missing dimensio
 ## Boundaries
 
 - This skill does not generate a plan package directly; hand off to `design`.
-- This skill does not execute code changes directly; hand off to `develop` or runtime routing.
+- This skill does not execute code changes directly; hand off to `develop`.

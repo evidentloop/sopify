@@ -32,19 +32,16 @@ from installer.models import InstallError
 from installer.outcome_contract import annotate_outcome_payload
 from installer.payload import (
     _REQUIRED_BUNDLE_CAPABILITIES,
-    _install_versioned_runtime_bundle,
+    _install_versioned_payload_bundle,
     _payload_is_current,
     install_global_payload,
 )
 from installer.validate import (
-    validate_bundle_install,
     validate_host_install,
     validate_payload_manifests,
     validate_workspace_bundle_manifest,
     validate_workspace_stub_manifest,
 )
-from runtime.engine import run_runtime
-from runtime.output import render_runtime_output
 from scripts.install_sopify import run_install
 
 
@@ -228,11 +225,9 @@ class PayloadInstallTests(unittest.TestCase):
             self.assertEqual(result.root, payload_root)
             payload_manifest = json.loads((payload_root / "payload-manifest.json").read_text(encoding="utf-8"))
             bundle_root = payload_root / "bundles" / payload_manifest["active_version"]
-            self.assertTrue((bundle_root / "scripts" / "runtime_gate.py").exists())
+            self.assertTrue((bundle_root / "sopify_contracts" / "__init__.py").exists())
             self.assertEqual(payload_manifest["bundle_manifest"], f"bundles/{payload_manifest['active_version']}/manifest.json")
             self.assertEqual(payload_manifest["dependency_model"]["mode"], "stdlib_only")
-            self.assertTrue(payload_manifest["minimum_workspace_manifest"]["required_capabilities"]["runtime_gate"])
-            self.assertTrue(payload_manifest["minimum_workspace_manifest"]["required_capabilities"]["runtime_entry_guard"])
 
     def test_ensure_workspace_instruction_resources_repairs_missing_manifest(self) -> None:
         """full.md present but manifest.json missing → ensure repairs manifest."""
@@ -297,7 +292,7 @@ class PayloadInstallTests(unittest.TestCase):
             )
             self.assertFalse(result)
 
-    def test_install_versioned_runtime_bundle_rejects_invalid_manifest_bundle_version_before_rename(self) -> None:
+    def test_install_versioned_payload_bundle_rejects_invalid_manifest_bundle_version_before_rename(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             host_root = Path(temp_dir)
             bundle_root = host_root / "sopify" / "bundles" / "2026-02-13"
@@ -310,9 +305,9 @@ class PayloadInstallTests(unittest.TestCase):
                 },
             )
 
-            with patch("installer.payload.sync_runtime_bundle", return_value=bundle_root):
+            with patch("installer.payload.sync_payload_bundle", return_value=bundle_root):
                 with self.assertRaisesRegex(InstallError, "bundle_version"):
-                    _install_versioned_runtime_bundle(
+                    _install_versioned_payload_bundle(
                         repo_root=REPO_ROOT,
                         host_root=host_root,
                         desired_bundle_version="2026-02-13",
@@ -321,24 +316,24 @@ class PayloadInstallTests(unittest.TestCase):
             self.assertTrue(bundle_root.exists())
             self.assertFalse((host_root / "sopify" / "escape").exists())
 
-    def test_install_versioned_runtime_bundle_rejects_invalid_desired_bundle_version_before_sync(self) -> None:
+    def test_install_versioned_payload_bundle_rejects_invalid_desired_bundle_version_before_sync(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             host_root = Path(temp_dir)
 
-            with patch("installer.payload.sync_runtime_bundle") as sync_runtime_bundle:
+            with patch("installer.payload.sync_payload_bundle") as sync_payload_bundle:
                 with self.assertRaisesRegex(InstallError, "bundle_version"):
-                    _install_versioned_runtime_bundle(
+                    _install_versioned_payload_bundle(
                         repo_root=REPO_ROOT,
                         host_root=host_root,
                         desired_bundle_version="../escape",
                     )
 
-            sync_runtime_bundle.assert_not_called()
+            sync_payload_bundle.assert_not_called()
 
 
 class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
     def _write_workspace_marker(self, workspace_root: Path, payload: dict[str, object]) -> Path:
-        marker_root = workspace_root / ".sopify-skills"
+        marker_root = workspace_root / ".sopify"
         marker_root.mkdir(parents=True, exist_ok=True)
         marker_path = marker_root / "sopify.json"
         _write_json(marker_path, payload)
@@ -355,7 +350,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
                     "stub_version": "1",
                     "bundle_version": "2026-02-13",
                     "locator_mode": "global_first",
-                    "capabilities": ["runtime_gate"],
+                    "capabilities": [],
                     "ignore_mode": "noop",
                     "written_by_host": True,
                 },
@@ -371,8 +366,6 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
             )
 
             for relative_path in _REQUIRED_BUNDLE_FILES:
-                if relative_path == Path("runtime") / "gate.py":
-                    continue
                 path = bundle_root / relative_path
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("", encoding="utf-8")
@@ -411,7 +404,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
                     "stub_version": "1",
                     "bundle_version": "2026-02-13",
                     "locator_mode": "global_first",
-                    "capabilities": ["runtime_gate"],
+                    "capabilities": [],
                     "ignore_mode": "noop",
                     "written_by_host": True,
                 },
@@ -460,7 +453,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
                     "stub_version": "1",
                     "bundle_version": "2026-02-13",
                     "locator_mode": "global_first",
-                    "capabilities": ["runtime_gate"],
+                    "capabilities": [],
                     "ignore_mode": "noop",
                     "written_by_host": True,
                 },
@@ -507,7 +500,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
                     "stub_version": "1",
                     "bundle_version": "2026-02-13",
                     "locator_mode": "global_only",
-                    "capabilities": ["runtime_gate"],
+                    "capabilities": [],
                     "ignore_mode": "noop",
                     "written_by_host": True,
                 },
@@ -549,7 +542,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
                     "stub_version": "1",
                     "bundle_version": "2026-02-13",
                     "locator_mode": "global_first",
-                    "capabilities": ["runtime_gate"],
+                    "capabilities": [],
                     "ignore_mode": "noop",
                     "written_by_host": True,
                 },
@@ -601,26 +594,10 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
         self.assertNotIn("stale", msg.lower())
         self.assertIn("missing", msg.lower())
 
-    def test_validate_bundle_install_requires_runtime_bridge_modules(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            bundle_root = Path(temp_dir) / "bundle-root"
-            bundle_root.mkdir(parents=True, exist_ok=True)
-
-            for relative_path in _REQUIRED_BUNDLE_FILES:
-                path = bundle_root / relative_path
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_text("", encoding="utf-8")
-
-            missing_runtime_module = bundle_root / "runtime" / "gate.py"
-            missing_runtime_module.unlink()
-
-            with self.assertRaisesRegex(Exception, "gate.py"):
-                validate_bundle_install(bundle_root)
-
     def test_validate_workspace_bundle_manifest_only_requires_marker_object(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
-            marker_root = workspace_root / ".sopify-skills"
+            marker_root = workspace_root / ".sopify"
             marker_root.mkdir(parents=True, exist_ok=True)
             manifest_path = marker_root / "sopify.json"
             _write_json(
@@ -628,7 +605,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
                 {
                     "schema_version": "1",
                     "bundle_version": "2026-02-13",
-                    "capabilities": ["runtime_gate"],
+                    "capabilities": [],
                 },
             )
 
@@ -639,7 +616,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
     def test_validate_workspace_stub_manifest_applies_defaults(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
-            marker_root = workspace_root / ".sopify-skills"
+            marker_root = workspace_root / ".sopify"
             marker_root.mkdir(parents=True, exist_ok=True)
             manifest_path = marker_root / "sopify.json"
             _write_json(
@@ -647,14 +624,14 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
                 {
                     "schema_version": "1",
                     "bundle_version": "2026-02-13",
-                    "capabilities": ["runtime_gate"],
+                    "capabilities": [],
                 },
             )
 
             resolved_path, manifest = validate_workspace_stub_manifest(marker_root)
             self.assertEqual(resolved_path, manifest_path)
             self.assertEqual(manifest["locator_mode"], "global_first")
-            self.assertEqual(manifest["required_capabilities"], ["runtime_gate"])
+            self.assertEqual(manifest["required_capabilities"], [])
             self.assertEqual(manifest["ignore_mode"], "noop")
 
     def test_write_workspace_stub_overlay_writes_frozen_stub_fields(self) -> None:
@@ -674,11 +651,11 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
 
             _write_workspace_stub_overlay(bundle_root=bundle_root, workspace_root=workspace_root)
 
-            marker = json.loads((workspace_root / ".sopify-skills" / "sopify.json").read_text(encoding="utf-8"))
+            marker = json.loads((workspace_root / ".sopify" / "sopify.json").read_text(encoding="utf-8"))
             self.assertEqual(marker["schema_version"], "1")
             self.assertEqual(marker["stub_version"], "1")
             self.assertEqual(marker["bundle_version"], "2026-02-13")
-            self.assertEqual(marker["capabilities"], ["runtime_gate"])
+            self.assertEqual(marker["capabilities"], [])
             self.assertEqual(marker["locator_mode"], "global_first")
             self.assertEqual(marker["ignore_mode"], "noop")
             self.assertTrue(marker["written_by_host"])
@@ -698,11 +675,11 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
                 },
             )
 
-            marker = json.loads((workspace_root / ".sopify-skills" / "sopify.json").read_text(encoding="utf-8"))
+            marker = json.loads((workspace_root / ".sopify" / "sopify.json").read_text(encoding="utf-8"))
             self.assertEqual(marker["schema_version"], "1")
             self.assertEqual(marker["stub_version"], "1")
             self.assertEqual(marker["bundle_version"], "2026-02-13")
-            self.assertEqual(marker["capabilities"], ["runtime_gate"])
+            self.assertEqual(marker["capabilities"], [])
             self.assertEqual(marker["locator_mode"], "global_first")
             self.assertEqual(marker["ignore_mode"], "noop")
             self.assertTrue(marker["written_by_host"])
@@ -720,12 +697,12 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
                     "schema_version": "1",
                     "bundle_version": "2026-02-13",
                     "capabilities": dict(_REQUIRED_BUNDLE_CAPABILITIES),
-                    "default_entry": "scripts/sopify_runtime.py",
-                    "limits": {"runtime_gate_entry": "scripts/runtime_gate.py"},
+                    "directory_assets": ["sopify_contracts", "sopify_writer"],
+                    "catalog_path": "catalog/builtin_catalog.generated.json",
                 },
             )
 
-            marker = json.loads((workspace_root / ".sopify-skills" / "sopify.json").read_text(encoding="utf-8"))
+            marker = json.loads((workspace_root / ".sopify" / "sopify.json").read_text(encoding="utf-8"))
             self.assertEqual(
                 set(marker.keys()),
                 {
@@ -743,7 +720,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
     def test_validate_workspace_stub_manifest_rejects_invalid_bundle_version(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
-            marker_root = workspace_root / ".sopify-skills"
+            marker_root = workspace_root / ".sopify"
             marker_root.mkdir(parents=True, exist_ok=True)
             manifest_path = marker_root / "sopify.json"
             _write_json(
@@ -752,7 +729,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
                     "schema_version": "1",
                     "bundle_version": "latest",
                     "locator_mode": "global_first",
-                    "capabilities": ["runtime_gate"],
+                    "capabilities": [],
                 },
             )
 
@@ -762,7 +739,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
     def test_validate_workspace_stub_manifest_treats_null_bundle_version_as_host_delegated(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
-            marker_root = workspace_root / ".sopify-skills"
+            marker_root = workspace_root / ".sopify"
             marker_root.mkdir(parents=True, exist_ok=True)
             manifest_path = marker_root / "sopify.json"
             _write_json(
@@ -771,7 +748,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
                     "schema_version": "1",
                     "stub_version": "1",
                     "bundle_version": None,
-                    "capabilities": ["runtime_gate"],
+                    "capabilities": [],
                 },
             )
 
@@ -782,7 +759,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
     def test_validate_workspace_stub_manifest_rejects_empty_string_bundle_version(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
-            marker_root = workspace_root / ".sopify-skills"
+            marker_root = workspace_root / ".sopify"
             marker_root.mkdir(parents=True, exist_ok=True)
             manifest_path = marker_root / "sopify.json"
             _write_json(
@@ -791,7 +768,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
                     "schema_version": "1",
                     "stub_version": "1",
                     "bundle_version": "",
-                    "capabilities": ["runtime_gate"],
+                    "capabilities": [],
                 },
             )
 
@@ -801,7 +778,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
     def test_validate_workspace_stub_manifest_rejects_missing_schema_version(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
-            marker_root = workspace_root / ".sopify-skills"
+            marker_root = workspace_root / ".sopify"
             marker_root.mkdir(parents=True, exist_ok=True)
             manifest_path = marker_root / "sopify.json"
             _write_json(
@@ -809,7 +786,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
                 {
                     "stub_version": "1",
                     "bundle_version": "2026-02-13",
-                    "capabilities": ["runtime_gate"],
+                    "capabilities": [],
                 },
             )
 
@@ -834,19 +811,19 @@ class WorkspaceBootstrapIgnorePolicyTests(unittest.TestCase):
             result = _run_installed_bootstrap_helper(
                 helper_path=helper_path,
                 workspace_root=workspace_root,
-                request="~go plan 补 runtime gate 骨架",
+                request="~go plan 补 protocol 骨架",
             )
 
             self.assertEqual(result["action"], "bootstrapped")
             self.assertEqual(result["reason_code"], "STUB_SELECTED")
             self.assertEqual(result["ignore_mode"], "exclude")
             self.assertEqual(Path(result["ignore_target"]).resolve(), exclude_path.resolve())
-            manifest = json.loads((workspace_root / ".sopify-skills" / "sopify.json").read_text(encoding="utf-8"))
+            manifest = json.loads((workspace_root / ".sopify" / "sopify.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["ignore_mode"], "exclude")
             exclude_content = exclude_path.read_text(encoding="utf-8")
             self.assertIn("user-entry\n", exclude_content)
             self.assertIn("# BEGIN sopify-managed", exclude_content)
-            self.assertIn(".sopify-skills/state/", exclude_content)
+            self.assertIn(".sopify/state/", exclude_content)
             self.assertFalse((workspace_root / ".gitignore").exists())
 
     def test_installed_helper_keeps_commit_lock_sticky_until_explicit_go_init_switches_back(self) -> None:
@@ -882,7 +859,7 @@ class WorkspaceBootstrapIgnorePolicyTests(unittest.TestCase):
 
             self.assertEqual(sticky["action"], "skipped")
             self.assertEqual(sticky["ignore_mode"], "gitignore")
-            manifest = json.loads((workspace_root / ".sopify-skills" / "sopify.json").read_text(encoding="utf-8"))
+            manifest = json.loads((workspace_root / ".sopify" / "sopify.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["ignore_mode"], "gitignore")
             self.assertIn("# BEGIN sopify-managed", gitignore_path.read_text(encoding="utf-8"))
 
@@ -895,7 +872,7 @@ class WorkspaceBootstrapIgnorePolicyTests(unittest.TestCase):
             self.assertEqual(switched["action"], "updated")
             self.assertEqual(switched["ignore_mode"], "exclude")
             self.assertEqual(Path(switched["ignore_target"]).resolve(), exclude_path.resolve())
-            manifest = json.loads((workspace_root / ".sopify-skills" / "sopify.json").read_text(encoding="utf-8"))
+            manifest = json.loads((workspace_root / ".sopify" / "sopify.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["ignore_mode"], "exclude")
             self.assertFalse(gitignore_path.exists())
             self.assertIn("# BEGIN sopify-managed", exclude_path.read_text(encoding="utf-8"))
@@ -1134,18 +1111,6 @@ class HostPromptContractTests(unittest.TestCase):
         self.assertTrue(lines[-1].startswith(next_prefix), msg=content)
         self._assert_no_footer_time_labels(content)
 
-    def _assert_rendered_footer_contract(
-        self,
-        rendered: str,
-        *,
-        next_prefix: str,
-    ) -> None:
-        lines = rendered.rstrip().splitlines()
-        self.assertGreaterEqual(len(lines), 2)
-        self.assertEqual(lines[-2], "", msg=rendered)
-        self.assertTrue(lines[-1].startswith(next_prefix), msg=rendered)
-        self._assert_no_footer_time_labels(rendered)
-
     def _assert_installed_footer_contract(
         self,
         *,
@@ -1153,7 +1118,6 @@ class HostPromptContractTests(unittest.TestCase):
         language_directory: str,
         next_template_line: str,
         footer_contract_line: str,
-        runtime_language: str,
     ) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             home_root = Path(temp_dir)
@@ -1189,20 +1153,6 @@ class HostPromptContractTests(unittest.TestCase):
                     next_prefix="Next:",
                 )
 
-            workspace = home_root / "workspace"
-            result = run_runtime("~go plan 补 runtime 骨架", workspace_root=workspace, user_home=home_root / "runtime-home")
-            rendered = render_runtime_output(
-                result,
-                brand="demo-ai",
-                language=runtime_language,
-                title_color="none",
-                use_color=False,
-            )
-            self._assert_rendered_footer_contract(
-                rendered,
-                next_prefix="Next:",
-            )
-
     def test_codex_cn_prompt_install_keeps_workspace_preflight_contract(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             home_root = Path(temp_dir)
@@ -1216,29 +1166,20 @@ class HostPromptContractTests(unittest.TestCase):
             validate_host_install(CODEX_ADAPTER, home_root=home_root)
 
             prompt = (home_root / ".codex" / "AGENTS.md").read_text(encoding="utf-8")
-            # Gate-first obligation (§8.1)
-            self.assertIn("runtime gate", prompt)
-            self.assertIn("protocol.md §8.1", prompt)
-            self.assertIn("allowed_response_mode", prompt)
-            # Handoff-first obligation (§8.2)
-            self.assertIn("current_handoff.json", prompt)
-            self.assertIn("protocol.md §8.2", prompt)
-            self.assertIn("required_host_action", prompt)
-            # No self-routing / no truth-writing (§8.3)
-            self.assertIn("protocol.md §8.3", prompt)
-            # Host Integration Contract ref (§8)
+            # Protocol entry contract (§8)
             self.assertIn("protocol.md §8", prompt)
-            # Runtime helper index ref (§8.4–8.5)
-            self.assertIn("protocol.md §8.4", prompt)
+            # 4-step protocol entry order
+            self.assertIn("active_plan.json", prompt)
+            self.assertIn("current_handoff.json", prompt)
+            # Writer boundary
+            self.assertIn("sopify_writer", prompt)
 
     def test_codex_cn_installed_prompt_assets_keep_footer_contract(self) -> None:
-        # Footer contract aligned: replay reference removed from source and assertion.
         self._assert_installed_footer_contract(
             adapter=CODEX_ADAPTER,
             language_directory="CN",
             next_template_line="Next: {下一步提示}",
             footer_contract_line="- footer 不展示生成时间；若需要机器可审计时间戳，内部摘要文件可继续使用 ISO 8601（可带时区）。",
-            runtime_language="zh-CN",
         )
 
     def test_claude_en_prompt_install_keeps_workspace_preflight_contract(self) -> None:
@@ -1254,29 +1195,20 @@ class HostPromptContractTests(unittest.TestCase):
             validate_host_install(CLAUDE_ADAPTER, home_root=home_root)
 
             prompt = (home_root / ".claude" / "CLAUDE.md").read_text(encoding="utf-8")
-            # Gate-first obligation (§8.1)
-            self.assertIn("runtime gate", prompt)
-            self.assertIn("protocol.md §8.1", prompt)
-            self.assertIn("allowed_response_mode", prompt)
-            # Handoff-first obligation (§8.2)
-            self.assertIn("current_handoff.json", prompt)
-            self.assertIn("protocol.md §8.2", prompt)
-            self.assertIn("required_host_action", prompt)
-            # No self-routing / no truth-writing (§8.3)
-            self.assertIn("protocol.md §8.3", prompt)
-            # Host Integration Contract ref (§8)
+            # Protocol entry contract (§8)
             self.assertIn("protocol.md §8", prompt)
-            # Runtime helper index ref (§8.4–8.5)
-            self.assertIn("protocol.md §8.4", prompt)
+            # 4-step protocol entry order
+            self.assertIn("active_plan.json", prompt)
+            self.assertIn("current_handoff.json", prompt)
+            # Writer boundary
+            self.assertIn("sopify_writer", prompt)
 
     def test_claude_en_installed_prompt_assets_keep_footer_contract(self) -> None:
-        # Footer contract aligned: replay reference removed from source and assertion.
         self._assert_installed_footer_contract(
             adapter=CLAUDE_ADAPTER,
             language_directory="EN",
             next_template_line="Next: {Next step hint}",
             footer_contract_line="- the footer does not display generated time; if a machine-auditable timestamp is needed, internal summary files may keep ISO 8601 timestamps with timezone data.",
-            runtime_language="en-US",
         )
 
 

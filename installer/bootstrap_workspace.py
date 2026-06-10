@@ -96,27 +96,23 @@ PAYLOAD_MANIFEST_FILENAME = "payload-manifest.json"
 _REQUIRED_BUNDLE_FILES = (
     Path("manifest.json"),
     Path("sopify_contracts") / "__init__.py",
-    Path("canonical_writer") / "__init__.py",
-    Path("runtime") / "__init__.py",
-    Path("runtime") / "gate.py",
-    Path("scripts") / "sopify_runtime.py",
-    Path("scripts") / "runtime_gate.py",
+    Path("sopify_writer") / "__init__.py",
+    Path("catalog") / "builtin_catalog.generated.json",
 )
 _IGNORE_PATTERNS = shutil.ignore_patterns(".DS_Store", "Thumbs.db", "__pycache__")
 _VERSION_TOKEN_RE = re.compile(r"[0-9]+|[A-Za-z]+")
 _EXACT_BUNDLE_VERSION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 _PRERELEASE_RANK = {"dev": -4, "alpha": -3, "beta": -2, "rc": -1}
-_WORKSPACE_STUB_REQUIRED_CAPABILITIES = ("runtime_gate",)
+_WORKSPACE_STUB_REQUIRED_CAPABILITIES: tuple[str, ...] = ()
 _WORKSPACE_STUB_LOCATOR_MODES = {"global_first", "global_only"}
 _WORKSPACE_STUB_IGNORE_MODES = {"exclude", "gitignore", "noop"}
-_SOPIFY_SKILLS_DIR = ".sopify-skills"
+_SOPIFY_DIR = ".sopify"
 _SOPIFY_JSON_FILENAME = "sopify.json"
 _SOPIFY_MANAGED_IGNORE_BEGIN = "# BEGIN sopify-managed"
 _SOPIFY_MANAGED_IGNORE_END = "# END sopify-managed"
 _SOPIFY_MANAGED_IGNORE_ENTRIES = (
-    ".sopify-runtime/",
-    ".sopify-skills/state/",
-    ".sopify-skills/plan/_registry.yaml",
+    ".sopify-payload/",
+    ".sopify/state/",
 )
 _SOPIFY_INSTRUCTION_BLOCK_BEGIN = "<!-- BEGIN SOPIFY MANAGED BLOCK -->"
 _SOPIFY_INSTRUCTION_BLOCK_END = "<!-- END SOPIFY MANAGED BLOCK -->"
@@ -133,7 +129,7 @@ DIAGNOSTIC_INVALID_ANCESTOR_MARKER = "INVALID_ANCESTOR_MARKER"
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Bootstrap a workspace-local Sopify runtime bundle.")
+    parser = argparse.ArgumentParser(description="Bootstrap a workspace-local Sopify payload bundle.")
     parser.add_argument("--workspace-root", required=True, help="Target project root that should receive Sopify workspace metadata.")
     parser.add_argument("--activation-root", default=None, help="Optional explicit activation root override.")
     parser.add_argument("--request", default="", help="Raw user request routed through host ingress.")
@@ -169,7 +165,7 @@ def main(argv: list[str] | None = None) -> int:
                     "state": "INCOMPATIBLE",
                     "reason_code": "UNEXPECTED_ERROR",
                     "workspace_root": str(Path(args.workspace_root).expanduser().resolve()),
-                    "bundle_root": str(Path(args.workspace_root).expanduser().resolve() / ".sopify-runtime"),
+                    "bundle_root": str(Path(args.workspace_root).expanduser().resolve() / ".sopify-payload"),
                     "from_version": None,
                     "to_version": None,
                     "message": str(exc),
@@ -209,9 +205,9 @@ def bootstrap_workspace(
     if not payload_manifest:
         raise ValueError(f"Missing or invalid payload manifest: {payload_manifest_path}")
 
-    target_bundle_dir = str(payload_manifest.get("default_bundle_dir") or ".sopify-runtime")
+    target_bundle_dir = str(payload_manifest.get("default_bundle_dir") or ".sopify-payload")
     bundle_root = resolved_activation_root / target_bundle_dir
-    current_manifest_path = resolved_activation_root / _SOPIFY_SKILLS_DIR / _SOPIFY_JSON_FILENAME
+    current_manifest_path = resolved_activation_root / _SOPIFY_DIR / _SOPIFY_JSON_FILENAME
     current_manifest = _read_json(current_manifest_path) if current_manifest_path.is_file() else {}
     (
         selected_bundle_root,
@@ -577,7 +573,7 @@ def _resolve_activation_root(
         return (explicit_activation_root, "explicit_root", "")
 
     for ancestor in workspace_root.parents:
-        new_marker = ancestor / _SOPIFY_SKILLS_DIR / _SOPIFY_JSON_FILENAME
+        new_marker = ancestor / _SOPIFY_DIR / _SOPIFY_JSON_FILENAME
         if new_marker.is_file() and _marker_has_minimum_validity(new_marker):
             return (ancestor, "ancestor_marker", "")
 
@@ -792,7 +788,7 @@ def _stale_stub_diagnostic(
             f"but the active version is {active_version} "
             f"(payload_root: {payload_root}). "
             f"The workspace stub is stale. "
-            f"Reinstall for this workspace or update .sopify-skills/sopify.json."
+            f"Reinstall for this workspace or update .sopify/sopify.json."
         )
     return f"Selected global bundle is missing: {bundle_manifest_path} (payload_root: {payload_root})"
 
@@ -890,16 +886,15 @@ def _coerce_workspace_bundle_version(value: Any) -> str | None:
 
 def _normalize_required_capabilities(value: Any) -> list[str]:
     if value in (None, ""):
-        return list(_WORKSPACE_STUB_REQUIRED_CAPABILITIES)
+        return []
     if not isinstance(value, (list, tuple)):
         raise ValueError("Workspace stub contract is invalid: required_capabilities.")
     normalized: list[str] = []
     for item in value:
         capability = str(item or "").strip()
-        if capability not in _WORKSPACE_STUB_REQUIRED_CAPABILITIES or capability in normalized:
-            raise ValueError("Workspace stub contract is invalid: required_capabilities.")
-        normalized.append(capability)
-    return normalized or list(_WORKSPACE_STUB_REQUIRED_CAPABILITIES)
+        if capability and capability not in normalized:
+            normalized.append(capability)
+    return normalized
 
 
 def _normalize_ignore_mode(value: Any, *, workspace_root: Path) -> str:
@@ -941,7 +936,7 @@ def _write_workspace_stub_overlay(
     bundle_manifest: dict[str, Any] | None = None,
     ignore_mode: str | None = None,
 ) -> None:
-    sopify_json_dir = workspace_root / _SOPIFY_SKILLS_DIR
+    sopify_json_dir = workspace_root / _SOPIFY_DIR
     sopify_json_path = sopify_json_dir / _SOPIFY_JSON_FILENAME
     source_payload = _read_json(sopify_json_path)
     if not source_payload:
@@ -954,7 +949,7 @@ def _write_workspace_stub_overlay(
     sopify_json_payload = {
         "schema_version": str(source_payload.get("schema_version") or "1"),
         "stub_version": "1",
-        "workspace_kind": "deep" if (workspace_root / _SOPIFY_SKILLS_DIR / "blueprint").is_dir() else "external",
+        "workspace_kind": "deep" if (workspace_root / _SOPIFY_DIR / "blueprint").is_dir() else "external",
         "bundle_version": _string_or_none(source_payload.get("bundle_version")),
         "locator_mode": "global_first",
         "capabilities": list(_WORKSPACE_STUB_REQUIRED_CAPABILITIES),
@@ -1378,7 +1373,7 @@ def _result_evidence(
         evidence.append(f"ignore_mode={ignore_mode}")
         ignore_target = _resolve_ignore_target(workspace_root=workspace_root, ignore_mode=ignore_mode)
         if ignore_target is not None:
-            evidence.append(f"manual_disable=remove .sopify-skills/sopify.json and the sopify-managed block from {ignore_target}")
+            evidence.append(f"manual_disable=remove .sopify/sopify.json and the sopify-managed block from {ignore_target}")
     return evidence
 
 
