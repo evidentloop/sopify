@@ -1,13 +1,13 @@
 ---
 title: P8 Protocol Kernel & Runtime Retirement — Tasks
 plan_id: 20260605_p8_protocol_kernel_runtime_retirement
-status: pending
+status: in_progress (W1 ✅ / W2 ✅ / Phase 0 ✅ / W3 next)
 created: 2026-06-05
 ---
 
 # Tasks
 
-> 三波次严格串行：W1 contract baseline → W2 physical cutover → W3 host proof/docs。
+> 严格串行：W1 contract baseline → W2 physical cutover → Phase 0 pre-flight cleanup → W3 host proof/docs。
 > 状态标记：`[ ]` 待办 / `[~]` 进行中 / `[x]` 完成 / `[-]` 阻塞 / `[·]` 取消
 > 每个切片必须闭合：Depends / Input / Output / Verify 均明确后才执行。
 
@@ -409,39 +409,114 @@ created: 2026-06-05
 
 ## Wave 3 — Qoder Host Proof + Narrative Cutover
 
-目标：用 Qoder proof 证明 Sopify 是协议内核，不是 runtime 工作流系统。
+目标：用 Qoder CLI proof 证明 Sopify 是协议内核，不是 runtime 工作流系统。
 
-### W3.1 Build Qoder Payload Adapter
+### Phase 0 — Pre-flight Cleanup（W3 前置）
 
-- [ ] Depends: W2 gate
-- [ ] Input: existing payload host patterns, Copilot payload-capable adapter
-- [ ] Output: `installer/hosts/qoder/` or equivalent payload target
-- [ ] Output: Qoder prompt asset consumes Host Protocol Entry Contract
-- [ ] Output: Qoder prompt asset includes 4-step continuation instructions
-- [ ] Output: install path through `install.sh --target qoder`
+> 在 Qoder proof 之前，先清理与 P8 2-file model 和 runtime 退场相矛盾的残留。不做这一步，proof 期间一直带着自相矛盾的 state / script 残留。
+
+### P0.1 Purge Stale State Files
+
+- [x] Depends: W2 gate
+- [x] Input: `.sopify-skills/state/`（当前 5 个 legacy 文件 + sessions/ 目录）
+- [x] Output: delete `state/current_decision.json` / `current_gate_receipt.json` / `current_run.json` / `last_route.json`
+- [x] Output: delete `state/sessions/`（整个目录）
+- [x] Verify: legacy state files 已清退（当前实例只剩 `current_handoff.json`，`active_plan.json` 待后续 managed plan 创建时生成）
+
+### P0.2 Delete check-context-checkpoints.py
+
+- [x] Depends: P0.1
+- [x] Input: `scripts/check-context-checkpoints.py`（整体无效：Plan A tasks 不存在，CHECKPOINT_FILE_REQUIREMENTS 引用已删除 runtime 文件）
+- [x] Output: delete `scripts/check-context-checkpoints.py`
+- [x] Verify: script does not exist
+
+### P0.3 Delete test_context_checkpoints.py
+
+- [x] Depends: P0.2
+- [x] Input: `tests/test_context_checkpoints.py`（仅测上述死脚本）
+- [x] Output: delete `tests/test_context_checkpoints.py`
+- [x] Verify: `rg "check.context.checkpoints\|plan.a.risk.adaptive" tests/` returns no active imports or references
+
+### P0.4 Atomic Removal of Checkpoint Governance Chain
+
+- [x] Depends: P0.2, P0.3
+- [x] Input: `.githooks/commit-msg` (~line 84), `.github/workflows/ci.yml` (~line 57), `scripts/release-preflight.sh` (~line 71), `tests/test_release_hooks.py`, `CONTRIBUTING.md:136`, `CONTRIBUTING_CN.md:137`
+- [x] Output: remove check-context-checkpoints invocation from `.githooks/commit-msg`
+- [x] Output: remove check-context-checkpoints step from `.github/workflows/ci.yml`
+- [x] Output: remove check-context-checkpoints step from `scripts/release-preflight.sh`
+- [x] Output: update `tests/test_release_hooks.py` to remove assertions about checkpoint governance
+- [x] Output: remove Plan A Context-Checkpoint line from `CONTRIBUTING.md`
+- [x] Output: remove Plan A Context-Checkpoint line from `CONTRIBUTING_CN.md`
+- [x] Verify: `rg "check.context.checkpoints\|context.checkpoints\|plan.a.risk.adaptive\|Context-Checkpoint" .githooks .github scripts tests CONTRIBUTING.md CONTRIBUTING_CN.md` returns no active references
+
+### P0.5 Rewrite project.md Runtime Section
+
+- [x] Depends: P0.1
+- [x] Input: `.sopify-skills/project.md` lines 27-35（§Runtime 实现与测试约定：runtime/models.py facade / runtime/_models/ / runtime_test_support.py / .sopify-runtime smoke 全部不存在）
+- [x] Output: rewrite §Runtime 实现与测试约定 → §Protocol Kernel 实现与测试约定
+- [x] Output: 新约定反映 sopify_writer / sopify_contracts / installer 为活跃模块
+- [x] Output: 测试命令更新为 `python3 -m pytest tests -v`（无 runtime 依赖）
+- [x] Verify: `project.md` 无 `runtime/models.py` / `runtime/_models/` / `runtime_test_support.py` / `.sopify-runtime` 引用
+
+### P0.6 Clear pytest Cache
+
+- [x] Depends: P0.3
+- [x] Input: `.pytest_cache/v/cache/lastfailed` + `.pytest_cache/v/cache/nodeids`（引用已删除测试文件）
+- [x] Output: delete `.pytest_cache/` 或 clear stale entries
+- [x] Verify: pytest cache does not reference deleted test files
+
+### Phase 0 Gate
+
+- [x] Depends: P0.1-P0.6
+- [x] Verify: legacy state files 已清退（当前实例只剩 `current_handoff.json`，`active_plan.json` 待后续 managed plan 创建时生成）
+- [x] Verify: `rg "check.context.checkpoints\|plan.a.risk.adaptive\|runtime/models\|runtime_test_support" . -g '!**/__pycache__/**' -g '!**/history/**'` returns no active references（方案包文档内部历史描述除外）
+- [x] Verify: `pytest tests/ -q` → 180 passed / 0 failed
+- [ ] Note: 用户文档旧 state 结构图（`docs/how-sopify-works*.md`）待 W3.5 收口，不阻断 W3.1
+- [x] Stop: Phase 0 gate must pass before W3.1 starts — **PASSED**
+
+---
+
+### W3.1 Build Qoder PROTOCOL_VERIFIED Adapter
+
+- [ ] Depends: Phase 0 gate
+- [ ] Input: existing Codex/Claude PROTOCOL_VERIFIED host patterns (`installer/hosts/codex.py`, `installer/hosts/claude.py`), Copilot workspace-scope adapter (`installer/hosts/copilot.py`)
+- [ ] Output: `installer/hosts/qoder.py`（home-scope hybrid adapter：`destination_dirname=".qoder"`, `header_filename="AGENTS.md"`, `config_dir="~/.qoder"`）
+- [ ] Output: Qoder 注册进 `installer/hosts/__init__.py`（`QODER_HOST` + `QODER_ADAPTER`）
+- [ ] Output: `HostCapability` 声明 `SupportTier.PROTOCOL_VERIFIED` + 5 verified_features（PROMPT_INSTALL, PAYLOAD_INSTALL, WORKSPACE_BOOTSTRAP, HANDOFF_FIRST, HOST_BRIDGE）+ CONTINUATION/INTERACTION/AUDIT enhancements
+- [ ] Output: Qoder prompt asset 消费 Host Protocol Entry Contract（request admission + 4 步续接 + 读取预算 + sopify_writer 写回边界）
+- [ ] Output: prompt asset 明确 consult / quick_fix **不**自动接续 active plan
+- [ ] Output: `install.sh --target qoder` 安装路径
 - [ ] Verify: adapter does not import runtime
 - [ ] Verify: adapter does not depend on `_registry.yaml`
-- [ ] Verify: `.qoder/` repo wiki config is not treated as Sopify state
-- [ ] Verify: Qoder prompt asset does not ask LLM to run `runtime_gate.py`
+- [ ] Verify: `.qoder/settings.local.json` / `.qoder/rules/` 不被当作 Sopify state
+- [ ] Verify: prompt asset does not instruct LLM to run `runtime_gate.py` or always auto-continue active plan
+- [ ] Verify: `install.sh --target qoder:zh-CN` does not error
 
-### W3.2 Qoder Continuation Writer Path
+### W3.2 Qoder Continuation Writer Path（Installed Payload Proof）
 
 - [ ] Depends: W3.1
-- [ ] Input: sopify_writer 2-file model
-- [ ] Output: Qoder can write `state/current_handoff.json`
-- [ ] Output: Qoder can write `plan/<id>/receipts/exec_NNN.json` / `verify_NNN.json`
-- [ ] Output: Qoder uses sopify_writer library/API; no writer CLI unless host limitation forces a thin wrapper
+- [ ] Input: sopify_writer 2-file model + installed payload at `~/.qoder/sopify/`
+- [ ] Output: Qoder 通过 installed payload 路径（非 repo-local sys.path）调 sopify_writer 写 `state/active_plan.json`
+- [ ] Output: Qoder 写 `state/current_handoff.json`
+- [ ] Output: Qoder 写 `plan/<id>/receipts/exec_NNN.json` / `verify_NNN.json`
+- [ ] Output: finalize 能清 state 并产出 `receipts/final.json` + `history/<id>/receipt.md`
+- [ ] Output: 如 installed payload 路径调不通，记录 thin wrapper 为已知限制（wrapper 只透传 writer 写入，不做路由或执行）
+- [ ] Verify: 不依赖 repo-local `sys.path.insert` 或 PYTHONPATH hack
 - [ ] Verify: Qoder new session reads `active_plan → plan.md → current_handoff → receipts`
 - [ ] Verify: same fixture can be resumed without runtime process
 
 ### W3.3 End-to-End Proof Transcript
 
 - [ ] Depends: W3.2
-- [ ] Input: fixture repo
-- [ ] Output: transcript showing session A writes handoff/receipt
-- [ ] Output: transcript showing session B resumes from files
-- [ ] Verify: transcript includes active_plan plan_id, plan.md Plan Snapshot or full-plan fallback, plan/task decision context, handoff required_host_action, latest receipt
+- [ ] Input: fixture repo with installed Qoder payload
+- [ ] Output: transcript showing session A creates or continues active plan
+- [ ] Output: transcript showing session A writes handoff + at least 1 receipt
+- [ ] Output: transcript showing session B resumes from files via 4-step read chain only
+- [ ] Output: transcript showing session B continues and writes new receipt
+- [ ] Verify: transcript includes active_plan plan_id, plan.md Plan Snapshot or full-plan fallback, handoff required_host_action, latest receipt
 - [ ] Verify: no command invokes runtime
+- [ ] Verify: consult / quick_fix requests in transcript do NOT trigger 4-step continuation
+- [ ] Verify: no `_registry.yaml` read, no retired runtime file read
 
 ### W3.5 Docs Narrative Cutover
 
@@ -450,6 +525,7 @@ created: 2026-06-05
 - [ ] Output: main narrative becomes "host executes; Sopify preserves auditable AI development assets through protocol, file assets, sopify_writer, receipts"
 - [ ] Output: docs describe the post-P8 product stack as protocol kernel + default workflow + skills/host adapters
 - [ ] Output: docs clarify runtime retirement does not retire analyze/design/develop/kb/templates workflow or development skills; those layers consume protocol assets and write through sopify_writer
+- [ ] Output: docs describe Qoder as PROTOCOL_VERIFIED full-capability host (home-scope hybrid), with same 5-point capability criteria as Codex/Claude
 - [ ] Output: architecture diagrams reflect 2 state files + plan/history/receipts
 - [ ] Output: remove runtime gate first language
 - [ ] Output: remove `_registry.yaml` from user-facing docs
@@ -488,11 +564,14 @@ created: 2026-06-05
 
 ### Wave 3 Gate
 
-- [ ] Depends: W3.1-W3.6
-- [ ] Verify: Qoder consumes active_plan to locate plan
-- [ ] Verify: Qoder reads plan.md to understand progress
-- [ ] Verify: Qoder writes handoff + receipts that another session can consume
-- [ ] Verify: whole chain has no runtime process
+- [ ] Depends: W3.1-W3.3, W3.5-W3.6
+- [ ] Verify: Qoder prompt 完成 request admission（consult / quick_fix 不自动接续 active plan）
+- [ ] Verify: Qoder 按 4 步读链恢复上下文（active_plan → plan.md → current_handoff → receipts）
+- [ ] Verify: Qoder 通过 sopify_writer（installed payload 路径）写 handoff + receipts
+- [ ] Verify: Qoder 新 session 仅通过 4 步读链恢复并继续写新 receipt（跨 session proof）
+- [ ] Verify: Qoder 能继续 Sopify 默认工作流（analyze / design / develop / finalize）
+- [ ] Verify: 整条链路不依赖 runtime 进程
+- [ ] Verify: installed payload 路径验证通过（不依赖 repo-local sys.path hack）
 
 ---
 

@@ -81,10 +81,5 @@ if [[ -f "$STATE_FILE" ]]; then
   upsert_trailer "$MESSAGE_FILE" "Release-Date" "$RELEASE_DATE"
 fi
 
-CHECKPOINT_SCRIPT="$ROOT_DIR/scripts/check-context-checkpoints.py"
-if [[ -f "$CHECKPOINT_SCRIPT" ]]; then
-  python3 "$CHECKPOINT_SCRIPT" commit-msg --root "$ROOT_DIR" --message-file "$MESSAGE_FILE"
-fi
-
 trap - EXIT
 cleanup

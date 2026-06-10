@@ -135,7 +135,6 @@ def _init_release_hook_fixture(root: Path, *, inject_sync_failure: bool = False)
         "scripts/release-sync.sh",
         "scripts/release-draft-changelog.py",
         "scripts/release-preflight.sh",
-        "scripts/check-context-checkpoints.py",
         "scripts/sync-skills.sh",
         "scripts/check-version-consistency.sh",
         "scripts/render-host-skills.py",
@@ -234,60 +233,6 @@ class ReleaseHookTests(unittest.TestCase):
             message = message_file.read_text(encoding="utf-8")
             self.assertEqual(message.count("Co-authored-by: Claude <claude@anthropic.com>"), 1)
             self.assertEqual(message.count("Co-authored-by: ChatGPT <chatgpt@openai.com>"), 1)
-
-    def test_commit_msg_requires_context_checkpoint_for_plan_a_scoped_changes(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            _init_release_hook_fixture(root)
-
-            _write(root / "CONTRIBUTING.md", "# scope change\n")
-            _run_git(root, "add", "CONTRIBUTING.md", capture_output=False, text=False)
-
-            message_file = root / "COMMIT_EDITMSG"
-            _write(message_file, "feat: tighten scope guard\n")
-
-            completed = subprocess.run(
-                ["bash", str(root / ".githooks" / "commit-msg"), str(message_file)],
-                cwd=root,
-                capture_output=True,
-                text=True,
-                check=False,
-                env=_git_subprocess_env(),
-            )
-
-            self.assertNotEqual(completed.returncode, 0)
-            self.assertIn("Context-Checkpoint", completed.stderr)
-
-    def test_commit_msg_accepts_context_checkpoint_for_plan_a_scoped_changes(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            _init_release_hook_fixture(root)
-
-            _write(root / "sopify_contracts/core.py", "print('scope change')\n")
-            _run_git(root, "add", "sopify_contracts/core.py", capture_output=False, text=False)
-
-            message_file = root / "COMMIT_EDITMSG"
-            _write(
-                message_file,
-                textwrap.dedent(
-                    """\
-                    feat: tighten scope guard
-
-                    Context-Checkpoint: C
-                    """
-                ),
-            )
-
-            completed = subprocess.run(
-                ["bash", str(root / ".githooks" / "commit-msg"), str(message_file)],
-                cwd=root,
-                capture_output=True,
-                text=True,
-                check=False,
-                env=_git_subprocess_env(),
-            )
-
-            self.assertEqual(completed.returncode, 0, msg=completed.stderr)
 
     def test_release_draft_changelog_populates_empty_unreleased(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

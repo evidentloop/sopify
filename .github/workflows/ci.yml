@@ -53,16 +53,12 @@ jobs:
               raise SystemExit(1)
           PY
 
-      - name: Check context checkpoints
-        run: python3 scripts/check-context-checkpoints.py repo --root .
-
       - name: Run hard gate tests (protocol + smoke + distribution)
         run: |
           pip install --quiet pytest
           python3 -m pytest \
             tests/protocol/test_convention_compliance.py \
             tests/test_check_readme_links.py \
-            tests/test_context_checkpoints.py \
             tests/test_distribution.py \
             tests/test_golden_snapshots.py \
             tests/test_release_hooks.py \

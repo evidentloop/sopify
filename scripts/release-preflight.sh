@@ -68,11 +68,9 @@ else
   echo "[release-preflight] Check golden snapshots"
 fi
 run_step "Check builtin catalog drift" check_builtin_catalog_drift
-run_step "Check context checkpoints" python3 "$ROOT_DIR/scripts/check-context-checkpoints.py" repo --root "$ROOT_DIR"
 run_step "Run hard gate tests (protocol + smoke + distribution)" python3 -m pytest \
   "$ROOT_DIR/tests/protocol/test_convention_compliance.py" \
   "$ROOT_DIR/tests/test_check_readme_links.py" \
-  "$ROOT_DIR/tests/test_context_checkpoints.py" \
   "$ROOT_DIR/tests/test_distribution.py" \
   "$ROOT_DIR/tests/test_golden_snapshots.py" \
   "$ROOT_DIR/tests/test_release_hooks.py" \
