@@ -99,7 +99,7 @@
   <text x="24" y="306" font-size="13" font-family="Menlo,Monaco,monospace" class="tl6"><tspan fill="#586e75">[sopify-ai]</tspan><tspan fill="#93a1a1"> Design </tspan><tspan fill="#859900" font-weight="600">✓</tspan></text>
 
   <!-- Plan path + Tasks + Quality -->
-  <text x="24" y="336" font-size="13" font-family="Menlo,Monaco,monospace" class="tl7"><tspan fill="#586e75">Plan:    </tspan><tspan fill="#93a1a1">.sopify-skills/plan/20260530_copilot_trigger/</tspan></text>
+  <text x="24" y="336" font-size="13" font-family="Menlo,Monaco,monospace" class="tl7"><tspan fill="#586e75">Plan:    </tspan><tspan fill="#93a1a1">.sopify/plan/20260530_copilot_trigger/</tspan></text>
   <text x="24" y="358" font-size="13" font-family="Menlo,Monaco,monospace" class="tl8"><tspan fill="#586e75">Tasks:   </tspan><tspan fill="#b58900" font-weight="600">3</tspan><tspan fill="#586e75"> items</tspan></text>
   <text x="24" y="380" font-size="13" font-family="Menlo,Monaco,monospace" class="tl9"><tspan fill="#586e75">Quality: </tspan><tspan fill="#859900" font-weight="600">9/10</tspan><tspan fill="#586e75">  |  Readiness: </tspan><tspan fill="#859900" font-weight="600">8/10</tspan></text>
 

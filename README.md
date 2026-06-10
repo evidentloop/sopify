@@ -27,7 +27,7 @@ No new editor, no new CLI. Install into the host you already use — Codex, Clau
 
 - **Stop when unsure** — score every requirement; ask before assuming
 - **Resume from anywhere** — checkpoint-based; switch hosts, machines, or teammates without re-explaining
-- **Trace every decision** — plans, choices, and reviews persist in `.sopify-skills/`
+- **Trace every decision** — plans, choices, and reviews persist in `.sopify/`
 
 **What Sopify prevents:**
 
@@ -56,13 +56,13 @@ After install, use `~go` to start a managed workflow. See [Installation](#instal
 ## Why Sopify?
 
 **When requirements are unclear, it stops to plan first.**
-You say "add a caching layer." Sopify doesn't start coding — it plans first: analyze, design, split into tasks, then save to `.sopify-skills/plan/`. Only after you confirm the plan does it write code. Every line changed traces back to a decision.
+You say "add a caching layer." Sopify doesn't start coding — it plans first: analyze, design, split into tasks, then save to `.sopify/plan/`. Only after you confirm the plan does it write code. Every line changed traces back to a decision.
 
 **Your teammate picks up where you left off.**
 You start a feature in Codex, finish the design, and implement two of four tasks. Next week your teammate opens the same repo in Claude, types `~go`. Sopify reads the checkpoint and continues from task 3 — no handoff doc, no re-explaining context.
 
 **Every decision leaves a trace.**
-A month later, someone asks why the cache key includes the user ID. The answer is in `.sopify-skills/plan/` — the requirement that prompted the decision, the design that resolved it, the review that approved it.
+A month later, someone asks why the cache key includes the user ID. The answer is in `.sopify/plan/` — the requirement that prompted the decision, the design that resolved it, the review that approved it.
 
 ## Architecture
 
@@ -70,12 +70,12 @@ A month later, someone asks why the cache key includes the user ID. The answer i
 <img src="./assets/sopify-architecture.svg" width="760" alt="Sopify Architecture — 3-layer protocol" />
 </div>
 
-The LLM is only a proposal source. The Validator is the sole authorizer — every action is proposed, validated, and receipted before it touches your code. Knowledge persists in `.sopify-skills/`, accessible across sessions, hosts, and teammates.
+The LLM is only a proposal source. The Validator is the sole authorizer — every action is proposed, validated, and receipted before it touches your code. Knowledge persists in `.sopify/`, accessible across sessions, hosts, and teammates.
 
 How Sopify achieves stability and quality:
 
 - Workflow rules live outside model memory — hosts load the same Sopify rules, so switching between Claude, Codex, or Copilot does not reset the workflow
-- State persists to the repo — plans, decisions, and checkpoints live in `.sopify-skills/`, so the next session resumes from project state, not chat history
+- State persists to the repo — plans, decisions, and checkpoints live in `.sopify/`, so the next session resumes from project state, not chat history
 - Runtime checks gate execution — before code is written, Sopify verifies plan completeness, unresolved risks, and pending decisions; if something is missing, it stops and asks
 
 This isn't prompt-level advice — it's a deterministic gate. If the plan isn't complete, execution doesn't proceed.
@@ -134,11 +134,7 @@ workflow:
   mode: adaptive   # strict | adaptive | minimal
   require_score: 7
 
-plan:
-  directory: .sopify-skills
 ```
-
-`plan.directory` only affects newly created knowledge and plan directories.
 
 ## Directory Structure
 
@@ -149,7 +145,7 @@ sopify/
 ├── docs/                  # workflow guides and developer references
 ├── runtime/               # built-in runtime / skill packages
 ├── skills/                # prompt-layer source of truth
-├── .sopify-skills/        # project knowledge base
+├── .sopify/        # project knowledge base
 │   ├── blueprint/         # design baseline, reduction targets
 │   ├── plan/              # active plans
 │   └── history/           # archived plans

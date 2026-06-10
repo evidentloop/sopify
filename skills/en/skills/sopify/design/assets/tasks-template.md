@@ -1,6 +1,6 @@
 # Task List: {Feature Name}
 
-Directory: `.sopify-skills/plan/YYYYMMDD_{feature}/`
+Directory: `.sopify/plan/YYYYMMDD_{feature}/`
 
 ## 1. {Module Name}
 - [ ] 1.1 Implement {feature} in `{file path}`

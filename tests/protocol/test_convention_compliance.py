@@ -3,10 +3,10 @@
 
 Validates compliance items 1-5 from protocol.md §5 (Phase 1 scope).
 Item 6 (blueprint writeback) is deferred — Convention minimum does not require it.
-Each test uses tmp_path to construct a minimal .sopify-skills/ structure,
+Each test uses tmp_path to construct a minimal .sopify/ structure,
 ensuring no dependency on the runtime package.
 
-Ref: .sopify-skills/blueprint/protocol.md §5 — 协议合规检查清单
+Ref: .sopify/blueprint/protocol.md §5 — 协议合规检查清单
 """
 
 from __future__ import annotations
@@ -18,8 +18,8 @@ import pytest
 
 
 def _build_sopify_root(tmp_path: Path) -> Path:
-    """Create a minimal .sopify-skills/ directory skeleton."""
-    root = tmp_path / ".sopify-skills"
+    """Create a minimal .sopify/ directory skeleton."""
+    root = tmp_path / ".sopify"
     root.mkdir()
     return root
 
@@ -28,7 +28,7 @@ def _build_sopify_root(tmp_path: Path) -> Path:
 
 
 class TestProjectMdIdentification:
-    """§5 item 1: 能读取 .sopify-skills/project.md 并识别项目名"""
+    """§5 item 1: 能读取 .sopify/project.md 并识别项目名"""
 
     def test_project_md_with_title(self, tmp_path: Path) -> None:
         root = _build_sopify_root(tmp_path)

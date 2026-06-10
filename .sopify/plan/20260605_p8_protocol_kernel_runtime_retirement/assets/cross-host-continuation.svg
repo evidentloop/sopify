@@ -168,7 +168,7 @@
     <g transform="translate(420,60)">
       <rect width="300" height="90" rx="10" fill="#ffffff" stroke="#6b7280" stroke-width="1.8" filter="url(#sketchy)"/>
       <rect width="300" height="26" rx="10" fill="#f3f4f6" stroke="#6b7280" stroke-width="1.8" filter="url(#sketchy)"/>
-      <text x="150" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="#374151">.sopify-skills/ 协议文件</text>
+      <text x="150" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="#374151">.sopify/ 协议文件</text>
       <text x="150" y="44" text-anchor="middle" font-size="10" fill="#374151" font-family="Menlo, monospace">state/active_plan.json</text>
       <text x="150" y="60" text-anchor="middle" font-size="10" fill="#374151" font-family="Menlo, monospace">plan/&lt;plan_id&gt;/plan.md</text>
       <text x="150" y="76" text-anchor="middle" font-size="10" fill="#374151" font-family="Menlo, monospace">state/current_handoff.json + receipts/</text>

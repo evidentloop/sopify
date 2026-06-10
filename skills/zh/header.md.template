@@ -45,10 +45,8 @@ workflow.mode: adaptive
 workflow.require_score: 7
 workflow.learning.auto_capture: by_requirement
 plan.level: auto
-plan.directory: .sopify-skills
 ```
 
-说明：修改 `plan.directory` 只影响后续新生成的知识库/方案文件目录，默认不会自动迁移旧目录内容。
 说明：`title_color` 仅作用于输出标题行的轻量着色；若终端不支持颜色则自动回退为纯文本。
 说明：`workflow.learning.auto_capture` 仅控制是否主动记录；“回放/复盘/为什么这么做”意图识别始终开启。
 
@@ -128,11 +126,11 @@ Next: {下一步提示}
  | `~go plan` | 只规划不执行 |
  | `~go finalize` | 对当前 metadata-managed plan 执行收口归档 |
 
-说明：每次进入 Sopify 回合时，宿主先判断用户请求意图（consult / quick_fix / new_plan / continue_plan / finalize）。仅 managed plan / continuation / finalize 进入 4 步协议入口；consult / quick_fix 默认不自动接续 active_plan。详见 `.sopify-skills/blueprint/protocol.md §8`。
+说明：每次进入 Sopify 回合时，宿主先判断用户请求意图（consult / quick_fix / new_plan / continue_plan / finalize）。仅 managed plan / continuation / finalize 进入 4 步协议入口；consult / quick_fix 默认不自动接续 active_plan。详见 `.sopify/blueprint/protocol.md §8`。
 
 说明：managed plan / continuation / finalize 的 4 步入口顺序为 `state/active_plan.json` → `plan/<id>/plan.md` → `state/current_handoff.json` → `plan/<id>/receipts/`。先读 plan.md 建立语义真相，再读 handoff 作为恢复提示；handoff 不是第二真相源。有未完成 checkpoint 时必须先响应再继续。
 
-说明：宿主不得绕过 checkpoint 约束或直接写入 machine truth。协议状态写入（active_plan / current_handoff / receipts）统一走 `sopify_writer`。详见 `.sopify-skills/blueprint/protocol.md §8`：Host Protocol Entry Contract。
+说明：宿主不得绕过 checkpoint 约束或直接写入 machine truth。协议状态写入（active_plan / current_handoff / receipts）统一走 `sopify_writer`。详见 `.sopify/blueprint/protocol.md §8`：Host Protocol Entry Contract。
 
 ---
 
@@ -183,7 +181,7 @@ Next: {下一步提示}
 
 **目录结构：**
 ```
-.sopify-skills/
+.sopify/
 ├── blueprint/               # 项目级长期蓝图，默认进入版本管理
 │   ├── README.md            # 纯索引页，只保留状态/维护方式/当前目标/当前焦点/阅读入口
 │   ├── background.md
@@ -202,11 +200,11 @@ Next: {下一步提示}
 ### A6 | 生命周期管理
 
 ```yaml
-首次触发: 真实项目仓库至少创建 .sopify-skills/blueprint/README.md
-首次进入方案流: 补齐 .sopify-skills/blueprint/background.md / design.md / tasks.md
-方案创建: .sopify-skills/plan/YYYYMMDD_feature_name/
+首次触发: 真实项目仓库至少创建 .sopify/blueprint/README.md
+首次进入方案流: 补齐 .sopify/blueprint/background.md / design.md / tasks.md
+方案创建: .sopify/plan/YYYYMMDD_feature_name/
 任务收口: 刷新 blueprint README 托管区块，并在需要时更新深层 blueprint
-准备交付验证: 迁移至 .sopify-skills/history/YYYY-MM/ 并更新 index.md
+准备交付验证: 迁移至 .sopify/history/YYYY-MM/ 并更新 index.md
 ```
 
 ---
@@ -286,7 +284,7 @@ Next: 继续方案设计？(Y/n)
 ```
 [my-app-ai] 方案设计 ✓
 
-方案: .sopify-skills/plan/20260115_feature/
+方案: .sopify/plan/20260115_feature/
 概要: {一句话技术方案}
 任务: {N} 项
 方案质量: {X}/10
@@ -295,9 +293,9 @@ Next: 继续方案设计？(Y/n)
 
 ---
 Changes: 3 files
-  - .sopify-skills/plan/20260115_feature/background.md
-  - .sopify-skills/plan/20260115_feature/design.md
-  - .sopify-skills/plan/20260115_feature/tasks.md
+  - .sopify/plan/20260115_feature/background.md
+  - .sopify/plan/20260115_feature/design.md
+  - .sopify/plan/20260115_feature/tasks.md
 
 Next: 在宿主会话中继续评审或执行方案，或直接回复修改意见
 ```
@@ -327,8 +325,8 @@ Changes: 5 files
   - src/components/xxx.vue
   - src/types/index.ts
   - src/hooks/useXxx.ts
-  - .sopify-skills/blueprint/design.md
-  - .sopify-skills/history/2026-01/...
+  - .sopify/blueprint/design.md
+  - .sopify/history/2026-01/...
 
 Next: 请验证功能
 ```
@@ -358,10 +356,10 @@ Next: 请验证功能
 ~go finalize     # 显式收口当前 metadata-managed plan
 ```
 
-**协议状态文件索引：** 详见 `.sopify-skills/blueprint/protocol.md §8`。
+**协议状态文件索引：** 详见 `.sopify/blueprint/protocol.md §8`。
 
 **配置文件：** `sopify.config.yaml` (项目根目录)
 
-**知识库目录：** `.sopify-skills/`
+**知识库目录：** `.sopify/`
 
-**方案包路径：** `.sopify-skills/plan/YYYYMMDD_feature_name/`
+**方案包路径：** `.sopify/plan/YYYYMMDD_feature_name/`

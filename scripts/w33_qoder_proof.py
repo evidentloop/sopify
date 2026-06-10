@@ -70,7 +70,7 @@ def main() -> None:
     print()
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        sopify_root = Path(tmpdir) / ".sopify-skills"
+        sopify_root = Path(tmpdir) / ".sopify"
         sopify_root.mkdir(parents=True)
         (sopify_root / "state").mkdir()
 
@@ -94,7 +94,7 @@ def main() -> None:
             schema_version="2",
             plan_id=plan_id,
             required_host_action="continue_host_develop",
-            plan_path=f".sopify-skills/plan/{plan_id}/plan.md",
+            plan_path=f".sopify/plan/{plan_id}/plan.md",
             notes=("Session A: W3.3 end-to-end proof",),
         )
         store_a.set_current_handoff(handoff)
@@ -179,7 +179,7 @@ def main() -> None:
 
         # 3b: Step 2 of read chain — plan.md (simulated check)
         print(f"### 3b: Read Chain Step 2 — plan.md")
-        print(f"- plan.md would be read at: `.sopify-skills/plan/{plan_id}/plan.md`")
+        print(f"- plan.md would be read at: `.sopify/plan/{plan_id}/plan.md`")
         print(f"- (Not created in this proof — protocol allows fallback to handoff)")
         print(f"- **PASS**: read chain handles missing plan.md gracefully")
         print()

@@ -19,12 +19,12 @@ Phase A (steps 1-4) -> check score >= require_score?
 ### Step 1: Check knowledge-base status
 
 - Condition: project code exists and the task is not "new project bootstrap".
-- Action: check whether `.sopify-skills/` exists.
+- Action: check whether `.sopify/` exists.
 - Mark the KB as missing when the directory does not exist.
 
 ### Step 2: Acquire project context
 
-- Read `.sopify-skills/user/preferences.md` and KB files first.
+- Read `.sopify/user/preferences.md` and KB files first.
 - Scan the codebase only when KB context is insufficient.
 - Follow the `kb` skill for KB-specific rules.
 

@@ -2,7 +2,7 @@
 
 > **文档状态：已拍板方向**
 > **Status**: Archived reference — 早期产品形态分析
-> **当前事实源**: CrossReview 产品/发布事实以 `cross-review/.sopify-skills/plan/20260425_crossreview_product_master_plan/` 和 `cross-review/docs/v0-scope.md` 为准。
+> **当前事实源**: CrossReview 产品/发布事实以 `cross-review/.sopify/plan/20260425_crossreview_product_master_plan/` 和 `cross-review/docs/v0-scope.md` 为准。
 > **使用方式**: 本文只保留产品形态与边界分析，不参与当前 v0 / PyPI / Sopify Phase 4a 执行判断。
 >
 > 本文档定义 CrossReview 作为独立产品的交付形态、集成协议与边界。

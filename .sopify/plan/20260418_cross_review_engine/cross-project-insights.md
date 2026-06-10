@@ -1,7 +1,7 @@
 # CrossReview 方案综合分析：跨项目思想借鉴
 
 > **Status**: Archived reference — 外部项目洞察资产
-> **当前事实源**: CrossReview 产品/发布事实以 `cross-review/.sopify-skills/plan/20260425_crossreview_product_master_plan/` 和 `cross-review/docs/v0-scope.md` 为准。
+> **当前事实源**: CrossReview 产品/发布事实以 `cross-review/.sopify/plan/20260425_crossreview_product_master_plan/` 和 `cross-review/docs/v0-scope.md` 为准。
 > **使用方式**: 本文只作为历史分析与 v1+ 设计素材，不参与当前 v0 / PyPI / Sopify Phase 4a 执行判断。
 >
 > 基于 Sopify 代码 + superpowers + spec-kit + hermes-agent + helloagents 的深度分析
@@ -92,7 +92,7 @@ cross_review:
       required_when: [auth, schema]
 
 # 建议增强（plan 级合约）
-# .sopify-skills/plan/20260420_feature/review-contract.yaml
+# .sopify/plan/20260420_feature/review-contract.yaml
 review_contract:
   mode: review-first          # 先 review 再继续
   required_evidence:

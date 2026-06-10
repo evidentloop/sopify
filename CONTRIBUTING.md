@@ -38,8 +38,8 @@ python3 scripts/sopify_protocol_check.py check --scenario new-plan --fixture tes
 Bundle rules:
 
 - The global payload lives under `~/.codex/sopify/` or `~/.claude/sopify/`.
-- Hosts must read `.sopify-skills/sopify.json` to detect workspace activation and resolve the selected global bundle.
-- The host follows the 4-step protocol entry contract (active_plan → plan.md → current_handoff → receipts) defined in `.sopify-skills/blueprint/protocol.md §8`.
+- Hosts must read `.sopify/sopify.json` to detect workspace activation and resolve the selected global bundle.
+- The host follows the 4-step protocol entry contract (active_plan → plan.md → current_handoff → receipts) defined in `.sopify/blueprint/protocol.md §8`.
 - Protocol state writes go through `sopify_writer`; hosts do not write state files directly.
 
 ### Installer Entry Points and Release Assets

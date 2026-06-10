@@ -50,7 +50,7 @@ class SopifyInitSmokeTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, msg=result.stderr)
             self.assertIn("Sopify workspace ready", result.stdout)
 
-            marker = workspace / ".sopify-skills" / "sopify.json"
+            marker = workspace / ".sopify" / "sopify.json"
             self.assertTrue(marker.exists(), "sopify.json should be created")
             data = json.loads(marker.read_text(encoding="utf-8"))
             self.assertIn("bundle_version", data)
@@ -91,7 +91,7 @@ class SopifyInitSmokeTests(unittest.TestCase):
                 "--no-copilot should skip copilot-instructions.md",
             )
 
-            marker = workspace / ".sopify-skills" / "sopify.json"
+            marker = workspace / ".sopify" / "sopify.json"
             self.assertTrue(marker.exists(), "sopify.json should still be created")
 
     def test_idempotent_reinit(self) -> None:
@@ -102,7 +102,7 @@ class SopifyInitSmokeTests(unittest.TestCase):
 
             r1 = _run_init(workspace, extra_args=["--no-copilot"])
             self.assertEqual(r1.returncode, 0, msg=r1.stderr)
-            marker = workspace / ".sopify-skills" / "sopify.json"
+            marker = workspace / ".sopify" / "sopify.json"
             data1 = json.loads(marker.read_text(encoding="utf-8"))
 
             r2 = _run_init(workspace, extra_args=["--no-copilot"])
@@ -144,7 +144,7 @@ class SopifyInitSmokeTests(unittest.TestCase):
                 ".gitignore should not be created in non-git workspace",
             )
             self.assertTrue(
-                (workspace / ".sopify-skills" / "sopify.json").exists(),
+                (workspace / ".sopify" / "sopify.json").exists(),
                 "sopify.json should still be created",
             )
 

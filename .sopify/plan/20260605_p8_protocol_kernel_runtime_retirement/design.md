@@ -1,7 +1,7 @@
 ---
 title: P8 Protocol Kernel & Runtime Retirement — Design
 plan_id: 20260605_p8_protocol_kernel_runtime_retirement
-status: in_progress (W1 ✅ / W2 ✅ / Phase 0 ✅ / W3.1 ✅ / W3.2 ✅ / W3.3 ✅ / W3.4 next)
+status: in_progress (W1 ✅ / W2 ✅ / Phase 0 ✅ / W3.1 ✅ / W3.2 ✅ / W3.3 ✅ / W3.4 ✅ / W3.5 next)
 created: 2026-06-05
 ---
 
@@ -304,7 +304,7 @@ P8 的入口不再是 `runtime_gate.py enter`，而是 **Host Protocol Entry Con
 | 项 | Contract |
 |---|---|
 | 触发者 | host prompt asset / Sopify instruction |
-| 触发条件 | workspace 存在 `.sopify-skills/sopify.json` 或 `.sopify-skills/`，且 ActionProposal 指向 managed plan / continuation / finalize |
+| 触发条件 | workspace 存在 `.sopify/sopify.json` 或 `.sopify/`，且 ActionProposal 指向 managed plan / continuation / finalize |
 | 触发时机 | 新 session 且用户请求需要接续；用户明确继续未完成工作前；managed plan 写回前 |
 | 必读文件 | active_plan → plan.md → current_handoff → receipts |
 | 禁止 | 不读 `_registry.yaml`；不调用 runtime gate；不自行写 state/receipt |
@@ -435,9 +435,9 @@ receipts/ 目录的读取不是"读 receipts/"，而是精确的 latest-only 查
 **用户心智**：
 
 - 不需要记住 session_id / 上次用的宿主 / 上次做到哪
-- 方案、决策、交接、执行/验证证据都沉淀在 `.sopify-skills/`
+- 方案、决策、交接、执行/验证证据都沉淀在 `.sopify/`
 - 换宿主 = 换工具，**审计资产不变、plan 身份不变**
-- 明确继续 managed plan 时，任何宿主都能"接着做"，因为接续锚点和证据链都在 `.sopify-skills/` 里
+- 明确继续 managed plan 时，任何宿主都能"接着做"，因为接续锚点和证据链都在 `.sopify/` 里
 
 ### 6.9 接续链路与状态写入的对称性
 
@@ -737,7 +737,7 @@ Qoder prompt 资产必须满足：
 - 不要求默认全量读 protocol.md
 - 明确 request admission 分类（consult / quick_fix 不自动进入 4 步读链）
 - continuation 只走 active_plan → plan.md → current_handoff → receipts
-- 不指示 LLM 在检测到 `.sopify-skills/` 时总是自动接续 active plan
+- 不指示 LLM 在检测到 `.sopify/` 时总是自动接续 active plan
 
 ### 11.7 产出物
 

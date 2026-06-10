@@ -29,7 +29,7 @@ def _write_json(path: Path, payload: dict[str, object]) -> None:
 
 
 def _seed_workspace_state(workspace_root: Path) -> None:
-    state_root = workspace_root / ".sopify-skills" / "state"
+    state_root = workspace_root / ".sopify" / "state"
     _write_json(
         state_root / "active_plan.json",
         {"plan_id": "20260320_helloagents_integration_enhancements"},
@@ -310,7 +310,7 @@ class StatusDoctorContractTests(unittest.TestCase):
             install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root)
             run_workspace_bootstrap(CODEX_ADAPTER.payload_root(home_root), workspace_root)
 
-            bundle_root = workspace_root / ".sopify-skills"
+            bundle_root = workspace_root / ".sopify"
             for name in ("sopify_contracts", "sopify_writer"):
                 target = bundle_root / name
                 if target.exists():
@@ -347,7 +347,7 @@ class StatusDoctorContractTests(unittest.TestCase):
             install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root)
             run_workspace_bootstrap(CODEX_ADAPTER.payload_root(home_root), workspace_root)
 
-            workspace_manifest = json.loads((workspace_root / ".sopify-skills" / "sopify.json").read_text(encoding="utf-8"))
+            workspace_manifest = json.loads((workspace_root / ".sopify" / "sopify.json").read_text(encoding="utf-8"))
             self.assertEqual(workspace_manifest["capabilities"], [])
             self.assertNotIn("limits", workspace_manifest)
 
@@ -428,7 +428,7 @@ class StatusDoctorContractTests(unittest.TestCase):
             payload_root = CODEX_ADAPTER.payload_root(home_root)
             payload_manifest = json.loads((payload_root / "payload-manifest.json").read_text(encoding="utf-8"))
             active_version = payload_manifest["active_version"]
-            bundle_root = workspace_root / ".sopify-skills"
+            bundle_root = workspace_root / ".sopify"
             for name in ("sopify_contracts", "sopify_writer"):
                 shutil.copytree(payload_root / "bundles" / active_version / name, bundle_root / name)
 
@@ -497,7 +497,7 @@ class StatusDoctorContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as home_dir, tempfile.TemporaryDirectory() as workspace_dir:
             home_root = Path(home_dir)
             workspace_root = Path(workspace_dir)
-            state_root = workspace_root / ".sopify-skills" / "state"
+            state_root = workspace_root / ".sopify" / "state"
             _write_json(
                 state_root / "active_plan.json",
                 {"plan_id": "p"},

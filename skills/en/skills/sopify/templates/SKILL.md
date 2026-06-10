@@ -220,7 +220,7 @@ Scoring rationale:
 ```markdown
 # Task List: {Feature Name}
 
-Directory: `.sopify-skills/plan/{YYYYMMDD}_{feature}/`
+Directory: `.sopify/plan/{YYYYMMDD}_{feature}/`
 
 ## 1. {Module Name}
 - [ ] 1.1 Implement {feature} in `{file path}`

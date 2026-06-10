@@ -38,8 +38,8 @@ python3 scripts/sopify_protocol_check.py check --scenario new-plan --fixture tes
 Bundle 规则：
 
 - 全局 payload 位于 `~/.codex/sopify/` 或 `~/.claude/sopify/`
-- 工作区内的 `.sopify-skills/sopify.json` 是唯一 workspace activation marker，声明 `bundle_version / locator_mode / capabilities`
-- 宿主按 4 步协议入口（active_plan → plan.md → current_handoff → receipts）接续，定义在 `.sopify-skills/blueprint/protocol.md §8`
+- 工作区内的 `.sopify/sopify.json` 是唯一 workspace activation marker，声明 `bundle_version / locator_mode / capabilities`
+- 宿主按 4 步协议入口（active_plan → plan.md → current_handoff → receipts）接续，定义在 `.sopify/blueprint/protocol.md §8`
 - 协议状态写入走 `sopify_writer`；宿主不直接写 state 文件
 
 ### Installer 入口与 Release Asset

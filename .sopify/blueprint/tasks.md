@@ -65,7 +65,7 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 
 ### P7: Copilot Payload-Only Onboarding Mainline
 
-把外部 repo 接入做成产品：一条官方默认路（Copilot + payload-only）、一套 bootstrap 动作、版本锚点迁入 `.sopify-skills/`、最小 smoke 验证。吸收 Copilot Payload-Only Onboarding Proof + First-Use Adoption Proof 相关交付物。
+把外部 repo 接入做成产品：一条官方默认路（Copilot + payload-only）、一套 bootstrap 动作、版本锚点迁入 `.sopify/`、最小 smoke 验证。吸收 Copilot Payload-Only Onboarding Proof + First-Use Adoption Proof 相关交付物。
 
 - 前置：P6 ✅
 - 状态：✅ 已完成 — 归档于 `history/2026-05/20260522_p7_payload_only_onboarding_mainline/`

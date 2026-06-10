@@ -97,7 +97,7 @@
   <!-- Knowledge Layer -->
   <rect x="60" y="410" width="840" height="105" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
   <text x="76" y="430" class="tier-label" fill="#059669">KNOWLEDGE LAYER</text>
-  <text x="260" y="430" class="node-desc">.sopify-skills/ — persists across sessions, hosts, and teammates via git</text>
+  <text x="260" y="430" class="node-desc">.sopify/ — persists across sessions, hosts, and teammates via git</text>
 
   <rect x="80" y="445" width="155" height="50" rx="8" fill="#ffffff" stroke="#059669" stroke-width="1.2"/>
   <text x="157" y="466" text-anchor="middle" class="node-name" style="font-size:12px">Blueprint</text>

@@ -32,7 +32,7 @@ The workflow diagram includes checkpoint nodes that pause execution in two scena
 ## Directory Structure and Layers
 
 ```text
-.sopify-skills/
+.sopify/
 ├── blueprint/                   # L1 long-lived blueprint (git tracked)
 │   ├── README.md
 │   ├── background.md

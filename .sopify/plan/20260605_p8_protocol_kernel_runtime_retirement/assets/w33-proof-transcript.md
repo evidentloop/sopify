@@ -4,6 +4,8 @@
 - Payload: `/Users/weixin.li/.qoder/sopify/bundles/0.0.0-dev`
 - sys.path: repo-local paths filtered out; installed payload inserted at front; stdlib + site-packages retained
 
+> **Rename note**: 本 proof 在 W3.4 canonical root rename 之前执行，transcript 中的 `.sopify/` 路径为 W3.4e 回写结果。原始执行时 canonical root 为 `.sopify-skills`。
+
 > **Scope**: 本 transcript 是 writer-level durable proof，验证 sopify_writer 从 installed payload 路径的端到端写入能力（Session A 写 → Session B 读 + 写 → Finalize）。Session A/B 由 ProtocolStore 实例模拟，不是真实 Qoder LLM session。Receipt evidence 字段为示例值，非现场命令输出。协议入口指令已通过 header template 安装到 `~/.qoder/AGENTS.md`（L131-135），但本 transcript 不验证 LLM 是否会自主遵守这些指令（那属于 host behavioral proof，不在本 scope 内）。注意：`.qoder/rules/` 优先级高于 AGENTS.md，用户/项目 rules 可覆盖 Sopify 协议入口。
 
 ## Step 1: Import from Installed Payload
@@ -35,7 +37,7 @@
     "written_at": "2026-06-10T06:02:24+00:00"
   },
   "plan_id": "20260610_w33_e2e_proof",
-  "plan_path": ".sopify-skills/plan/20260610_w33_e2e_proof/plan.md",
+  "plan_path": ".sopify/plan/20260610_w33_e2e_proof/plan.md",
   "required_host_action": "continue_host_develop",
   "schema_version": "2"
 }
@@ -80,7 +82,7 @@
 - **PASS**: located plan_id = `20260610_w33_e2e_proof`
 
 ### 3b: Read Chain Step 2 — plan.md
-- plan.md would be read at: `.sopify-skills/plan/20260610_w33_e2e_proof/plan.md`
+- plan.md would be read at: `.sopify/plan/20260610_w33_e2e_proof/plan.md`
 - (Not created in this proof — protocol allows fallback to handoff)
 - **PASS**: read chain handles missing plan.md gracefully
 

@@ -28,14 +28,13 @@ class RuntimeConfig:
     require_score: int
     auto_decide: bool
     plan_level: str
-    plan_directory: str
     ehrb_level: str
     kb_init: str
     cache_project: bool
 
     @property
     def runtime_root(self) -> Path:
-        return self.workspace_root / self.plan_directory
+        return self.workspace_root / ".sopify"
 
     @property
     def state_dir(self) -> Path:

@@ -8,8 +8,8 @@ __pycache__/
 
 .sopify-runtime/
 
-.sopify-skills/state/
-.sopify-skills/replay/
+.sopify/state/
+.sopify/replay/
 
 evals/skill_eval_report.json
 

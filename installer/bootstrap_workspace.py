@@ -106,13 +106,13 @@ _PRERELEASE_RANK = {"dev": -4, "alpha": -3, "beta": -2, "rc": -1}
 _WORKSPACE_STUB_REQUIRED_CAPABILITIES: tuple[str, ...] = ()
 _WORKSPACE_STUB_LOCATOR_MODES = {"global_first", "global_only"}
 _WORKSPACE_STUB_IGNORE_MODES = {"exclude", "gitignore", "noop"}
-_SOPIFY_SKILLS_DIR = ".sopify-skills"
+_SOPIFY_DIR = ".sopify"
 _SOPIFY_JSON_FILENAME = "sopify.json"
 _SOPIFY_MANAGED_IGNORE_BEGIN = "# BEGIN sopify-managed"
 _SOPIFY_MANAGED_IGNORE_END = "# END sopify-managed"
 _SOPIFY_MANAGED_IGNORE_ENTRIES = (
     ".sopify-payload/",
-    ".sopify-skills/state/",
+    ".sopify/state/",
 )
 _SOPIFY_INSTRUCTION_BLOCK_BEGIN = "<!-- BEGIN SOPIFY MANAGED BLOCK -->"
 _SOPIFY_INSTRUCTION_BLOCK_END = "<!-- END SOPIFY MANAGED BLOCK -->"
@@ -207,7 +207,7 @@ def bootstrap_workspace(
 
     target_bundle_dir = str(payload_manifest.get("default_bundle_dir") or ".sopify-payload")
     bundle_root = resolved_activation_root / target_bundle_dir
-    current_manifest_path = resolved_activation_root / _SOPIFY_SKILLS_DIR / _SOPIFY_JSON_FILENAME
+    current_manifest_path = resolved_activation_root / _SOPIFY_DIR / _SOPIFY_JSON_FILENAME
     current_manifest = _read_json(current_manifest_path) if current_manifest_path.is_file() else {}
     (
         selected_bundle_root,
@@ -573,7 +573,7 @@ def _resolve_activation_root(
         return (explicit_activation_root, "explicit_root", "")
 
     for ancestor in workspace_root.parents:
-        new_marker = ancestor / _SOPIFY_SKILLS_DIR / _SOPIFY_JSON_FILENAME
+        new_marker = ancestor / _SOPIFY_DIR / _SOPIFY_JSON_FILENAME
         if new_marker.is_file() and _marker_has_minimum_validity(new_marker):
             return (ancestor, "ancestor_marker", "")
 
@@ -788,7 +788,7 @@ def _stale_stub_diagnostic(
             f"but the active version is {active_version} "
             f"(payload_root: {payload_root}). "
             f"The workspace stub is stale. "
-            f"Reinstall for this workspace or update .sopify-skills/sopify.json."
+            f"Reinstall for this workspace or update .sopify/sopify.json."
         )
     return f"Selected global bundle is missing: {bundle_manifest_path} (payload_root: {payload_root})"
 
@@ -936,7 +936,7 @@ def _write_workspace_stub_overlay(
     bundle_manifest: dict[str, Any] | None = None,
     ignore_mode: str | None = None,
 ) -> None:
-    sopify_json_dir = workspace_root / _SOPIFY_SKILLS_DIR
+    sopify_json_dir = workspace_root / _SOPIFY_DIR
     sopify_json_path = sopify_json_dir / _SOPIFY_JSON_FILENAME
     source_payload = _read_json(sopify_json_path)
     if not source_payload:
@@ -949,7 +949,7 @@ def _write_workspace_stub_overlay(
     sopify_json_payload = {
         "schema_version": str(source_payload.get("schema_version") or "1"),
         "stub_version": "1",
-        "workspace_kind": "deep" if (workspace_root / _SOPIFY_SKILLS_DIR / "blueprint").is_dir() else "external",
+        "workspace_kind": "deep" if (workspace_root / _SOPIFY_DIR / "blueprint").is_dir() else "external",
         "bundle_version": _string_or_none(source_payload.get("bundle_version")),
         "locator_mode": "global_first",
         "capabilities": list(_WORKSPACE_STUB_REQUIRED_CAPABILITIES),
@@ -1373,7 +1373,7 @@ def _result_evidence(
         evidence.append(f"ignore_mode={ignore_mode}")
         ignore_target = _resolve_ignore_target(workspace_root=workspace_root, ignore_mode=ignore_mode)
         if ignore_target is not None:
-            evidence.append(f"manual_disable=remove .sopify-skills/sopify.json and the sopify-managed block from {ignore_target}")
+            evidence.append(f"manual_disable=remove .sopify/sopify.json and the sopify-managed block from {ignore_target}")
     return evidence
 
 

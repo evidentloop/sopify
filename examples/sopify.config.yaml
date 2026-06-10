@@ -54,11 +54,6 @@ plan:
   # - full: Complete structure with ADR and diagrams
   level: auto
 
-  # Knowledge base directory (relative to project root)
-  # Default: .sopify-skills (hidden directory)
-  # Note: Changing this does not migrate existing history from the old directory.
-  directory: .sopify-skills
-
 # Note: model compare configuration was removed with the retired compare runtime.
 
 # ============================================================

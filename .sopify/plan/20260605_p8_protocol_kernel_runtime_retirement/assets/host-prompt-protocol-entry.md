@@ -8,7 +8,7 @@
 
 ### 1. Request Admission（请求准入）
 
-当 workspace 中存在 `.sopify-skills/` 时，host prompt MUST 指示 LLM：
+当 workspace 中存在 `.sopify/` 时，host prompt MUST 指示 LLM：
 
 - 先判断用户请求意图，形成 runtime-independent ActionProposal
 - 将请求归类为以下之一：

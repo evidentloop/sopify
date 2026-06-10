@@ -1,7 +1,7 @@
 ---
 title: P8 Protocol Kernel & Runtime Retirement — Tasks
 plan_id: 20260605_p8_protocol_kernel_runtime_retirement
-status: in_progress (W1 ✅ / W2 ✅ / Phase 0 ✅ / W3.1 ✅ / W3.2 ✅ / W3.3 ✅ / W3.4 next)
+status: in_progress (W1 ✅ / W2 ✅ / Phase 0 ✅ / W3.1 ✅ / W3.2 ✅ / W3.3 ✅ / W3.4 ✅ / W3.5 next)
 created: 2026-06-05
 ---
 
@@ -35,7 +35,7 @@ created: 2026-06-05
 ### W1.2 Rewrite protocol.md Kernel Sections
 
 - [x] Depends: W1.1 schema 字段已确定
-- [x] Input: `.sopify-skills/blueprint/protocol.md`
+- [x] Input: `.sopify/blueprint/protocol.md`
 - [x] Output: protocol.md §2 plan package structure 改为 `plan.md` 唯一语义入口
 - [x] Output: protocol.md §6 verifier read-only contract 升格为 MUST
 - [x] Output: protocol.md §6 明确 ExecutionAuthorizationReceipt 为 `[RETIRED in P8]`，并把 post-P8 审计主链指向 `plan/<id>/receipts/*.json` + `history/<id>/receipt.md`
@@ -56,7 +56,7 @@ created: 2026-06-05
 
 - [x] Depends: W1.2
 - [x] Input: current host prompt assets / installer host payload patterns
-- [x] Output: host prompt summary says: if `.sopify-skills/` exists, first form a runtime-independent ActionProposal for request admission
+- [x] Output: host prompt summary says: if `.sopify/` exists, first form a runtime-independent ActionProposal for request admission
 - [x] Output: prompt summary says: only managed plan / continuation / finalize ActionProposal enters the 4-step protocol entry
 - [x] Output: prompt summary includes ActionProposal categories, 4-step entry order, read budget, and `sopify_writer` write boundary
 - [x] Output: prompt summary explicitly states that default spec workflow (analyze → design → develop → finalize) is a prompt asset / skill layer function, not runtime logic
@@ -69,7 +69,7 @@ created: 2026-06-05
 ### W1.4 Define Plan Package Required Sections
 
 - [x] Depends: W1.2
-- [x] Input: current plan package examples under `.sopify-skills/plan/`
+- [x] Input: current plan package examples under `.sopify/plan/`
 - [x] Output: plan.md recommended Plan Snapshot + 8 required sections documented: Plan Snapshot (Goal/Status/Next/Task; optional schema field `plan_snapshot`) + Context/Why / Scope / Approach / Waves / Key Decisions / Constraints / Status / Next
 - [x] Output: Plan Snapshot is the default read window for LLM when present; host falls back to full plan.md when absent or conflicting
 - [x] Output: Plan Snapshot is documented as user-readable derived status snapshot and continuation entry summary, not directory index, not `_registry.yaml` replacement, not a new state file, and not authoritative audit evidence
@@ -93,7 +93,7 @@ created: 2026-06-05
 ### W1.5b Blueprint Interim Sync + persistence_red_line + promise surface
 
 - [x] Depends: W1.1 / W1.2
-- [x] Input: `.sopify-skills/blueprint/design.md` keep-list / persistence_red_line / 对外承诺分层表 / ADR-013 / ADR-017
+- [x] Input: `.sopify/blueprint/design.md` keep-list / persistence_red_line / 对外承诺分层表 / ADR-013 / ADR-017
 - [x] Output: P8 design 明确 blueprint `persistence_red_line` 将从 pre-P8 runtime state 集合切到 post-P8 persistence model
 - [x] Output: P8 design 明确 ExecutionAuthorizationReceipt / current_gate_receipt 在 P8 中 retire，而不是静默丢失
 - [x] Output: W3 blueprint sync 需要同步更新对外承诺分层表（EAR 从 Now/✅ 退场，receipts/history receipt 写入新的审计承诺面）
@@ -146,7 +146,7 @@ created: 2026-06-05
 - [x] Verify: `python3 scripts/sopify_protocol_check.py check --scenario new-plan --fixture tests/fixtures/minimal_plan`
 - [x] Verify: `python3 scripts/sopify_protocol_check.py check --scenario continuation --fixture tests/fixtures/minimal_plan`
 - [x] Verify: `python3 scripts/sopify_protocol_check.py check --scenario finalize --fixture tests/fixtures/minimal_plan`
-- [x] Verify: `rg "runtime_gate|current_run|current_plan|_registry" .sopify-skills/blueprint/protocol.md` only returns legacy notes marked retired or no matches
+- [x] Verify: `rg "runtime_gate|current_run|current_plan|_registry" .sopify/blueprint/protocol.md` only returns legacy notes marked retired or no matches
 - [x] Verify: protocol.md §8 已完成整节替换；旧 deep runtime gate 正文不存在
 - [x] Verify: host prompt entry summary exists and does not reintroduce runtime routing
 - [x] Verify: ADR-013 正文已加注 P8 Scope Clarification（authorization 语义收窄）
@@ -166,7 +166,7 @@ created: 2026-06-05
 ### W2.0a Registry Snapshot
 
 - [x] Depends: W1 gate
-- [x] Input: `.sopify-skills/plan/_registry.yaml`（当前全部 registry entries，当前预期 4 条）
+- [x] Input: `.sopify/plan/_registry.yaml`（当前全部 registry entries，当前预期 4 条）
 - [x] Output: 导出当前全部 registry entries 为人类可读摘要，存入当前 P8 plan 的 `assets/registry-lifecycle-snapshot.md`（随 P8 归档时一起进 history）
 - [x] Verify: 快照文件存在于 `assets/` 且包含全部 plan 的 id + lifecycle_state + 关键时间戳
 
@@ -293,7 +293,7 @@ created: 2026-06-05
 - [x] Output: remove `_registry.yaml` from active plan directory
 - [x] Output: remove registry tests or migrate only non-registry plan lookup behavior
 - [x] Output: remove registry mention from docs
-- [x] Verify: `find .sopify-skills/plan -name _registry.yaml` returns no files
+- [x] Verify: `find .sopify/plan -name _registry.yaml` returns no files
 - [x] Verify: `rg "plan.registry|_registry|registry_is_observe_only|suggested_priority" runtime sopify_writer sopify_contracts installer scripts tests docs README.md README.zh-CN.md` returns no active code/docs
 
 ### W2.7 Reclassify Tests
@@ -344,7 +344,7 @@ created: 2026-06-05
 - [x] Output: **文档清理清单**：
   - `CONTRIBUTING.md`：Runtime Bundle section → Payload Bundle section，删除 runtime 验证命令
   - `CONTRIBUTING_CN.md`：同上中文版
-  - `.sopify-skills/blueprint/skill-standards-refactor.md`：runtime-first → protocol-first
+  - `.sopify/blueprint/skill-standards-refactor.md`：runtime-first → protocol-first
 - [x] Verify: `scripts/check-bundle-smoke.sh` 和 `scripts/check-prompt-runtime-gate-smoke.py` 不存在
 - [x] Verify: `installer/validate.py` 无 `run_bundle_smoke_check` / `subprocess` / `shlex` 引用
 
@@ -418,7 +418,7 @@ created: 2026-06-05
 ### P0.1 Purge Stale State Files
 
 - [x] Depends: W2 gate
-- [x] Input: `.sopify-skills/state/`（当前 5 个 legacy 文件 + sessions/ 目录）
+- [x] Input: `.sopify/state/`（当前 5 个 legacy 文件 + sessions/ 目录）
 - [x] Output: delete `state/current_decision.json` / `current_gate_receipt.json` / `current_run.json` / `last_route.json`
 - [x] Output: delete `state/sessions/`（整个目录）
 - [x] Verify: legacy state files 已清退（当前实例只剩 `current_handoff.json`，`active_plan.json` 待后续 managed plan 创建时生成）
@@ -452,7 +452,7 @@ created: 2026-06-05
 ### P0.5 Rewrite project.md Runtime Section
 
 - [x] Depends: P0.1
-- [x] Input: `.sopify-skills/project.md` lines 27-35（§Runtime 实现与测试约定：runtime/models.py facade / runtime/_models/ / runtime_test_support.py / .sopify-runtime smoke 全部不存在）
+- [x] Input: `.sopify/project.md` lines 27-35（§Runtime 实现与测试约定：runtime/models.py facade / runtime/_models/ / runtime_test_support.py / .sopify-runtime smoke 全部不存在）
 - [x] Output: rewrite §Runtime 实现与测试约定 → §Protocol Kernel 实现与测试约定
 - [x] Output: 新约定反映 sopify_writer / sopify_contracts / installer 为活跃模块
 - [x] Output: 测试命令更新为 `python3 -m pytest tests -v`（无 runtime 依赖）
@@ -524,71 +524,73 @@ created: 2026-06-05
 - [x] Verify: no `_registry.yaml` read, no retired runtime file read (Step 5 negative checks)
 - [x] Output: reproducible proof script → `scripts/w33_qoder_proof.py`
 
-### W3.4 Canonical Root Rename（.sopify-skills → .sopify）
+### W3.4 Canonical Root Rename（.sopify → .sopify）
 
 > 协议根目录硬切。无双路径兼容、无迁移 shim、无老目录 fallback。顺手收掉 plan.directory 虚假可配置承诺。
 
 #### W3.4a Implementation Layer Rename
 
-- [ ] Depends: W3.3
-- [ ] Input: all `.sopify-skills` references in installer/, scripts/, sopify_writer/, sopify_contracts/
-- [ ] Output: global replace `.sopify-skills` → `.sopify` in implementation code
-- [ ] Output: `plan.directory` config claim removed; canonical root fixed to `.sopify`
-- [ ] Verify: `rg ".sopify-skills" installer/ scripts/ sopify_writer/ sopify_contracts/` → 0 hits
+- [x] Depends: W3.3
+- [x] Input: all `.sopify-skills` references in installer/, scripts/, sopify_writer/, sopify_contracts/
+- [x] Output: global replace `.sopify-skills` → `.sopify` in implementation code (51 replacements, 9 files)
+- [x] Output: `plan.directory` config claim + contract field removed; canonical root fixed to `.sopify`（closure pass: sopify_contracts/core.py + README + templates + copilot-instructions + examples）
+- [x] Verify: `rg ".sopify-skills" installer/ scripts/ sopify_writer/ sopify_contracts/` → 0 hits
 
 #### W3.4b Test Layer Rename
 
-- [ ] Depends: W3.4a
-- [ ] Input: all `.sopify-skills` references in tests/, tests/fixtures/
-- [ ] Output: global replace in test assertions, fixture paths, fixture content
-- [ ] Output: `tests/fixtures/minimal_plan/` fixture uses `.sopify/` structure
-- [ ] Output: regenerate `tests/golden-snapshots.json`（template/skill 资产变更必然导致 hash 漂移）
-- [ ] Verify: `pytest tests/ -q` → all pass
+- [x] Depends: W3.4a
+- [x] Input: all `.sopify-skills` references in tests/, tests/fixtures/
+- [x] Output: global replace in test assertions, fixture paths, fixture content (37 replacements, 5 files)
+- [x] Output: `tests/fixtures/minimal_plan/` fixture uses `.sopify/` structure
+- [x] Output: regenerate `tests/golden-snapshots.json`
+- [x] Verify: `pytest tests/ -q` → 181 passed
 
 #### W3.4c Protocol + Prompt + Skill Asset Rename
 
-- [ ] Depends: W3.4b
-- [ ] Input: protocol.md, skills/{zh,en}/header.md.template, .github/copilot-instructions.md, skills/{zh,en}/skills/sopify/**（kb / analyze / develop / design assets / templates / references）
-- [ ] Output: global replace in protocol text, prompt templates, copilot instructions
-- [ ] Output: global replace in skill bodies / references / assets（宿主和工作流直接消费的指令资产）
-- [ ] Output: `.gitignore` pattern updated from `.sopify-skills/state/` to `.sopify/state/`
-- [ ] Verify: protocol smoke 3/3 PASS with `.sopify/` fixtures
-- [ ] Verify: `rg ".sopify-skills" .gitignore skills/ .github/` → 0 active hits
+- [x] Depends: W3.4b
+- [x] Input: protocol.md, skills/{zh,en}/header.md.template, .github/copilot-instructions.md, skills/{zh,en}/skills/sopify/**
+- [x] Output: global replace in protocol text, prompt templates, copilot instructions (171 replacements, 16 files)
+- [x] Output: global replace in skill bodies / references / assets
+- [x] Output: `.gitignore` pattern updated to `.sopify/state/`
+- [x] Verify: protocol smoke 3/3 PASS with `.sopify/` fixtures
+- [x] Verify: `rg ".sopify-skills" .gitignore skills/ .github/` → 0 active hits
 
 #### W3.4c2 User Docs Path Rename
 
-- [ ] Depends: W3.4c
-- [ ] Input: README.md, README.zh-CN.md, docs/how-sopify-works.md, docs/how-sopify-works.en.md, docs/getting-started.md
-- [ ] Output: path-level rename only（`.sopify-skills` → `.sopify`）；不做 narrative rewrite（那是 W3.5 的职责）
-- [ ] Verify: `rg ".sopify-skills" README.md README.zh-CN.md docs/` → 0 active hits
+- [x] Depends: W3.4c
+- [x] Input: README.md, README.zh-CN.md, CONTRIBUTING.md/CN, CHANGELOG.md, docs/
+- [x] Output: path-level rename only (26 replacements, 8 files)；narrative rewrite 留 W3.5
+- [x] Verify: `rg ".sopify-skills" README.md README.zh-CN.md docs/` → 0 active hits
 
 #### W3.4d Physical Directory Rename
 
-- [ ] Depends: W3.4c2
-- [ ] Input: `.sopify-skills/` directory
-- [ ] Output: `git mv .sopify-skills .sopify`
-- [ ] Output: `install.sh --target qoder` re-run to refresh `~/.qoder/AGENTS.md` with new paths
-- [ ] Verify: `.sopify/` exists, `.sopify-skills/` does not exist
-- [ ] Verify: `install.sh --target qoder` succeeds
-- [ ] Verify: lightweight continuation check — sopify_writer writes state to `.sopify/`
+- [x] Depends: W3.4c2
+- [x] Input: `.sopify-skills/` directory (original canonical root)
+- [x] Output: `git mv .sopify-skills .sopify`
+- [x] Output: `install.sh --target qoder` re-run to refresh `~/.qoder/AGENTS.md` with new paths
+- [x] Verify: `.sopify/` exists, `.sopify-skills/` does not exist
+- [x] Verify: `install.sh --target qoder` succeeds
+- [x] Verify: lightweight continuation check — sopify_writer writes state to `.sopify/`
 
 #### W3.4e Plan Package Self-Update
 
-- [ ] Depends: W3.4d
-- [ ] Input: plan.md, tasks.md, design.md (this plan package)
-- [ ] Output: global replace `.sopify-skills` → `.sopify` in plan package documents
-- [ ] Verify: plan package internally consistent with `.sopify/` canonical root
+- [x] Depends: W3.4d
+- [x] Input: plan.md, tasks.md, design.md (this plan package) + blueprint + project.md + assets + examples
+- [x] Output: global replace `.sopify-skills` → `.sopify` in plan package documents + blueprint + project.md (49 replacements)
+- [x] Output: W3.3 transcript 加 rename note（"proof executed before W3.4 rename"）
+- [x] Output: assets SVGs + examples updated (147 replacements across remaining active files)
+- [x] Verify: plan package internally consistent with `.sopify/` canonical root
 
 ### W3.4 Gate
 
-- [ ] Depends: W3.4a-W3.4e, W3.4c2
-- [ ] Verify: `pytest tests/ -q` → all pass
-- [ ] Verify: protocol smoke 3/3 PASS
-- [ ] Verify (工程 gate): `rg ".sopify-skills" installer/ scripts/ tests/ sopify_writer/ sopify_contracts/ .gitignore` → 0 active hits
-- [ ] Verify (消费面 gate): `rg ".sopify-skills" skills/ .github/ README.md README.zh-CN.md docs/` → 0 active hits
-- [ ] Verify: `install.sh --target qoder` → success
-- [ ] Verify: lightweight continuation check passes
-- [ ] Stop: W3.4 gate must pass before W3.5 starts
+- [x] Depends: W3.4a-W3.4e, W3.4c2
+- [x] Verify: `pytest tests/ -q` → 181 passed
+- [x] Verify: protocol smoke 3/3 PASS
+- [x] Verify (工程 gate): `rg ".sopify-skills" installer/ scripts/ tests/ sopify_writer/ sopify_contracts/ .gitignore` → 0 active hits
+- [x] Verify (消费面 gate): `rg ".sopify-skills" skills/ .github/ README.md README.zh-CN.md docs/` → 0 active hits
+- [x] Verify: `install.sh --target qoder` → success
+- [x] Verify: lightweight continuation check passes
+- [x] Stop: W3.4 gate must pass before W3.5 starts — **PASSED**
 
 ---
 
@@ -611,7 +613,7 @@ created: 2026-06-05
 ### W3.6 Blueprint Sync（全量叙事收口 — 11 项显式回写清单）
 
 - [ ] Depends: W3.5
-- [ ] Input: `.sopify-skills/blueprint/README.md`, `design.md`, `tasks.md`, `protocol.md`
+- [ ] Input: `.sopify/blueprint/README.md`, `design.md`, `tasks.md`, `protocol.md`
 - [ ] Output: ADR-013 scope clarification 从 interim disclaimer 升级为 final 语义边界
 - [ ] Output: ADR-017 EAR 标注从 interim [SUPERSEDED] 升级为 final [RETIRED]
 - [ ] Output: 底层哲学收敛链 produce→verify→authorize→settle → produce→verify→record evidence→settle

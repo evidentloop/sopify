@@ -17,8 +17,8 @@ Implement the task list, maintain task state, sync V2 long-lived knowledge throu
 
 Sources:
 
-- `.sopify-skills/plan/{current_plan}/tasks.md`
-- `.sopify-skills/plan/{current_plan}/plan.md` (light)
+- `.sopify/plan/{current_plan}/tasks.md`
+- `.sopify/plan/{current_plan}/plan.md` (light)
 
 Handling rules:
 
@@ -80,7 +80,7 @@ Use the following field names consistently in develop flows. Do not introduce al
 
 Additional rules:
 
-- `.sopify-skills/project.md` is the future long-term home for a project-level `verify` contract. When present, it has the highest priority, but it is not a prerequisite for v1.
+- `.sopify/project.md` is the future long-term home for a project-level `verify` contract. When present, it has the highest priority, but it is not a prerequisite for v1.
 - `verification_source` is a source field only. Degrade/skip outcomes must be expressed through `result + reason_code`.
 - `reason_code` is an internal verification field and must not appear in user-facing output. Use a human-readable "Note" column when explanation is needed.
 
@@ -89,7 +89,7 @@ Additional rules:
 Use this fixed priority:
 
 1. `project_contract`
-   - A `verify` contract already defined in `.sopify-skills/project.md`.
+   - A `verify` contract already defined in `.sopify/project.md`.
 2. `project_native`
    - Stable native project entry points such as `package.json`, `pyproject.toml`, `Makefile`, or `justfile`.
 3. `not_configured`
@@ -215,11 +215,11 @@ Disallowed:
 Migration path:
 
 ```text
-.sopify-skills/plan/YYYYMMDD_feature/
-  -> .sopify-skills/history/YYYY-MM/YYYYMMDD_feature/
+.sopify/plan/YYYYMMDD_feature/
+  -> .sopify/history/YYYY-MM/YYYYMMDD_feature/
 ```
 
-Create and update `.sopify-skills/history/index.md` on demand during the first explicit finalize.
+Create and update `.sopify/history/index.md` on demand during the first explicit finalize.
 
 ## Output templates
 

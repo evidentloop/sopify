@@ -39,7 +39,7 @@
 <rect x="318" y="590" width="234" height="44" rx="8" fill="#4f46e5" stroke="#3730a3" stroke-width="1.5"/>
 <text x="435" y="617" text-anchor="middle" font-size="14" font-weight="600" fill="#ffffff">Output + Handoff</text>
 <rect x="348" y="658" width="174" height="32" rx="6" fill="#e0e7ff" stroke="#818cf8" stroke-width="1"/>
-<text x="435" y="679" text-anchor="middle" font-size="12" fill="#4338ca">.sopify-skills/state/</text>
+<text x="435" y="679" text-anchor="middle" font-size="12" fill="#4338ca">.sopify/state/</text>
 <line x1="435" y1="102" x2="435" y2="132" stroke="#374151" stroke-width="1.5" marker-end="url(#arr)"/>
 <line x1="435" y1="172" x2="435" y2="200" stroke="#374151" stroke-width="1.5" marker-end="url(#arr)"/>
 <line x1="401" y1="232" x2="275" y2="306" stroke="#374151" stroke-width="1.5" marker-end="url(#arr)"/>

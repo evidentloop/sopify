@@ -35,7 +35,7 @@ Use the script when task extraction must be auditable:
 
 ```bash
 python3 skills/en/skills/sopify/develop/scripts/extract_pending_tasks.py \
-  --tasks-file .sopify-skills/plan/<plan>/tasks.md
+  --tasks-file .sopify/plan/<plan>/tasks.md
 ```
 
 The script returns JSON with pending tasks, status counts, and execution order.

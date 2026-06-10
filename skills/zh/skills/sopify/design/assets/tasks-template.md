@@ -1,6 +1,6 @@
 # 任务清单: {功能名称}
 
-目录: `.sopify-skills/plan/YYYYMMDD_{feature}/`
+目录: `.sopify/plan/YYYYMMDD_{feature}/`
 
 ## 1. {模块名称}
 - [ ] 1.1 在 `{文件路径}` 中实现 {功能}

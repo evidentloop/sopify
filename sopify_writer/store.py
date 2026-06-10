@@ -2,7 +2,7 @@
 
 ProtocolStore is the single write entry point for all protocol state,
 receipts, and finalize operations. It manages three directory trees under
-the `.sopify-skills/` root:
+the `.sopify/` root:
 
   state/
     active_plan.json      Minimal plan_id pointer.
@@ -37,9 +37,9 @@ _RECEIPT_ID_RE = re.compile(r"^(exec_\d{3}|verify_\d{3}|final)$")
 
 
 class ProtocolStore:
-    """Read and write P8 protocol assets under a `.sopify-skills/` root.
+    """Read and write P8 protocol assets under a `.sopify/` root.
 
-    Constructor takes the `.sopify-skills/` root directory. State files,
+    Constructor takes the `.sopify/` root directory. State files,
     plan receipts, and history receipts are all derived from this root.
     """
 

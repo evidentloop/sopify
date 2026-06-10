@@ -5,12 +5,12 @@ description: Knowledge base management skill; read during KB operations; include
 
 # Knowledge Base Management - V2 Rules
 
-**Goal:** manage the V2 layers in `.sopify-skills/` so long-lived knowledge, the active plan, and finalized archives stay clearly separated.
+**Goal:** manage the V2 layers in `.sopify/` so long-lived knowledge, the active plan, and finalized archives stay clearly separated.
 
 ## Knowledge Base Structure
 
 ```text
-.sopify-skills/
+.sopify/
 ├── blueprint/
 │   ├── README.md           # Pure index page with index-required sections only
 │   ├── background.md       # Long-term goals, scope, non-goals
@@ -36,13 +36,13 @@ Create on the first bootstrap:
 
 ```yaml
 Create:
-  - .sopify-skills/project.md
-  - .sopify-skills/user/preferences.md
-  - .sopify-skills/user/feedback.jsonl
-  - .sopify-skills/blueprint/README.md
-  - .sopify-skills/blueprint/background.md
-  - .sopify-skills/blueprint/design.md
-  - .sopify-skills/blueprint/tasks.md
+  - .sopify/project.md
+  - .sopify/user/preferences.md
+  - .sopify/user/feedback.jsonl
+  - .sopify/blueprint/README.md
+  - .sopify/blueprint/background.md
+  - .sopify/blueprint/design.md
+  - .sopify/blueprint/tasks.md
 ```
 
 Notes:
@@ -56,22 +56,22 @@ Materialize by lifecycle:
 
 ```yaml
 First real-project trigger:
-  - .sopify-skills/project.md
-  - .sopify-skills/user/preferences.md
-  - .sopify-skills/blueprint/README.md
+  - .sopify/project.md
+  - .sopify/user/preferences.md
+  - .sopify/blueprint/README.md
 
 First plan lifecycle:
-  - .sopify-skills/blueprint/background.md
-  - .sopify-skills/blueprint/design.md
-  - .sopify-skills/blueprint/tasks.md
-  - .sopify-skills/plan/YYYYMMDD_feature/
+  - .sopify/blueprint/background.md
+  - .sopify/blueprint/design.md
+  - .sopify/blueprint/tasks.md
+  - .sopify/plan/YYYYMMDD_feature/
 
 First explicit ~go finalize:
-  - .sopify-skills/history/index.md
-  - .sopify-skills/history/YYYY-MM/YYYYMMDD_feature/
+  - .sopify/history/index.md
+  - .sopify/history/YYYY-MM/YYYYMMDD_feature/
 
 First explicit long-term preference:
-  - .sopify-skills/user/feedback.jsonl
+  - .sopify/user/feedback.jsonl
 ```
 
 ## Read Order
@@ -152,8 +152,8 @@ Strategy: {full/progressive}
 
 ---
 Changes: {N} files
-  - .sopify-skills/project.md
-  - .sopify-skills/blueprint/README.md
+  - .sopify/project.md
+  - .sopify/blueprint/README.md
   - ...
 
 Next: KB is ready
@@ -168,8 +168,8 @@ Updated: {N} files
 
 ---
 Changes: {N} files
-  - .sopify-skills/project.md
-  - .sopify-skills/blueprint/design.md
+  - .sopify/project.md
+  - .sopify/blueprint/design.md
   - ...
 
 Next: Docs updated

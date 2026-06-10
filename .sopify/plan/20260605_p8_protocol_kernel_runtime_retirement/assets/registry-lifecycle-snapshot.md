@@ -1,6 +1,6 @@
 # Registry Lifecycle Snapshot
 
-> Exported from `.sopify-skills/plan/_registry.yaml` before W2.6 registry retirement.
+> Exported from `.sopify/plan/_registry.yaml` before W2.6 registry retirement.
 > Source: `p8-runtime-retirement-baseline` tag (commit `ed57992`).
 > Registry mode: `observe_only` / selection: `explicit_only` / priority: `heuristic_v1`
 

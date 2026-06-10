@@ -340,18 +340,18 @@ def inspect_workspace_state(workspace_root: Path | None) -> dict[str, object]:
             "requested": False,
             "root": None,
             "bootstrap_mode": "on_first_project_trigger",
-            "sopify_skills_present": None,
+            "sopify_present": None,
             "active_plan": None,
             "pending_checkpoint": None,
         }
-    state_root = workspace_root / ".sopify-skills" / "state"
+    state_root = workspace_root / ".sopify" / "state"
     active_plan_json = _read_json(state_root / "active_plan.json")
     current_handoff_json = _read_json(state_root / "current_handoff.json")
     return {
         "requested": True,
         "root": str(workspace_root),
         "bootstrap_mode": "prewarmed",
-        "sopify_skills_present": (workspace_root / ".sopify-skills").is_dir(),
+        "sopify_present": (workspace_root / ".sopify").is_dir(),
         "active_plan": str(active_plan_json.get("plan_id") or "") or None,
         "pending_checkpoint": current_handoff_json.get("required_host_action"),
     }
@@ -441,7 +441,7 @@ def render_status_text(payload: dict[str, object]) -> str:
             [
                 "  requested: yes",
                 f"  root: {workspace_state['root']}",
-                f"  sopify_skills_present: {workspace_state['sopify_skills_present']}",
+                f"  sopify_present: {workspace_state['sopify_present']}",
                 f"  active_plan: {workspace_state['active_plan'] or '(none)'}",
                 f"  pending_checkpoint: {_CHECKPOINT_LABELS.get(workspace_state['pending_checkpoint'], workspace_state['pending_checkpoint']) if workspace_state['pending_checkpoint'] else '(none)'}",
             ]
@@ -504,7 +504,7 @@ def _render_structured_evidence_lines(evidence: object) -> tuple[str, ...]:
 def _protocol_state_checks(workspace_state: dict[str, object]) -> tuple[InspectionCheck, ...]:
     if not workspace_state.get("requested"):
         return ()
-    if not workspace_state.get("sopify_skills_present"):
+    if not workspace_state.get("sopify_present"):
         return (
             InspectionCheck(
                 check_id="workspace_protocol_state",
@@ -515,7 +515,7 @@ def _protocol_state_checks(workspace_state: dict[str, object]) -> tuple[Inspecti
         )
     checks: list[InspectionCheck] = []
     workspace_root = Path(str(workspace_state["root"]))
-    state_root = workspace_root / ".sopify-skills" / "state"
+    state_root = workspace_root / ".sopify" / "state"
     for filename, check_id in (
         ("active_plan.json", "active_plan_health"),
         ("current_handoff.json", "current_handoff_health"),
@@ -676,7 +676,7 @@ def _inspect_workspace_bundle(
     workspace_root: Path,
 ) -> InspectionCheck:
     payload_root = adapter.payload_root(home_root)
-    bundle_root = workspace_root / ".sopify-skills"
+    bundle_root = workspace_root / ".sopify"
     try:
         current_manifest_path, current_manifest = validate_workspace_stub_manifest(bundle_root)
     except InstallError as exc:
@@ -830,7 +830,7 @@ def _resolve_workspace_capability_manifest(
     if workspace_bundle.status != CHECK_PASS:
         return {}
 
-    bundle_root = workspace_root / ".sopify-skills"
+    bundle_root = workspace_root / ".sopify"
     try:
         _manifest_path, current_manifest = validate_workspace_stub_manifest(bundle_root)
         selected_bundle_version = current_manifest.get("bundle_version")
@@ -907,7 +907,7 @@ def _workspace_bundle_recommendation(host_id: str, workspace_root: Path, reason_
         return f"Sopify is not enabled in {workspace_root} yet. Trigger Sopify there to bootstrap on demand."
     if reason_code == REASON_STUB_INVALID:
         return (
-            f"The local `.sopify-skills/sopify.json` in {workspace_root} looks invalid. "
+            f"The local `.sopify/sopify.json` in {workspace_root} looks invalid. "
             f"Rerun Sopify bootstrap, or delete that file and retry."
         )
     if reason_code == REASON_STUB_SELECTED:

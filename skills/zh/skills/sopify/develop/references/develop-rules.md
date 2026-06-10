@@ -17,8 +17,8 @@
 
 来源：
 
-- `.sopify-skills/plan/{current_plan}/tasks.md`
-- `.sopify-skills/plan/{current_plan}/plan.md`（light）
+- `.sopify/plan/{current_plan}/tasks.md`
+- `.sopify/plan/{current_plan}/plan.md`（light）
 
 处理规则：
 
@@ -80,7 +80,7 @@ develop 阶段统一使用以下字段名，不再混用 `discovery_source`、`s
 
 补充说明：
 
-- `.sopify-skills/project.md` 的 `verify` 约定是后续长期落点；当它已存在时，作为最高优先级来源，但不是当前 v1 落地前提。
+- `.sopify/project.md` 的 `verify` 约定是后续长期落点；当它已存在时，作为最高优先级来源，但不是当前 v1 落地前提。
 - `verification_source` 只表示来源，不复用为结果态；“是否跳过/为何降级”统一通过 `result + reason_code` 表达。
 - `reason_code` 是内部验证字段，最终用户输出不得展示原始值；需要解释时用人话填入"说明"列。
 
@@ -89,7 +89,7 @@ develop 阶段统一使用以下字段名，不再混用 `discovery_source`、`s
 固定优先级：
 
 1. `project_contract`
-   - 即 `.sopify-skills/project.md` 中已显式定义的 `verify` 约定。
+   - 即 `.sopify/project.md` 中已显式定义的 `verify` 约定。
 2. `project_native`
    - 项目原生脚本或配置，例如 `package.json`、`pyproject.toml`、`Makefile`、`justfile` 中稳定的验证入口。
 3. `not_configured`
@@ -215,11 +215,11 @@ Stage B `code_quality` 至少检查：
 迁移路径：
 
 ```text
-.sopify-skills/plan/YYYYMMDD_feature/
-  -> .sopify-skills/history/YYYY-MM/YYYYMMDD_feature/
+.sopify/plan/YYYYMMDD_feature/
+  -> .sopify/history/YYYY-MM/YYYYMMDD_feature/
 ```
 
-索引更新：在首次显式 finalize 时按需创建并更新 `.sopify-skills/history/index.md`。
+索引更新：在首次显式 finalize 时按需创建并更新 `.sopify/history/index.md`。
 
 ## 输出模板
 

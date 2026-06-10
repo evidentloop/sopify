@@ -329,7 +329,7 @@ class ReleaseHookTests(unittest.TestCase):
             self.assertNotIn("**Skills**", unreleased)
 
     def test_release_draft_ignores_sopify_kb_paths(self) -> None:
-        """Plan/history package paths are included for attribution; non-package .sopify-skills/ paths are excluded."""
+        """Plan/history package paths are included for attribution; non-package .sopify/ paths are excluded."""
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             changelog = root / "CHANGELOG.md"
@@ -342,9 +342,9 @@ class ReleaseHookTests(unittest.TestCase):
                     "--root",
                     str(root),
                     "--file",
-                    ".sopify-skills/history/index.md",
+                    ".sopify/history/index.md",
                     "--file",
-                    ".sopify-skills/plan/20260324_task/tasks.md",
+                    ".sopify/plan/20260324_task/tasks.md",
                     "--file",
                     "installer/payload.py",
                 ],
@@ -358,13 +358,13 @@ class ReleaseHookTests(unittest.TestCase):
             # Plan package path is now included for attribution
             self.assertIn("`20260324_task`", unreleased)
             self.assertIn("**Changed**", unreleased)
-            # Non-package .sopify-skills/ paths still excluded
+            # Non-package .sopify/ paths still excluded
             self.assertNotIn("history/index.md", unreleased)
             # Blueprint internals still excluded
-            self.assertNotIn(".sopify-skills/blueprint/", unreleased)
+            self.assertNotIn(".sopify/blueprint/", unreleased)
 
     def test_release_draft_skips_when_only_sopify_kb_paths_changed(self) -> None:
-        """Only non-package .sopify-skills/ paths → no eligible files."""
+        """Only non-package .sopify/ paths → no eligible files."""
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             changelog = root / "CHANGELOG.md"
@@ -378,11 +378,11 @@ class ReleaseHookTests(unittest.TestCase):
                     "--root",
                     str(root),
                     "--file",
-                    ".sopify-skills/history/index.md",
+                    ".sopify/history/index.md",
                     "--file",
-                    ".sopify-skills/blueprint/design.md",
+                    ".sopify/blueprint/design.md",
                     "--file",
-                    ".sopify-skills/state/current_handoff.json",
+                    ".sopify/state/current_handoff.json",
                 ],
                 capture_output=True,
                 text=True,

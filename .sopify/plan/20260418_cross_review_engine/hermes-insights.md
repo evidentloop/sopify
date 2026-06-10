@@ -138,8 +138,8 @@ _CONTEXT_THREAT_PATTERNS = [
   ~/.sopify/skills/        # 暂无，但需要（见 §4.2 借鉴建议）
 
 项目知识：
-  .sopify-skills/blueprint/ # 项目内结构化上下文（陈述性）
-  .sopify-skills/history/   # 已完成方案归档
+  .sopify/blueprint/ # 项目内结构化上下文（陈述性）
+  .sopify/history/   # 已完成方案归档
 ```
 
 **缺口**：Sopify 缺少"全局可复用 AI 操作程序"层。
@@ -184,7 +184,7 @@ _CONTEXT_THREAT_PATTERNS = [
 
 **与项目级 blueprint 的分工**：
 - `~/.crossreview/rubrics/`：**如何 review**（通用过程，跨项目）
-- `.sopify-skills/blueprint/patterns.md`：**这个项目的已知风险**（项目内知识）
+- `.sopify/blueprint/patterns.md`：**这个项目的已知风险**（项目内知识）
 
 ### 4.3 借鉴 3：review 输出的知识沉淀管道
 

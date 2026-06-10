@@ -107,7 +107,7 @@ def run_smoke(*, target_value: str, temp_root: Path) -> dict[str, Any]:
     install_stdout = _run_install_cli(target_value=target.value, temp_home=temp_home)
     host_root = adapter.destination_root(temp_home)
     payload_root = adapter.payload_root(temp_home)
-    marker_root = workspace_root / ".sopify-skills"
+    marker_root = workspace_root / ".sopify"
     helper_path = payload_root / "helpers" / "bootstrap_workspace.py"
 
     host_paths = validate_host_install(adapter, home_root=temp_home)
@@ -173,7 +173,7 @@ def run_smoke(*, target_value: str, temp_root: Path) -> dict[str, Any]:
         "workspace_root": str(workspace_root),
         "host_root": str(host_root),
         "payload_root": str(payload_root),
-        "bundle_root": str(workspace_root / ".sopify-skills"),
+        "bundle_root": str(workspace_root / ".sopify"),
         "global_bundle_root": str(global_bundle_root),
         "payload_bundle": payload_bundle.to_status_dict(),
         "workspace_bundle": workspace_bundle,

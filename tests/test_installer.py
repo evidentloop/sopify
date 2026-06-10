@@ -333,7 +333,7 @@ class PayloadInstallTests(unittest.TestCase):
 
 class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
     def _write_workspace_marker(self, workspace_root: Path, payload: dict[str, object]) -> Path:
-        marker_root = workspace_root / ".sopify-skills"
+        marker_root = workspace_root / ".sopify"
         marker_root.mkdir(parents=True, exist_ok=True)
         marker_path = marker_root / "sopify.json"
         _write_json(marker_path, payload)
@@ -597,7 +597,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
     def test_validate_workspace_bundle_manifest_only_requires_marker_object(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
-            marker_root = workspace_root / ".sopify-skills"
+            marker_root = workspace_root / ".sopify"
             marker_root.mkdir(parents=True, exist_ok=True)
             manifest_path = marker_root / "sopify.json"
             _write_json(
@@ -616,7 +616,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
     def test_validate_workspace_stub_manifest_applies_defaults(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
-            marker_root = workspace_root / ".sopify-skills"
+            marker_root = workspace_root / ".sopify"
             marker_root.mkdir(parents=True, exist_ok=True)
             manifest_path = marker_root / "sopify.json"
             _write_json(
@@ -651,7 +651,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
 
             _write_workspace_stub_overlay(bundle_root=bundle_root, workspace_root=workspace_root)
 
-            marker = json.loads((workspace_root / ".sopify-skills" / "sopify.json").read_text(encoding="utf-8"))
+            marker = json.loads((workspace_root / ".sopify" / "sopify.json").read_text(encoding="utf-8"))
             self.assertEqual(marker["schema_version"], "1")
             self.assertEqual(marker["stub_version"], "1")
             self.assertEqual(marker["bundle_version"], "2026-02-13")
@@ -675,7 +675,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
                 },
             )
 
-            marker = json.loads((workspace_root / ".sopify-skills" / "sopify.json").read_text(encoding="utf-8"))
+            marker = json.loads((workspace_root / ".sopify" / "sopify.json").read_text(encoding="utf-8"))
             self.assertEqual(marker["schema_version"], "1")
             self.assertEqual(marker["stub_version"], "1")
             self.assertEqual(marker["bundle_version"], "2026-02-13")
@@ -702,7 +702,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
                 },
             )
 
-            marker = json.loads((workspace_root / ".sopify-skills" / "sopify.json").read_text(encoding="utf-8"))
+            marker = json.loads((workspace_root / ".sopify" / "sopify.json").read_text(encoding="utf-8"))
             self.assertEqual(
                 set(marker.keys()),
                 {
@@ -720,7 +720,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
     def test_validate_workspace_stub_manifest_rejects_invalid_bundle_version(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
-            marker_root = workspace_root / ".sopify-skills"
+            marker_root = workspace_root / ".sopify"
             marker_root.mkdir(parents=True, exist_ok=True)
             manifest_path = marker_root / "sopify.json"
             _write_json(
@@ -739,7 +739,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
     def test_validate_workspace_stub_manifest_treats_null_bundle_version_as_host_delegated(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
-            marker_root = workspace_root / ".sopify-skills"
+            marker_root = workspace_root / ".sopify"
             marker_root.mkdir(parents=True, exist_ok=True)
             manifest_path = marker_root / "sopify.json"
             _write_json(
@@ -759,7 +759,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
     def test_validate_workspace_stub_manifest_rejects_empty_string_bundle_version(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
-            marker_root = workspace_root / ".sopify-skills"
+            marker_root = workspace_root / ".sopify"
             marker_root.mkdir(parents=True, exist_ok=True)
             manifest_path = marker_root / "sopify.json"
             _write_json(
@@ -778,7 +778,7 @@ class WorkspaceBootstrapCompatibilityTests(unittest.TestCase):
     def test_validate_workspace_stub_manifest_rejects_missing_schema_version(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
-            marker_root = workspace_root / ".sopify-skills"
+            marker_root = workspace_root / ".sopify"
             marker_root.mkdir(parents=True, exist_ok=True)
             manifest_path = marker_root / "sopify.json"
             _write_json(
@@ -818,12 +818,12 @@ class WorkspaceBootstrapIgnorePolicyTests(unittest.TestCase):
             self.assertEqual(result["reason_code"], "STUB_SELECTED")
             self.assertEqual(result["ignore_mode"], "exclude")
             self.assertEqual(Path(result["ignore_target"]).resolve(), exclude_path.resolve())
-            manifest = json.loads((workspace_root / ".sopify-skills" / "sopify.json").read_text(encoding="utf-8"))
+            manifest = json.loads((workspace_root / ".sopify" / "sopify.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["ignore_mode"], "exclude")
             exclude_content = exclude_path.read_text(encoding="utf-8")
             self.assertIn("user-entry\n", exclude_content)
             self.assertIn("# BEGIN sopify-managed", exclude_content)
-            self.assertIn(".sopify-skills/state/", exclude_content)
+            self.assertIn(".sopify/state/", exclude_content)
             self.assertFalse((workspace_root / ".gitignore").exists())
 
     def test_installed_helper_keeps_commit_lock_sticky_until_explicit_go_init_switches_back(self) -> None:
@@ -859,7 +859,7 @@ class WorkspaceBootstrapIgnorePolicyTests(unittest.TestCase):
 
             self.assertEqual(sticky["action"], "skipped")
             self.assertEqual(sticky["ignore_mode"], "gitignore")
-            manifest = json.loads((workspace_root / ".sopify-skills" / "sopify.json").read_text(encoding="utf-8"))
+            manifest = json.loads((workspace_root / ".sopify" / "sopify.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["ignore_mode"], "gitignore")
             self.assertIn("# BEGIN sopify-managed", gitignore_path.read_text(encoding="utf-8"))
 
@@ -872,7 +872,7 @@ class WorkspaceBootstrapIgnorePolicyTests(unittest.TestCase):
             self.assertEqual(switched["action"], "updated")
             self.assertEqual(switched["ignore_mode"], "exclude")
             self.assertEqual(Path(switched["ignore_target"]).resolve(), exclude_path.resolve())
-            manifest = json.loads((workspace_root / ".sopify-skills" / "sopify.json").read_text(encoding="utf-8"))
+            manifest = json.loads((workspace_root / ".sopify" / "sopify.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["ignore_mode"], "exclude")
             self.assertFalse(gitignore_path.exists())
             self.assertIn("# BEGIN sopify-managed", exclude_path.read_text(encoding="utf-8"))

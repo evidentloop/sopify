@@ -241,7 +241,7 @@ def check_history_receipt(history_dir: Path) -> list[str]:
 
 def run_new_plan(fixture: Path) -> dict:
     failures = []
-    sopify = fixture / ".sopify-skills"
+    sopify = fixture / ".sopify"
     state = sopify / "state"
     plan_root = sopify / "plan"
 
@@ -263,7 +263,7 @@ def run_new_plan(fixture: Path) -> dict:
 
 def run_continuation(fixture: Path) -> dict:
     failures = []
-    sopify = fixture / ".sopify-skills"
+    sopify = fixture / ".sopify"
     state = sopify / "state"
     plan_root = sopify / "plan"
     protocol_md = sopify / "blueprint" / "protocol.md"
@@ -297,11 +297,11 @@ def run_continuation(fixture: Path) -> dict:
         failures.extend(check_forbidden_patterns(protocol_md))
     else:
         # Fallback: scan the repo's own protocol.md if fixture doesn't have one
-        repo_protocol = Path(__file__).resolve().parent.parent / ".sopify-skills" / "blueprint" / "protocol.md"
+        repo_protocol = Path(__file__).resolve().parent.parent / ".sopify" / "blueprint" / "protocol.md"
         if repo_protocol.exists():
             failures.extend(check_forbidden_patterns(repo_protocol))
         # Also scan host prompt entry spec
-        repo_prompt_spec = Path(__file__).resolve().parent.parent / ".sopify-skills" / "plan" / "20260605_p8_protocol_kernel_runtime_retirement" / "assets" / "host-prompt-protocol-entry.md"
+        repo_prompt_spec = Path(__file__).resolve().parent.parent / ".sopify" / "plan" / "20260605_p8_protocol_kernel_runtime_retirement" / "assets" / "host-prompt-protocol-entry.md"
         if repo_prompt_spec.exists():
             failures.extend(check_forbidden_patterns(repo_prompt_spec))
 
@@ -315,7 +315,7 @@ def run_continuation(fixture: Path) -> dict:
 
 def run_finalize(fixture: Path) -> dict:
     failures = []
-    sopify = fixture / ".sopify-skills"
+    sopify = fixture / ".sopify"
     state = sopify / "state"
     history_root = sopify / "history"
 
