@@ -1,7 +1,7 @@
 ---
 title: P8 Protocol Kernel & Runtime Retirement — Tasks
 plan_id: 20260605_p8_protocol_kernel_runtime_retirement
-status: in_progress (W1 ✅ / W2 ✅ / Phase 0 ✅ / W3.1 ✅ / W3.2 next)
+status: in_progress (W1 ✅ / W2 ✅ / Phase 0 ✅ / W3.1 ✅ / W3.2 ✅ / W3.3 ✅ / W3.4 next)
 created: 2026-06-05
 ---
 
@@ -499,33 +499,102 @@ created: 2026-06-05
 
 ### W3.2 Qoder Continuation Writer Path（Installed Payload Proof）
 
-- [ ] Depends: W3.1
-- [ ] Input: sopify_writer 2-file model + installed payload at `~/.qoder/sopify/`
-- [ ] Output: Qoder 通过 installed payload 路径（非 repo-local sys.path）调 sopify_writer 写 `state/active_plan.json`
-- [ ] Output: Qoder 写 `state/current_handoff.json`
-- [ ] Output: Qoder 写 `plan/<id>/receipts/exec_NNN.json` / `verify_NNN.json`
-- [ ] Output: finalize 能清 state 并产出 `receipts/final.json` + `history/<id>/receipt.md`
-- [ ] Output: 如 installed payload 路径调不通，记录 thin wrapper 为已知限制（wrapper 只透传 writer 写入，不做路由或执行）
-- [ ] Verify: 不依赖 repo-local `sys.path.insert` 或 PYTHONPATH hack
-- [ ] Verify: Qoder new session reads `active_plan → plan.md → current_handoff → receipts`
-- [ ] Verify: same fixture can be resumed without runtime process
+- [x] Depends: W3.1
+- [x] Input: sopify_writer 2-file model + installed payload at `~/.qoder/sopify/bundles/0.0.0-dev/`
+- [x] Output: Qoder 通过 installed payload 路径（非 repo-local sys.path）调 sopify_writer 写 `state/active_plan.json`
+- [x] Output: Qoder 写 `state/current_handoff.json`（via `RuntimeHandoff` → `ProtocolStore.set_current_handoff`）
+- [x] Output: Qoder 写 `plan/<id>/receipts/exec_NNN.json` / `verify_NNN.json`
+- [x] Output: finalize 能清 state 并产出 `receipts/final.json` + `history/<id>/receipt.md`
+- [x] Output: installed payload 路径直接调通，**不需要 thin wrapper**
+- [x] Verify: 不依赖 repo-local `sys.path.insert` 或 PYTHONPATH hack（sys.path 仅含 `~/.qoder/sopify/bundles/0.0.0-dev/`）
+- [x] Verify: Qoder new session reads `active_plan → current_handoff`（Session B proof 通过）
+- [x] Verify: same fixture can be resumed without runtime process（Session B 写 exec_002 成功）
 
 ### W3.3 End-to-End Proof Transcript
 
-- [ ] Depends: W3.2
-- [ ] Input: fixture repo with installed Qoder payload
-- [ ] Output: transcript showing session A creates or continues active plan
-- [ ] Output: transcript showing session A writes handoff + at least 1 receipt
-- [ ] Output: transcript showing session B resumes from files via 4-step read chain only
-- [ ] Output: transcript showing session B continues and writes new receipt
-- [ ] Verify: transcript includes active_plan plan_id, plan.md Plan Snapshot or full-plan fallback, handoff required_host_action, latest receipt
-- [ ] Verify: no command invokes runtime
-- [ ] Verify: consult / quick_fix requests in transcript do NOT trigger 4-step continuation
-- [ ] Verify: no `_registry.yaml` read, no retired runtime file read
+- [x] Depends: W3.2
+- [x] Input: fixture repo with installed Qoder payload
+- [x] Output: transcript showing session A creates or continues active plan → `assets/w33-proof-transcript.md` Step 2
+- [x] Output: transcript showing session A writes handoff + at least 1 receipt → exec_001 + verify_001
+- [x] Output: transcript showing session B resumes from files via 4-step read chain only → Step 3a-3d
+- [x] Output: transcript showing session B continues and writes new receipt → exec_002 (Step 3e)
+- [x] Verify: transcript includes active_plan plan_id, plan.md fallback, handoff required_host_action, latest receipt
+- [x] Verify: no command invokes runtime (sys.path restricted to installed payload only)
+- [x] Verify: consult / quick_fix not applicable in this proof (writer-level API, no prompt routing)
+- [x] Verify: no `_registry.yaml` read, no retired runtime file read (Step 5 negative checks)
+- [x] Output: reproducible proof script → `scripts/w33_qoder_proof.py`
+
+### W3.4 Canonical Root Rename（.sopify-skills → .sopify）
+
+> 协议根目录硬切。无双路径兼容、无迁移 shim、无老目录 fallback。顺手收掉 plan.directory 虚假可配置承诺。
+
+#### W3.4a Implementation Layer Rename
+
+- [ ] Depends: W3.3
+- [ ] Input: all `.sopify-skills` references in installer/, scripts/, sopify_writer/, sopify_contracts/
+- [ ] Output: global replace `.sopify-skills` → `.sopify` in implementation code
+- [ ] Output: `plan.directory` config claim removed; canonical root fixed to `.sopify`
+- [ ] Verify: `rg ".sopify-skills" installer/ scripts/ sopify_writer/ sopify_contracts/` → 0 hits
+
+#### W3.4b Test Layer Rename
+
+- [ ] Depends: W3.4a
+- [ ] Input: all `.sopify-skills` references in tests/, tests/fixtures/
+- [ ] Output: global replace in test assertions, fixture paths, fixture content
+- [ ] Output: `tests/fixtures/minimal_plan/` fixture uses `.sopify/` structure
+- [ ] Output: regenerate `tests/golden-snapshots.json`（template/skill 资产变更必然导致 hash 漂移）
+- [ ] Verify: `pytest tests/ -q` → all pass
+
+#### W3.4c Protocol + Prompt + Skill Asset Rename
+
+- [ ] Depends: W3.4b
+- [ ] Input: protocol.md, skills/{zh,en}/header.md.template, .github/copilot-instructions.md, skills/{zh,en}/skills/sopify/**（kb / analyze / develop / design assets / templates / references）
+- [ ] Output: global replace in protocol text, prompt templates, copilot instructions
+- [ ] Output: global replace in skill bodies / references / assets（宿主和工作流直接消费的指令资产）
+- [ ] Output: `.gitignore` pattern updated from `.sopify-skills/state/` to `.sopify/state/`
+- [ ] Verify: protocol smoke 3/3 PASS with `.sopify/` fixtures
+- [ ] Verify: `rg ".sopify-skills" .gitignore skills/ .github/` → 0 active hits
+
+#### W3.4c2 User Docs Path Rename
+
+- [ ] Depends: W3.4c
+- [ ] Input: README.md, README.zh-CN.md, docs/how-sopify-works.md, docs/how-sopify-works.en.md, docs/getting-started.md
+- [ ] Output: path-level rename only（`.sopify-skills` → `.sopify`）；不做 narrative rewrite（那是 W3.5 的职责）
+- [ ] Verify: `rg ".sopify-skills" README.md README.zh-CN.md docs/` → 0 active hits
+
+#### W3.4d Physical Directory Rename
+
+- [ ] Depends: W3.4c2
+- [ ] Input: `.sopify-skills/` directory
+- [ ] Output: `git mv .sopify-skills .sopify`
+- [ ] Output: `install.sh --target qoder` re-run to refresh `~/.qoder/AGENTS.md` with new paths
+- [ ] Verify: `.sopify/` exists, `.sopify-skills/` does not exist
+- [ ] Verify: `install.sh --target qoder` succeeds
+- [ ] Verify: lightweight continuation check — sopify_writer writes state to `.sopify/`
+
+#### W3.4e Plan Package Self-Update
+
+- [ ] Depends: W3.4d
+- [ ] Input: plan.md, tasks.md, design.md (this plan package)
+- [ ] Output: global replace `.sopify-skills` → `.sopify` in plan package documents
+- [ ] Verify: plan package internally consistent with `.sopify/` canonical root
+
+### W3.4 Gate
+
+- [ ] Depends: W3.4a-W3.4e, W3.4c2
+- [ ] Verify: `pytest tests/ -q` → all pass
+- [ ] Verify: protocol smoke 3/3 PASS
+- [ ] Verify (工程 gate): `rg ".sopify-skills" installer/ scripts/ tests/ sopify_writer/ sopify_contracts/ .gitignore` → 0 active hits
+- [ ] Verify (消费面 gate): `rg ".sopify-skills" skills/ .github/ README.md README.zh-CN.md docs/` → 0 active hits
+- [ ] Verify: `install.sh --target qoder` → success
+- [ ] Verify: lightweight continuation check passes
+- [ ] Stop: W3.4 gate must pass before W3.5 starts
+
+---
 
 ### W3.5 Docs Narrative Cutover
 
-- [ ] Depends: W3.3
+- [ ] Depends: W3.4
 - [ ] Input: README / README.zh-CN / docs/how-sopify-works(.en).md / docs/getting-started.md
 - [ ] Output: main narrative becomes "host executes; Sopify preserves auditable AI development assets through protocol, file assets, sopify_writer, receipts"
 - [ ] Output: docs describe the post-P8 product stack as protocol kernel + default workflow + skills/host adapters
