@@ -6,13 +6,16 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
-.sopify-runtime/
-
+# Sopify dogfood repo tracks .sopify/ 资产 (覆盖 global gitignore 的 .sopify/);
+# 仅 state/ 与 replay/ 是运行态, 继续忽略。
+# TODO(P9/W0): .sopify/replay/ 概念在 P9 state 2 文件模型下是否已废弃? 待 W0 顺手确认
+!.sopify/
+!.sopify/*
 .sopify/state/
 .sopify/replay/
 
-evals/skill_eval_report.json
-
+# TODO(P9/W0): P8 后安装链切到 payload, scripts/sync-skills.sh 是否仍在使用?
+# 若已废弃, 下面 3 条生成产物 ignore 也可删。
 # Generated host prompt distributions. Source of truth is skills/{zh,en}.
 Codex/Skills/
 Claude/Skills/
@@ -27,6 +30,3 @@ Copilot/Skills/
 dist/
 build/
 .claude/settings.local.json
-.agents/history/
-
-reports/
