@@ -4,6 +4,7 @@
 
 ## 索引
 
+- `2026-06-12` [`20260418_cross_review_engine`](2026-06/20260418_cross_review_engine/) - standard - deferred archive - CrossReview Sopify 集成: Phase 4a advisory dogfood 完成后暂缓，核心洞察已沉淀到 `evidentloop/CrossReview` 独立仓库，Sopify 侧不再维护集成工作
 - `2026-06-10` [`20260605_p8_protocol_kernel_runtime_retirement`](2026-06/20260605_p8_protocol_kernel_runtime_retirement/) - architecture - P8 Protocol Kernel & Runtime Retirement: runtime 物理删除（46 files / ~15.6K LOC），canonical root .sopify-skills→.sopify，state model 6→2 files，Qoder PROTOCOL_VERIFIED host proof，产品定位"开发过程协议层"，蓝图/README/架构图全量对齐
 - `2026-06-05` [`20260529_pre_launch_consolidation`](2026-06/20260529_pre_launch_consolidation/) - standard - 推广前收口整合: D1 README 重写 / D3 命令面收敛 / D5-3B 安全修复 / Wave A 首次触达 / Wave B 文档打磨 / Wave C 输出增强（PR #54）/ Wave D 推广文章草稿（本地就绪 / 发布 deferred / docs/articles 已删除）/ Wave E runtime 线已被 P8 吸收、手工项 deferred
 - `2026-05-28` [`20260528_output_contract_enforcement`](2026-05/20260528_output_contract_enforcement/) - standard - 输出契约提示层与模板结构约束: output-contract.md（ZH+EN）定义必需 section / 表格列约束 / 条件增强与表达选型（DO/DON'T）/ 输出前自检，6 SKILL.md 引用行 + develop §2.6 自检子节 + 16 项 golden snapshot 结构与内联断言

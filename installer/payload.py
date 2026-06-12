@@ -217,14 +217,20 @@ def _install_versioned_payload_bundle(
     desired_bundle_version: str | None,
 ) -> Path:
     """Install a versioned payload bundle containing protocol-kernel assets only."""
-    initial_version = _normalize_payload_bundle_version(desired_bundle_version) or "0.0.0-dev"
+    resolved_version = _normalize_payload_bundle_version(desired_bundle_version)
+    if not resolved_version:
+        raise InstallError(
+            "Bundle version could not be resolved for payload installation. "
+            "The SOPIFY_VERSION header is missing or invalid."
+        )
     bundle_root = sync_payload_bundle(
         repo_root,
         host_root,
-        bundle_dirname=str(Path(PAYLOAD_DIRNAME) / PAYLOAD_BUNDLES_RELATIVE_PATH / initial_version),
+        bundle_dirname=str(Path(PAYLOAD_DIRNAME) / PAYLOAD_BUNDLES_RELATIVE_PATH / resolved_version),
+        bundle_version=resolved_version,
     )
     bundle_manifest = _read_json(bundle_root / "manifest.json")
-    actual_version = _payload_bundle_version_or_default(bundle_manifest.get("bundle_version"), default=initial_version)
+    actual_version = _payload_bundle_version_or_default(bundle_manifest.get("bundle_version"), default=resolved_version)
     if actual_version == bundle_root.name:
         return bundle_root
 
@@ -239,7 +245,7 @@ def _write_payload_manifest(*, payload_root: Path, bundle_root: Path, payload_ve
     bundle_manifest = _read_json(bundle_root / "manifest.json")
     if not bundle_manifest:
         raise InstallError(f"Missing bundle manifest for payload generation: {bundle_root / 'manifest.json'}")
-    bundle_version = _payload_bundle_version_or_default(bundle_manifest.get("bundle_version"), default=bundle_root.name or "0.0.0-dev")
+    bundle_version = _payload_bundle_version_or_default(bundle_manifest.get("bundle_version"), default=bundle_root.name)
     normalized_payload_version = _normalize_payload_bundle_version(payload_version)
     bundle_manifest_path = PAYLOAD_BUNDLES_RELATIVE_PATH / bundle_version / "manifest.json"
 

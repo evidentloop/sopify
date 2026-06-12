@@ -51,6 +51,12 @@ SOURCE_KIND_UNRESOLVED = "unresolved"
 STATUS_READY_STATES = {"READY", "NEWER_THAN_GLOBAL"}
 STATUS_WARN_STATES = {"MISSING", "OUTDATED_COMPATIBLE"}
 
+# W0.10a: workspace version state classifier (inspection-surface, not protocol kernel)
+VERSION_STATE_UP_TO_DATE = "up_to_date"
+VERSION_STATE_PINNED_OLD = "pinned_old_but_healthy"
+VERSION_STATE_STALE = "stale"
+VERSION_STATE_BROKEN = "broken"
+
 _CHECKPOINT_LABELS: dict[str, str] = {
     "answer_questions": "awaiting supplemental info",
     "confirm_decision": "awaiting decision confirmation",
@@ -187,6 +193,32 @@ class HostInspection:
             self.workspace_bundle,
             self.handoff_first,
         )
+
+
+def classify_workspace_version_state(
+    *,
+    workspace_pin: str | None,
+    active_version: str | None,
+    bundle_resolvable: bool,
+) -> str:
+    """Classify workspace version alignment into one of 4 states.
+
+    W0.10a: stays in inspection.py (not sopify_contracts).
+    Host-delegated is semantic reservation only — pin == null is broken, not up_to_date.
+
+    States:
+        up_to_date:              workspace_pin == active_version
+        pinned_old_but_healthy:  workspace_pin != active_version, but old bundle resolvable
+        stale:                   workspace_pin set but old version unresolvable
+        broken:                  workspace_pin missing/null or active_version missing
+    """
+    if not workspace_pin or not active_version:
+        return VERSION_STATE_BROKEN
+    if workspace_pin == active_version:
+        return VERSION_STATE_UP_TO_DATE
+    if bundle_resolvable:
+        return VERSION_STATE_PINNED_OLD
+    return VERSION_STATE_STALE
 
 
 def inspect_all_hosts(
@@ -333,7 +365,12 @@ def inspect_host(
     )
 
 
-def inspect_workspace_state(workspace_root: Path | None) -> dict[str, object]:
+def inspect_workspace_state(
+    workspace_root: Path | None,
+    *,
+    active_version: str | None = None,
+    home_root: Path | None = None,
+) -> dict[str, object]:
     """Return a lightweight view of current workspace protocol state."""
     if workspace_root is None:
         return {
@@ -343,10 +380,28 @@ def inspect_workspace_state(workspace_root: Path | None) -> dict[str, object]:
             "sopify_present": None,
             "active_plan": None,
             "pending_checkpoint": None,
+            "version_state": None,
         }
     state_root = workspace_root / ".sopify" / "state"
     active_plan_json = _read_json(state_root / "active_plan.json")
     current_handoff_json = _read_json(state_root / "current_handoff.json")
+    sopify_json = _read_json(workspace_root / ".sopify" / "sopify.json")
+    workspace_pin = sopify_json.get("bundle_version") if sopify_json else None
+
+    if active_version is None and home_root is not None:
+        active_version, bundle_resolvable = _resolve_active_version_and_pin(
+            home_root, workspace_pin,
+        )
+    elif workspace_pin and home_root is not None:
+        _, bundle_resolvable = _resolve_active_version_and_pin(home_root, workspace_pin)
+    else:
+        bundle_resolvable = False
+
+    version_state = classify_workspace_version_state(
+        workspace_pin=workspace_pin,
+        active_version=active_version,
+        bundle_resolvable=bundle_resolvable,
+    )
     return {
         "requested": True,
         "root": str(workspace_root),
@@ -354,7 +409,36 @@ def inspect_workspace_state(workspace_root: Path | None) -> dict[str, object]:
         "sopify_present": (workspace_root / ".sopify").is_dir(),
         "active_plan": str(active_plan_json.get("plan_id") or "") or None,
         "pending_checkpoint": current_handoff_json.get("required_host_action"),
+        "version_state": version_state,
+        "workspace_pin": workspace_pin,
+        "active_version": active_version,
     }
+
+
+def _resolve_active_version_and_pin(
+    home_root: Path,
+    workspace_pin: str | None,
+) -> tuple[str | None, bool]:
+    """Read active_version from the first installed host's payload manifest.
+
+    Returns (active_version, bundle_resolvable) where bundle_resolvable is True
+    only if workspace_pin's bundle directory actually exists on disk.
+    """
+    for reg in iter_host_registrations():
+        adapter = reg.adapter
+        payload_root = adapter.payload_root(home_root)
+        manifest = _read_json(payload_root / "payload-manifest.json")
+        if not manifest:
+            continue
+        active = manifest.get("active_version")
+        if not active:
+            continue
+        bundle_resolvable = False
+        if workspace_pin:
+            bundle_dir = payload_root / "bundles" / workspace_pin
+            bundle_resolvable = bundle_dir.is_dir()
+        return active, bundle_resolvable
+    return None, False
 
 
 def build_status_payload(*, home_root: Path, workspace_root: Path | None) -> dict[str, object]:
@@ -365,7 +449,7 @@ def build_status_payload(*, home_root: Path, workspace_root: Path | None) -> dic
         "schema_version": STATUS_SCHEMA_VERSION,
         "hosts": hosts,
         "state": _build_status_summary(hosts),
-        "workspace_state": inspect_workspace_state(workspace_root),
+        "workspace_state": inspect_workspace_state(workspace_root, home_root=home_root),
     }
 
 
@@ -373,12 +457,13 @@ def build_doctor_payload(*, home_root: Path, workspace_root: Path | None) -> dic
     """Build the machine contract for `sopify doctor`."""
     inspections = inspect_all_hosts(home_root=home_root, workspace_root=workspace_root, include_smoke=True)
     checks = [check.to_dict() for inspection in inspections for check in inspection.doctor_checks()]
-    workspace_state = inspect_workspace_state(workspace_root)
+    workspace_state = inspect_workspace_state(workspace_root, home_root=home_root)
     checks.extend(check.to_dict() for check in _protocol_state_checks(workspace_state))
     return {
         "schema_version": DOCTOR_SCHEMA_VERSION,
         "checks": checks,
         "summary": _build_doctor_summary(checks),
+        "workspace_state": workspace_state,
     }
 
 
@@ -446,6 +531,20 @@ def render_status_text(payload: dict[str, object]) -> str:
                 f"  pending_checkpoint: {_CHECKPOINT_LABELS.get(workspace_state['pending_checkpoint'], workspace_state['pending_checkpoint']) if workspace_state['pending_checkpoint'] else '(none)'}",
             ]
         )
+        version_state = workspace_state.get("version_state")
+        if version_state:
+            version_labels = {
+                VERSION_STATE_UP_TO_DATE: "aligned",
+                VERSION_STATE_PINNED_OLD: "pinned (old but usable)",
+                VERSION_STATE_STALE: "stale (unresolvable)",
+                VERSION_STATE_BROKEN: "broken",
+            }
+            lines.append(f"  version_state: {version_labels.get(version_state, version_state)}")
+            pin = workspace_state.get("workspace_pin")
+            active = workspace_state.get("active_version")
+            if pin and active:
+                lines.append(f"  workspace_pin: {pin}")
+                lines.append(f"  active_version: {active}")
     return "\n".join(lines)
 
 
@@ -475,6 +574,26 @@ def render_doctor_text(payload: dict[str, object]) -> str:
         lines.append(line)
         for detail in _render_structured_evidence_lines(check.get("evidence")):
             lines.append(f"    {detail}")
+    workspace_state = payload.get("workspace_state") or {}
+    version_state = workspace_state.get("version_state")
+    if version_state:
+        lines.append("Version alignment:")
+        pin = workspace_state.get("workspace_pin")
+        active = workspace_state.get("active_version")
+        lines.append(f"  state: {version_state}")
+        if pin:
+            lines.append(f"  workspace_pin: {pin}")
+        if active:
+            lines.append(f"  active_version: {active}")
+        hints = {
+            VERSION_STATE_UP_TO_DATE: "No action needed.",
+            VERSION_STATE_PINNED_OLD: "Workspace is pinned to an older version that still works. Update when ready.",
+            VERSION_STATE_STALE: "Workspace pin points to a version that can no longer be resolved. Re-initialize or update.",
+            VERSION_STATE_BROKEN: "Workspace marker is missing or corrupted. Run init to repair.",
+        }
+        hint = hints.get(version_state)
+        if hint:
+            lines.append(f"  hint: {hint}")
     return "\n".join(lines)
 
 

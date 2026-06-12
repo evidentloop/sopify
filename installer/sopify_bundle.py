@@ -31,6 +31,7 @@ def sync_payload_bundle(
     workspace_root: Path,
     *,
     bundle_dirname: str = DEFAULT_PAYLOAD_BUNDLE_DIRNAME,
+    bundle_version: str | None = None,
 ) -> Path:
     """Sync the protocol-kernel payload bundle into the target workspace."""
     resolved_repo_root = repo_root.resolve()
@@ -56,7 +57,11 @@ def sync_payload_bundle(
         catalog_dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(catalog_source, catalog_dest)
 
-        _write_payload_bundle_manifest(bundle_root=bundle_root, source_root=resolved_repo_root)
+        _write_payload_bundle_manifest(
+            bundle_root=bundle_root,
+            source_root=resolved_repo_root,
+            bundle_version=bundle_version,
+        )
     except OSError as exc:
         raise InstallError(f"Payload bundle sync failed: {exc}") from exc
 
@@ -72,30 +77,36 @@ def sync_payload_bundle(
     return bundle_root
 
 
-def _write_payload_bundle_manifest(*, bundle_root: Path, source_root: Path) -> None:
+def _write_payload_bundle_manifest(
+    *,
+    bundle_root: Path,
+    source_root: Path,
+    bundle_version: str | None = None,
+) -> None:
     """Write a minimal bundle manifest without importing from runtime.manifest.
 
     P8 replaced the runtime-generated manifest (which transitively imported 8+
     runtime submodules) with this inline writer that captures only the
     protocol-kernel metadata needed by the installer and bootstrap helper.
+
+    W0.7: version resolution is explicit parameter > sopify_contracts.__version__
+    > SOPIFY_DEV_VERSION env var (must be a valid version string). If none
+    resolves, raises InstallError instead of silently falling back to "0.0.0-dev".
     """
     from sopify_writer import iso_now
 
-    version_path = source_root / "sopify_contracts" / "__init__.py"
-    bundle_version = "0.0.0-dev"
-    if version_path.is_file():
-        for line in version_path.read_text(encoding="utf-8").splitlines():
-            stripped = line.strip()
-            if stripped.startswith("__version__"):
-                _, _, raw = stripped.partition("=")
-                candidate = raw.strip().strip("'\"")
-                if candidate:
-                    bundle_version = candidate
-                    break
+    resolved_version = bundle_version or _read_contracts_version(source_root) or _read_dev_version()
+    if not resolved_version:
+        raise InstallError(
+            "Bundle version could not be resolved: no explicit version provided, "
+            "sopify_contracts.__version__ not found, and SOPIFY_DEV_VERSION not set. "
+            "Pass bundle_version explicitly or set SOPIFY_DEV_VERSION to a valid version string "
+            "(e.g. SOPIFY_DEV_VERSION=0.0.0-dev.local)."
+        )
 
     manifest = {
         "schema_version": "1",
-        "bundle_version": bundle_version,
+        "bundle_version": resolved_version,
         "generated_at": iso_now(),
         "capabilities": {
             "bundle_role": "control_plane",
@@ -115,6 +126,35 @@ def _write_payload_bundle_manifest(*, bundle_root: Path, source_root: Path) -> N
     with open(manifest_path, "w", encoding="utf-8") as handle:
         json.dump(manifest, handle, ensure_ascii=False, indent=2, sort_keys=True)
         handle.write("\n")
+
+
+def _read_contracts_version(source_root: Path) -> str | None:
+    """Read __version__ from sopify_contracts/__init__.py, return None if absent."""
+    version_path = source_root / "sopify_contracts" / "__init__.py"
+    if not version_path.is_file():
+        return None
+    for line in version_path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if stripped.startswith("__version__"):
+            _, _, raw = stripped.partition("=")
+            candidate = raw.strip().strip("'\"")
+            if candidate:
+                return candidate
+    return None
+
+
+def _read_dev_version() -> str | None:
+    """Read SOPIFY_DEV_VERSION env var. Bare boolean '1'/'true' is NOT accepted."""
+    dev_value = os.environ.get("SOPIFY_DEV_VERSION", "").strip()
+    if not dev_value:
+        return None
+    if dev_value.lower() in ("1", "true", "yes"):
+        raise InstallError(
+            "SOPIFY_DEV_VERSION is set to a bare boolean value. "
+            "Provide an explicit dev channel version string, "
+            "e.g. SOPIFY_DEV_VERSION=0.0.0-dev.local"
+        )
+    return dev_value
 
 
 def _replace_tree(source_root: Path, destination_root: Path) -> None:

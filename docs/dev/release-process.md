@@ -20,7 +20,7 @@ git config core.hooksPath .githooks
 bash scripts/release-preflight.sh
 ```
 
-依次跑：版本一致性、golden snapshot、builtin catalog 漂移检测、runtime 单元测试 + smoke、skill eval 质量门禁。全部通过再继续。
+依次跑：版本一致性、golden snapshot、builtin catalog 漂移检测、单元测试、skill eval 质量门禁。全部通过再继续。
 
 ### 2. 确认版本号
 

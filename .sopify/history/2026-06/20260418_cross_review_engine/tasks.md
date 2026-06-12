@@ -3,12 +3,14 @@ plan_id: 20260418_cross_review_engine
 feature_key: cross_review_engine
 level: standard
 lifecycle_state: deferred
+archive_type: deferred_archive
+archive_reason: "CrossReview 已独立为 evidentloop/CrossReview，核心洞察已沉淀到外部仓库，Sopify 侧集成工作不再推进"
 knowledge_sync:
   project: skip
   background: skip
   design: skip
   tasks: skip
-archive_ready: false
+archive_ready: true
 ---
 
 # 任务清单: CrossReview Sopify 集成
