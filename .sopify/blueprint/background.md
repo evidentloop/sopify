@@ -12,35 +12,34 @@ Sopify 官方在 core 之上提供一个轻量、可插拔、收敛式的 bluepr
 
 | 层 | 职责 | 生存性 |
 |----|------|--------|
-| **Core**（证据与授权层） | 协议规范 + Validator 授权 + 收据/接力/归档 truth | Durable：不随宿主生态变化而 sunset |
-| **Default Workflow** | blueprint 驱动的分析 → 计划讨论 → 标准方案包 → 开发验证 → 归档回写 | 用户买到的主体验，建构在 core 之上，不硬绑 runtime 状态机 |
-| **Plugins / Skills** | cross-review、graphify、宿主自带分析/开发/验证增强 | Sopify 定义接入点（Producer/Verifier/Knowledge Provider），不做 skill 分发 |
+| **Protocol Kernel**（协议内核） | 协议规范 + sopify_writer + 收据/接力/归档 truth | Durable：不随宿主生态变化而 sunset |
+| **Default Workflow** | blueprint 驱动的分析 → 计划讨论 → 标准方案包 → 开发验证 → 归档回写 | 用户买到的主体验，建构在 protocol kernel 之上 |
+| **Plugins / Skills** | cross-review、graphify、宿主自带分析/开发/验证增强 | Sopify 定义接入点，不做 skill 分发 |
 
 核心价值不在于"能调 skill"或"能编排 workflow"，而在于：
 
 - **证据规范**：定义任务事实、方案事实、交接事实、归档事实的标准格式
-- **授权判定**：Validator 是唯一授权者——判断当前上下文下行动是否可执行
-- **收据生成**：fail-closed 授权回执让每次决策可追溯、可审计
+- **收据生成**：每次决策可追溯、可审计
 - **跨宿主接力**：`.sopify/` 纯文件协议让任务中断后在不同宿主/模型间精确恢复
-- **知识沉淀**：只有跨任务可复用、能改变后续授权或验证基线的稳定结论，才进入长期知识层（blueprint / history）
+- **知识沉淀**：只有跨任务可复用、能改变后续验证基线的稳定结论，才进入长期知识层（blueprint / history）
 
-**外插原则**：谁负责"把事做好"（生产、验证、知识处理），谁外插；谁负责"把结果变成可验证事实"（证据规范、授权判定、收据生成），谁进 Sopify core。
+**外插原则**：谁负责"把事做好"（生产、验证、知识处理），谁外插；谁负责"把结果变成可验证事实"（证据规范、收据生成），谁进 Sopify protocol kernel。
 
-**产品形态锚点**：Protocol 是新宿主的唯一硬依赖（Convention 模式下无需 runtime 即可合规工作）；Validator 是宿主吸收执行编排后 Sopify 最后保留的面（durable core 的生存底线）；Runtime 是确定性加固线，不是接入前提（新接入方不应被要求先跑完整 runtime）；一切外部验证与生产能力通过 integration contract 外插，不进 core（边界判定原则）。
+**产品形态锚点**：Protocol 是宿主的唯一硬依赖；宿主执行、Sopify 保存、任意宿主恢复——这是 P8 runtime 退场后的三层分工。一切外部验证与生产能力通过 integration contract 外插，不进 kernel。
 
 ## 核心架构模式
 
-Sopify 的一切交互遵循一条管线：
+P8 后 Sopify 不再运行进程。一切交互通过纯文件协议：
 
 ```
 用户自然语言
-  → Host LLM 映射为 ActionProposal（结构化工单）
-  → Validator 校验 schema + 事实 + side effect
-  → Deterministic action 按结构化字段执行
-  → Handoff / Receipt 暴露机器事实
+  → Host LLM 读取 .sopify/blueprint + plan + state
+  → Host LLM 按协议约定生成 ActionProposal
+  → sopify_writer 写入 state / receipt / handoff
+  → 下次会话（同宿主或跨宿主）通过 4-step read chain 恢复上下文
 ```
 
-Host LLM 只是 proposal source，不是 authorizer。Validator 是唯一授权者。执行层不理解人话，只按结构化字段和文件事实做事。
+Host LLM 是 proposal source 和 executor。sopify_writer 是唯一的 machine truth 写入路径。协议文件是跨会话、跨宿主的持久真相。
 
 ## 当前现实
 

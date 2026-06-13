@@ -2,31 +2,38 @@
 
 <div align="center">
 
-**先问再写、随时恢复的 AI 编程**
+**可恢复的 AI 编程 — 先问再写，方案跟着项目走**
 
-[![许可证](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
-[![文档](https://img.shields.io/badge/docs-CC%20BY%204.0-green.svg)](./LICENSE-docs)
-[![版本](https://img.shields.io/badge/version-2026--06--10.191940-orange.svg)](#版本历史)
-[![欢迎PR](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING_CN.md)
+[![许可证](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)](./LICENSE)
+[![文档](https://img.shields.io/badge/docs-CC%20BY%204.0-green.svg?style=for-the-badge)](./LICENSE-docs)
+[![版本](https://img.shields.io/badge/version-2026--06--13.221525-orange.svg?style=for-the-badge)](#版本历史)
+[![欢迎PR](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](./CONTRIBUTING_CN.md)
+
+[![Codex](https://img.shields.io/badge/host-Codex-4A9EFF.svg?style=for-the-badge)](#快速开始)
+[![Claude](https://img.shields.io/badge/host-Claude-CC785C.svg?style=for-the-badge)](#快速开始)
+[![Qoder](https://img.shields.io/badge/host-Qoder-7C3AED.svg?style=for-the-badge)](#快速开始)
+[![Copilot](https://img.shields.io/badge/host-Copilot-000000.svg?style=for-the-badge)](#快速开始)
 
 [English](./README.md) · 简体中文 · [快速开始](#快速开始) · [贡献者](./CONTRIBUTORS.md)
 
 </div>
 
 <div align="center">
-<img src="./assets/sopify-cover-cn.jpg" width="660" alt="Sopify — 先问再写、随时恢复的 AI 编程" />
+<img src="./assets/sopify-cover-cn.jpg" width="660" alt="Sopify — 可恢复的 AI 编程，先问再写，方案跟着项目走" />
 </div>
 
 ---
 
-AI 工具写代码很快。但没搞清楚需求就动手，快就变成了返工。Sopify 是 AI 编程的开发过程协议层——把方案、决策、交接和验证记录沉淀成项目资产，让任务能停、能接、能查。
+AI 工具写代码很快。但在事实没搞清、关键决策还没拍板前就直接动手，快就会变成返工。Sopify 是 AI 编程的开发过程协议层：在托管流程里，需求不全或决策未定时，宿主会先追问，再写代码。
+
+Sopify 把方案和验证收据保存在 `.sopify/` 中，作为可纳入 git 的项目文件；只有恢复用的本地指针不进 git。换一个宿主打开同一个仓库，它会读取这些文件，从上次停下的地方继续。
 
 无需新编辑器、无需新 CLI。安装到你已有的宿主：Codex、Claude、Qoder、Copilot 均支持。
 
 **设计原则：**
 
 - **不确定就停下** — 需求不全时先追问，再动手
-- **随时恢复** — 方案、决策、验证记录都持久保存在 `.sopify/` 里；换宿主、换机器、换人接手都能从项目状态继续
+- **随时恢复** — 方案和验证收据都持久保存在 `.sopify/` 里；换宿主、换机器、换人接手都能从项目状态继续
 - **决策留痕** — 方案、取舍、审查持久保存在 `.sopify/`
 
 **Sopify 主要在防什么：**
@@ -76,10 +83,10 @@ curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/instal
 <img src="./assets/readme-visuals/sopify-scene-decision.jpg" width="720" alt="决策留痕 可追溯" />
 </div>
 
-## 架构
+## 产品形态
 
 <div align="center">
-<img src="./assets/sopify-architecture.svg" width="760" alt="Sopify 架构 — 协议内核 + 工作流 + 宿主适配" />
+<img src="./assets/sopify-product-form-release.svg" width="900" alt="Sopify 产品形态 — 宿主执行、技能引导、资产留存、任意宿主接续" />
 </div>
 
 宿主 LLM 负责执行。Sopify 把 AI 开发过程中的审计资产——方案、决策、交接、验证证据——持久保留在 `.sopify/` 中，跨 session、宿主和团队成员均可访问。
@@ -90,6 +97,14 @@ Sopify 靠四件事做到稳定可控、质量可靠：
 - **项目资产在 git 里** — 方案、决策、验证记录都落在 `.sopify/`；只有两个本地指针文件（`active_plan.json`、`current_handoff.json`）不纳入 git
 - **从上次停下的地方继续** — 宿主读取当前方案、上次交接记录和已验证内容，然后接着干
 - **Runtime 已退场；工作流保留** — analyze → design → develop → finalize 流程不变；变的是规则活在文件里，不再依赖 runtime 进程
+
+## 架构细节
+
+想了解产品形态背后的内部层次，可以看下面的技术结构图。
+
+<div align="center">
+<img src="./assets/sopify-architecture.svg" width="760" alt="Sopify 架构 — 协议内核 + 默认工作流 + 知识层" />
+</div>
 
 ## 安装说明
 

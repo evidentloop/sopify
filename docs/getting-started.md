@@ -95,7 +95,7 @@ Expected output:
 
 ```json
 {
-  "bundle_version": "2026-05-31.142150",
+  "bundle_version": "2026-06-10.191940",
   "capabilities": [],
   "locator_mode": "global_first",
   "schema_version": "1",

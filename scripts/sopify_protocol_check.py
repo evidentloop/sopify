@@ -138,7 +138,7 @@ def check_current_handoff(state_dir: Path, expected_plan_id: str | None = None) 
     failures = []
     ch_file = state_dir / "current_handoff.json"
     if not ch_file.exists():
-        failures.append("Missing state/current_handoff.json")
+        # protocol.md §8.7: missing handoff is normal — host proceeds with plan.md only
         return None, failures
     try:
         data = json.loads(ch_file.read_text(encoding="utf-8"))
