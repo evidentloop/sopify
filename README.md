@@ -2,31 +2,38 @@
 
 <div align="center">
 
-**AI coding that asks before it acts**
+**Resumable AI coding — ask first, plans stay with the repo**
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
-[![Docs](https://img.shields.io/badge/docs-CC%20BY%204.0-green.svg)](./LICENSE-docs)
-[![Version](https://img.shields.io/badge/version-2026--06--10.191940-orange.svg)](#version-history)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)](./LICENSE)
+[![Docs](https://img.shields.io/badge/docs-CC%20BY%204.0-green.svg?style=for-the-badge)](./LICENSE-docs)
+[![Version](https://img.shields.io/badge/version-2026--06--13.221525-orange.svg?style=for-the-badge)](#version-history)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](./CONTRIBUTING.md)
+
+[![Codex](https://img.shields.io/badge/host-Codex-4A9EFF.svg?style=for-the-badge)](#quick-start)
+[![Claude](https://img.shields.io/badge/host-Claude-CC785C.svg?style=for-the-badge)](#quick-start)
+[![Qoder](https://img.shields.io/badge/host-Qoder-7C3AED.svg?style=for-the-badge)](#quick-start)
+[![Copilot](https://img.shields.io/badge/host-Copilot-000000.svg?style=for-the-badge)](#quick-start)
 
 English · [简体中文](./README.zh-CN.md) · [Quick Start](#quick-start) · [Contributors](./CONTRIBUTORS.md)
 
 </div>
 
 <div align="center">
-<img src="./assets/sopify-cover.jpg" width="660" alt="Sopify — AI coding that asks before it acts" />
+<img src="./assets/sopify-cover.jpg" width="660" alt="Sopify — Resumable AI coding, ask first, plans stay with the repo" />
 </div>
 
 ---
 
-AI coding tools are fast. But when they jump to code without understanding what's needed, speed becomes rework. Sopify is a development process protocol layer for AI coding — it turns plans, decisions, handoffs, and verification records into project assets, so work can stop, resume, and be traced.
+AI coding tools are fast. But when they jump to code before the facts are clear, speed turns into rework. Sopify is a development process protocol layer for AI coding: in managed workflows, the host asks before coding when requirements are incomplete or a decision still needs you.
+
+Sopify stores plans and verification receipts in `.sopify/` as project files tracked by git. Only the local resume pointers stay out of git. Open the same repo on another host, and it reads those files to continue from where the work stopped.
 
 No new editor, no new CLI. Install into the host you already use — Codex, Claude, Qoder, or Copilot.
 
 **Design principles:**
 
 - **Stop when unsure** — score every requirement; ask before assuming
-- **Resume from anywhere** — plans, decisions, and verification records are tracked in `.sopify/`; open the repo on any host and pick up where you left off
+- **Resume from anywhere** — plans and verification receipts are tracked in `.sopify/`; open the repo on any host and pick up where you left off
 - **Trace every decision** — plans, choices, and reviews persist in `.sopify/`
 
 **What Sopify prevents:**
@@ -58,16 +65,28 @@ After install, use `~go` to start a managed workflow. See [Installation](#instal
 **When requirements are unclear, it stops to plan first.**
 You say "add a caching layer." Sopify doesn't start coding — it plans first: analyze, design, split into tasks, then save to `.sopify/plan/`. Only after you confirm the plan does it write code. Every line changed traces back to a decision.
 
+<div align="center">
+<img src="./assets/readme-visuals/sopify-scene-ask-en.jpg" width="720" alt="Plan first, code second — discuss, record, execute" />
+</div>
+
 **Your teammate picks up where you left off.**
 You start a feature in Codex, finish the design, and implement two of four tasks. Next week your teammate opens the same repo in Claude, types `~go`. Sopify reads the checkpoint and continues from task 3 — no handoff doc, no re-explaining context.
+
+<div align="center">
+<img src="./assets/readme-visuals/sopify-scene-cross-host-en.jpg" width="720" alt="Seamless cross-host handoff" />
+</div>
 
 **Every decision leaves a trace.**
 A month later, someone asks why the cache key includes the user ID. The answer is in `.sopify/plan/` — the requirement that prompted the decision, the design that resolved it, the review that approved it.
 
-## Architecture
+<div align="center">
+<img src="./assets/readme-visuals/sopify-scene-decision-en.jpg" width="720" alt="Every decision traced — auditable and reviewable" />
+</div>
+
+## Product Form
 
 <div align="center">
-<img src="./assets/sopify-architecture.svg" width="760" alt="Sopify Architecture — protocol kernel + workflow + host adapters" />
+<img src="./assets/sopify-product-form-release-en.svg" width="900" alt="Sopify Product Form — host executes, skill guides, assets preserved, any host resumes" />
 </div>
 
 The host LLM executes. Sopify preserves auditable development assets — plans, decisions, handoffs, and verification evidence — in `.sopify/`, accessible across sessions, hosts, and teammates.
@@ -78,6 +97,14 @@ How Sopify achieves stability and quality:
 - **Project assets tracked in git** — plans, decisions, and verification records live in `.sopify/`; only the two local pointer files (`active_plan.json`, `current_handoff.json`) are gitignored
 - **Resumes from where you stopped** — the host reads the current plan, picks up the last handoff, and checks what's already been verified before continuing
 - **Runtime retired; workflow retained** — the analyze → design → develop → finalize workflow is unchanged; what changed is that rules live in files, not a runtime process
+
+## Architecture Details
+
+For readers who want the internal layering behind the product form, the technical structure is below.
+
+<div align="center">
+<img src="./assets/sopify-architecture.svg" width="760" alt="Sopify Architecture — protocol kernel + default workflow + knowledge layer" />
+</div>
 
 ## Installation
 
