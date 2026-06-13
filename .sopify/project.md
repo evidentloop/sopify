@@ -1,7 +1,7 @@
 # 项目技术约定
 
 ## Runtime 快照
-- 项目名：sopify-skills
+- 项目名：sopify
 - 工作目录：项目根目录
 - 运行时目录：`.sopify`
 - 根配置：`sopify.config.yaml`

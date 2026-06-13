@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 640" width="1500" height="640">
+  <defs>
+    <marker id="arr-flow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0,10 3.5,0 7" fill="#2563eb"/>
+    </marker>
+    <filter id="shadowSoft" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0f172a" flood-opacity="0.08"/>
+    </filter>
+    <style>
+      text { font-family: -apple-system, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif; }
+      .ttl { font-size: 24px; font-weight: 700; fill: #111827; }
+      .sub { font-size: 12px; font-weight: 500; fill: #6b7280; letter-spacing: 1.2px; }
+      .lbl { font-size: 11px; font-weight: 700; fill: #2563eb; letter-spacing: 2px; }
+      .stage-num { font-size: 11px; font-weight: 700; fill: #9ca3af; letter-spacing: 1px; }
+      .stage-title { font-size: 14px; font-weight: 700; fill: #111827; }
+      .stage-sub { font-size: 10.5px; fill: #6b7280; }
+      .nm { font-size: 13px; font-weight: 600; fill: #111827; }
+      .sm { font-size: 10px; fill: #6b7280; }
+      .fn { font-family: "Cascadia Code", "SF Mono", "Courier New", monospace; font-size: 10.5px; fill: #2563eb; }
+      .pill { font-size: 12px; font-weight: 600; fill: #7c3aed; }
+      .pill-sm { font-size: 8.5px; fill: #6b7280; letter-spacing: 0.1px; }
+      .phi { font-size: 10.5px; font-weight: 500; fill: #2563eb; font-style: italic; }
+      .tag { font-size: 15px; font-weight: 500; fill: #111827; font-style: italic; }
+      .arr-lbl { font-size: 8.5px; font-weight: 600; fill: #2563eb; letter-spacing: 0.8px; }
+      .foot { font-size: 10px; fill: #9ca3af; }
+    </style>
+  </defs>
+
+  <!-- Canvas -->
+  <rect width="1500" height="640" fill="#ffffff"/>
+
+  <!-- Title (centered) -->
+  <text x="750" y="54" text-anchor="middle" class="ttl" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">Sopify Product Form</text>
+  <text x="750" y="78" text-anchor="middle" class="sub" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">HOST ASKS  ·  SKILL GUIDES  ·  ASSETS PRESERVED  ·  ANY HOST RESUMES</text>
+
+  <!-- ════════════ STAGE 1 : HOST (x=80, w=230, right=310) ════════════ -->
+  <g>
+    <rect x="80" y="120" width="230" height="340" rx="10" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.4"/>
+    <text x="94" y="144" class="stage-num" font-family="-apple-system,'Helvetica Neue',sans-serif">I</text>
+    <text x="112" y="144" class="lbl" font-family="-apple-system,'Helvetica Neue',sans-serif">HOST</text>
+    <text x="94" y="170" class="stage-title" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">User asks from any host</text>
+    <text x="94" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">One protocol, four entry points</text>
+
+    <!-- 4 host cards, ALL 96px wide. L-col right=190, R-col right=296. Stage right=310. -->
+    <g transform="translate(94,206)" filter="url(#shadowSoft)">
+      <rect width="96" height="44" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.3"/>
+      <circle cx="14" cy="22" r="3.5" fill="#10b981"/>
+      <text x="24" y="20" class="nm" font-family="-apple-system,'Helvetica Neue',sans-serif">Codex</text>
+      <text x="24" y="34" class="sm" font-family="-apple-system,'Helvetica Neue',sans-serif">verified</text>
+    </g>
+    <g transform="translate(196,206)" filter="url(#shadowSoft)">
+      <rect width="96" height="44" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1.3" stroke-dasharray="3,2"/>
+      <circle cx="14" cy="22" r="3.5" fill="#fbbf24"/>
+      <text x="24" y="20" class="nm" font-family="-apple-system,'Helvetica Neue',sans-serif">Copilot</text>
+      <text x="24" y="34" class="sm" font-family="-apple-system,'Helvetica Neue',sans-serif">baseline</text>
+    </g>
+    <g transform="translate(94,260)" filter="url(#shadowSoft)">
+      <rect width="96" height="44" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.3"/>
+      <circle cx="14" cy="22" r="3.5" fill="#10b981"/>
+      <text x="24" y="20" class="nm" font-family="-apple-system,'Helvetica Neue',sans-serif">Claude</text>
+      <text x="24" y="34" class="sm" font-family="-apple-system,'Helvetica Neue',sans-serif">verified</text>
+    </g>
+    <g transform="translate(196,260)" filter="url(#shadowSoft)">
+      <rect width="96" height="44" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.3"/>
+      <circle cx="14" cy="22" r="3.5" fill="#10b981"/>
+      <text x="24" y="20" class="nm" font-family="-apple-system,'Helvetica Neue',sans-serif">Qoder</text>
+      <text x="24" y="34" class="sm" font-family="-apple-system,'Helvetica Neue',sans-serif">verified</text>
+    </g>
+
+    <text x="94" y="336" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Same .sopify/ project</text>
+    <text x="94" y="352" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Any host can consume it</text>
+    <text x="94" y="368" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Same protocol assets</text>
+
+    <text x="94" y="438" class="fn" font-family="'Cascadia Code','SF Mono','Courier New',monospace">~go</text>
+    <text x="120" y="438" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif"> · user starts the work</text>
+  </g>
+
+  <!-- Arrow 1 → 2 (gap 310→370, center x=340) -->
+  <line x1="318" y1="290" x2="362" y2="290" stroke="#2563eb" stroke-width="2" marker-end="url(#arr-flow)"/>
+  <text x="340" y="282" text-anchor="middle" class="arr-lbl" font-family="-apple-system,'Helvetica Neue',sans-serif">ASKS</text>
+
+  <!-- ════════════ STAGE 2 : SKILL (x=370, w=230, right=600) ════════════ -->
+  <g>
+    <rect x="370" y="120" width="230" height="340" rx="10" fill="#faf5ff" stroke="#ddd6fe" stroke-width="1.4"/>
+    <text x="384" y="144" class="stage-num" font-family="-apple-system,'Helvetica Neue',sans-serif">II</text>
+    <text x="402" y="144" class="lbl" font-family="-apple-system,'Helvetica Neue',sans-serif">SKILL</text>
+    <text x="384" y="170" class="stage-title" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Skill guides host behavior</text>
+    <text x="384" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Built-in skills encode shared practice</text>
+
+    <!-- 4 skill pills, all 202px wide, stacked -->
+    <g transform="translate(384,206)" filter="url(#shadowSoft)">
+      <rect width="202" height="40" rx="6" fill="#ffffff" stroke="#a78bfa" stroke-width="1.3"/>
+      <text x="12" y="17" class="pill" font-family="-apple-system,'Helvetica Neue',sans-serif">analyze</text>
+      <text x="12" y="32" class="pill-sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Score first · stop for missing facts</text>
+    </g>
+    <g transform="translate(384,250)" filter="url(#shadowSoft)">
+      <rect width="202" height="40" rx="6" fill="#ffffff" stroke="#a78bfa" stroke-width="1.3"/>
+      <text x="12" y="17" class="pill" font-family="-apple-system,'Helvetica Neue',sans-serif">design</text>
+      <text x="12" y="32" class="pill-sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Plan levels · task split · ADR</text>
+    </g>
+    <g transform="translate(384,294)" filter="url(#shadowSoft)">
+      <rect width="202" height="40" rx="6" fill="#ffffff" stroke="#a78bfa" stroke-width="1.3"/>
+      <text x="12" y="17" class="pill" font-family="-apple-system,'Helvetica Neue',sans-serif">develop</text>
+      <text x="12" y="32" class="pill-sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Task order · write back evidence</text>
+    </g>
+    <g transform="translate(384,338)" filter="url(#shadowSoft)">
+      <rect width="202" height="40" rx="6" fill="#ffffff" stroke="#a78bfa" stroke-width="1.3"/>
+      <text x="12" y="17" class="pill" font-family="-apple-system,'Helvetica Neue',sans-serif">kb / templates</text>
+      <text x="12" y="32" class="pill-sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Knowledge sync · output rules</text>
+    </g>
+
+    <!-- Philosophy annotation (CENTERED at x=485 = stage center) -->
+    <line x1="425" y1="392" x2="545" y2="392" stroke="#2563eb" stroke-width="0.4" opacity="0.5"/>
+    <text x="485" y="410" text-anchor="middle" class="phi" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Score first · converge first</text>
+    <text x="485" y="426" text-anchor="middle" class="phi" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Shared practice as workflow rules</text>
+    <text x="485" y="442" text-anchor="middle" class="phi" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">More than prompts: a method</text>
+  </g>
+
+  <!-- Arrow 2 → 3 (gap 600→660, center x=630) -->
+  <line x1="608" y1="290" x2="652" y2="290" stroke="#2563eb" stroke-width="2" marker-end="url(#arr-flow)"/>
+  <text x="630" y="282" text-anchor="middle" class="arr-lbl" font-family="-apple-system,'Helvetica Neue',sans-serif">GUIDES</text>
+
+  <!-- ════════════ STAGE 3 : ASSETS (x=660, w=230, right=890) ════════════ -->
+  <g>
+    <rect x="660" y="120" width="230" height="340" rx="10" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="1.4"/>
+    <text x="674" y="144" class="stage-num" font-family="-apple-system,'Helvetica Neue',sans-serif">III</text>
+    <text x="692" y="144" class="lbl" font-family="-apple-system,'Helvetica Neue',sans-serif">ASSETS</text>
+    <text x="674" y="170" class="stage-title" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Assets persist in .sopify/</text>
+    <text x="674" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Plans · decisions · handoffs · evidence</text>
+
+    <!-- 5 asset folders, all 202px wide, stacked -->
+    <g transform="translate(674,206)" filter="url(#shadowSoft)">
+      <rect width="202" height="38" rx="5" fill="#ffffff" stroke="#16a34a" stroke-width="1.3"/>
+      <text x="12" y="16" class="fn" font-family="'Cascadia Code','SF Mono','Courier New',monospace">blueprint/</text>
+      <text x="12" y="31" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Long-term memory · baseline</text>
+    </g>
+    <g transform="translate(674,248)" filter="url(#shadowSoft)">
+      <rect width="202" height="38" rx="5" fill="#ffffff" stroke="#16a34a" stroke-width="1.3"/>
+      <text x="12" y="16" class="fn" font-family="'Cascadia Code','SF Mono','Courier New',monospace">plan/</text>
+      <text x="12" y="31" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Active plan · plan.md · tasks</text>
+    </g>
+    <g transform="translate(674,290)" filter="url(#shadowSoft)">
+      <rect width="202" height="38" rx="5" fill="#ffffff" stroke="#16a34a" stroke-width="1.3"/>
+      <text x="12" y="16" class="fn" font-family="'Cascadia Code','SF Mono','Courier New',monospace">plan/*/receipts/</text>
+      <text x="12" y="31" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Decision · verify · handoff receipts</text>
+    </g>
+    <g transform="translate(674,332)" filter="url(#shadowSoft)">
+      <rect width="202" height="38" rx="5" fill="#ffffff" stroke="#16a34a" stroke-width="1.3"/>
+      <text x="12" y="16" class="fn" font-family="'Cascadia Code','SF Mono','Courier New',monospace">history/</text>
+      <text x="12" y="31" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Archived plans + receipt.md</text>
+    </g>
+    <g transform="translate(674,374)" filter="url(#shadowSoft)">
+      <rect width="202" height="38" rx="5" fill="#f9fafb" stroke="#9ca3af" stroke-width="1.3" stroke-dasharray="3,2"/>
+      <text x="12" y="16" class="fn" font-family="'Cascadia Code','SF Mono','Courier New',monospace">state/</text>
+      <text x="12" y="31" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">active_plan · handoff pointers</text>
+    </g>
+  </g>
+
+  <!-- Arrow 3 → 4 (gap 890→950, center x=920) -->
+  <line x1="898" y1="290" x2="942" y2="290" stroke="#2563eb" stroke-width="2" marker-end="url(#arr-flow)"/>
+  <text x="920" y="282" text-anchor="middle" class="arr-lbl" font-family="-apple-system,'Helvetica Neue',sans-serif">PRESERVES</text>
+
+  <!-- ════════════ STAGE 4 : HANDOFF (x=950, w=230, right=1180) ════════════ -->
+  <g>
+    <rect x="950" y="120" width="230" height="340" rx="10" fill="#fff7ed" stroke="#fed7aa" stroke-width="1.4"/>
+    <text x="964" y="144" class="stage-num" font-family="-apple-system,'Helvetica Neue',sans-serif">IV</text>
+    <text x="982" y="144" class="lbl" font-family="-apple-system,'Helvetica Neue',sans-serif">HANDOFF</text>
+    <text x="964" y="170" class="stage-title" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Stop · switch host · continue</text>
+    <text x="964" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Pause for facts, resume anywhere</text>
+
+    <!-- 3 capability pills, all 202px wide, stacked -->
+    <g transform="translate(964,206)" filter="url(#shadowSoft)">
+      <rect width="202" height="54" rx="8" fill="#ffffff" stroke="#ea580c" stroke-width="1.3"/>
+      <text x="14" y="24" class="pill" fill="#ea580c" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">STOP</text>
+      <text x="14" y="42" class="pill-sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Pause when facts or decisions missing</text>
+    </g>
+    <g transform="translate(964,270)" filter="url(#shadowSoft)">
+      <rect width="202" height="54" rx="8" fill="#ffffff" stroke="#ea580c" stroke-width="1.3"/>
+      <text x="14" y="24" class="pill" fill="#ea580c" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">RESUME</text>
+      <text x="14" y="42" class="pill-sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">state → plan → handoff → receipts</text>
+    </g>
+    <g transform="translate(964,334)" filter="url(#shadowSoft)">
+      <rect width="202" height="54" rx="8" fill="#ffffff" stroke="#ea580c" stroke-width="1.3"/>
+      <text x="14" y="24" class="pill" fill="#ea580c" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">TRACE</text>
+      <text x="14" y="42" class="pill-sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Why changed · who approved · what passed</text>
+    </g>
+  </g>
+
+  <!-- Arrow 4 → 5 (gap 1180→1240, center x=1210) -->
+  <line x1="1188" y1="290" x2="1232" y2="290" stroke="#2563eb" stroke-width="2" marker-end="url(#arr-flow)"/>
+  <text x="1210" y="282" text-anchor="middle" class="arr-lbl" font-family="-apple-system,'Helvetica Neue',sans-serif">RESUMES</text>
+
+  <!-- ════════════ STAGE 5 : ARCHIVE (x=1240, w=230, right=1470) ════════════ -->
+  <g>
+    <rect x="1240" y="120" width="230" height="340" rx="10" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.4"/>
+    <text x="1254" y="144" class="stage-num" font-family="-apple-system,'Helvetica Neue',sans-serif">V</text>
+    <text x="1272" y="144" class="lbl" font-family="-apple-system,'Helvetica Neue',sans-serif">ARCHIVE</text>
+    <text x="1254" y="170" class="stage-title" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Archive · always auditable</text>
+    <text x="1254" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Plans and receipts move to history</text>
+
+    <g transform="translate(1254,206)" filter="url(#shadowSoft)">
+      <rect width="202" height="44" rx="5" fill="#ffffff" stroke="#16a34a" stroke-width="1.3"/>
+      <text x="12" y="18" class="fn" font-family="'Cascadia Code','SF Mono','Courier New',monospace">history/YYYY-MM/</text>
+      <text x="12" y="34" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Archived plans + receipt.md</text>
+    </g>
+
+    <!-- Stage 5 descriptive lines (CENTERED at x=1355 = stage center) -->
+    <text x="1355" y="290" text-anchor="middle" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">A month later or a year later</text>
+    <text x="1355" y="306" text-anchor="middle" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Any teammate, any host</text>
+    <text x="1355" y="322" text-anchor="middle" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Can follow project evolution</text>
+
+    <!-- Stage 5 philosophy (CENTERED at x=1355) -->
+    <line x1="1295" y1="346" x2="1415" y2="346" stroke="#2563eb" stroke-width="0.4" opacity="0.5"/>
+    <text x="1355" y="366" text-anchor="middle" class="phi" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">The audit chain is not extra</text>
+    <text x="1355" y="382" text-anchor="middle" class="phi" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">It is part of the product value</text>
+
+    <text x="1355" y="438" text-anchor="middle" class="fn" font-family="'Cascadia Code','SF Mono','Courier New',monospace">~go finalize</text>
+  </g>
+
+  <!-- Tagline (centered) -->
+  <line x1="80" y1="490" x2="1470" y2="490" stroke="#d1d5db" stroke-width="1"/>
+  <text x="750" y="524" text-anchor="middle" class="tag" font-family="Georgia,'Times New Roman','Songti SC',serif">"Host executes. Skills guide. .sopify/ preserves audit-ready assets."</text>
+  <text x="750" y="548" text-anchor="middle" class="sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Host executes · skills guide · .sopify/ keeps audit-ready assets · any host resumes · work stays traceable</text>
+
+  <!-- Legend -->
+  <g transform="translate(80,590)">
+    <rect x="0" y="-10" width="14" height="14" rx="3" fill="#ffffff" stroke="#16a34a" stroke-width="1.3"/>
+    <text x="20" y="2" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">git tracked (portable)</text>
+
+    <rect x="180" y="-10" width="14" height="14" rx="3" fill="#f9fafb" stroke="#9ca3af" stroke-width="1.3" stroke-dasharray="3,2"/>
+    <text x="200" y="2" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">git ignored (local)</text>
+
+    <rect x="376" y="-10" width="14" height="14" rx="3" fill="#ffffff" stroke="#a78bfa" stroke-width="1.3"/>
+    <text x="396" y="2" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">builtin skill (method)</text>
+
+    <circle cx="560" cy="-3" r="3.5" fill="#10b981"/>
+    <text x="570" y="2" class="sm" font-family="-apple-system,'Helvetica Neue',sans-serif">protocol verified</text>
+
+    <circle cx="690" cy="-3" r="3.5" fill="#fbbf24"/>
+    <text x="700" y="2" class="sm" font-family="-apple-system,'Helvetica Neue',sans-serif">baseline</text>
+  </g>
+
+  <text x="1470" y="622" text-anchor="end" class="foot" font-family="-apple-system,'Helvetica Neue',sans-serif">Sopify · 2026-06</text>
+</svg>

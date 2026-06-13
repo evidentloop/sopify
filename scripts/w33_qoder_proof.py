@@ -23,11 +23,39 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
+def _resolve_bundle_dir(payload_root: Path, bundles_dir: Path) -> Path | None:
+    """Resolve the installed bundle directory from payload manifest or directory scan."""
+    manifest_path = payload_root / "payload-manifest.json"
+    if manifest_path.is_file():
+        try:
+            manifest = json.loads(manifest_path.read_text())
+            active = manifest.get("active_version")
+            if active:
+                candidate = bundles_dir / active
+                if candidate.is_dir():
+                    return candidate
+        except (json.JSONDecodeError, OSError):
+            pass
+    if bundles_dir.is_dir():
+        versions = sorted(
+            (d for d in bundles_dir.iterdir() if d.is_dir()),
+            key=lambda p: p.name,
+            reverse=True,
+        )
+        if versions:
+            return versions[0]
+    return None
+
+
 def main() -> None:
     # ── Step 0: Restrict sys.path to installed payload only ──
-    bundle_dir = Path.home() / ".qoder" / "sopify" / "bundles" / "0.0.0-dev"
-    if not bundle_dir.is_dir():
-        print("FAIL: installed payload not found at", bundle_dir)
+    payload_root = Path.home() / ".qoder" / "sopify"
+    bundles_dir = payload_root / "bundles"
+
+    # W0.7: dynamically resolve bundle version instead of hardcoding "0.0.0-dev"
+    bundle_dir = _resolve_bundle_dir(payload_root, bundles_dir)
+    if bundle_dir is None or not bundle_dir.is_dir():
+        print("FAIL: installed payload not found under", bundles_dir)
         sys.exit(1)
 
     repo_root = str(Path.cwd())

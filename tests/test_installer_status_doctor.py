@@ -544,5 +544,161 @@ def _run_script(entrypoint, argv: list[str]) -> str:
     return buffer.getvalue()
 
 
+class TestWorkspaceVersionClassifier(unittest.TestCase):
+    """W0.10a: tests for the 4-state workspace version classifier."""
+
+    def setUp(self) -> None:
+        from installer.inspection import classify_workspace_version_state
+        self.classify = classify_workspace_version_state
+
+    def test_up_to_date(self) -> None:
+        result = self.classify(
+            workspace_pin="2026-06-10.191940",
+            active_version="2026-06-10.191940",
+            bundle_resolvable=True,
+        )
+        self.assertEqual(result, "up_to_date")
+
+    def test_pinned_old_but_healthy(self) -> None:
+        result = self.classify(
+            workspace_pin="2026-05-31.142150",
+            active_version="2026-06-10.191940",
+            bundle_resolvable=True,
+        )
+        self.assertEqual(result, "pinned_old_but_healthy")
+
+    def test_stale(self) -> None:
+        result = self.classify(
+            workspace_pin="2026-05-31.142150",
+            active_version="2026-06-10.191940",
+            bundle_resolvable=False,
+        )
+        self.assertEqual(result, "stale")
+
+    def test_broken_pin_null(self) -> None:
+        result = self.classify(
+            workspace_pin=None,
+            active_version="2026-06-10.191940",
+            bundle_resolvable=True,
+        )
+        self.assertEqual(result, "broken")
+
+    def test_broken_active_null(self) -> None:
+        result = self.classify(
+            workspace_pin="2026-06-10.191940",
+            active_version=None,
+            bundle_resolvable=True,
+        )
+        self.assertEqual(result, "broken")
+
+    def test_broken_both_null(self) -> None:
+        result = self.classify(
+            workspace_pin=None,
+            active_version=None,
+            bundle_resolvable=False,
+        )
+        self.assertEqual(result, "broken")
+
+    def test_broken_pin_empty_string(self) -> None:
+        result = self.classify(
+            workspace_pin="",
+            active_version="2026-06-10.191940",
+            bundle_resolvable=True,
+        )
+        self.assertEqual(result, "broken")
+
+
+class TestVersionStateIntegration(unittest.TestCase):
+    """F3: integration tests verifying version_state flows through build_status/doctor_payload."""
+
+    def test_status_pipeline_up_to_date(self) -> None:
+        with tempfile.TemporaryDirectory() as home_dir, tempfile.TemporaryDirectory() as ws_dir:
+            home_root = Path(home_dir)
+            workspace_root = Path(ws_dir)
+
+            install_host_assets(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root, language_directory="CN")
+            install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root)
+
+            payload_root = CODEX_ADAPTER.payload_root(home_root)
+            manifest = json.loads((payload_root / "payload-manifest.json").read_text(encoding="utf-8"))
+            active_version = manifest["active_version"]
+
+            _write_json(workspace_root / ".sopify" / "sopify.json", {"bundle_version": active_version})
+
+            payload = build_status_payload(home_root=home_root, workspace_root=workspace_root)
+            ws_state = payload["workspace_state"]
+            self.assertEqual(ws_state["version_state"], "up_to_date")
+            self.assertEqual(ws_state["workspace_pin"], active_version)
+            self.assertEqual(ws_state["active_version"], active_version)
+
+            rendered = render_status_text(payload)
+            self.assertIn("version_state: aligned", rendered)
+
+    def test_status_pipeline_pinned_old_but_healthy(self) -> None:
+        with tempfile.TemporaryDirectory() as home_dir, tempfile.TemporaryDirectory() as ws_dir:
+            home_root = Path(home_dir)
+            workspace_root = Path(ws_dir)
+
+            install_host_assets(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root, language_directory="CN")
+            install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root)
+
+            payload_root = CODEX_ADAPTER.payload_root(home_root)
+            manifest = json.loads((payload_root / "payload-manifest.json").read_text(encoding="utf-8"))
+            active_version = manifest["active_version"]
+
+            old_pin = "2026-01-01.000000"
+            old_bundle_dir = payload_root / "bundles" / old_pin
+            shutil.copytree(payload_root / "bundles" / active_version, old_bundle_dir)
+
+            _write_json(workspace_root / ".sopify" / "sopify.json", {"bundle_version": old_pin})
+
+            payload = build_status_payload(home_root=home_root, workspace_root=workspace_root)
+            ws_state = payload["workspace_state"]
+            self.assertEqual(ws_state["version_state"], "pinned_old_but_healthy")
+            self.assertEqual(ws_state["workspace_pin"], old_pin)
+            self.assertEqual(ws_state["active_version"], active_version)
+
+            rendered = render_status_text(payload)
+            self.assertIn("version_state: pinned (old but usable)", rendered)
+
+    def test_doctor_pipeline_surfaces_version_hint(self) -> None:
+        with tempfile.TemporaryDirectory() as home_dir, tempfile.TemporaryDirectory() as ws_dir:
+            home_root = Path(home_dir)
+            workspace_root = Path(ws_dir)
+
+            install_host_assets(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root, language_directory="CN")
+            install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root)
+
+            _write_json(workspace_root / ".sopify" / "sopify.json", {"bundle_version": None})
+
+            payload = build_doctor_payload(home_root=home_root, workspace_root=workspace_root)
+            ws_state = payload["workspace_state"]
+            self.assertEqual(ws_state["version_state"], "broken")
+
+            rendered = render_doctor_text(payload)
+            self.assertIn("Version alignment:", rendered)
+            self.assertIn("state: broken", rendered)
+            self.assertIn("hint:", rendered)
+
+    def test_status_pipeline_stale(self) -> None:
+        with tempfile.TemporaryDirectory() as home_dir, tempfile.TemporaryDirectory() as ws_dir:
+            home_root = Path(home_dir)
+            workspace_root = Path(ws_dir)
+
+            install_host_assets(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root, language_directory="CN")
+            install_global_payload(CODEX_ADAPTER, repo_root=REPO_ROOT, home_root=home_root)
+
+            old_pin = "2026-01-01.000000"
+            _write_json(workspace_root / ".sopify" / "sopify.json", {"bundle_version": old_pin})
+
+            payload = build_status_payload(home_root=home_root, workspace_root=workspace_root)
+            ws_state = payload["workspace_state"]
+            self.assertEqual(ws_state["version_state"], "stale")
+            self.assertEqual(ws_state["workspace_pin"], old_pin)
+
+            rendered = render_status_text(payload)
+            self.assertIn("version_state: stale (unresolvable)", rendered)
+
+
 if __name__ == "__main__":
     unittest.main()

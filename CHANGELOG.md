@@ -6,6 +6,39 @@ Format: Summary → Changed → Plan Packages. File-level details live in `git l
 
 ## [Unreleased]
 
+## [2026-06-13.221525] - 2026-06-13
+
+### Summary
+
+- Changes across: Docs, Scripts, Tests, Changed.
+
+### Changed
+
+- **Docs**: Refined public documentation (4 files)
+- **Scripts**: Adjusted maintenance scripts (2 files)
+- **Tests**: Updated automated coverage (2 files)
+- **Changed**: Updated project files (15 files)
+
+## [2026-06-13.220854] - 2026-06-13
+
+### Summary
+
+Public surface refresh + W0 version model hardening: README rewrite with new hero tagline ("Resumable AI coding — ask first, plans stay with the repo"), bilingual scene illustrations, product-form diagrams, architecture SVG update, installer fail-loud version handling, 4-state status/doctor classifier, and protocol check continuation semantics fix.
+
+### Changed
+
+- **README**: New hero tagline (EN/CN), "how it works" body paragraph (managed workflow scoping, git-tracked plans/receipts vs local resume pointers), host compatibility badges (Codex / Claude / Qoder / Copilot), `for-the-badge` style for all shields.
+- **Illustrations**: 3 bilingual scene images (ask / cross-host / decision), 2 product-form release SVGs (EN/CN), architecture SVG regenerated.
+- **Installer (W0)**: Fail-loud version handling — 3 silent `0.0.0-dev` fallbacks replaced with `InstallError`; 4-state inspection classifier (`up_to_date` / `pinned_old_but_healthy` / `stale` / `broken`) with status/doctor rendering; bootstrap workspace stale-pin diagnostics.
+- **Protocol check**: Continuation semantics fix for handoff pointer handling.
+- **Docs**: Release process preflight updated; getting-started bundle_version example aligned to version model.
+- **Blueprint**: Status L2 active; focus updated to "版本模型闭环 + 公共展示面刷新".
+
+### Host Support
+
+- Codex / Claude / Qoder: PROTOCOL_VERIFIED
+- Copilot: BASELINE_SUPPORTED (verification planned for W1a)
+
 ## [2026-06-10.191940] - 2026-06-10
 
 ### Summary
