@@ -1,0 +1,14 @@
+{
+  "plan_id": "20260617_host_docstrings",
+  "created_at": "2026-06-17T10:55:00+08:00",
+  "updated_at": "2026-06-17T10:55:00+08:00",
+  "level": "light",
+  "status": "planned",
+  "goal": "给 installer/hosts/ 下四个宿主适配器文件补模块级 docstring",
+  "next": "执行 Waves/Steps：为 codex.py / claude.py / qoder.py / copilot.py 各插入模块级 docstring",
+  "host": "Qoder",
+  "session": "A",
+  "managed": true,
+  "plan_path": "plan/20260617_host_docstrings/plan.md",
+  "notes": "Session A 锚点。Session B 应读回同一 plan_id 并续接，不得重建 plan。"
+}

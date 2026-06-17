@@ -1,0 +1,11 @@
+{
+  "schema_version": "1",
+  "plan_id": "w1a_s5_host_docstrings",
+  "required_host_action": "continue_host_develop",
+  "summary": "Session A 创建了 light plan，尚未开始执行。",
+  "artifacts": {
+    "produced": [
+      "plan/w1a_s5_host_docstrings/plan.md"
+    ]
+  }
+}

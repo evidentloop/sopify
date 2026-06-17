@@ -1,0 +1,33 @@
+{
+  "verdict": "pass",
+  "evidence": {
+    "scenario": "S5_same_host_continuation",
+    "host_role": "same_host_session_b",
+    "consumed_session_a_artifacts": [
+      "state/active_plan.json",
+      "state/current_handoff.json",
+      "plan/w1a_s5_host_docstrings/plan.md",
+      "plan/w1a_s5_host_docstrings/receipts/exec_001.json"
+    ],
+    "plan_id_continuity": {
+      "session_a_plan_id": "w1a_s5_host_docstrings",
+      "session_b_read_plan_id": "w1a_s5_host_docstrings",
+      "match": true
+    },
+    "session_a_not_rebuilt": true,
+    "conclusion": "Session B read the same plan_id from Session A's active_plan.json, consumed plan.md and exec_001.json, and confirmed the original plan artifacts were not rebuilt or overwritten. Recovery occurred on the same plan_id.",
+    "read_chain": {
+      "step_1_active_plan": {"present": true, "plan_id": "w1a_s5_host_docstrings"},
+      "step_2_plan_md": {"present": true, "status_field": "draft"},
+      "step_3_current_handoff": {"present": true, "required_host_action": "continue_host_develop"},
+      "step_4_receipts": {"present": true, "consumed": ["exec_001.json"]}
+    }
+  },
+  "provenance": {
+    "plan_id": "w1a_s5_host_docstrings",
+    "host": "qoder",
+    "receipt_id": "verify_001",
+    "session_id": "s5-session-b"
+  },
+  "timestamp": "2026-06-13T08:45:00Z"
+}
