@@ -1,0 +1,45 @@
+{
+  "verdict": "pass",
+  "evidence": {
+    "gate": "W0F",
+    "wave": "W0 Post-P8 Active Truth + Version Model Cleanup",
+    "checks": {
+      "W0.14_active_truth_drift": {
+        "result": "pass",
+        "detail": "4/4 drift gate PASS: Validator-only/fail-closed/runtime 旧叙事 0 命中; deep_verified 仅 RETIRED 注释; runtime 单测/smoke 0 命中; stale pin 允许保留"
+      },
+      "W0.15_version_anchor": {
+        "result": "pass",
+        "detail": "5 锚点合法; sopify_bundle.py:85 / payload.py:220 / payload.py:242 三处 0.0.0-dev 静默 fallback 已改 Fail-loud; dev opt-in 需 SOPIFY_DEV_VERSION=1 + 显式版本串"
+      },
+      "W0.10a_classifier": {
+        "result": "pass",
+        "detail": "4 状态 classifier (up_to_date / pinned_old_but_healthy / stale / broken) 定义于 installer/inspection.py; pin==null 归 broken; 单测覆盖每个分支"
+      },
+      "W0.10b_render": {
+        "result": "pass",
+        "detail": "inspection.py render_status_text + render_doctor_text + distribution.py 安装完成页已基于 classifier 更新; text/json 双格式回归通过"
+      },
+      "W0.11_12_copilot_drift": {
+        "result": "pass",
+        "detail": ".github/copilot-instructions.md 与安装源一致"
+      },
+      "W0.13_deferred_plan": {
+        "result": "pass",
+        "detail": "plan/20260418_cross_review_engine/ 已归档为 deferred (history/2026-06/)"
+      },
+      "W0B_version_model": {
+        "result": "pass",
+        "detail": "裁定: exact pin (外部项目) + dogfood release-sync (Sopify 自身); host-delegated 为语义预留 (读取侧兼容, 写入侧不产出 null)"
+      }
+    },
+    "tasks_completed": "W0.1-W0.16 (16/16)",
+    "known_residual": "sopify.json.bundle_version 仍为 2026-05-31.142150 (W0 裁定不改 pin; 由 W4 sopify update 实现 realign)"
+  },
+  "provenance": {
+    "plan_id": "20260611_p9_host_uplift_protocol_cleanup",
+    "host": "qoder",
+    "receipt_id": "verify_001"
+  },
+  "timestamp": "2026-06-12T07:57:50Z"
+}

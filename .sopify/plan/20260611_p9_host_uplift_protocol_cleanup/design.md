@@ -91,13 +91,13 @@ W0 完成且以下条件成立，方可启动 W1：
 - `.github/copilot-instructions.md` 与安装源一致
 - `plan/20260418_cross_review_engine/` 状态已裁定（deferred 归档或写明保留原因）
 
-### 3.2 W1 → W2 gate
+### 3.2 W1a → W2 gate
 
-W1 完成且以下条件成立，方可启动 W2：
+W1a 完成且以下条件成立，方可启动 W2：
 
-- 4 宿主 × 7 场景的 evidence 已落 `assets/w1_gaps.md`
+- Codex / Claude / Qoder 全量 S1-S7（21 单元）+ Copilot S1-S3 baseline smoke（3 单元）的 evidence 已落 `assets/w1_gaps.md`
 - Copilot gap 已分类（平台硬限制 vs 可修 gap）
-- W1 结论不假装 4 宿主等价（Copilot 是 BASELINE，其他 3 是 VERIFIED）
+- W1a 结论不假装 4 宿主等价（Copilot 是 BASELINE，其他 3 是 VERIFIED）
 
 ### 3.3 W2 → W3 gate
 

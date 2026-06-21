@@ -1,0 +1,11 @@
+{
+  "schema_version": "1",
+  "plan_id": "w1a_codex_s5_host_docstrings",
+  "required_host_action": "continue_host_develop",
+  "artifacts": {
+    "session_stage": "s5_session_a_anchor_created"
+  },
+  "notes": [
+    "Session A created a compliant light plan and stopped before continuation."
+  ]
+}

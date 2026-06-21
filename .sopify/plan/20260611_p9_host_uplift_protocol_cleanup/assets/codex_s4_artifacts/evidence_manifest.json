@@ -1,0 +1,15 @@
+{
+  "scenario": "S4_standard_plan",
+  "host": "codex",
+  "plan_id": "w1a_codex_s4_standard",
+  "workspace_type": "independent_temp_workspace",
+  "primary_artifacts": [
+    "state/active_plan.json",
+    "plan/w1a_codex_s4_standard/plan.md",
+    "plan/w1a_codex_s4_standard/tasks.md",
+    "protocol_check_new_plan.json",
+    "tasks_file_check.json"
+  ],
+  "protocol_check_verdict": "PASS",
+  "tasks_file_exists": true
+}

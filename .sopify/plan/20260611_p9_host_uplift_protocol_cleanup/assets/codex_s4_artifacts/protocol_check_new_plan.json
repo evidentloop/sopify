@@ -1,0 +1,8 @@
+{
+  "scenario": "new-plan",
+  "verdict": "PASS",
+  "failures": [],
+  "evidence": {
+    "fixture": "/var/folders/wy/n1vcwj1x1_g1nvjs5qt2pyfh0000gq/T/codex_w1a_s4_xt8sdndz"
+  }
+}

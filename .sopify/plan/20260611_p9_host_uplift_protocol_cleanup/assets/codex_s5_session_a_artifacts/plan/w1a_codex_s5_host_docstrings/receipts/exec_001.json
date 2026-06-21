@@ -1,0 +1,19 @@
+{
+  "verdict": "plan_created",
+  "evidence": {
+    "scenario": "S5_session_a",
+    "action": "light plan created, session stopping before continuation",
+    "files_produced": [
+      "plan/w1a_codex_s5_host_docstrings/plan.md",
+      "state/active_plan.json",
+      "state/current_handoff.json"
+    ]
+  },
+  "provenance": {
+    "plan_id": "w1a_codex_s5_host_docstrings",
+    "host": "codex",
+    "receipt_id": "exec_001",
+    "session_id": "s5-session-a"
+  },
+  "timestamp": "2026-06-13T12:00:00Z"
+}

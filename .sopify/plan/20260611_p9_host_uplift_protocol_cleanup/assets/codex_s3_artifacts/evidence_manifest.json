@@ -1,0 +1,12 @@
+{
+  "scenario": "S3_light_plan",
+  "host": "codex",
+  "plan_id": "w1a_codex_s3_light",
+  "workspace_type": "independent_temp_workspace",
+  "primary_artifacts": [
+    "state/active_plan.json",
+    "plan/w1a_codex_s3_light/plan.md",
+    "protocol_check_new_plan.json"
+  ],
+  "protocol_check_verdict": "PASS"
+}

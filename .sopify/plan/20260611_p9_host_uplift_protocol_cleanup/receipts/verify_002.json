@@ -1,0 +1,45 @@
+{
+  "evidence": {
+    "codex_conclusion": "Codex can continue the active P9 plan from protocol assets without rebuilding plan state.",
+    "consumed_qoder_evidence": {
+      "host": "qoder",
+      "receipt_id": "verify_001",
+      "timestamp": "2026-06-12T07:57:50Z",
+      "verdict": "pass"
+    },
+    "host_role": "host_b",
+    "limitations": [
+      "This receipt proves cross-host continuation on the active P9 plan only.",
+      "It does not retroactively convert Qoder S6 from SKIP to PASS for the cleaned temporary test plan."
+    ],
+    "read_chain": {
+      "step_1_active_plan": {
+        "plan_id": "20260611_p9_host_uplift_protocol_cleanup",
+        "present": true
+      },
+      "step_2_plan_md": {
+        "path": ".sopify/plan/20260611_p9_host_uplift_protocol_cleanup/plan.md",
+        "present": true
+      },
+      "step_3_current_handoff": {
+        "fallback_allowed": true,
+        "present": false
+      },
+      "step_4_receipts": {
+        "consumed_receipts": [
+          "verify_001.json"
+        ],
+        "present": true
+      }
+    },
+    "scenario": "S6_cross_host_continuation"
+  },
+  "provenance": {
+    "host": "codex",
+    "plan_id": "20260611_p9_host_uplift_protocol_cleanup",
+    "receipt_id": "verify_002",
+    "session_id": "codex-s6-continuation-audit"
+  },
+  "timestamp": "2026-06-13T05:57:19+00:00",
+  "verdict": "pass"
+}

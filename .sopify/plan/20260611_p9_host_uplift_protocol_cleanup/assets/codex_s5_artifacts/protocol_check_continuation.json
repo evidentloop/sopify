@@ -1,0 +1,8 @@
+{
+  "scenario": "continuation",
+  "verdict": "PASS",
+  "failures": [],
+  "evidence": {
+    "fixture": "/private/tmp/codex-s5-session-b-PIWot3"
+  }
+}

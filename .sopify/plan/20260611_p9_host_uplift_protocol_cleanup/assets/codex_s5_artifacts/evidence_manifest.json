@@ -1,0 +1,18 @@
+{
+  "scenario": "S5_same_host_continuation",
+  "host": "codex",
+  "plan_id": "w1a_codex_s5_host_docstrings",
+  "workspace_type": "independent_temp_workspace",
+  "session_a_source": "assets/codex_s5_session_a_artifacts/",
+  "primary_artifacts": [
+    "state/active_plan.json",
+    "state/current_handoff.json",
+    "plan/w1a_codex_s5_host_docstrings/plan.md",
+    "plan/w1a_codex_s5_host_docstrings/receipts/exec_001.json",
+    "plan/w1a_codex_s5_host_docstrings/receipts/verify_002.json",
+    "protocol_check_continuation.json"
+  ],
+  "protocol_check_verdict": "PASS",
+  "plan_md_sha256_session_a": "1bddf0143714bb6a18018d6c6879945d77d9efbc13768880ab243073978ff0e3",
+  "plan_md_sha256_session_b": "1bddf0143714bb6a18018d6c6879945d77d9efbc13768880ab243073978ff0e3"
+}

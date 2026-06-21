@@ -13,11 +13,11 @@ depends_on: [P8 (protocol_kernel_runtime_retirement), P7 (payload_only_onboardin
 ## Plan Snapshot
 
 - **Goal**: 证明 P8 后的轻量协议资产在四个宿主（Codex / Claude / Qoder / Copilot）真实业务场景下能稳定接续、留痕、审计；同时收口 P8 后漂移的活跃 prose、版本模型和可选工具边界
-- **Status**: active（待评审通过后按波次执行）
-- **Next**: 用户评审 plan.md → design.md → tasks.md，通过后进入 W0
+- **Status**: active（W0 已完成，W1a 执行中）
+- **Next**: Codex S1/S2/S6/S7 收尾 → Claude S1-S7 冒烟 → Copilot S1-S3 baseline smoke
 - **Task**: 6 段（W0 活跃真相+版本模型 / W1a 三宿主 baseline+Copilot smoke / W2 Copilot uplift / W1b 四宿主统一验证（条件式）/ W3 prose+图重写 / W4 工具决策）
 
-## 1. Context / Why
+## Context / Why
 
 **触发条件**（三条输入同时成立）：
 
@@ -50,7 +50,7 @@ depends_on: [P8 (protocol_kernel_runtime_retirement), P7 (payload_only_onboardin
 - 不引入新宿主（Cursor / Windsurf 等）——P9 使命是证明 P8 后的 4 宿主协议能跑，铺新宿主是 P10 的事
 - 不做跨 agent orchestration / 多 agent 自组织——design.md 竞品边界明确排除
 
-## 2. Scope
+## Scope
 
 **做什么**：
 
@@ -70,9 +70,11 @@ depends_on: [P8 (protocol_kernel_runtime_retirement), P7 (payload_only_onboardin
 - 不做 cross-review 集成工（CrossReview 自有蓝图）
 - 不做 pre-commit / 强制门禁
 
-## 3. Approach
+## Approach
 
 **核心命题**：P8 把 Sopify 真相源从 runtime 切到了 `protocol.md + sopify_writer + receipts`。P9 要用真实业务证明这个切换是有效的——4 宿主消费同一协议资产能停、能接、能查；prose 与图与真相源对齐；薄工具有据可依。
+
+## Waves / Steps
 
 **波次划分与依赖**：
 
@@ -182,7 +184,12 @@ SOPIFY_VERSION header (真相源，如 2026-06-10.191940)
 - 触发条件：**至少有第二个独立项目（非 Sopify 自身 dogfood）真实写入 `.sopify/` 资产并被 Sopify 消费**；在此之前 schema 视为 Sopify-internal。
 - 生态桥接（superpowers / helloagents 写入 `.sopify/`）和迁移指南同属 post-P9，前提是本 plan W1a/W2/W1b 的四宿主证据与版本语义已稳定。
 
-## 4. Non-Goals（显式排除）
+## Key Decisions
+
+- **W0B 版本模型裁定**：正式模式只有 Exact pin（外部项目默认）+ Dogfood release-sync（Sopify 自身）；Host-delegated 为语义预留（读取侧兼容 `bundle_version == null`，写入侧本次不产出）。详见 Approach 中 W0 版本模型裁定表。
+- **workspace_kind 声明**：Sopify 自身仓库为 `deep`（有 `.sopify/blueprint/`），外部项目为 `external`。
+
+## Constraints / Not-in-scope
 
 - Protocol v1 全面 normative 升格
 - pre-commit / sopify gate / 强制门禁
@@ -194,7 +201,7 @@ SOPIFY_VERSION header (真相源，如 2026-06-10.191940)
 - runtime 复活（任何形态）
 - 知识自动提炼 / 声明式工作流引擎（design.md 明确延后项）
 
-## 5. Risks
+## Risks
 
 | 风险 | 缓解 |
 |---|---|
@@ -204,9 +211,9 @@ SOPIFY_VERSION header (真相源，如 2026-06-10.191940)
 | W4 默认封装 CLI 扩大面 | W4 是决策不是实施，必须允许"不封装"结论 |
 | W0 版本修复制造假一致 | 先裁定 exact pin + dogfood release-sync 合法状态，再改实现与文件 |
 | W0 改动扩散到 ADR / history | W0 只动活跃 prose + 版本模型 + 安装资产 + deferred 裁定，不碰 ADR 正文和已归档 plan |
-| P9 范围膨胀（补"强制力焦虑"） | 每波次启动前检查 Non-Goals 列表，新增项必须回到 §4 显式排除 |
+| P9 范围膨胀（补"强制力焦虑"） | 每波次启动前检查 Constraints / Not-in-scope 列表，新增项必须回到该节显式排除 |
 
-## 6. Acceptance
+## Acceptance
 
 **整体 Acceptance**：
 
@@ -235,6 +242,7 @@ SOPIFY_VERSION header (真相源，如 2026-06-10.191940)
 - 每个 gap 登记到 `plan/20260611_p9_*/assets/w1_gaps.md`
 - Copilot gap 分类完成（平台硬限制 vs 可修 gap），作为 W2 初始输入（W2.3 新暴露 gap 在 W2 内分类处置）
 - Copilot 已知 baseline 不足不混入"4 宿主都过"的结论
+- **反模式门槛**：每个单元的 evidence 须通过 W1.1 定义的 3 项 gate quality check（包完整性 / 状态词一致 / 开放问题交叉核对），未通过的单元不算 PASS，记入 `w1_gaps.md` 并注明触发的反模式编号（A-G，详见 `assets/qoder_host_drift_learnings.md`）
 
 **W2 Acceptance**：
 
@@ -270,13 +278,13 @@ SOPIFY_VERSION header (真相源，如 2026-06-10.191940)
 - **CLI 评估配对**：每个选项必须同时通过 (a) **正向可发现性评估**（统一入口是否真的降低用户发现成本）与 (b) **反向约束三否评估**（是否引入新的运行时进程 / 自动决定工作流路线 / 强制流程的 hook 或 gate;违反任一项即否决）。宿主能力模型中已存在的 entry-mode hook（PreToolUse / PostToolUse / SubagentStop 等仅用于只读诊断或合规检查）**不在否决范围**,被否决的是"偷偷复活 runtime 强制力"的 hook/gate
 - ADR 草稿（若推荐封装）进 `blueprint/architecture-decision-records/ADR-0XX.md`
 
-## 7. Tasks
+## Tasks
 
 详见 `tasks.md`。
 
 波次顺序：W0 → W1a → W2 → W1b（条件式）→ W3 → W4。每波次启动前检查前一 gate。
 
-## 8. Assets
+## Assets
 
 - 产品形态图（SVG）：`assets/sopify-product-form-p9.svg`（W3 产出）
 - 协议资产图（SVG）：`assets/sopify-protocol-assets-p9.svg`（W3 产出）
@@ -284,3 +292,22 @@ SOPIFY_VERSION header (真相源，如 2026-06-10.191940)
 - W4 工具审计：`assets/w4_tooling_audit.md`
 - W4 ADR 草稿（若）：`blueprint/architecture-decision-records/ADR-0XX.md`
 - 产品形态图 V2 草稿（Style 8）：`assets/p9-product-form-v2-draft.svg`（跨渲染器鲁棒，仍待 W3 基于 W1a/W2/W1b 证据出正式版替换）
+
+## Status / Progress
+
+- **P9 status**: active（已部分执行）
+- **W0**: 16/16 tasks completed, gate 已通过（`receipts/verify_001.json`）
+- **W1a**: evidence collection in progress — Qoder S1-S5 PASS, S6-S7 SKIP（W1.1 + W1.4 完成，2/8 tasks checked）；Codex S3/S4/S5 PASS（一级工件保留，S5 为两个真实 session 的 same-host continuation），S1/S2/S6/S7 待补；Claude 全空；Copilot 全空
+- **W2–W4**: pending
+- 详见 `tasks.md` + `assets/w1_gaps.md`
+
+## Next
+
+- [已修] W1a→W2 gate 死锁（design.md §3.2 已对齐 tasks.md W1a scope：3 宿主全量 + Copilot S1-S3）
+- [已修] W1.1 gate 质量门槛（3 项 check 写入 tasks.md W1.1 + plan.md W1a Acceptance）
+- [已修] 7 场景业务 prompt + 统一记录模板（`assets/w1_gaps.md` §一 + §二）
+- [已修] Codex S3/S4 一级工件（`assets/codex_s3_artifacts/` + `assets/codex_s4_artifacts/`）
+- [已补证] Codex S5 同宿主恢复（两个真实 session，见 `assets/codex_s5_artifacts/`）
+- Codex S1/S2/S6/S7 收尾（填表或明确 SKIP）
+- Claude S1-S7 冒烟
+- Copilot S1-S3 baseline smoke
