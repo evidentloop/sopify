@@ -175,6 +175,8 @@ class ProtocolStore:
 
         Returns the path of the written receipt file.
         """
+        if not plan_id or not plan_id.strip():
+            raise InvariantViolationError("plan_id must be non-empty")
         if not outcome or not outcome.strip():
             raise InvariantViolationError("outcome must be non-empty")
         if not summary or not summary.strip():
@@ -184,6 +186,8 @@ class ProtocolStore:
 
         if month is None:
             month = datetime.now(timezone.utc).strftime("%Y-%m")
+        if not month.strip():
+            raise InvariantViolationError("month must be non-empty")
 
         decisions_text = "\n".join(f"- {d}" for d in key_decisions)
         content = (
