@@ -327,6 +327,31 @@ class ProtocolStoreHistoryReceiptTests(unittest.TestCase):
                     key_decisions=["A", ""],
                 )
 
+    def test_empty_plan_id_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            store = ProtocolStore(Path(temp_dir))
+            for bad_id in ("", "   "):
+                with self.subTest(plan_id=bad_id):
+                    with self.assertRaises(InvariantViolationError):
+                        store.write_history_receipt(
+                            plan_id=bad_id,
+                            outcome="completed",
+                            summary="Done.",
+                            key_decisions=["A"],
+                        )
+
+    def test_empty_month_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            store = ProtocolStore(Path(temp_dir))
+            with self.assertRaises(InvariantViolationError):
+                store.write_history_receipt(
+                    plan_id="plan_001",
+                    outcome="completed",
+                    summary="Done.",
+                    key_decisions=["A"],
+                    month="",
+                )
+
     def test_multiple_key_decisions_rendered(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             store = ProtocolStore(Path(temp_dir))
