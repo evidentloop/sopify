@@ -224,8 +224,6 @@ def check_relative_file_links(path: Path) -> list[str]:
         normalized, anchor = split_link_target(target)
         if not normalized.startswith(("./", "../")):
             continue
-        if not normalized:
-            continue
         resolved = (path.parent / normalized).resolve()
         if not resolved.exists():
             errors.append(
