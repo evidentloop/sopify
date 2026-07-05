@@ -4,8 +4,8 @@
 
 - 核心技术: Python MCP server over stdio，复用现有 Python 模块。
 - 实现要点:
-  - S1 使用单文件 `scripts/sopify_mcp_server.py`，不新增 `sopify_mcp/` 包；等 tool 数量和写入场景稳定后再拆模块。
-  - MCP SDK 选型为官方 Python `mcp` SDK；实施前确认最小 stdio server 示例和依赖声明方式。
+  - S1 使用单文件 `scripts/sopify_mcp_server.py`，不新增 `sopify_mcp/` 包；文件内部按 workspace 校验、纯业务函数、MCP tool 绑定三层组织，保留后续拆包空间但不提前抽象。
+  - MCP SDK 选型为官方 Python `mcp` SDK 稳定线（`mcp[cli]>=1.27,<2`）；v2 仍为预发布线，不作为 S1 基线。
   - 不重写 installer，不改变当前 prompt-only 宿主安装路径。
   - MCP tool 只包确定性能力，不把 `analyze/design/develop` 推理工作流做成 tool。
   - S1 不 import `installer.inspection`；`workspace_status_lite` 只检查 `.sopify/` 基础结构、active plan、handoff 和 plan 目录。
@@ -36,13 +36,13 @@ Host LLM
 | active_plan / current_handoff 读取 | 否 | 是 | AI 接续时高频需要，结构化读取更稳 |
 | plan receipt / history receipt 写入 | 暂保留库调用 | 第二阶段 | 需要更严格 tool 描述和测试 |
 | analyze / design / develop | 否 | 否 | 推理型工作流保留 prompt/skill 形态 |
-| host MCP 注册 | installer 后续支持 | 否 | S1 只在 Qoder 手动注册验证 |
+| host MCP 注册 | installer 后续支持 | 否 | S1 只做手动注册观察，不改 installer |
 
 ### S1 工具清单
 
 1. `sopify.protocol_check`
    - 输入: `workspace_root`、`scenario` (`new-plan` / `continuation` / `finalize`)
-   - 输出: `{scenario, verdict, failures, evidence}`
+   - 输出: `{protocol_check: {scenario, verdict, failures, evidence}, error: null|{code, message}}`
 
 2. `sopify.get_active_plan`
    - 输入: `workspace_root`
@@ -60,12 +60,12 @@ Host LLM
 
 | 信号 | 判定 |
 |------|------|
-| Qoder 中 AI 能通过 MCP 完成 active plan 读取和 protocol check | go S2 |
-| Qoder 中 AI 仍优先拼 shell 命令完成同类动作 | stop，先调整 tool 名称和描述 |
+| Codex / Qoder 中 AI 能通过 MCP 完成 active plan 读取和 protocol check | go S2 |
+| Codex / Qoder 中 AI 仍优先拼 shell 命令完成同类动作 | stop，先调整 tool 名称和描述 |
 | MCP server 启动或响应延迟明显影响对话体验 | stop，先排查依赖和启动开销 |
 | pytest / MCP stdio smoke 不稳定 | stop，先补测试和错误处理 |
 
-说明：`AI 优先调 MCP` 是 Qoder 手动试点观察项，不属于 pytest 自动化验收。
+说明：`AI 优先调 MCP` 是手动试点观察项，不属于 pytest 自动化验收。Codex / Qoder 为主观察对象；Claude / Copilot 参与兼容性观察，但不阻塞 S1 收口，观察结论作为 S3 输入。
 
 ### S2 写入工具
 

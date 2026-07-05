@@ -4,24 +4,32 @@
 
 ## S1 Build + Test
 
-- [ ] 1.1 确认官方 Python `mcp` SDK 的最小 stdio server 示例和依赖声明方式。
-- [ ] 1.2 新增单文件 `scripts/sopify_mcp_server.py`，不新增 `sopify_mcp/` 包。
-- [ ] 1.3 实现 `sopify.get_active_plan` 和 `sopify.get_current_handoff`，复用 `ProtocolStore`。
-- [ ] 1.4 实现 `sopify.workspace_status_lite`，只做 `.sopify/` 基础结构和 active plan 指向检查。
-- [ ] 1.5 在 `scripts/sopify_protocol_check.py` 抽取 `run_protocol_check(workspace_root, scenario)`。
-- [ ] 1.6 实现 `sopify.protocol_check`，返回现有 `{scenario, verdict, failures, evidence}` 结构。
-- [ ] 1.7 保持 `sopify_protocol_check.py` CLI 行为、exit code 和 JSON 输出兼容。
-- [ ] 1.8 为 MCP tool 输入校验、lite status、protocol check 补测试。
-- [ ] 1.9 启动 MCP server，通过 stdio client smoke 调用 S1 tool。
-- [ ] 1.10 跑 `python3 -m pytest tests -v`，确认现有测试不回退。
-- [ ] 1.11 在 Qoder 手动注册 MCP server，验证 AI 能通过 MCP 读取 active plan 和执行 protocol check。
+- [x] 1.1 确认官方 Python `mcp` SDK 的最小 stdio server 示例和依赖声明方式。
+- [x] 1.2 新增单文件 `scripts/sopify_mcp_server.py`，不新增 `sopify_mcp/` 包。
+- [x] 1.3 实现 `sopify.get_active_plan` 和 `sopify.get_current_handoff`，复用 `ProtocolStore`。
+- [x] 1.4 实现 `sopify.workspace_status_lite`，只做 `.sopify/` 基础结构和 active plan 指向检查。
+- [x] 1.5 在 `scripts/sopify_protocol_check.py` 抽取 `run_protocol_check(workspace_root, scenario)`。
+- [x] 1.6 实现 `sopify.protocol_check`，返回现有 `{scenario, verdict, failures, evidence}` 结构。
+- [x] 1.7 保持 `sopify_protocol_check.py` CLI 行为、exit code 和 JSON 输出兼容。
+- [x] 1.8 为 MCP tool 输入校验、lite status、protocol check 补测试。
+- [x] 1.9 启动 MCP server，通过 stdio client smoke 调用 S1 tool。
+- [x] 1.10 跑 `python3 -m pytest tests -v`，确认现有测试不回退。
+- [ ] 1.11 在 Codex / Qoder 手动注册 MCP server 作为主观察，并让 Claude / Copilot 参与兼容性观察，验证 AI 能通过 MCP 读取 active plan 和执行 protocol check。
+
+### S1.11 手动观察记录
+
+- [x] Codex 主观察：已发现并调用 Sopify MCP tools，未走 shell；`get_active_plan` 返回 `null`，`protocol_check(continuation)` 返回预期 `FAIL: Missing state/active_plan.json`，`workspace_status_lite` 返回结构化 workspace 状态。
+- [ ] Qoder 主观察：待验证。
+- [ ] Claude 兼容性观察：待验证。
+- [ ] Copilot 兼容性观察：待验证。
 
 ### S1 go/no-go
 
-- [ ] AI 能通过 MCP 完成 active plan 读取和 protocol check。
-- [ ] Qoder 手动观察中，AI 对同类动作不再优先拼 shell 命令。
-- [ ] MCP server 启动和响应没有明显拖慢对话体验。
-- [ ] pytest 与 MCP stdio smoke 稳定通过。
+- [ ] Codex / Qoder 中 AI 能通过 MCP 完成 active plan 读取和 protocol check。（Codex 已通过，Qoder 待验证）
+- [ ] Codex / Qoder 手动观察中，AI 对同类动作不再优先拼 shell 命令。（Codex 已通过，Qoder 待验证）
+- [ ] Claude / Copilot 参与兼容性观察；不阻塞 S1，记录为 S3 输入。
+- [x] MCP server 启动和响应没有明显拖慢对话体验。
+- [x] pytest 与 MCP stdio smoke 稳定通过。
 
 若任一项失败，先停在 S1，调整 tool 名称、描述、依赖或错误处理，不进入 S2。
 
