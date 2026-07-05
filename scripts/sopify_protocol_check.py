@@ -30,6 +30,8 @@ REQUIRED_SECTIONS = [
     "Next",
 ]
 
+SCENARIOS = ("new-plan", "continuation", "finalize")
+
 # Patterns that must NOT appear in active contract surfaces.
 # Matches in [RETIRED], [DEPRECATED], [SUPERSEDED], MUST NOT, 禁止, ~~ contexts are allowed.
 FORBIDDEN_PATTERNS = [
@@ -343,11 +345,45 @@ def make_result(scenario: str, failures: list[str], fixture: Path) -> dict:
     }
 
 
+def run_protocol_check(workspace_root: Path | str, scenario: str) -> dict:
+    """Run the protocol checker with the same result shape as the CLI.
+
+    The CLI still owns argument parsing and exit codes. This function is the
+    shared deterministic boundary used by tests and the MCP read-only tool.
+    """
+    fixture = Path(workspace_root).expanduser()
+    if scenario not in SCENARIOS:
+        return make_result(
+            scenario,
+            [f"Unsupported scenario: {scenario!r}; expected one of {', '.join(SCENARIOS)}"],
+            fixture,
+        )
+    if not fixture.exists():
+        return make_result(scenario, [f"fixture not found: {fixture}"], fixture)
+    if not fixture.is_dir():
+        return make_result(scenario, [f"fixture is not a directory: {fixture}"], fixture)
+
+    runners = {
+        "new-plan": run_new_plan,
+        "continuation": run_continuation,
+        "finalize": run_finalize,
+    }
+    try:
+        return runners[scenario](fixture)
+    except Exception as e:
+        return {
+            "scenario": scenario,
+            "verdict": "FAIL",
+            "failures": [f"Unexpected error: {type(e).__name__}: {e}"],
+            "evidence": {"fixture": str(fixture)},
+        }
+
+
 def main():
     parser = argparse.ArgumentParser(description="Sopify P8 protocol check")
     sub = parser.add_subparsers(dest="command")
     check_p = sub.add_parser("check")
-    check_p.add_argument("--scenario", required=True, choices=["new-plan", "continuation", "finalize"])
+    check_p.add_argument("--scenario", required=True, choices=SCENARIOS)
     check_p.add_argument("--fixture", required=True, type=Path)
     args = parser.parse_args()
 
@@ -359,20 +395,7 @@ def main():
         print(json.dumps({"error": f"fixture not found: {args.fixture}"}), file=sys.stderr)
         sys.exit(2)
 
-    runners = {
-        "new-plan": run_new_plan,
-        "continuation": run_continuation,
-        "finalize": run_finalize,
-    }
-    try:
-        result = runners[args.scenario](args.fixture)
-    except Exception as e:
-        result = {
-            "scenario": args.scenario,
-            "verdict": "FAIL",
-            "failures": [f"Unexpected error: {type(e).__name__}: {e}"],
-            "evidence": {"fixture": str(args.fixture)},
-        }
+    result = run_protocol_check(args.fixture, args.scenario)
     print(json.dumps(result, indent=2, ensure_ascii=False))
     sys.exit(0 if result["verdict"] == "PASS" else 1)
 
