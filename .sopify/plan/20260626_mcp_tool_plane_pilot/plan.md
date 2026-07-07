@@ -18,9 +18,9 @@ archive_ready: false
 ## Plan Snapshot
 
 - **Goal**: Add a narrow MCP tool plane for deterministic Sopify protocol reads/checks and one guarded low-level plan receipt write, without replacing prompt workflow, CLI, installer, or host adapters.
-- **Status**: Active. S1 read/check pilot and S2A `write_plan_receipt` are complete for Codex/Qoder observation; S2A go/no-go is `go`.
-- **Next**: Enter S3.1 as a Codex-only design step: produce the Codex MCP config matrix and registration boundary, then stop for review before implementation.
-- **Task**: Continue from `tasks.md` item 3.1; do not implement installer registration or enter finalize yet.
+- **Status**: Active. S1 read/check pilot and S2A `write_plan_receipt` are complete; S3.1 Codex-only registration design is drafted and awaiting review.
+- **Next**: Review the S3.1 Codex MCP config matrix and registration boundary in `design.md`; if accepted, implement Codex-only registration as the next slice.
+- **Task**: Stop at the S3.1 review checkpoint; do not implement installer registration, expand to other hosts, or enter finalize yet.
 
 ## Context / Why
 
@@ -40,9 +40,9 @@ The current scope is:
 - Keep CLI, protocol checker, and `ProtocolStore` as the source of deterministic behavior.
 - Record manual observation signals in `tasks.md`.
 
-Out of scope for this plan stage:
+Out of scope before the S3.1 review checkpoint:
 
-- Installer-driven MCP registration.
+- Applying installer-driven MCP registration.
 - Host capability declaration changes.
 - `write_history_receipt`, `finalize_plan`, `set_active_plan`, or `set_current_handoff` MCP tools.
 - Rewriting analyze/design/develop workflow prompts as tools.

@@ -104,6 +104,44 @@ S2A 不引入并发锁。顺序调用下必须保证 no-overwrite；并发写入
 
 S3 在 S1/S2 证明 MCP 价值后进行。目标是让 installer 增加 MCP config 注册能力，覆盖已支持宿主的配置差异。MCP server 仍是一份代码，多宿主差异只落在配置路径和格式。
 
+### S3.1 Codex-only 设计记录
+
+S3.1 只产出设计，不实现 installer 注册。Codex 是第一个落地对象，其他宿主只作为后续矩阵输入。
+
+#### Codex MCP config matrix
+
+| 维度 | Codex 现状 | S3.1 决策 |
+|------|------------|-----------|
+| 配置入口 | Codex 使用 `CODEX_HOME/config.toml`，默认 `~/.codex/config.toml`；可信项目还会读取项目内 `.codex/config.toml`。 | 应用注册只写用户级 `CODEX_HOME/config.toml`。项目级 `.codex/config.toml` 只读诊断，不生成到仓库，避免提交机器本地绝对路径。 |
+| server 格式 | MCP server 使用 TOML `[mcp_servers.<name>]` 表；stdio server 使用 `command`，可选 `args`、`cwd`、`env`。 | 注册单个 stdio server：`[mcp_servers.sopify]`。S3.1 不自动改 tool approval 策略。 |
+| 启动命令 | Codex 直接启动配置里的命令。 | 使用安装/doctor 已验证的 Python `>=3.11` 可执行文件，不写裸 `python3`；`args` 使用 `scripts/sopify_mcp_server.py`，`cwd` 指向工作区根目录。 |
+| 依赖边界 | MCP server 依赖仓库代码和 Python `mcp` SDK。 | dry-run/doctor 必须先验证 server 文件存在、Python 版本满足要求、`import mcp` 成功；验证失败不写配置。 |
+| 失败影响 | Codex 支持 `enabled`、`required`、timeout 等 server 字段。 | `enabled = true`，`required = false`；Sopify MCP 不应因启动失败阻断 Codex 会话。 |
+
+目标配置形态：
+
+```toml
+[mcp_servers.sopify]
+command = "<validated-python-3.11+>"
+args = ["scripts/sopify_mcp_server.py"]
+cwd = "<workspace-root>"
+enabled = true
+required = false
+startup_timeout_sec = 20
+```
+
+#### `register_mcp_config("codex")` boundary
+
+`register_mcp_config(host_id)` 在 S3.1 只接受 `host_id = "codex"`。实现边界如下：
+
+1. 发现目标：读取 `CODEX_HOME`，否则使用 `~/.codex`；目标文件为 `config.toml`。
+2. 生成期望块：基于当前工作区根目录、已验证 Python、固定 server 名 `sopify` 生成 TOML block。
+3. 预检：确认 Python `>=3.11`、`mcp` SDK 可 import、`scripts/sopify_mcp_server.py` 存在、已有 `config.toml` 能被 TOML parser 读取。
+4. dry-run 默认：输出目标路径、期望 block、冲突状态，不修改文件。
+5. apply 行为后续实现时再启用：写入前创建时间戳备份；缺文件可创建；目标 server 不存在时只追加 block；已存在且相同则 no-op；已存在但不同则 fail closed 并提示人工处理。
+
+配置写入不得 round-trip 整个 TOML 文件，避免破坏用户已有注释和排序。S3.1 不设计 Qoder/Claude/Copilot 写入，不设计自动 tool approval 策略，不改变 host capability 和 doctor 输出；这些留给 S3.2+。
+
 ## 安全与性能
 
 - 安全:

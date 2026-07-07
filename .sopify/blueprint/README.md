@@ -13,7 +13,7 @@
 ## 当前焦点
 
 <!-- sopify:auto:focus:start -->
-- 当前活动 plan：`../plan/20260626_mcp_tool_plane_pilot`（standard 级，MCP tool plane pilot；S2A `write_plan_receipt` stdio smoke 与 Qoder 手动审计待完成）。
+- 当前活动 plan：`../plan/20260626_mcp_tool_plane_pilot`（standard 级，MCP tool plane pilot；S3.1 Codex-only MCP config matrix 与 registration boundary 已进入评审点，实施前暂停）。
 - P8 Protocol Kernel & Runtime Retirement 已归档至 `../history/2026-06/20260605_p8_protocol_kernel_runtime_retirement`。
 - history 归档：已可用；最近归档：`../history/2026-06/20260605_p8_protocol_kernel_runtime_retirement`。
 <!-- sopify:auto:focus:end -->

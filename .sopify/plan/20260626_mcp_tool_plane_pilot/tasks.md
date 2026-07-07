@@ -107,11 +107,19 @@ Receipt 内容包含 `verdict: "pass"`, `evidence`, `provenance`, `timestamp`，
 
 ## S3 Multi-host
 
-- [ ] 3.1 设计 `register_mcp_config(host_id)`，把多宿主差异限制在配置路径和格式。
-- [ ] 3.2 Qoder 自动注册落地。
-- [ ] 3.3 Claude / Codex / Copilot 配置路径实测后接入。
+- [x] 3.1 设计 Codex-only `register_mcp_config("codex")`：Codex MCP config matrix、注册边界、dry-run/apply 边界、冲突处理。
+- [ ] 3.1R 评审 S3.1 设计，确认后再进入实现。
+- [ ] 3.2 实现 Codex-only MCP config 注册。
+- [ ] 3.3 Qoder / Claude / Copilot 配置路径实测后接入矩阵。
 - [ ] 3.4 更新 host capability 声明和 doctor 检查。
 - [ ] 3.5 S3 通过后再更新 README / docs / blueprint 长期说明。
+
+### S3.1 设计记录 (2026-07-07)
+
+- Codex 应用注册目标为用户级 `CODEX_HOME/config.toml`，默认 `~/.codex/config.toml`；项目级 `.codex/config.toml` 只做诊断输入，不写入仓库。
+- 目标 server 为 `[mcp_servers.sopify]` stdio 配置，使用已验证 Python `>=3.11`、`args = ["scripts/sopify_mcp_server.py"]`、`cwd = "<workspace-root>"`。
+- 注册默认 dry-run；apply 后续实现必须先备份/预检，且只在 server 缺失时追加 block，已有不同配置时 fail closed。
+- 停止点：当前只完成设计，不实现 installer 注册，不扩展其他宿主。
 
 ## 验收标准
 
