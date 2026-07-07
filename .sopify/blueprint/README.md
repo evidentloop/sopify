@@ -13,7 +13,7 @@
 ## 当前焦点
 
 <!-- sopify:auto:focus:start -->
-- 当前活动 plan：`../plan/20260611_p9_host_uplift_protocol_cleanup`（architecture 级，版本模型闭环 + 公共展示面刷新；W1a 四宿主验证后置）。
+- 当前活动 plan：`../plan/20260626_mcp_tool_plane_pilot`（standard 级，MCP tool plane pilot；S2A `write_plan_receipt` stdio smoke 与 Qoder 手动审计待完成）。
 - P8 Protocol Kernel & Runtime Retirement 已归档至 `../history/2026-06/20260605_p8_protocol_kernel_runtime_retirement`。
 - history 归档：已可用；最近归档：`../history/2026-06/20260605_p8_protocol_kernel_runtime_retirement`。
 <!-- sopify:auto:focus:end -->
