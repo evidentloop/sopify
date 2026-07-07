@@ -10,11 +10,13 @@ from sopify_contracts import RuntimeHandoff
 from sopify_writer import ProtocolStore
 
 from scripts.sopify_mcp_server import (
+    _safe_tool,
     get_mcp_dependency_hint,
     protocol_check,
     read_active_plan,
     read_current_handoff,
     resolve_workspace_root,
+    write_plan_receipt,
     workspace_status_lite,
 )
 from scripts.sopify_protocol_check import run_protocol_check
@@ -152,6 +154,87 @@ class SopifyMcpServerCoreTests(unittest.TestCase):
     def test_mcp_dependency_hint_pins_stable_sdk_line(self) -> None:
         hint = get_mcp_dependency_hint()
         self.assertIn("mcp[cli]>=1.27,<2", hint)
+
+
+class SopifyMcpServerWritePlanReceiptTests(unittest.TestCase):
+    def test_write_plan_receipt_writes_current_active_plan(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            plan_id = "plan_001"
+            sopify = workspace / ".sopify"
+            ProtocolStore(sopify).set_active_plan(plan_id=plan_id)
+            _write_plan_md(sopify / "plan" / plan_id / "plan.md")
+
+            result = write_plan_receipt(
+                workspace,
+                plan_id,
+                "exec_001",
+                "PASS",
+                {"ok": True},
+                {"actor": "test"},
+            )
+
+            receipt_path = Path(result["path"])
+            self.assertEqual(receipt_path.name, "exec_001.json")
+            payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload["verdict"], "PASS")
+            self.assertEqual(payload["evidence"], {"ok": True})
+            self.assertEqual(payload["provenance"]["actor"], "test")
+            self.assertEqual(payload["provenance"]["plan_id"], plan_id)
+            self.assertEqual(payload["provenance"]["receipt_id"], "exec_001")
+
+    def test_write_plan_receipt_rejects_missing_active_plan(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with self.assertRaises(ValueError):
+                write_plan_receipt(Path(temp_dir), "plan_001", "exec_001", "PASS")
+
+    def test_write_plan_receipt_rejects_non_active_plan(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            sopify = workspace / ".sopify"
+            ProtocolStore(sopify).set_active_plan(plan_id="plan_001")
+            _write_plan_md(sopify / "plan" / "plan_001" / "plan.md")
+
+            with self.assertRaises(ValueError):
+                write_plan_receipt(workspace, "plan_002", "exec_001", "PASS")
+
+    def test_write_plan_receipt_rejects_existing_receipt(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            plan_id = "plan_001"
+            sopify = workspace / ".sopify"
+            ProtocolStore(sopify).set_active_plan(plan_id=plan_id)
+            _write_plan_md(sopify / "plan" / plan_id / "plan.md")
+            write_plan_receipt(workspace, plan_id, "exec_001", "PASS")
+
+            with self.assertRaises(FileExistsError):
+                write_plan_receipt(workspace, plan_id, "exec_001", "PASS")
+
+    def test_write_plan_receipt_rejects_missing_plan_md(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            plan_id = "plan_001"
+            ProtocolStore(workspace / ".sopify").set_active_plan(plan_id=plan_id)
+
+            with self.assertRaises(ValueError):
+                write_plan_receipt(workspace, plan_id, "exec_001", "PASS")
+
+    def test_write_plan_receipt_invalid_workspace_uses_structured_error(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            missing = Path(temp_dir) / "missing"
+
+            result = _safe_tool(
+                "write_plan_receipt",
+                write_plan_receipt,
+                missing,
+                "plan_001",
+                "exec_001",
+                "PASS",
+            )
+
+            self.assertIsNone(result["write_plan_receipt"])
+            self.assertEqual(result["error"]["code"], "ValueError")
+            self.assertIn("workspace_root does not exist", result["error"]["message"])
 
 
 class SopifyMcpServerScriptSmokeTests(unittest.TestCase):

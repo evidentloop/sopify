@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-"""Read-only MCP tool plane for Sopify protocol state.
+"""MCP tool plane for Sopify protocol state.
 
-S1 intentionally exposes only deterministic read/check operations. Workflow
-decisions, checkpoint confirmation, installer setup, and all state writes stay
-with the host prompt, CLI, and sopify_writer.
+S1 exposes deterministic read/check operations. S2A adds one guarded low-level
+write tool for plan receipts. Workflow decisions, required host actions,
+installer setup, and higher-level finalization stay with the host prompt, CLI,
+and sopify_writer.
 """
 
 from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -75,6 +76,74 @@ def protocol_check(workspace_root: str | Path, scenario: str) -> dict[str, Any]:
     return run_protocol_check(workspace_root, scenario)
 
 
+def _safe_child_path(root: Path, *parts: str) -> Path:
+    """Build a child path and reject polluted ids that escape the expected root."""
+    root_resolved = root.resolve()
+    candidate = root_resolved.joinpath(*parts).resolve()
+    try:
+        candidate.relative_to(root_resolved)
+    except ValueError as exc:
+        raise ValueError(f"path escapes expected root: {candidate}") from exc
+    return candidate
+
+
+def _active_plan_id(store: ProtocolStore) -> str:
+    active_plan = store.get_active_plan()
+    if not isinstance(active_plan, dict) or not active_plan.get("plan_id"):
+        raise ValueError("active plan is missing")
+    return str(active_plan["plan_id"])
+
+
+def _guard_write_plan_receipt(
+    *,
+    sopify_root: Path,
+    store: ProtocolStore,
+    plan_id: str,
+    receipt_id: str,
+) -> Path:
+    """Enforce S2A write guards before delegating the actual write to ProtocolStore."""
+    active_plan_id = _active_plan_id(store)
+    if plan_id != active_plan_id:
+        raise ValueError(f"plan_id must match active plan: {active_plan_id}")
+
+    plan_dir = _safe_child_path(sopify_root / "plan", plan_id)
+    if not (plan_dir / "plan.md").is_file():
+        raise ValueError(f"active plan plan.md not found: {plan_dir / 'plan.md'}")
+
+    receipt_path = _safe_child_path(plan_dir / "receipts", f"{receipt_id}.json")
+    if receipt_path.exists():
+        raise FileExistsError(f"plan receipt already exists: {receipt_path}")
+    return receipt_path
+
+
+def write_plan_receipt(
+    workspace_root: str | Path,
+    plan_id: str,
+    receipt_id: str,
+    verdict: str,
+    evidence: Mapping[str, Any] | None = None,
+    provenance: Mapping[str, Any] | None = None,
+) -> dict[str, str]:
+    """Write a receipt for the current active plan after S2A MCP guards pass."""
+    workspace = resolve_workspace_root(workspace_root)
+    sopify_root = workspace / ".sopify"
+    store = ProtocolStore(sopify_root)
+    _guard_write_plan_receipt(
+        sopify_root=sopify_root,
+        store=store,
+        plan_id=plan_id,
+        receipt_id=receipt_id,
+    )
+    receipt_path = store.write_plan_receipt(
+        plan_id=plan_id,
+        receipt_id=receipt_id,
+        verdict=verdict,
+        evidence=evidence,
+        provenance=provenance,
+    )
+    return {"path": str(receipt_path)}
+
+
 def _tool_error(exc: Exception) -> dict[str, str]:
     return {
         "code": type(exc).__name__,
@@ -121,6 +190,27 @@ def create_mcp_server() -> Any:
     def tool_protocol_check(workspace_root: str, scenario: str) -> dict[str, Any]:
         """Run the Sopify protocol checker for new-plan, continuation, or finalize."""
         return _safe_tool("protocol_check", protocol_check, workspace_root, scenario)
+
+    @server.tool(name="sopify.write_plan_receipt")
+    def tool_write_plan_receipt(
+        workspace_root: str,
+        plan_id: str,
+        receipt_id: str,
+        verdict: str,
+        evidence: dict[str, Any] | None = None,
+        provenance: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Write a plan receipt only after the host has authorized the protocol write."""
+        return _safe_tool(
+            "write_plan_receipt",
+            write_plan_receipt,
+            workspace_root,
+            plan_id,
+            receipt_id,
+            verdict,
+            evidence,
+            provenance,
+        )
 
     return server
 
