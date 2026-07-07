@@ -214,6 +214,14 @@ def _init_fixture(root: Path, module, *, broken_workflow_link: bool = False, reo
 
 
 class CheckReadmeLinksTests(unittest.TestCase):
+    def test_current_public_docs_pass(self) -> None:
+        module = _load_module()
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            exit_code = module.main()
+
+        self.assertEqual(exit_code, 0, msg=stdout.getvalue())
+
     def test_main_passes_when_public_docs_are_aligned(self) -> None:
         module = _load_module()
         with tempfile.TemporaryDirectory() as temp_dir:
