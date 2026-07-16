@@ -19,7 +19,7 @@ Sopify 当前是 Protocol-first / Convention 模式：宿主通过 prompt 消费
 1. S1 Build + Test：新增单文件 `scripts/sopify_mcp_server.py`，先暴露只读/检查类工具：`protocol_check`、`get_active_plan`、`get_current_handoff`、`workspace_status_lite`。
 2. S1 只做 Qoder 手动注册试点，不新增 `sopify_mcp/` 包，不改 installer，不改 host adapter 声明。
 3. S2A Write Plan Receipt：Codex / Qoder 主观察通过后，先只开放 `write_plan_receipt` 一个低层写入 tool；`write_history_receipt` 与 `finalize_plan` 暂缓，等写入观察和授权承接方式明确后再决策。
-4. S3 Multi-host：写入 tool 稳定后，再让 installer 注册 MCP 配置并覆盖已支持宿主。
+4. S3 Codex-first 注册：写入 tool 稳定后，先在 Codex 验证最小注册路径，再用实测结果扩展其他已支持宿主；这是验证顺序，不是宿主能力排他判断。
 5. 保留 CLI 作为安装、CI、人类运维入口；MCP 作为 AI tool plane，不替代 CLI / installer。
 
 ## 影响范围

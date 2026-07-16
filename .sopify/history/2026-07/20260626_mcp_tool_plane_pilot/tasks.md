@@ -107,19 +107,44 @@ Receipt 内容包含 `verdict: "pass"`, `evidence`, `provenance`, `timestamp`，
 
 ## S3 Multi-host
 
-- [x] 3.1 设计 Codex-only `register_mcp_config("codex")`：Codex MCP config matrix、注册边界、dry-run/apply 边界、冲突处理。
-- [ ] 3.1R 评审 S3.1 设计，确认后再进入实现。
-- [ ] 3.2 实现 Codex-only MCP config 注册。
-- [ ] 3.3 Qoder / Claude / Copilot 配置路径实测后接入矩阵。
-- [ ] 3.4 更新 host capability 声明和 doctor 检查。
-- [ ] 3.5 S3 通过后再更新 README / docs / blueprint 长期说明。
+- [x] 3.1 设计 Codex-first `register_mcp_config("codex")`：最小注册入口、dry-run/apply 边界、冲突处理。
+- [x] 3.1R 完成 S3.1 评审：Codex 是首个验证对象，不是唯一满足条件的宿主；删除自动依赖安装、payload 改造和自建 TOML 合并器等超前设计。
+- [x] 3.2A 实现预检与 dry-run：验证 Codex CLI、现有 Python/MCP 环境和绝对 server 路径，使用 `codex mcp get sopify --json` 判定状态。
+- [x] 3.2B 实现显式 apply：仅 absent 时调用 `codex mcp add`，same 时 no-op，conflict 时拒绝覆盖。
+- [x] 3.2C 补最小单元测试与一次 Codex 手动注册 smoke，记录证据后暂停。
+- [-] 3.3 基于 Codex 试点证据继续验证 Qoder / Claude / Copilot；转入蓝图长期待办，延后不代表不满足接入条件。
+- [-] 3.4 更新 host capability 声明和 doctor 检查；当前证据不足，不为 repo-local 试点改变产品能力声明。
+- [x] 3.5 同步 maintainer docs、CHANGELOG、project 与 blueprint；公开 README 保持不变，因为当前仍是 repo-local 维护者试点。
 
-### S3.1 设计记录 (2026-07-07)
+### S3.1 评审记录 (2026-07-16)
 
-- Codex 应用注册目标为用户级 `CODEX_HOME/config.toml`，默认 `~/.codex/config.toml`；项目级 `.codex/config.toml` 只做诊断输入，不写入仓库。
-- 目标 server 为 `[mcp_servers.sopify]` stdio 配置，使用已验证 Python `>=3.11`、`args = ["scripts/sopify_mcp_server.py"]`、`cwd = "<workspace-root>"`。
-- 注册默认 dry-run；apply 后续实现必须先备份/预检，且只在 server 缺失时追加 block，已有不同配置时 fail closed。
-- 停止点：当前只完成设计，不实现 installer 注册，不扩展其他宿主。
+- Codex 是首个验证对象，用于先形成一条注册证据；不是对其他宿主能力的排他判断。
+- 注册复用 `codex mcp get/add`，使用绝对 Python 与 server 路径，不手写或 round-trip 用户 TOML。
+- 试点只消费现有 Python/MCP 环境；缺依赖时可见失败，不自动安装、不改 payload。
+- 默认 dry-run；apply 必须显式触发，已有不同配置时 fail closed。
+- 停止点已兑现：S3.2 经用户确认后完成 Codex smoke；扩展其他宿主前回到蓝图证据项重新评估。
+
+### S3.2 实施与验证记录 (2026-07-16)
+
+- [x] `scripts/sopify_mcp_register.py` 已实现：默认 dry-run，显式 `--apply`，配置相同 no-op，配置冲突 fail closed。
+- [x] 目标单元测试 21 passed；全量测试 216 passed，另含 28 passed subtests。
+- [x] public docs check、continuation protocol check、`py_compile` 与 `git diff --check` 均通过。
+- [x] 使用 `/Users/liweixin/.local/sopify-py311` 的 Python 3.11 环境验证 `mcp==1.28.1`；依赖安装是本次环境准备，不进入注册脚本产品边界。
+- [x] 真实 Codex 用户级注册成功；`codex mcp get sopify --json` 确认启用且 command/args 与期望一致，再次 dry-run 返回 `noop`。
+- [x] MCP stdio smoke 列出 5 个 tools，并成功调用 `sopify.get_active_plan`，返回当前活动 plan 且 `is_error=false`。
+- [-] CrossReview advisory：本机 CLI 仅支持 `pack --diff`，不支持 skill 要求的 staged/unstaged 隔离输入；按技能前置条件明确跳过，不伪造审查结果，也不创建临时 commit。
+- [x] `ProtocolStore.finalize_plan` 写入 final/history receipts 并清空活动状态；仅包含本次归档的 finalize fixture 检查 PASS。
+- [-] 仓库级 finalize checker 会同时审计全部 pre-P8 history，因旧归档缺新式 receipts 而失败；这是既有历史债，不在本次试点中批量回填或改造 checker。
+
+### S3.2 独立审查后最小修复 (2026-07-16)
+
+- [x] disabled 的同路径配置不再误报 `noop`，而是 fail closed 为 conflict；不自动改回用户开关。
+- [x] Python / Codex 可执行文件启动失败统一进入现有结构化 JSON error，不再泄漏 traceback。
+- [x] preflight 与 server 声明对齐，只接受 Python 3.11+、`mcp[cli]>=1.27,<2` 且可导入 `FastMCP` 的已有环境。
+- [x] 测试保持局部：新增 3 个测试方法；定向 24 passed + 2 subtests，全量 219 passed + 30 subtests。
+- [x] 真实 Codex dry-run 仍为 `noop`，MCP stdio smoke 仍列出 5 个 tools 且调用成功。
+- [x] 通过 `ProtocolStore` 写入 `verify_002` 并重发 final/history receipts；final 使用稳定相对引用 `receipts/verify_002.json`。
+- [x] 未加入依赖安装、完整握手、并发锁、doctor 或多宿主抽象。
 
 ## 验收标准
 

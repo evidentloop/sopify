@@ -1,16 +1,17 @@
 ---
 title: MCP Tool Plane Pilot
 plan_id: 20260626_mcp_tool_plane_pilot
-status: active
+status: completed
+lifecycle_state: archived
 level: standard
 created: 2026-06-26
-updated: 2026-07-07
+updated: 2026-07-16
 knowledge_sync:
-  project: skip
+  project: required
   background: review
-  design: review
-  tasks: review
-archive_ready: false
+  design: required
+  tasks: required
+archive_ready: true
 ---
 
 # MCP Tool Plane Pilot
@@ -18,9 +19,9 @@ archive_ready: false
 ## Plan Snapshot
 
 - **Goal**: Add a narrow MCP tool plane for deterministic Sopify protocol reads/checks and one guarded low-level plan receipt write, without replacing prompt workflow, CLI, installer, or host adapters.
-- **Status**: Active. S1 read/check pilot and S2A `write_plan_receipt` are complete; S3.1 Codex-only registration design is drafted and awaiting review.
-- **Next**: Review the S3.1 Codex MCP config matrix and registration boundary in `design.md`; if accepted, implement Codex-only registration as the next slice.
-- **Task**: Stop at the S3.1 review checkpoint; do not implement installer registration, expand to other hosts, or enter finalize yet.
+- **Status**: Completed. S1/S2A tools and the S3.2 Codex-first repo-local registration pilot are implemented and verified.
+- **Next**: No active continuation. Any other-host registration work must start from the blueprint evidence item.
+- **Task**: Preserve the proven narrow boundary: official host CLI, existing Python/MCP environment, no dependency provisioning, payload packaging, doctor integration, or multi-host abstraction without new evidence.
 
 ## Context / Why
 
@@ -61,7 +62,11 @@ S2A is intentionally smaller than the original S2 idea. It only exposes `write_p
 2. **S2A Write Plan Receipt**: Implement one guarded receipt-writing tool and verify it through tests, stdio smoke, and manual host observation.
 3. **S3 Multi-host Registration**: Only after S2A proves useful and safe, design installer-assisted MCP config registration across supported hosts.
 
-Current execution is between S2A and S3. S1 is complete for Codex and Qoder. S2A implementation, unit tests, stdio smoke, and Qoder manual observation are complete. S3.1 is the next step and is limited to Codex registration design.
+Execution completed through S3.2. S1 is complete for Codex and Qoder. S2A implementation, unit tests, stdio smoke, and Qoder manual observation are complete. S3.1 narrowed the registration design, and S3.2 supplied the first Codex registration evidence without extending the result into an unsupported multi-host abstraction.
+
+S3.2 is now complete. The repo-local registration helper, targeted/full tests, real Codex user-level registration, repeated no-op detection, and MCP stdio tool call all passed. Multi-host automation and product packaging were deliberately not added; they remain evidence-gated follow-up work in the blueprint.
+
+Post-archive independent review found four narrow boundary gaps: disabled-server matching, executable startup errors, MCP SDK range validation, and an unstable receipt reference. All four were fixed without adding installer behavior, locking, handshake orchestration, or multi-host abstractions; `verify_002` and the final receipt record the rerun evidence.
 
 ## Key Decisions
 
@@ -70,7 +75,8 @@ Current execution is between S2A and S3. S1 is complete for Codex and Qoder. S2A
 - S2A exposes only `write_plan_receipt`, not finalization or history receipt tools.
 - `write_plan_receipt` must call `ProtocolStore.write_plan_receipt`; it must not hand-write JSON or Markdown.
 - Missing `state/active_plan.json`, mismatched plan id, missing active `plan.md`, or an existing receipt must fail closed with a structured error envelope.
-- S3 multi-host registration must start with a host-specific design step. Current next scope is Codex-only S3.1; other hosts remain matrix inputs, not implementation targets.
+- S3 registration starts with Codex because it is the first validation target, not because other hosts are considered incapable or unsupported.
+- The Codex-first pilot may use the current repository server path and pre-existing dependencies; packaging and dependency provisioning require evidence from the pilot and stay out of S3.2.
 
 ## Constraints / Not-in-scope
 
@@ -92,18 +98,14 @@ Completed:
 - S2A unit coverage for success, missing active plan, non-active plan, duplicate receipt, missing `plan.md`, and invalid workspace error envelope.
 - S2A MCP stdio smoke for `write_plan_receipt`.
 - Qoder manual validation that the write tool does not encourage bypassing `required_host_action`, user instructions, or finalize intent branching.
+- S3.2 Codex-first registration helper, unit tests, real registration/no-op smoke, and MCP stdio tool invocation.
+- Maintainer docs, CHANGELOG, project conventions, blueprint design, and blueprint follow-up task synchronization.
 
 Pending:
 
-- Claude/Copilot compatibility observation as S3 input.
-- S3.1 Codex MCP config matrix and registration boundary.
-- S3 implementation, installer/doctor updates, and multi-host registration.
+- Claude/Copilot compatibility observation as non-blocking S3 input.
+- Evidence-based registration validation for Qoder / Claude / Copilot, followed later by installer/doctor and packaging decisions only if justified.
 
 ## Next
 
-Start S3.1 with Codex only:
-
-- Map current Codex MCP config location and expected JSON/TOML shape.
-- Decide non-destructive registration behavior: opt-in, merge, backup, dry-run, and existing-server conflict handling.
-- Decide the dependency boundary for launching `scripts/sopify_mcp_server.py` from Codex.
-- Record the design in `design.md` / `tasks.md` and stop before code changes.
+Archived under `.sopify/history/2026-07/20260626_mcp_tool_plane_pilot/`. The only continuation item is the blueprint-level cross-host evidence task; it does not imply unsupported hosts and does not authorize productizing dependency provisioning or multi-host registration without further validation.

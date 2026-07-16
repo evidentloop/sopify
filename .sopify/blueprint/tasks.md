@@ -134,6 +134,7 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
   4. 若涉及 legacy surface，替代 contract 是否已在 `design.md` sunset 表中对应里程碑稳定？
   5. 若影响 Core promotion rule / hard max / ownership / validator authority，须补充 ADR impact
 - [ ] 补宿主级 first-hop ingress proof / diagnostics
+- [ ] MCP 注册扩展证据：沿用 Codex 试点的最小契约验证 Qoder / Claude / Copilot；仅在实测出现重复需求后再决定依赖打包、doctor 和多宿主自动注册
 - [ ] `~compare` shortlist facade 收敛进默认主链路
 - [ ] blueprint 索引摘要更细粒度自动刷新
 - [ ] history feature_key 聚合视图
@@ -143,7 +144,7 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 - [ ] 轻量化产品指标与 acceptance gate（首次上手步骤数、必需文件数、默认 workflow 必需 contract 数）
 - [ ] 产品层 ↔ 实现层 contract matrix 正式化（ownership / admission / lifecycle responsibilities）
 - [x] GitHub Release pipeline 建立（首次 release 创建 + tag 规范 + install 脚本端到端验证）
-- [x] 测试套件健康基线（pass rate ≥ 99%；当前基线 619 tests / 619 passed = 100%，含 49 subtests；退役 124 测试后仍保持 100% pass rate）
+- [x] 测试套件健康基线（pass rate ≥ 99%；当前基线 219 tests / 219 passed = 100%，另含 30 passed subtests）
 - [ ] Skill packaging / localization governance：skill 打包格式、多语言资产管理、bundle 内 i18n 分层规范
 - [ ] Stale stub 检测与错误可观测性：~~诊断信息~~（PR #49 已补 `_stale_stub_diagnostic`）；剩余：自动建议 `--target <host>` 重装或降级到已安装版本（layer 3 auto-fix，用户已明确延后为 opt-in）
 - [x] Runtime output renderer scope audit：runtime/output.py 已随 P8 W2.10 退场，develop 输出归宿主/skill 所有

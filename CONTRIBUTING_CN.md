@@ -42,6 +42,20 @@ Bundle 规则：
 - 宿主按 4 步协议入口（active_plan → plan.md → current_handoff → receipts）接续，定义在 `.sopify/blueprint/protocol.md §8`
 - 协议状态写入走 `sopify_writer`；宿主不直接写 state 文件
 
+### MCP Tool Plane 试点
+
+仓库内提供 Codex-first 注册试点，用于维护者验证 `scripts/sopify_mcp_server.py`。它要求一个已有的 Python 3.11+ 环境和 `mcp[cli]>=1.27,<2`，不会自动安装依赖或修改 payload：
+
+```bash
+# 默认 dry-run
+python3 scripts/sopify_mcp_register.py --python /path/to/python3
+
+# 明确写入 Codex 用户级 MCP 配置
+python3 scripts/sopify_mcp_register.py --python /path/to/python3 --apply
+```
+
+注册脚本委托官方 `codex mcp get/add`，不直接编辑 TOML；同配置为 no-op，不同配置会拒绝覆盖。Codex 是首个验证对象，不是唯一具备 MCP 接入能力的宿主。Qoder、Claude、Copilot 的自动注册、依赖打包和 doctor 集成要等实测证据后再决定。
+
 ### Installer 入口与 Release Asset
 
 当前 installer 入口按受众分层：

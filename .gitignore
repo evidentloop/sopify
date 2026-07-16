@@ -22,6 +22,7 @@ Copilot/Skills/
 .github/copilot-instructions.md
 
 # Local / environment files
+.idea/
 .env
 .venv/
 dist/

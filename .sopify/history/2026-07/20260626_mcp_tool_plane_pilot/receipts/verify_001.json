@@ -1,0 +1,21 @@
+{
+  "evidence": {
+    "codex_registration": "registered; repeated dry-run noop",
+    "cross_review": "advisory skipped: installed CLI lacks staged/unstaged isolation required by skill",
+    "diff_checks": "working and staged diff checks passed",
+    "full_tests": "216 passed; 28 passed subtests",
+    "mcp_stdio_smoke": "5 tools listed; sopify.get_active_plan succeeded",
+    "protocol_continuation": "PASS",
+    "public_docs": "README validation passed",
+    "targeted_tests": "21 passed"
+  },
+  "provenance": {
+    "host": "codex",
+    "phase": "develop",
+    "plan_id": "20260626_mcp_tool_plane_pilot",
+    "receipt_id": "verify_001",
+    "scope": "s3.2_codex_first_registration"
+  },
+  "timestamp": "2026-07-16T14:03:34+00:00",
+  "verdict": "pass"
+}
