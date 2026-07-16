@@ -6,6 +6,8 @@ Format: Summary → Changed → Plan Packages. File-level details live in `git l
 
 ## [Unreleased]
 
+## [2026-07-16.230506] - 2026-07-16
+
 ### Summary
 
 Added a repo-local, Codex-first MCP registration pilot with dry-run/apply safeguards and real stdio verification. Codex is the first validation target; other supported hosts remain future evidence work rather than being classified as incapable.
