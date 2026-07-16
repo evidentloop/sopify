@@ -6,6 +6,20 @@ Format: Summary → Changed → Plan Packages. File-level details live in `git l
 
 ## [Unreleased]
 
+### Summary
+
+Added a repo-local, Codex-first MCP registration pilot with dry-run/apply safeguards and real stdio verification. Codex is the first validation target; other supported hosts remain future evidence work rather than being classified as incapable.
+
+### Changed
+
+- **MCP registration**: Added `scripts/sopify_mcp_register.py`, delegating user config changes to official `codex mcp get/add` commands and failing closed on conflicts, disabled servers, unsupported MCP SDK versions, and executable startup errors.
+- **Tests**: Covered absent, no-op, disabled/conflicting config, apply verification, missing dependency, unsupported SDK versions, and invalid executable paths.
+- **Docs**: Documented the maintainer-only pilot boundary and deferred dependency packaging, doctor integration, and multi-host automation until further host evidence exists.
+
+### Plan Packages
+
+- `20260626_mcp_tool_plane_pilot` → archived to `history/2026-07/`
+
 ## [2026-06-13.221525] - 2026-06-13
 
 ### Summary

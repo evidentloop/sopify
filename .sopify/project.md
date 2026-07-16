@@ -33,6 +33,12 @@
 - `runtime/` 目录已在 P8 W2.10 物理删除（46 文件 / ~15.6K LOC）；不再存在 runtime facade、runtime engine、runtime gate。
 - `scripts/sopify_protocol_check.py` 是 CI/preflight 协议合规 smoke（3 场景：new-plan / continuation / finalize）；不得 import runtime。
 
+## MCP Tool Plane 约定
+
+- repo-local MCP server 固定为 `scripts/sopify_mcp_server.py`；它只暴露确定性协议能力，不承接工作流判断或用户拍板。
+- Codex-first 注册试点入口为 `scripts/sopify_mcp_register.py`，配置写入必须委托宿主官方 CLI，不直接改写用户配置文件。
+- 当前试点消费已有 Python 3.11+ 与 `mcp[cli]>=1.27,<2` 环境。依赖供给、payload 打包、doctor 集成及其他宿主自动注册须先有跨宿主实测证据，不作为现阶段产品契约。
+
 ## Develop 质量约定
 
 - `continue_host_develop` 仍是宿主负责真实代码修改的正式模式；sopify_writer 负责 handoff 落盘与 receipts 写回。

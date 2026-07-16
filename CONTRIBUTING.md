@@ -42,6 +42,20 @@ Bundle rules:
 - The host follows the 4-step protocol entry contract (active_plan → plan.md → current_handoff → receipts) defined in `.sopify/blueprint/protocol.md §8`.
 - Protocol state writes go through `sopify_writer`; hosts do not write state files directly.
 
+### MCP Tool Plane Pilot
+
+The repository includes a Codex-first registration pilot for maintainer verification of `scripts/sopify_mcp_server.py`. It requires an existing Python 3.11+ environment with `mcp[cli]>=1.27,<2`; it does not install dependencies or modify the payload:
+
+```bash
+# Dry-run by default
+python3 scripts/sopify_mcp_register.py --python /path/to/python3
+
+# Explicitly update the user-level Codex MCP configuration
+python3 scripts/sopify_mcp_register.py --python /path/to/python3 --apply
+```
+
+The helper delegates to official `codex mcp get/add` commands instead of editing TOML directly. Matching configuration is a no-op; conflicting configuration is not overwritten. Codex is the first validation target, not the only MCP-capable host. Automated registration for Qoder, Claude, and Copilot, dependency packaging, and doctor integration remain evidence-gated follow-up work.
+
 ### Installer Entry Points and Release Assets
 
 Current installer entry points are intentionally split by audience:

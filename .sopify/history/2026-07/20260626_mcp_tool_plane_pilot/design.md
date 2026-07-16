@@ -104,6 +104,44 @@ S2A 不引入并发锁。顺序调用下必须保证 no-overwrite；并发写入
 
 S3 在 S1/S2 证明 MCP 价值后进行。目标是让 installer 增加 MCP config 注册能力，覆盖已支持宿主的配置差异。MCP server 仍是一份代码，多宿主差异只落在配置路径和格式。
 
+### S3.1 Codex-first 设计记录
+
+S3.1 先用 Codex 验证注册路径，因为当前环境已经具备官方 MCP CLI 和前序手动观察基础。这是串行验证顺序，不表示 Qoder、Claude 或 Copilot 不满足 MCP 接入条件。S3.1 只确定最小试点边界，不提前完成多宿主产品化设计。
+
+#### Codex MCP 最小矩阵
+
+| 维度 | S3.2 最小决策 |
+|------|---------------|
+| 注册入口 | 复用官方 `codex mcp get/add`；不自建 TOML 合并器。 |
+| 启动命令 | 使用已验证 Python `>=3.11` 的绝对路径和 `scripts/sopify_mcp_server.py` 的绝对路径，不依赖 workspace `cwd`。 |
+| 依赖 | 只检查现有环境能否 `import mcp`；缺失时可见失败，不在试点中自动安装或创建虚拟环境。 |
+| 冲突 | `sopify` 不存在时可注册；配置相同则 no-op；配置不同则 fail closed，交给用户处理。 |
+| 写入 | 默认 dry-run；只有显式 apply 才调用 Codex CLI 修改用户配置。 |
+
+目标注册命令：
+
+```text
+codex mcp add sopify -- <validated-python-3.11+> <absolute-path>/scripts/sopify_mcp_server.py
+```
+
+#### `register_mcp_config("codex")` 最小边界
+
+1. 验证 `codex mcp get/add` 可用、Python `>=3.11`、`import mcp` 成功、server 脚本存在。
+2. 使用 `codex mcp get sopify --json` 判定 absent / same / conflict。
+3. dry-run 只返回计划命令和判定，不修改文件。
+4. explicit apply 仅在 absent 时调用 `codex mcp add`；same 返回 no-op；conflict 拒绝覆盖。
+5. 注册后运行一次 `codex mcp get sopify --json` 与 MCP tool smoke，记录验证结果后暂停。
+
+S3.2 不修改 payload dependency model，不自动安装 `mcp`，不创建专用 Python 环境，不直接编辑 `config.toml`，不改变 tool approval、host capability 或 doctor。其他宿主在 Codex 证据形成后继续验证，而不是被排除在能力范围之外。
+
+### S3.2 验证结论 (2026-07-16)
+
+- 新增单文件 `scripts/sopify_mcp_register.py`，dry-run/apply、same/no-op、conflict/fail-closed 边界均按 S3.1 落地。
+- 复用现有 Sopify Python 3.11 环境安装并验证 MCP SDK；注册脚本本身不承担依赖安装。
+- 真实执行 `codex mcp add` 后，`codex mcp get sopify --json` 返回期望绝对 Python 与 server 路径；再次 dry-run 为 `noop`。
+- 通过 MCP stdio client 列出 5 个 Sopify tools，并成功调用 `sopify.get_active_plan`。
+- 结论：Codex 最小注册路径可用；产品化依赖供给、doctor 与其他宿主自动注册继续等待跨宿主证据。
+
 ## 安全与性能
 
 - 安全:
