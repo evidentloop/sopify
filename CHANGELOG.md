@@ -6,6 +6,8 @@ Format: Summary → Changed → Plan Packages. File-level details live in `git l
 
 ## [Unreleased]
 
+## [2026-07-17.194640] - 2026-07-17
+
 ### Summary
 
 Made managed-plan entry intent-first: existing work resumes only when the user explicitly asks to continue or uses `~go`, while ordinary questions and small fixes stay on the current request.
