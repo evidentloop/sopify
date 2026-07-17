@@ -133,8 +133,7 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
   3. 是否新增、删除、替代 action / route / state / checkpoint / receipt 中的任一 machine truth？若是，对照 `design.md` 削减预算表
   4. 若涉及 legacy surface，替代 contract 是否已在 `design.md` sunset 表中对应里程碑稳定？
   5. 若影响 Core promotion rule / hard max / ownership / validator authority，须补充 ADR impact
-- [ ] 补宿主级 first-hop ingress proof / diagnostics
-- [ ] MCP 注册扩展证据：沿用 Codex 试点的最小契约验证 Qoder / Claude / Copilot；仅在实测出现重复需求后再决定依赖打包、doctor 和多宿主自动注册
+- [ ] MCP 持久注册扩展证据：沿用 Codex 试点的最小契约验证 Qoder / Claude / Copilot；Claude 会话级只读调用已通过，但不代替持久注册。仅在实测出现重复需求后再决定依赖打包、doctor 和多宿主自动注册
 - [ ] `~compare` shortlist facade 收敛进默认主链路
 - [ ] blueprint 索引摘要更细粒度自动刷新
 - [ ] history feature_key 聚合视图
@@ -144,7 +143,7 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 - [ ] 轻量化产品指标与 acceptance gate（首次上手步骤数、必需文件数、默认 workflow 必需 contract 数）
 - [ ] 产品层 ↔ 实现层 contract matrix 正式化（ownership / admission / lifecycle responsibilities）
 - [x] GitHub Release pipeline 建立（首次 release 创建 + tag 规范 + install 脚本端到端验证）
-- [x] 测试套件健康基线（pass rate ≥ 99%；当前基线 219 tests / 219 passed = 100%，另含 30 passed subtests）
+- [x] 测试套件健康基线（pass rate ≥ 99%；当前基线 226 tests / 226 passed = 100%，另含 34 passed subtests）
 - [ ] Skill packaging / localization governance：skill 打包格式、多语言资产管理、bundle 内 i18n 分层规范
 - [ ] Stale stub 检测与错误可观测性：~~诊断信息~~（PR #49 已补 `_stale_stub_diagnostic`）；剩余：自动建议 `--target <host>` 重装或降级到已安装版本（layer 3 auto-fix，用户已明确延后为 opt-in）
 - [x] Runtime output renderer scope audit：runtime/output.py 已随 P8 W2.10 退场，develop 输出归宿主/skill 所有
@@ -158,6 +157,7 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 | Convention 入口兑现差距 | 已并入 | 已转入 P1.5 先行切片 |
 | ~replay 更多入口 | 终止 | P3b replay 能力已下线 |
 | 第三方 CLI 宿主能力边界治理（P4a→P4c bridge） | 已消费 | P4c 已消费，Host Capability Governance 已落地 design.md |
+| 宿主级 first-hop ingress proof / diagnostics | 已完成 | `20260717_sopify_entry_preflight` 已落地意图优先预检、最小状态事实、静态语义断言与一次 Codex 上下文隔离回放 |
 
 ## 明确延后项
 

@@ -26,7 +26,7 @@ English · [简体中文](./README.zh-CN.md) · [Quick Start](#quick-start) · [
 
 AI coding tools are fast. But when they jump to code before the facts are clear, speed turns into rework. Sopify is a development process protocol layer for AI coding: in managed workflows, the host asks before coding when requirements are incomplete or a decision still needs you.
 
-Sopify stores plans and verification receipts in `.sopify/` as project files tracked by git. Only the local resume pointers stay out of git. Open the same repo on another host, and it reads those files to continue from where the work stopped.
+Sopify stores plans and verification receipts in `.sopify/` as project files tracked by git. Only the local resume pointers stay out of git. In the same repo, explicitly ask to continue or use `~go` to resume managed work from those files on any supported host.
 
 No new editor, no new CLI. Install into the host you already use — Codex, Claude, Qoder, or Copilot.
 
@@ -58,7 +58,7 @@ curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/instal
 
 After install, use `~go` to start a managed workflow. See [Installation](#installation) for other hosts, audit-first install, and Windows.
 
-**Already in a Sopify-managed repo?** Open any AI host and continue — it picks up from where you left off.
+**Already in a Sopify-managed repo?** Explicitly ask to continue or use `~go` to resume the current plan. Ordinary questions and small fixes are handled directly without automatically entering the previous plan workflow.
 
 ## Why Sopify?
 
@@ -95,7 +95,7 @@ How Sopify achieves stability and quality:
 
 - **Same rules on every host** — Claude, Codex, Qoder, and Copilot load the same Sopify instructions, so switching hosts doesn't reset the workflow
 - **Project assets tracked in git** — plans, decisions, and verification records live in `.sopify/`; only the two local pointer files (`active_plan.json`, `current_handoff.json`) are gitignored
-- **Resumes from where you stopped** — the host reads the current plan, picks up the last handoff, and checks what's already been verified before continuing
+- **Resumes when you ask** — explicitly ask to continue or use `~go`; the host then reads the current plan, last handoff, and existing verification evidence before proceeding
 - **Runtime retired; workflow retained** — the analyze → design → develop → finalize workflow is unchanged; what changed is that rules live in files, not a runtime process
 
 ## Architecture Details

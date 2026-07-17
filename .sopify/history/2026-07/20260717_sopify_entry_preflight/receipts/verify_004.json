@@ -1,0 +1,65 @@
+{
+  "evidence": {
+    "full_test_result": "226 passed, 34 subtests passed",
+    "protocol_check_commands": [
+      "/opt/homebrew/bin/python3.11 scripts/sopify_protocol_check.py check --scenario new-plan --fixture tests/fixtures/minimal_plan",
+      "/opt/homebrew/bin/python3.11 scripts/sopify_protocol_check.py check --scenario continuation --fixture tests/fixtures/minimal_plan",
+      "/opt/homebrew/bin/python3.11 scripts/sopify_protocol_check.py check --scenario finalize --fixture tests/fixtures/minimal_plan"
+    ],
+    "protocol_check_result": "all PASS",
+    "purpose": "independent-review corrections and evidence metadata closure",
+    "replay": {
+      "answer_assertion": "exact match: ENTRY_PREFLIGHT_FIXTURE_OK_7C9A",
+      "command": "codex exec --ephemeral --json --sandbox read-only --skip-git-repo-check -C /private/tmp/sopify-entry-preflight-codex-replay.PTz80b/workspace -o /private/tmp/sopify-entry-preflight-codex-replay.PTz80b/last-message-proxy.txt <fixture-question>",
+      "environment_attempts_before_success": 3,
+      "environment_attempts_note": "sqlite sandbox denial, proxy TLS failure, and local Ollama startup failure occurred before the single completed replay",
+      "fixture_answer_sha256": "79b4df245e232fec3ca561317797a88f7332c95d1a912a4e9e13ac4528e5577b",
+      "fresh_session_id": "019f6f09-2803-7dd1-a1d5-fd12f722444e",
+      "host_version": "codex-cli 0.144.3",
+      "last_message_sha256": "4cd93e054df006b5553a8d159dc64f3359f4d2e919c6cf7821de678357951166",
+      "observed_tool_events": [
+        "command_execution: cat fixture-answer.txt; exit_code=0",
+        "agent_message: ENTRY_PREFLIGHT_FIXTURE_OK_7C9A"
+      ],
+      "prompt_asset_sha256": "54cefc1bc568fd943e0e5cd476185dc3dc08db662e6d801525d2b0db6e6159b0",
+      "sandbox_note": "read-only sandbox was containment; the completed event trace itself contained no state-write command or tool",
+      "state_after": [
+        {
+          "path": ".sopify/state/active_plan.json",
+          "sha256": "f65e500e8db1528f9e1196372a9610562dfebfbab0346d62d88c6400eddf4b61"
+        }
+      ],
+      "state_before": [
+        {
+          "path": ".sopify/state/active_plan.json",
+          "sha256": "f65e500e8db1528f9e1196372a9610562dfebfbab0346d62d88c6400eddf4b61"
+        }
+      ],
+      "write_attempts_observed": false
+    },
+    "result": "passed",
+    "retry_count": 0,
+    "review_fixes": [
+      "atomic exclusive-create receipt write with a concurrent double-write regression",
+      "host prompts and static assertions require rereading latest plan state after concurrency stop confirmation",
+      "blueprint test baseline refreshed"
+    ],
+    "review_result": {
+      "code_quality": "passed: no lock, state, tool, retry framework, or diagnostic platform added",
+      "spec_compliance": "passed after minimal independent-review fixes"
+    },
+    "supersedes_metadata_in": [
+      "exec_001",
+      "verify_002",
+      "verify_003"
+    ]
+  },
+  "provenance": {
+    "host": "codex",
+    "plan_id": "20260717_sopify_entry_preflight",
+    "receipt_id": "verify_004",
+    "session_id": "019f6df6-83c0-7b73-87ec-5401ce0c843c"
+  },
+  "timestamp": "2026-07-17T08:06:28+00:00",
+  "verdict": "passed"
+}

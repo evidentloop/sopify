@@ -1,0 +1,30 @@
+{
+  "evidence": {
+    "commands": [
+      "python3.11 -m pytest tests/test_sopify_mcp_server.py -v",
+      "python3.11 -m pytest tests/test_sopify_writer.py -v",
+      "python3.11 -m pytest tests/test_installer.py -k workspace_preflight_contract -v",
+      "git diff --check"
+    ],
+    "result": "passed",
+    "retry_count": 0,
+    "review_result": {
+      "code_quality": "passed: focused fixtures and shared assertion helper; no policy test framework",
+      "spec_compliance": "passed: status matrix and exact host semantics are permanently asserted"
+    },
+    "tasks": [
+      "3.1",
+      "3.2"
+    ],
+    "verification_source": "project_contract",
+    "wave": 3
+  },
+  "provenance": {
+    "host": "codex",
+    "plan_id": "20260717_sopify_entry_preflight",
+    "receipt_id": "verify_001",
+    "session_id": "019f6df6-83c0-7b73-87ec-5401ce0c843c"
+  },
+  "timestamp": "2026-07-17T07:29:57+00:00",
+  "verdict": "passed"
+}

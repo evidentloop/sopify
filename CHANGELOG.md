@@ -6,6 +6,20 @@ Format: Summary → Changed → Plan Packages. File-level details live in `git l
 
 ## [Unreleased]
 
+### Summary
+
+Made managed-plan entry intent-first: existing work resumes only when the user explicitly asks to continue or uses `~go`, while ordinary questions and small fixes stay on the current request.
+
+### Changed
+
+- **Protocol entry**: Added finite state facts and prompt rules for stale pointers, checkpoint answers, valid plan switches, and three parallel-progress signals without new state, locks, or automatic repair.
+- **Receipt safety**: Made plan receipt creation atomic and non-overwriting, with concurrent regression coverage.
+- **Docs and evidence**: Aligned bilingual public docs, recorded bounded Codex and Claude host evidence, and archived the independently reviewed plan package.
+
+### Plan Packages
+
+- `20260717_sopify_entry_preflight` → archived to `history/2026-07/`
+
 ## [2026-07-16.230506] - 2026-07-16
 
 ### Summary

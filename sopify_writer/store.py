@@ -30,7 +30,7 @@ from typing import Any, Mapping, Optional, Sequence
 
 from sopify_contracts import RuntimeHandoff
 from .invariants import InvariantViolationError
-from .io import read_json, read_runtime_handoff, write_json
+from .io import read_json, read_runtime_handoff, write_json, write_json_exclusive
 from ._time import iso_now
 
 _RECEIPT_ID_RE = re.compile(r"^(exec_\d{3}|verify_\d{3}|final)$")
@@ -116,6 +116,7 @@ class ProtocolStore:
           - provenance.plan_id matches the plan_id argument if present
           - provenance.receipt_id matches the receipt_id argument if present
           - verdict is non-empty
+          - the target receipt does not already exist
 
         Returns the path of the written receipt file.
         """
@@ -151,8 +152,7 @@ class ProtocolStore:
         }
 
         receipt_path = self._receipt_path(plan_id, receipt_id)
-        receipt_path.parent.mkdir(parents=True, exist_ok=True)
-        write_json(receipt_path, payload)
+        write_json_exclusive(receipt_path, payload)
         return receipt_path
 
     # -- History receipts (history/<YYYY-MM>/<plan_id>/receipt.md) --

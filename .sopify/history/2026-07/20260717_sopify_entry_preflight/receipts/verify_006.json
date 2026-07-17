@@ -1,0 +1,50 @@
+{
+  "evidence": {
+    "commands": [
+      "/opt/homebrew/bin/python3.11 -m pytest tests -v",
+      "/opt/homebrew/bin/python3.11 scripts/check-readme-links.py",
+      "/opt/homebrew/bin/python3.11 scripts/sopify_protocol_check.py check --scenario new-plan --fixture tests/fixtures/minimal_plan",
+      "/opt/homebrew/bin/python3.11 scripts/sopify_protocol_check.py check --scenario continuation --fixture tests/fixtures/minimal_plan",
+      "/opt/homebrew/bin/python3.11 scripts/sopify_protocol_check.py check --scenario finalize --fixture tests/fixtures/minimal_plan",
+      "git diff --check"
+    ],
+    "plan_md_sha256_before_write": "f70b0f883d010aa191344c28e396b4e5fa52a6475c6b38a827fc3dfec108b024",
+    "purpose": "README product wording closure and pre-finalize verification",
+    "readme_closure": {
+      "behavior": "explicit continue or ~go resumes managed work; ordinary questions and small fixes are handled directly",
+      "image_changes": 0,
+      "referenced_images_reviewed": true,
+      "rewrites_per_language": 3
+    },
+    "result": "passed",
+    "retry_count": 0,
+    "review_result": {
+      "code_quality": "passed: local bilingual rewrites only; no asset or implementation expansion",
+      "spec_compliance": "passed: user-facing wording aligned without changing protocol scope"
+    },
+    "scope": [
+      "README.md",
+      "README.zh-CN.md",
+      "current plan implementation and protocol assets"
+    ],
+    "verification": {
+      "git_diff_check": "passed",
+      "protocol_scenarios": [
+        "new-plan PASS",
+        "continuation PASS",
+        "finalize PASS"
+      ],
+      "readme_links": "passed",
+      "tests": "226 passed, 34 subtests passed"
+    },
+    "verification_source": "project_native"
+  },
+  "provenance": {
+    "host": "codex",
+    "plan_id": "20260717_sopify_entry_preflight",
+    "receipt_id": "verify_006",
+    "session_id": "019f6df6-83c0-7b73-87ec-5401ce0c843c"
+  },
+  "timestamp": "2026-07-17T08:25:50+00:00",
+  "verdict": "passed"
+}

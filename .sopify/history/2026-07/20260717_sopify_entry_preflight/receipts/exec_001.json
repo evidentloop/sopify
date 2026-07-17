@@ -1,0 +1,31 @@
+{
+  "evidence": {
+    "commands": [
+      "python3.11 -m pytest tests/test_sopify_writer.py -v",
+      "python3.11 -m pytest tests/test_installer.py -k workspace_preflight_contract -v",
+      "sopify_protocol_check.py new-plan",
+      "sopify_protocol_check.py continuation",
+      "git diff --check"
+    ],
+    "result": "passed",
+    "retry_count": 0,
+    "review_result": {
+      "code_quality": "passed: minimal invariant reuse with no new state or tool",
+      "spec_compliance": "passed: protocol matrix, writer guard, and host prompts match the plan"
+    },
+    "tasks": [
+      "1.1",
+      "1.2"
+    ],
+    "verification_source": "project_contract",
+    "wave": 1
+  },
+  "provenance": {
+    "host": "codex",
+    "plan_id": "20260717_sopify_entry_preflight",
+    "receipt_id": "exec_001",
+    "session_id": "019f6df6-83c0-7b73-87ec-5401ce0c843c"
+  },
+  "timestamp": "2026-07-17T07:22:50+00:00",
+  "verdict": "passed"
+}

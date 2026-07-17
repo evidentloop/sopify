@@ -11,12 +11,16 @@ Covers:
 from __future__ import annotations
 
 import json
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from threading import Barrier
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from sopify_contracts import RuntimeHandoff
 from sopify_writer import InvariantViolationError, ProtocolStore
+from sopify_writer.io import write_json_exclusive
 
 # Pre-P8 state files retired by the 2-file model (active_plan + current_handoff).
 # ProtocolStore must never produce these; if a new state file is added, add it here too.
@@ -167,6 +171,67 @@ class ProtocolStorePlanReceiptTests(unittest.TestCase):
 
             payload = json.loads(path.read_text(encoding="utf-8"))
             self.assertEqual(payload["provenance"]["receipt_id"], "verify_002")
+
+    def test_existing_receipt_is_not_overwritten(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            store = ProtocolStore(Path(temp_dir))
+            path = store.write_plan_receipt(
+                plan_id="plan_001",
+                receipt_id="verify_001",
+                verdict="pass",
+                evidence={"source": "first"},
+            )
+            original = path.read_bytes()
+
+            with self.assertRaises(FileExistsError):
+                store.write_plan_receipt(
+                    plan_id="plan_001",
+                    receipt_id="verify_001",
+                    verdict="fail",
+                    evidence={"source": "second"},
+                )
+
+            self.assertEqual(path.read_bytes(), original)
+
+    def test_concurrent_receipt_writes_create_exactly_one_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            store = ProtocolStore(Path(temp_dir))
+            barrier = Barrier(2)
+            original_write = write_json_exclusive
+
+            def synchronized_write(path: Path, payload: dict[str, object]) -> None:
+                barrier.wait()
+                original_write(path, payload)
+
+            def write(source: str) -> str:
+                try:
+                    store.write_plan_receipt(
+                        plan_id="plan_001",
+                        receipt_id="verify_001",
+                        verdict="pass",
+                        evidence={"source": source},
+                    )
+                except FileExistsError:
+                    return "exists"
+                return "created"
+
+            with patch(
+                "sopify_writer.store.write_json_exclusive",
+                side_effect=synchronized_write,
+            ), ThreadPoolExecutor(max_workers=2) as pool:
+                results = list(pool.map(write, ("first", "second")))
+
+            self.assertCountEqual(results, ["created", "exists"])
+            receipt = json.loads(
+                (
+                    Path(temp_dir)
+                    / "plan"
+                    / "plan_001"
+                    / "receipts"
+                    / "verify_001.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertIn(receipt["evidence"]["source"], {"first", "second"})
 
     def test_receipt_id_pattern_rejects_invalid(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

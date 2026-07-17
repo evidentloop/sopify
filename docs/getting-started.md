@@ -132,6 +132,8 @@ For managed workflows with planning and review:
 
 Most users only need `~go`.
 
+Ordinary questions and small fixes are answered directly, even if local plan state is stale. Sopify reads the managed-plan chain only when you start, continue, or finalize managed work; any state write then goes through `sopify_writer`.
+
 ### What Gets Created
 
 As you work, Sopify creates project knowledge in `.sopify/`:
@@ -147,7 +149,7 @@ As you work, Sopify creates project knowledge in `.sopify/`:
 ```
 
 - `blueprint/`, `plan/`, `history/` are tracked by git — they are your project memory
-- `state/` is git-ignored — it holds only `active_plan.json` (current plan pointer) and `current_handoff.json` (resume hint). If missing, the host falls back to browsing `plan/` to find active work
+- `state/` is git-ignored — it holds only `active_plan.json` (a pure `plan_id` pointer) and `current_handoff.json` (resume hint). If missing during a managed action, the host can browse `plan/` for candidates without auto-resuming one during ordinary questions
 
 ## Updating
 
