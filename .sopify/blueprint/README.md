@@ -13,7 +13,7 @@
 ## 当前焦点
 
 <!-- sopify:auto:focus:start -->
-- 当前无活动 plan；MCP tool plane pilot 已完成 Codex-first 最小注册验证，其他宿主注册保留为证据型待办。
+- 当前无活动 plan；MCP tool plane 已完成 Codex-first 持久注册验证和 Claude 会话级只读调用验证，Qoder / Claude / Copilot 的后续持久注册仍按证据推进。
 - P8 Protocol Kernel & Runtime Retirement 已归档至 `../history/2026-06/20260605_p8_protocol_kernel_runtime_retirement`。
 - history 归档：已可用；最近归档：`../history/2026-07/20260626_mcp_tool_plane_pilot`。
 <!-- sopify:auto:focus:end -->

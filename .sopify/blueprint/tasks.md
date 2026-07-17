@@ -134,7 +134,7 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
   4. 若涉及 legacy surface，替代 contract 是否已在 `design.md` sunset 表中对应里程碑稳定？
   5. 若影响 Core promotion rule / hard max / ownership / validator authority，须补充 ADR impact
 - [ ] 补宿主级 first-hop ingress proof / diagnostics
-- [ ] MCP 注册扩展证据：沿用 Codex 试点的最小契约验证 Qoder / Claude / Copilot；仅在实测出现重复需求后再决定依赖打包、doctor 和多宿主自动注册
+- [ ] MCP 持久注册扩展证据：沿用 Codex 试点的最小契约验证 Qoder / Claude / Copilot；Claude 会话级只读调用已通过，但不代替持久注册。仅在实测出现重复需求后再决定依赖打包、doctor 和多宿主自动注册
 - [ ] `~compare` shortlist facade 收敛进默认主链路
 - [ ] blueprint 索引摘要更细粒度自动刷新
 - [ ] history feature_key 聚合视图
