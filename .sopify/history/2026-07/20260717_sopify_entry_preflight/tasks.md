@@ -1,6 +1,6 @@
 # 任务清单: Sopify 会话入口状态预检
 
-目录: `.sopify/plan/20260717_sopify_entry_preflight/`
+原执行目录: `.sopify/plan/20260717_sopify_entry_preflight/`；当前归档目录: `.sopify/history/2026-07/20260717_sopify_entry_preflight/`
 
 ## 1. 协议边界
 
