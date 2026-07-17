@@ -1,0 +1,40 @@
+{
+  "evidence": {
+    "answer_assertion": "exact match: ENTRY_PREFLIGHT_FIXTURE_OK_7C9A",
+    "command": "codex exec --ephemeral --json --sandbox read-only --skip-git-repo-check -C <fixture-workspace> -o <last-message> <fixture-question>",
+    "fixture_question": "请读取当前目录的 fixture-answer.txt，并只回复其中的完整内容。",
+    "fresh_session_id": "019f6f09-2803-7dd1-a1d5-fd12f722444e",
+    "host_version": "codex-cli 0.144.3",
+    "result": "passed",
+    "retry_count": 0,
+    "review_result": {
+      "code_quality": "passed: one isolated Codex replay; no multi-host matrix",
+      "spec_compliance": "passed: stale active_plan did not hijack consult or write state"
+    },
+    "state_after": [
+      {
+        "path": ".sopify/state/active_plan.json",
+        "sha256": "f65e500e8db1528f9e1196372a9610562dfebfbab0346d62d88c6400eddf4b61"
+      }
+    ],
+    "state_before": [
+      {
+        "path": ".sopify/state/active_plan.json",
+        "sha256": "f65e500e8db1528f9e1196372a9610562dfebfbab0346d62d88c6400eddf4b61"
+      }
+    ],
+    "tasks": [
+      "3.3"
+    ],
+    "verification_source": "representative_host_replay",
+    "wave": 4
+  },
+  "provenance": {
+    "host": "codex",
+    "plan_id": "20260717_sopify_entry_preflight",
+    "receipt_id": "verify_002",
+    "session_id": "019f6df6-83c0-7b73-87ec-5401ce0c843c"
+  },
+  "timestamp": "2026-07-17T07:47:36+00:00",
+  "verdict": "passed"
+}

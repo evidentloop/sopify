@@ -31,6 +31,7 @@ Sopify 把 AI 开发过程中的**方案、决策、交接、执行/验证证据
 - 宿主从已安装的 prompt 资产中读取协议入口指令（通过 `install.sh --target <host>` 安装）
 - 进入 managed plan / continuation / finalize 前，宿主按 4 步读链恢复上下文：`state/active_plan.json` → `plan/<id>/plan.md` → `state/current_handoff.json` → `plan/<id>/receipts/`
 - consult 和 quick-fix 请求**不**自动接续 active plan
+- 陈旧或无效状态不会打断普通问答；只有进入方案操作时才按用户意图处理
 - 状态写入统一走 `sopify_writer`（协议资产的唯一写路径）
 
 ### Checkpoint 暂停与恢复
@@ -53,9 +54,9 @@ Sopify 把 AI 开发过程中的**方案、决策、交接、执行/验证证据
 4. plan/<id>/receipts/        → 最新 1-3 个 receipt（哪些已验证）
 ```
 
-**设计原则**：先读 `plan.md` 建立语义真相，再读 `current_handoff` 作为恢复提示。handoff 永远不是第二真相源。
+**设计原则**：先读 `plan.md` 建立语义真相，再读 `current_handoff` 作为恢复提示。handoff 永远不是第二真相源；`active_plan.json` 只保存 `plan_id`，Wave 和任务进度留在方案文件中。MCP 可帮助读取这些事实，但不是协议入口的依赖。
 
-**状态文件缺失时**（如新机器 fresh clone）：`active_plan.json` 和 `current_handoff.json` 按设计被 gitignore。宿主会回退到浏览 `plan/` 目录来找到活跃方案。方案和收据始终在 git 里——只有"我现在在哪"的指针是本地的。
+**状态文件缺失时**（如新机器 fresh clone）：`active_plan.json` 和 `current_handoff.json` 按设计被 gitignore。只有用户要新建、继续或收口方案时，宿主才浏览 `plan/` 发现候选并按用户意图处理；普通问答不会因此自动恢复旧方案。方案和收据始终在 git 里——只有"我现在在哪"的指针是本地的。
 
 ## 目录结构与层级
 

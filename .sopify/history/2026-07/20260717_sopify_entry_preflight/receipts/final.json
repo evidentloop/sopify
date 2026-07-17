@@ -1,0 +1,48 @@
+{
+  "evidence": {
+    "completion_receipt": "verify_006",
+    "final_findings": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+    },
+    "independent_review_receipt": "verify_005",
+    "not_added": [
+      "state files",
+      "MCP tools",
+      "locks or leases",
+      "automatic repair",
+      "diagnostic platform",
+      "doctor integration",
+      "multi-host replay matrix"
+    ],
+    "protocol_scenarios": [
+      "new-plan PASS",
+      "continuation PASS",
+      "finalize PASS"
+    ],
+    "readme_closure": {
+      "files": [
+        "README.md",
+        "README.zh-CN.md"
+      ],
+      "image_changes": 0
+    },
+    "readme_links": "passed",
+    "representative_host_replay": {
+      "answer_assertion": "exact match: ENTRY_PREFLIGHT_FIXTURE_OK_7C9A",
+      "fresh_session_id": "019f6f09-2803-7dd1-a1d5-fd12f722444e",
+      "host": "codex-cli 0.144.3",
+      "multi_host_claim": false
+    },
+    "tests": "226 passed, 34 subtests passed"
+  },
+  "provenance": {
+    "host": "codex",
+    "plan_id": "20260717_sopify_entry_preflight",
+    "receipt_id": "final",
+    "session_id": "019f6df6-83c0-7b73-87ec-5401ce0c843c"
+  },
+  "timestamp": "2026-07-17T08:26:37+00:00",
+  "verdict": "finalized"
+}

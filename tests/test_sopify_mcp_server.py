@@ -59,6 +59,24 @@ def _write_plan_md(path: Path) -> None:
     )
 
 
+def _write_active_plan_payload(sopify_root: Path, payload: object) -> Path:
+    path = sopify_root / "state" / "active_plan.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
+
+
+def _state_snapshot(sopify_root: Path) -> dict[str, bytes]:
+    state_root = sopify_root / "state"
+    if not state_root.is_dir():
+        return {}
+    return {
+        path.name: path.read_bytes()
+        for path in sorted(state_root.iterdir())
+        if path.is_file()
+    }
+
+
 class SopifyMcpServerCoreTests(unittest.TestCase):
     def test_resolve_workspace_root_rejects_missing_path(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -103,8 +121,12 @@ class SopifyMcpServerCoreTests(unittest.TestCase):
             self.assertFalse(status["paths"]["history"])
             self.assertFalse(status["paths"]["state"])
             self.assertIsNone(status["active_plan"])
+            self.assertFalse(status["active_plan_file_exists"])
             self.assertIsNone(status["active_plan_dir_exists"])
+            self.assertIsNone(status["active_plan_md_exists"])
             self.assertFalse(status["handoff_exists"])
+            self.assertIsNone(status["handoff_plan_id"])
+            self.assertIsNone(status["handoff_matches_active_plan"])
 
     def test_workspace_status_lite_reports_active_plan_directory(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -124,8 +146,89 @@ class SopifyMcpServerCoreTests(unittest.TestCase):
             self.assertTrue(status["paths"]["history"])
             self.assertTrue(status["paths"]["state"])
             self.assertEqual(status["active_plan"], {"plan_id": plan_id})
+            self.assertTrue(status["active_plan_file_exists"])
             self.assertTrue(status["active_plan_dir_exists"])
+            self.assertFalse(status["active_plan_md_exists"])
             self.assertFalse(status["handoff_exists"])
+            self.assertIsNone(status["handoff_plan_id"])
+            self.assertIsNone(status["handoff_matches_active_plan"])
+
+    def test_workspace_status_lite_reports_matching_handoff(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            sopify = workspace / ".sopify"
+            plan_id = "plan_001"
+            store = ProtocolStore(sopify)
+            store.set_active_plan(plan_id=plan_id)
+            store.set_current_handoff(
+                RuntimeHandoff(schema_version="1", plan_id=plan_id)
+            )
+            _write_plan_md(sopify / "plan" / plan_id / "plan.md")
+
+            status = workspace_status_lite(workspace)
+
+            self.assertTrue(status["active_plan_md_exists"])
+            self.assertEqual(status["handoff_plan_id"], plan_id)
+            self.assertTrue(status["handoff_matches_active_plan"])
+
+    def test_workspace_status_lite_reports_mismatched_handoff(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            sopify = workspace / ".sopify"
+            store = ProtocolStore(sopify)
+            store.set_active_plan(plan_id="plan_001")
+            store.set_current_handoff(
+                RuntimeHandoff(schema_version="1", plan_id="plan_002")
+            )
+            _write_plan_md(sopify / "plan" / "plan_001" / "plan.md")
+
+            status = workspace_status_lite(workspace)
+
+            self.assertEqual(status["handoff_plan_id"], "plan_002")
+            self.assertFalse(status["handoff_matches_active_plan"])
+
+    def test_workspace_status_lite_rejects_invalid_active_plan_payloads(self) -> None:
+        for payload in (None, [], {}, {"plan_id": ""}):
+            with self.subTest(payload=payload), tempfile.TemporaryDirectory() as temp_dir:
+                workspace = Path(temp_dir)
+                sopify = workspace / ".sopify"
+                _write_active_plan_payload(sopify, payload)
+                before = _state_snapshot(sopify)
+
+                result = _safe_tool("status", workspace_status_lite, workspace)
+
+                self.assertIsNone(result["status"])
+                self.assertEqual(result["error"]["code"], "ValueError")
+                self.assertEqual(_state_snapshot(sopify), before)
+
+    def test_workspace_status_lite_rejects_polluted_plan_id(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            sopify = workspace / ".sopify"
+            _write_active_plan_payload(sopify, {"plan_id": "../outside"})
+            before = _state_snapshot(sopify)
+
+            result = _safe_tool("status", workspace_status_lite, workspace)
+
+            self.assertIsNone(result["status"])
+            self.assertEqual(result["error"]["code"], "ValueError")
+            self.assertEqual(_state_snapshot(sopify), before)
+
+    def test_workspace_status_lite_does_not_write_state(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            sopify = workspace / ".sopify"
+            store = ProtocolStore(sopify)
+            store.set_active_plan(plan_id="plan_001")
+            store.set_current_handoff(
+                RuntimeHandoff(schema_version="1", plan_id="plan_001")
+            )
+            _write_plan_md(sopify / "plan" / "plan_001" / "plan.md")
+            before = _state_snapshot(sopify)
+
+            workspace_status_lite(workspace)
+
+            self.assertEqual(_state_snapshot(sopify), before)
 
     def test_protocol_check_function_matches_cli_result_shape(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

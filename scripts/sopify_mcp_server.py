@@ -9,6 +9,7 @@ and sopify_writer.
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 from typing import Any, Callable, Mapping
@@ -21,6 +22,7 @@ from scripts.sopify_protocol_check import run_protocol_check  # noqa: E402
 from sopify_writer import ProtocolStore  # noqa: E402
 
 MCP_DEPENDENCY = "mcp[cli]>=1.27,<2"
+_PLAN_ID_RE = re.compile(r"^[a-zA-Z0-9_]+$")
 
 
 def resolve_workspace_root(workspace_root: str | Path) -> Path:
@@ -48,14 +50,42 @@ def read_current_handoff(workspace_root: str | Path) -> dict[str, Any] | None:
     return handoff.to_dict() if handoff is not None else None
 
 
+def _validated_plan_id(active_plan: Any) -> str:
+    """Return a schema-compatible plan_id or reject invalid state."""
+    if not isinstance(active_plan, dict):
+        raise ValueError("active plan must be an object")
+    plan_id = active_plan.get("plan_id")
+    if not isinstance(plan_id, str) or not _PLAN_ID_RE.fullmatch(plan_id):
+        raise ValueError("active plan plan_id is missing or invalid")
+    return plan_id
+
+
 def workspace_status_lite(workspace_root: str | Path) -> dict[str, Any]:
     """Return a minimal, dependency-light Sopify workspace status."""
     workspace = resolve_workspace_root(workspace_root)
     sopify_root = workspace / ".sopify"
     state_root = sopify_root / "state"
-    active_plan = read_active_plan(workspace) if sopify_root.exists() else None
-    active_plan_id = active_plan.get("plan_id") if isinstance(active_plan, dict) else None
-    active_plan_dir = sopify_root / "plan" / str(active_plan_id) if active_plan_id else None
+    active_plan_path = state_root / "active_plan.json"
+    active_plan_file_exists = active_plan_path.is_file()
+    active_plan = read_active_plan(workspace) if active_plan_file_exists else None
+    active_plan_id = _validated_plan_id(active_plan) if active_plan_file_exists else None
+    active_plan_dir = (
+        _safe_child_path(sopify_root / "plan", active_plan_id)
+        if active_plan_id is not None
+        else None
+    )
+    handoff = read_current_handoff(workspace) if sopify_root.exists() else None
+    raw_handoff_plan_id = handoff.get("plan_id") if isinstance(handoff, dict) else None
+    handoff_plan_id = (
+        raw_handoff_plan_id
+        if isinstance(raw_handoff_plan_id, str) and raw_handoff_plan_id
+        else None
+    )
+    handoff_matches_active_plan = (
+        handoff_plan_id == active_plan_id
+        if handoff_plan_id and active_plan_id
+        else None
+    )
 
     return {
         "workspace_root": str(workspace),
@@ -67,8 +97,14 @@ def workspace_status_lite(workspace_root: str | Path) -> dict[str, Any]:
             "state": state_root.is_dir(),
         },
         "active_plan": active_plan,
+        "active_plan_file_exists": active_plan_file_exists,
         "active_plan_dir_exists": active_plan_dir.is_dir() if active_plan_dir else None,
+        "active_plan_md_exists": (
+            (active_plan_dir / "plan.md").is_file() if active_plan_dir else None
+        ),
         "handoff_exists": (state_root / "current_handoff.json").is_file(),
+        "handoff_plan_id": handoff_plan_id,
+        "handoff_matches_active_plan": handoff_matches_active_plan,
     }
 
 
@@ -88,10 +124,7 @@ def _safe_child_path(root: Path, *parts: str) -> Path:
 
 
 def _active_plan_id(store: ProtocolStore) -> str:
-    active_plan = store.get_active_plan()
-    if not isinstance(active_plan, dict) or not active_plan.get("plan_id"):
-        raise ValueError("active plan is missing")
-    return str(active_plan["plan_id"])
+    return _validated_plan_id(store.get_active_plan())
 
 
 def _guard_write_plan_receipt(

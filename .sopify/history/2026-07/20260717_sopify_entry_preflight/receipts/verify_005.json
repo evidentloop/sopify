@@ -1,0 +1,67 @@
+{
+  "evidence": {
+    "final_findings": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+    },
+    "purpose": "final independent product and architecture review",
+    "replay_command_argv": [
+      "codex",
+      "exec",
+      "--ephemeral",
+      "--json",
+      "--sandbox",
+      "read-only",
+      "--skip-git-repo-check",
+      "-C",
+      "/private/tmp/sopify-entry-preflight-codex-replay.PTz80b/workspace",
+      "-o",
+      "/private/tmp/sopify-entry-preflight-codex-replay.PTz80b/last-message-proxy.txt",
+      "请读取当前目录的 fixture-answer.txt，并只回复其中的完整内容。"
+    ],
+    "replay_fixture_question": "请读取当前目录的 fixture-answer.txt，并只回复其中的完整内容。",
+    "resolved_findings": [
+      "receipt writes now use atomic exclusive-create and concurrent regression coverage",
+      "host prompts and static assertions require rereading current plan state after concurrency stop confirmation",
+      "protocol-check evidence now records executable commands",
+      "replay evidence metadata includes prompt, fixture, answer, and state hashes",
+      "blueprint test baseline updated"
+    ],
+    "result": "passed",
+    "reviewers": [
+      {
+        "final_verdict": "approve_with_minor_changes",
+        "initial_verdict": "reject",
+        "perspective": "product_delivery"
+      },
+      {
+        "final_verdict": "approve_with_minor_changes",
+        "initial_verdict": "reject",
+        "perspective": "architecture_implementation"
+      }
+    ],
+    "scope_decisions": [
+      "kept user-approved non-active-plan audit sidepath",
+      "preserved pre-existing Claude MCP evidence",
+      "did not add state, tool, scan, lock, retry framework, automatic repair, doctor, or multi-host replay matrix"
+    ],
+    "verification": {
+      "git_diff_check": "passed",
+      "protocol_scenarios": [
+        "new-plan PASS",
+        "continuation PASS",
+        "finalize PASS"
+      ],
+      "tests": "226 passed, 34 subtests passed"
+    }
+  },
+  "provenance": {
+    "host": "codex",
+    "plan_id": "20260717_sopify_entry_preflight",
+    "receipt_id": "verify_005",
+    "session_id": "019f6df6-83c0-7b73-87ec-5401ce0c843c"
+  },
+  "timestamp": "2026-07-17T08:10:02+00:00",
+  "verdict": "passed"
+}

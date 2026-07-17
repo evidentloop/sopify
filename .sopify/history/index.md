@@ -4,6 +4,7 @@
 
 ## 索引
 
+- `2026-07-17` [`20260717_sopify_entry_preflight`](2026-07/20260717_sopify_entry_preflight/) - standard - 会话入口状态预检：显式 managed 意图才接续；lite 客观状态、writer 原子收据、防重复询问与并行信号边界闭环，Codex 代表回放及产品/架构双审通过
 - `2026-07-16` [`20260626_mcp_tool_plane_pilot`](2026-07/20260626_mcp_tool_plane_pilot/) - standard - MCP tool plane pilot：确定性协议读/检查与 guarded plan receipt 写入；Codex-first repo-local 注册、真实配置和 stdio tool smoke 通过；其他宿主扩展保持证据门控
 - `2026-06-10` [`20260605_p8_protocol_kernel_runtime_retirement`](2026-06/20260605_p8_protocol_kernel_runtime_retirement/) - architecture - P8 Protocol Kernel & Runtime Retirement: runtime 物理删除（46 files / ~15.6K LOC），canonical root .sopify-skills→.sopify，state model 6→2 files，Qoder PROTOCOL_VERIFIED host proof，产品定位"开发过程协议层"，蓝图/README/架构图全量对齐
 - `2026-06-05` [`20260529_pre_launch_consolidation`](2026-06/20260529_pre_launch_consolidation/) - standard - 推广前收口整合: D1 README 重写 / D3 命令面收敛 / D5-3B 安全修复 / Wave A 首次触达 / Wave B 文档打磨 / Wave C 输出增强（PR #54）/ Wave D 推广文章草稿（本地就绪 / 发布 deferred / docs/articles 已删除）/ Wave E runtime 线已被 P8 吸收、手工项 deferred

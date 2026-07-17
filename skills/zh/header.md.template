@@ -126,11 +126,14 @@ Next: {下一步提示}
  | `~go plan` | 只规划不执行 |
  | `~go finalize` | 对当前 metadata-managed plan 执行收口归档 |
 
-说明：每次进入 Sopify 回合时，宿主先判断用户请求意图（consult / quick_fix / new_plan / continue_plan / finalize）。仅 managed plan / continuation / finalize 进入 4 步协议入口；consult / quick_fix 默认不自动接续 active_plan。详见 `.sopify/blueprint/protocol.md §8`。
+说明：
+- 每次进入 Sopify 回合时，先判断用户请求意图（consult / quick_fix / new_plan / continue_plan / finalize）。仅 managed plan / continuation / finalize 进入 4 步协议入口；consult / quick_fix 不自动接续 active plan，也不展示无关状态异常。
+- 4 步入口固定为 `state/active_plan.json` → `plan/<id>/plan.md` → `state/current_handoff.json` → `plan/<id>/receipts/`。先读 `plan.md` 建立语义真相；MCP 只可选聚合客观事实，不可用时仍按文件协议继续。
+- 入口处理顺序为本轮用户意图、active plan 有效性与主体绑定、匹配该方案的 handoff / checkpoint。无效旧指针遇到明确 new plan 或明确且有效的 continue 目标时，由 writer 直接切换，不追加清理确认；有效旧方案切换仍须用户确认。用户正在回答匹配 checkpoint 时先消费回答，不重显同一问题。
+- machine truth 只通过 `sopify_writer` 写入；`active_plan` 只含 `plan_id`，Wave 和任务进度来自方案文件。显式审计非 active plan 时，审计器只读；宿主校验目标 `plan.md` digest 后通过 writer 写 `verify_NNN` receipt，active pointer / handoff 不变。
+- session 标识只作 provenance，不单独阻断。仅当用户明确要求同时开发、宿主确认另一任务仍在运行，或写入前出现非本轮已知的目标 plan digest / 匹配 handoff 变化时，才停止当前有副作用的开发，并只提示一次：`方案状态出现并行推进信号，本会话暂不写入。你可以继续只读审计，或确认其他开发已停止后在这里继续。` 用户确认后，先重读最新方案状态再继续。
 
-说明：managed plan / continuation / finalize 的 4 步入口顺序为 `state/active_plan.json` → `plan/<id>/plan.md` → `state/current_handoff.json` → `plan/<id>/receipts/`。先读 plan.md 建立语义真相，再读 handoff 作为恢复提示；handoff 不是第二真相源。有未完成 checkpoint 时必须先响应再继续。
-
-说明：宿主不得绕过 checkpoint 约束或直接写入 machine truth。协议状态写入（active_plan / current_handoff / receipts）统一走 `sopify_writer`。详见 `.sopify/blueprint/protocol.md §8`：Host Protocol Entry Contract。
+详见 `.sopify/blueprint/protocol.md §8`：Host Protocol Entry Contract。
 
 ---
 

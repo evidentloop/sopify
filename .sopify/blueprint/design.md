@@ -356,6 +356,8 @@ ActionProposal 的标量 `side_effect` 字段表达粗粒度权限层级（`none
 
 **P8 关键变化**：主链机器真相从 6 个 runtime state 文件收窄为 2 个协议文件（active_plan + current_handoff）。不再存在 runtime gate/router 作为消费者；宿主通过 protocol entry 4 步读顺序消费。
 
+**会话入口稳定边界**：宿主先识别意图，consult / quick fix 不因陈旧状态进入接续链；`active_plan` 保持纯 `plan_id` 指针，Wave / 任务进度来自方案文件。显式审计非 active plan 时，Verifier 只读目标，宿主校验目标 `plan.md` digest 后仅通过 `sopify_writer` 写方案级 receipt，不切换 active plan / handoff。`session_id` 只作 provenance；只有用户明确并行开发、确认另一任务仍在运行，或写入前发现非本轮状态变化时，才停止当前有副作用的开发。
+
 **P8 偏好能力退场**：`user/preferences.md` 文件保留（persistence red-line 不可删），但旧 `preferences_preload` installer/doctor capability 在 P8 退场（runtime gate 删除后无自动预加载实现承接）。未来由 protocol entry 重新定义消费方式（TBD）。
 
 ### Legacy Mapping（P8 退场）
