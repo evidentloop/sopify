@@ -16,9 +16,7 @@ the `.sopify/` root:
   history/<YYYY-MM>/<plan_id>/
     receipt.md            Auditable Markdown receipt at finalize time.
 
-Boundary: ProtocolStore writes files into existing directories. It does not
-move, delete, or archive plan directories. Archive lifecycle is outside
-scope (deferred to W3/W3.6 blueprint sync).
+Finalize moves a validated plan package into history before clearing state.
 """
 
 from __future__ import annotations
@@ -28,12 +26,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping, Optional, Sequence
 
-from sopify_contracts import RuntimeHandoff
+from sopify_contracts import RuntimeHandoff, inspect_plan_package
 from .invariants import InvariantViolationError
 from .io import read_json, read_runtime_handoff, write_json, write_json_exclusive
 from ._time import iso_now
 
 _RECEIPT_ID_RE = re.compile(r"^(exec_\d{3}|verify_\d{3}|final)$")
+_PLAN_ID_RE = re.compile(r"^[a-zA-Z0-9_]+$")
+_HISTORY_MONTH_RE = re.compile(r"^\d{4}-(?:0[1-9]|1[0-2])$")
 
 
 class ProtocolStore:
@@ -55,6 +55,14 @@ class ProtocolStore:
     def _history_receipt_path(self, plan_id: str, month: str) -> Path:
         return self.root / "history" / month / plan_id / "receipt.md"
 
+    @staticmethod
+    def _validated_plan_id(plan_id: str) -> str:
+        if not isinstance(plan_id, str) or not _PLAN_ID_RE.fullmatch(plan_id):
+            raise InvariantViolationError(
+                "plan_id must contain only letters, numbers, and underscores"
+            )
+        return plan_id
+
     def _ensure_state_dir(self) -> None:
         self.state_dir.mkdir(parents=True, exist_ok=True)
 
@@ -66,8 +74,7 @@ class ProtocolStore:
 
     def set_active_plan(self, *, plan_id: str) -> None:
         """Write active_plan.json with a minimal plan_id pointer."""
-        if not plan_id or not plan_id.strip():
-            raise InvariantViolationError("plan_id must be non-empty")
+        plan_id = self._validated_plan_id(plan_id)
         self._ensure_state_dir()
         write_json(self.active_plan_path, {"plan_id": plan_id})
 
@@ -83,14 +90,17 @@ class ProtocolStore:
 
     def set_current_handoff(self, handoff: RuntimeHandoff) -> None:
         """Write current_handoff.json with observability metadata injection."""
+        self._validated_plan_id(handoff.plan_id)
         self._ensure_state_dir()
         payload = handoff.to_dict()
         observability = dict(payload.get("observability") or {})
-        observability.update({
-            "state_kind": "current_handoff",
-            "writer": "sopify_writer",
-            "written_at": iso_now(),
-        })
+        observability.update(
+            {
+                "state_kind": "current_handoff",
+                "writer": "sopify_writer",
+                "written_at": iso_now(),
+            }
+        )
         payload["observability"] = observability
         write_json(self.current_handoff_path, payload)
 
@@ -108,11 +118,14 @@ class ProtocolStore:
         verdict: str,
         evidence: Optional[Mapping[str, Any]] = None,
         provenance: Optional[Mapping[str, Any]] = None,
+        expected_plan_version: Optional[str] = None,
     ) -> Path:
         """Write a plan receipt to plan/<plan_id>/receipts/<receipt_id>.json.
 
         Validates:
           - receipt_id matches ^(exec_\\d{3}|verify_\\d{3}|final)$
+          - the plan package is structurally valid
+          - expected/provenance plan versions match the current package
           - provenance.plan_id matches the plan_id argument if present
           - provenance.receipt_id matches the receipt_id argument if present
           - verdict is non-empty
@@ -120,8 +133,7 @@ class ProtocolStore:
 
         Returns the path of the written receipt file.
         """
-        if not plan_id or not plan_id.strip():
-            raise InvariantViolationError("plan_id must be non-empty")
+        plan_id = self._validated_plan_id(plan_id)
         if not _RECEIPT_ID_RE.match(receipt_id):
             raise InvariantViolationError(
                 f"receipt_id {receipt_id!r} does not match "
@@ -129,6 +141,21 @@ class ProtocolStore:
             )
         if not verdict or not verdict.strip():
             raise InvariantViolationError("verdict must be non-empty")
+
+        plan_dir = self.root / "plan" / plan_id
+        snapshot = inspect_plan_package(plan_dir)
+        if not snapshot.valid or snapshot.version is None:
+            raise InvariantViolationError(
+                f"invalid plan package {plan_id!r}: {snapshot.error or 'unknown error'}"
+            )
+        if (
+            expected_plan_version is not None
+            and expected_plan_version != snapshot.version
+        ):
+            raise InvariantViolationError(
+                f"expected_plan_version {expected_plan_version!r} does not match "
+                f"current plan_version {snapshot.version!r}"
+            )
 
         prov: dict[str, Any] = dict(provenance) if provenance else {}
         if "plan_id" in prov and prov["plan_id"] != plan_id:
@@ -141,8 +168,14 @@ class ProtocolStore:
                 f"provenance.receipt_id {prov['receipt_id']!r} conflicts "
                 f"with receipt_id {receipt_id!r}"
             )
+        if "plan_version" in prov and prov["plan_version"] != snapshot.version:
+            raise InvariantViolationError(
+                f"provenance.plan_version {prov['plan_version']!r} conflicts "
+                f"with current plan_version {snapshot.version!r}"
+            )
         prov["plan_id"] = plan_id
         prov["receipt_id"] = receipt_id
+        prov["plan_version"] = snapshot.version
 
         payload = {
             "verdict": verdict,
@@ -151,7 +184,7 @@ class ProtocolStore:
             "timestamp": iso_now(),
         }
 
-        receipt_path = self._receipt_path(plan_id, receipt_id)
+        receipt_path = plan_dir / "receipts" / f"{receipt_id}.json"
         write_json_exclusive(receipt_path, payload)
         return receipt_path
 
@@ -165,6 +198,7 @@ class ProtocolStore:
         summary: str,
         key_decisions: Sequence[str],
         month: Optional[str] = None,
+        plan_version: Optional[str] = None,
     ) -> Path:
         """Write a history receipt Markdown to history/<month>/<plan_id>/receipt.md.
 
@@ -175,25 +209,69 @@ class ProtocolStore:
 
         Returns the path of the written receipt file.
         """
-        if not plan_id or not plan_id.strip():
-            raise InvariantViolationError("plan_id must be non-empty")
+        month = self._validated_history_month(
+            plan_id=plan_id,
+            outcome=outcome,
+            summary=summary,
+            key_decisions=key_decisions,
+            month=month,
+        )
+        content = self._render_history_receipt(
+            plan_id=plan_id,
+            outcome=outcome,
+            summary=summary,
+            key_decisions=key_decisions,
+            plan_version=plan_version,
+        )
+
+        receipt_path = self._history_receipt_path(plan_id, month)
+        receipt_path.parent.mkdir(parents=True, exist_ok=True)
+        receipt_path.write_text(content, encoding="utf-8")
+        return receipt_path
+
+    @staticmethod
+    def _validated_history_month(
+        *,
+        plan_id: str,
+        outcome: str,
+        summary: str,
+        key_decisions: Sequence[str],
+        month: Optional[str],
+    ) -> str:
+        ProtocolStore._validated_plan_id(plan_id)
         if not outcome or not outcome.strip():
             raise InvariantViolationError("outcome must be non-empty")
         if not summary or not summary.strip():
             raise InvariantViolationError("summary must be non-empty")
         if not key_decisions or not all(d.strip() for d in key_decisions):
-            raise InvariantViolationError("key_decisions must have at least one non-empty item")
+            raise InvariantViolationError(
+                "key_decisions must have at least one non-empty item"
+            )
+        resolved_month = (
+            datetime.now(timezone.utc).strftime("%Y-%m") if month is None else month
+        )
+        if not isinstance(resolved_month, str) or not _HISTORY_MONTH_RE.fullmatch(
+            resolved_month
+        ):
+            raise InvariantViolationError("month must match YYYY-MM")
+        return resolved_month
 
-        if month is None:
-            month = datetime.now(timezone.utc).strftime("%Y-%m")
-        if not month.strip():
-            raise InvariantViolationError("month must be non-empty")
-
-        decisions_text = "\n".join(f"- {d}" for d in key_decisions)
-        content = (
+    @staticmethod
+    def _render_history_receipt(
+        *,
+        plan_id: str,
+        outcome: str,
+        summary: str,
+        key_decisions: Sequence[str],
+        plan_version: Optional[str],
+    ) -> str:
+        decisions_text = "\n".join(f"- {decision}" for decision in key_decisions)
+        version_line = f"plan_version: {plan_version}\n" if plan_version else ""
+        return (
             f"---\n"
             f"plan_id: {plan_id}\n"
             f"outcome: {outcome}\n"
+            f"{version_line}"
             f"---\n\n"
             f"# {outcome}\n\n"
             f"## Summary\n\n"
@@ -201,11 +279,6 @@ class ProtocolStore:
             f"## Key Decisions\n\n"
             f"{decisions_text}\n"
         )
-
-        receipt_path = self._history_receipt_path(plan_id, month)
-        receipt_path.parent.mkdir(parents=True, exist_ok=True)
-        receipt_path.write_text(content, encoding="utf-8")
-        return receipt_path
 
     # -- Finalize (write final receipt + history receipt + clear state) --
 
@@ -219,39 +292,99 @@ class ProtocolStore:
         evidence: Optional[Mapping[str, Any]] = None,
         provenance: Optional[Mapping[str, Any]] = None,
         month: Optional[str] = None,
+        expected_plan_version: Optional[str] = None,
     ) -> dict[str, Path]:
-        """Finalize a plan: write final receipt, history receipt, clear state.
-
-        Performs three operations in order:
-          1. Write plan/<plan_id>/receipts/final.json
-          2. Write history/<month>/<plan_id>/receipt.md
-          3. Clear active_plan.json and current_handoff.json
-
-        Does not move or delete the plan directory.
-
-        Returns a dict with keys 'final_receipt' and 'history_receipt'
-        pointing to the written file paths.
-        """
-        final_receipt_path = self.write_plan_receipt(
-            plan_id=plan_id,
-            receipt_id="final",
-            verdict="finalized",
-            evidence=evidence,
-            provenance=provenance,
-        )
-        history_receipt_path = self.write_history_receipt(
+        """Finalize and archive one valid plan, then clear its runtime state."""
+        resolved_month = self._validated_history_month(
             plan_id=plan_id,
             outcome=outcome,
             summary=summary,
             key_decisions=key_decisions,
             month=month,
         )
+        source_dir = self.root / "plan" / plan_id
+        snapshot = inspect_plan_package(source_dir)
+        if not snapshot.valid or snapshot.version is None:
+            raise InvariantViolationError(
+                f"invalid plan package {plan_id!r}: {snapshot.error or 'unknown error'}"
+            )
+        if (
+            expected_plan_version is not None
+            and expected_plan_version != snapshot.version
+        ):
+            raise InvariantViolationError(
+                f"expected_plan_version {expected_plan_version!r} does not match "
+                f"current plan_version {snapshot.version!r}"
+            )
 
-        # Clear state after both receipts are written successfully.
+        active_plan = self.get_active_plan()
+        if active_plan is not None and active_plan.get("plan_id") != plan_id:
+            raise InvariantViolationError(
+                f"active plan {active_plan.get('plan_id')!r} conflicts with "
+                f"finalize plan {plan_id!r}"
+            )
+        handoff = self.get_current_handoff()
+        if handoff is not None and handoff.plan_id != plan_id:
+            raise InvariantViolationError(
+                f"handoff plan {handoff.plan_id!r} conflicts with finalize plan {plan_id!r}"
+            )
+
+        archive_dir = self.root / "history" / resolved_month / plan_id
+        if archive_dir.exists():
+            raise FileExistsError(f"history plan already exists: {archive_dir}")
+        history_source = source_dir / "receipt.md"
+        if history_source.exists():
+            raise FileExistsError(
+                f"history receipt already exists in plan: {history_source}"
+            )
+
+        final_source = self._receipt_path(plan_id, "final")
+        created_final = False
+        created_history = False
+        try:
+            self.write_plan_receipt(
+                plan_id=plan_id,
+                receipt_id="final",
+                verdict="finalized",
+                evidence=evidence,
+                provenance=provenance,
+                expected_plan_version=snapshot.version,
+            )
+            created_final = True
+            history_content = self._render_history_receipt(
+                plan_id=plan_id,
+                outcome=outcome,
+                summary=summary,
+                key_decisions=key_decisions,
+                plan_version=snapshot.version,
+            )
+            history_source.write_text(
+                history_content, encoding="utf-8", errors="strict"
+            )
+            created_history = True
+            final_snapshot = inspect_plan_package(source_dir)
+            if not final_snapshot.valid or final_snapshot.version != snapshot.version:
+                raise InvariantViolationError(
+                    "plan package changed while finalize evidence was being written"
+                )
+            archive_dir.parent.mkdir(parents=True, exist_ok=True)
+            source_dir.rename(archive_dir)
+        except Exception:
+            # Generated finalize evidence is safe to remove; semantic plan files remain intact.
+            if created_history:
+                history_source.unlink(missing_ok=True)
+            if created_final:
+                final_source.unlink(missing_ok=True)
+            raise
+
+        final_receipt_path = archive_dir / "receipts" / "final.json"
+        history_receipt_path = archive_dir / "receipt.md"
+        # Runtime pointers are cleared only after the full directory is archived.
         self.clear_active_plan()
         self.clear_current_handoff()
 
         return {
             "final_receipt": final_receipt_path,
             "history_receipt": history_receipt_path,
+            "archive_dir": archive_dir,
         }

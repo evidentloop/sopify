@@ -6,7 +6,7 @@ Design the technical solution, break work into executable tasks, and generate a 
 
 ## Overall flow
 
-1. Decide the plan level (`light/standard/full`).
+1. Decide the plan level (`light/standard/architecture`).
 2. Generate the plan file scaffold.
 3. Break down tasks and mark verification criteria.
 4. Render the summary and wait for the next host action.
@@ -17,16 +17,15 @@ Auto-detection rules (`plan.level=auto`):
 
 - `light`: 3-5 files, no architectural change, scope is explicit.
 - `standard`: more than 5 files, or a new feature, or a cross-module change.
-- `full`: architectural change, major refactor, or new system design.
+- `architecture`: architectural change, major refactor, or new system design.
 
 ## Step 2: Generate plan files
 
 - `light`: generate `plan.md`.
-- `standard`: generate `background.md + design.md + tasks.md`.
-- `full`: extend standard with `adr/` and `diagrams/`.
-- formal plan packages include the scoring block by default:
-  - `light`: write it into `plan.md`
-  - `standard/full`: write it into `background.md`
+- `standard`: generate `plan.md + tasks.md`.
+- `architecture`: generate `plan.md + tasks.md + design.md`.
+- Every formal package puts its `level` frontmatter, semantic entry, and scoring block in `plan.md`.
+- Create ADRs, diagrams, assets, and receipts only when evidence requires them; no level requires empty supporting directories.
 - the plan summary must also surface:
   - `Solution quality`
   - `Implementation readiness`
@@ -34,11 +33,10 @@ Auto-detection rules (`plan.level=auto`):
 
 Template sources live in `assets/`:
 
-1. `assets/plan-light-template.md`
-2. `assets/background-template.md`
+1. `assets/plan-template.md`
+2. `assets/tasks-template.md`
 3. `assets/design-template.md`
-4. `assets/tasks-template.md`
-5. `assets/adr-template.md`
+4. `assets/adr-template.md` (only for an actual architecture decision)
 
 ## Step 3: Break down tasks
 

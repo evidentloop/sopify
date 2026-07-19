@@ -8,13 +8,13 @@
   },
   "protocol_version": "1.0",
   "snapshots": {
-    "codex:zh-CN:header": "33ca71635a75c7d0d5e3c8fb9d04e29801d5dc11db33e692d35f08abab591c83",
-    "codex:en-US:header": "7eea0751d5d963df829f971a05f428362962cd3394e3cc770e7b32b11d29207c",
-    "claude:zh-CN:header": "05367ec7fa2aaa7e48f43527df2036c5677d0f9e2a0458310f0f1f726757d48a",
-    "claude:en-US:header": "eadba1e63dcc8deac52b2be99570aefe76894450ee1efc112fcd2930a7a93017",
-    "copilot:zh-CN:managed_block_payload": "70331f91da6153037762d2ce1bf06c1f2a20889259c6ec4b27b380e664c66f53",
-    "skills:zh-CN:tree": "41deccef82565834dcc8cfb6d81ec74db275a301356373fefe5b06bc0868009b",
-    "copilot:en-US:managed_block_payload": "606fd1d3392a076acf991d6b762d571668c698eeccff7f1f1b9b024843fe082a",
-    "skills:en-US:tree": "7bbce298fb80c319978a0180e3a28a10d5a48bb27a3f309f126de13707865fb6"
+    "codex:zh-CN:header": "0ec1f813b0796eb3cd8eff5ac1d4ba9d1a5a8d7594d8ea1b85f316926320b787",
+    "codex:en-US:header": "e687af9bbca32a5cdcf204bd5a8819d9535a37a999342a12c0ead46ebfeef2bc",
+    "claude:zh-CN:header": "fb9a6b664a3bd16192e7b75515874fdd06148a466fb31d475802ac2fc4246ba5",
+    "claude:en-US:header": "ad2e8ae091bfe2a0615d2f03a4347ed0bb324e9a26c87cc076b428d4dcb7db16",
+    "copilot:zh-CN:managed_block_payload": "fae89a10b6d8a7efe568ae9c520cc8d2477a49c3c1ac1b1650993a97494199ef",
+    "skills:zh-CN:tree": "fd0221eb7bd60e381c440381dbfdaf547a5c06d8de518be51ce55b7a4d8514f1",
+    "copilot:en-US:managed_block_payload": "b95b3c0e7e2610c67b5aa4672c524d8cc7d8c844a90bb166385b5afaf326ef00",
+    "skills:en-US:tree": "feef68ee74cd1d1e851d368bef0a741569d3063a6b08aec3837e213d6b311253"
   }
 }

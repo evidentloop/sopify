@@ -8,10 +8,9 @@ Implement the task list, maintain task state, sync V2 long-lived knowledge throu
 
 1. Read the task list.
 2. Execute each task through the fixed quality loop: implement change -> discover verification -> run verification -> retry once when needed -> perform two-stage review. Update task markers only after the minimum quality contract is satisfied.
-3. If the workspace contains a `post_develop` advisory skill and its prerequisites are met, execute a single post-develop advisory review.
-4. Sync KB and preference data through `knowledge_sync`.
-5. Move the completed plan into `history/`.
-6. Render the execution summary.
+3. Sync KB and preference data through `knowledge_sync`.
+4. Move the completed plan into `history/`.
+5. Render the execution summary.
 
 ## Step 1: Read the task list
 
@@ -159,24 +158,7 @@ After completing the two-stage review, before outputting the final summary:
 3. Review conclusion line present: success must include `spec_compliance` + `code_quality` each with one sentence of evidence.
 4. Footer complete: `Changes:` + `Next:` must be present.
 
-## Step 3: Post-develop advisory review
-
-After all tasks pass the quality loop and two-stage review, if the workspace `.agents/skills/` contains an advisory skill whose triggers include `post_develop`, execute a single post-develop advisory review following its SKILL.md. Currently only CrossReview Phase 4a is included in this path.
-
-Trigger conditions:
-
-1. All tasks have passed the quality loop (Step 2 complete).
-2. The workspace has unreviewed code changes (committed review range `git diff <REF>..HEAD` is non-empty, or uncommitted changes exist and must be confirmed/handled per advisory skill Step 0).
-3. The advisory skill's prerequisites are met (e.g. CLI installed, and the isolated execution context required by host-integrated review is available).
-
-Execution constraints:
-
-- Execution failure or `inconclusive` verdict does not block the main flow.
-- `concerns` / `needs_human_triage` are shown to the user and await their decision; do not auto-write checkpoints or auto-modify code.
-- If prerequisites are not met (e.g. CLI not installed), skip and log the reason without blocking.
-- Note: Phase 4a stays in Convention mode; this does not introduce `bridge.py` or `pipeline_hooks`.
-
-## Step 4: Sync the knowledge base
+## Step 3: Sync the knowledge base
 
 Sync timing:
 
@@ -210,7 +192,7 @@ Disallowed:
 - Guesses from incomplete context.
 - Generalized conclusions unrelated to the task.
 
-## Step 5: Plan migration
+## Step 4: Plan migration
 
 Migration path:
 

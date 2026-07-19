@@ -14,9 +14,10 @@
 - 当约定发生变化时，应以代码现状为准并同步更新。
 
 ## Plan 归档约定
-- Plan 归档到 `history/` 后，`plan/` 下的同名原件**必须删除**，避免双驻留。
-- `lifecycle_state` 在 history 副本中须改为 `archived`（或 `completed`，视收口结论）。
-- 唯一例外：`lifecycle_state: deferred` 的 plan 尚未归档，保留在 `plan/` 下。
+- 方案级别固定为 `light / standard / architecture`；分别包含 `plan.md`、`plan.md + tasks.md`、`plan.md + tasks.md + design.md`。
+- 所有方案都以 `plan.md` 为语义入口；`plan_version` 绑定该级别全部语义文件，audits、receipts、assets 与 state 不参与版本。
+- finalize 前由宿主完成最终语义状态更新，再由 `sopify_writer.finalize_plan` 校验版本、写 final/history receipt、迁移完整目录；归档成功后才清 runtime state。
+- Plan 归档到 `history/` 后，`plan/` 下不得保留同名原件，避免双驻留。
 
 ## 文档边界
 - `project.md`：只放跨任务可复用的技术约定。
@@ -29,7 +30,7 @@
 - `sopify_writer/` 是 protocol state 与 receipts 的唯一写路径；`ProtocolStore` 通过 `sopify_writer.store` 访问。
 - `sopify_contracts/` 定义 schema 与共享数据结构（`RuntimeHandoff` 等），是所有写回操作的契约基线。
 - `installer/` 负责 payload 分发、workspace bootstrap、doctor/inspection；不再打包 `runtime/` 目录。
-- repo-local 测试统一使用 `python3 -m pytest tests -v`；测试文件按 `test_sopify_writer` / `test_installer` / `test_distribution` / `protocol/` 分组。
+- repo-local 测试统一使用 Python 3.11+ 执行 `python -m pytest tests -v`；测试文件按 `test_sopify_writer` / `test_installer` / `test_distribution` / `protocol/` 分组。
 - `runtime/` 目录已在 P8 W2.10 物理删除（46 文件 / ~15.6K LOC）；不再存在 runtime facade、runtime engine、runtime gate。
 - `scripts/sopify_protocol_check.py` 是 CI/preflight 协议合规 smoke（3 场景：new-plan / continuation / finalize）；不得 import runtime。
 

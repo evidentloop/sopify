@@ -129,9 +129,10 @@ Complex Task (full 3 phases):
 Notes:
 - On each Sopify turn, first classify the user request (consult / quick_fix / new_plan / continue_plan / finalize). Only managed plan / continuation / finalize enter the 4-step protocol entry; consult / quick_fix do not auto-resume the active plan or surface unrelated state errors.
 - The 4-step entry is `state/active_plan.json` → `plan/<id>/plan.md` → `state/current_handoff.json` → `plan/<id>/receipts/`. Read `plan.md` first for semantic truth. MCP may only aggregate objective facts; if unavailable, continue with the file protocol.
+- An active plan is valid only when its level has the exact semantic files: light has `plan.md`, standard adds `tasks.md`, and architecture adds `design.md`. Bind the complete package with `plan_version`; audits, receipts, assets, and state do not participate in that version.
 - Process the current user intent first, then active-plan validity and subject binding, then only the matching handoff / checkpoint. When a stale invalid pointer meets an explicit new plan or an explicit valid continue target, let the writer switch directly without a cleanup confirmation; switching away from a still-valid plan still requires user confirmation. When the user is answering the matching checkpoint, consume the answer before continuing and do not repeat the same question.
-- Write machine truth only through `sopify_writer`. `active_plan` contains only `plan_id`; Wave and task progress come from plan files. For an explicit audit of a non-active plan, the verifier stays read-only; after revalidating the target `plan.md` digest, the host writes a `verify_NNN` receipt through the writer without changing the active pointer or handoff.
-- A session ID is provenance only and does not block continuation by itself. Stop side-effecting development only when the user explicitly requests simultaneous development, the host confirms another task is still running, or the target plan digest / matching handoff changes before the first write due to an unknown write. Show this once: `The plan state shows a parallel-advance signal, so this session will not write. You can continue read-only review, or confirm that the other development has stopped and then continue here.` After the user confirms, reread the latest plan state before continuing.
+- Write machine truth only through `sopify_writer`. `active_plan` contains only `plan_id`; Wave and task progress come from plan files. For an explicit audit of a non-active plan, the verifier's semantic review stays read-only on the target; the host may follow the user-selected verifier's official workflow for bounded evidence collection and independent report generation, then revalidates the target `plan_version` and writes a `verify_NNN` receipt through the writer without changing the active pointer or handoff.
+- A session ID is provenance only and does not block continuation by itself. Stop side-effecting development only when the user explicitly requests simultaneous development, the host confirms another task is still running, or the target `plan_version` / matching handoff changes before the first write due to an unknown write. Show this once: `The plan state shows a parallel-advance signal, so this session will not write. You can continue read-only review, or confirm that the other development has stopped and then continue here.` After the user confirms, reread the latest plan state before continuing.
 
 See `.sopify/blueprint/protocol.md §8`: Host Protocol Entry Contract.
 
@@ -179,8 +180,10 @@ Complex: Files > 5, architectural changes, new features
 | Level | Structure | Trigger |
 |-------|-----------|---------|
 | light | Single `plan.md` | Medium tasks |
-| standard | `background.md` + `design.md` + `tasks.md` | Complex tasks |
-| full | Standard + `adr/` + `diagrams/` | Architectural changes |
+| standard | `plan.md` + `tasks.md` | Complex tasks |
+| architecture | `plan.md` + `tasks.md` + `design.md` | Architectural changes |
+
+Every level uses `plan.md` as its semantic entry. Create ADRs, diagrams, assets, and receipts only when needed.
 
 **Directory Structure:**
 ```
@@ -278,7 +281,7 @@ Next: Continue to solution design? (Y/n)
 **Execution Flow:**
 ```
 1. Read design Skill
-2. Determine plan package level (light/standard/full)
+2. Determine plan package level (light/standard/architecture)
 3. Generate plan files
 4. Output summary
 ```
@@ -296,9 +299,9 @@ Scoring rationale: {1 line}
 
 ---
 Changes: 3 files
-  - .sopify/plan/20260115_feature/background.md
-  - .sopify/plan/20260115_feature/design.md
+  - .sopify/plan/20260115_feature/plan.md
   - .sopify/plan/20260115_feature/tasks.md
+  - .sopify/plan/20260115_feature/design.md
 
 Next: Continue plan review or execution in the host session, or reply with feedback
 ```

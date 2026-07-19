@@ -54,9 +54,15 @@ When the host detects `.sopify/` and the user request targets managed plan / con
 4. plan/<id>/receipts/        → latest 1-3 receipts (what's been verified)
 ```
 
-**Design principle**: read `plan.md` first for semantic truth, then `current_handoff` as a resume hint. The handoff is never a second truth source; `active_plan.json` stores only `plan_id`, while wave and task progress stay in plan files. MCP may aggregate these facts, but it is not required for protocol entry.
+**Design principle**: read `plan.md` first for semantic truth, then `current_handoff` as a resume hint. The handoff is never a second truth source; `active_plan.json` stores only `plan_id`, while wave and task progress stay in plan files. A complete plan is identified by `plan_version`; standard tasks and architecture design both participate in that version. MCP may aggregate these facts, but it is not required for protocol entry.
 
 **If state files are missing** (e.g. fresh clone on a new machine): `active_plan.json` and `current_handoff.json` are gitignored by design. The host browses `plan/` for candidates only when the user starts, continues, or finalizes managed work; an ordinary question never auto-resumes an old plan. Plans and receipts are always in git — only the "where am I right now" pointer is local.
+
+### Optional Verifiers
+
+Sopify does not install or run a verifier by default. Sopify alone, an explicitly selected alternative verifier, and an independently installed EvidentLoop are all valid paths. `--with-evidentloop` is a planned one-command installation convenience and remains unavailable until its installer wave lands; it will not be a runtime switch.
+
+Independent audits do not need a plan binding. A formal plan-wide audit may live in `audits/plan/`, while focused audits may use `audits/<scope>/`; the host writes a receipt only when the user adopts the result as formal evidence. `audits/` is not part of the default 4-step read chain.
 
 ## Directory Structure and Layers
 
@@ -73,6 +79,7 @@ When the host detects `.sopify/` and the user request targets managed plan / con
 │       ├── plan.md              # sole semantic entry
 │       ├── tasks.md             # optional (standard+)
 │       ├── design.md            # optional (architecture level)
+│       ├── audits/              # optional audit reports; not read by default
 │       └── receipts/            # execution/verification evidence
 ├── history/                     # L3 archived plans (git tracked)
 │   ├── index.md

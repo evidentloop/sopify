@@ -14,7 +14,7 @@ Sopify 官方在 core 之上提供一个轻量、可插拔、收敛式的 bluepr
 |----|------|--------|
 | **Protocol Kernel**（协议内核） | 协议规范 + sopify_writer + 收据/接力/归档 truth | Durable：不随宿主生态变化而 sunset |
 | **Default Workflow** | blueprint 驱动的分析 → 计划讨论 → 标准方案包 → 开发验证 → 归档回写 | 用户买到的主体验，建构在 protocol kernel 之上 |
-| **Plugins / Skills** | cross-review、graphify、宿主自带分析/开发/验证增强 | Sopify 定义接入点，不做 skill 分发 |
+| **Plugins / Skills** | EvidentLoop（可选）、其他 Verifier、graphify、宿主自带增强 | Sopify 定义通用接入点，不绑定单一实现 |
 
 核心价值不在于"能调 skill"或"能编排 workflow"，而在于：
 

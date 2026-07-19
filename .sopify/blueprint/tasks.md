@@ -112,15 +112,12 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 - 服务主线：P5（决定哪些 handoff 生产面是 deep-only vs 可降级为 convention 自驱）
 - 最小交付证据：Gap 分析报告，覆盖 RuntimeHandoff / RunState / DecisionState 的生产 vs 消费拆分判定
 
-## 独立产品线
+## 外部验证器接入
 
-### CrossReview
+Sopify 只保留通用 Verifier 证据消费。EvidentLoop 是首个官方推荐的可选实例，不是默认能力或唯一实现。
 
-独立审查内核，宿主中立。已作为独立产品发布（`evidentloop/CrossReview`，v0.1.0a3）。Sopify 侧方案已瘦身为纯集成任务（Phase 4a advisory / Phase 4b bridge），产品设计已迁移至 CrossReview 自身蓝图。
-
-- Registry 状态：active + governance deferred
-- 详见：`plan/20260418_cross_review_engine/`（仅 Sopify 集成任务）
-- 当前阶段：Phase 4a advisory dogfood 中（首次 E2E 2026-05-31 已完成）
+- [ ] 完成 `plan/20260718_evidentloop_optional_audit_integration/` 剩余 Wave：EvidentLoop 通用版本输出、公开 Alpha、可选配套安装、真实 dogfood 与归档
+- [ ] `--with-evidentloop` 落地前不得在公开文档中宣称该参数已可用
 
 ## 流程与工具项
 
@@ -128,7 +125,7 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
   - Phase 1 已完成（方案包 `20260522_runtime_slimming_kernel_extraction`）：contract 面清理 −6,400 LOC + engine 重构 + 34 退役测试块清理 −1,400 LOC + installer bundle 纯 Python 重写 + legacy workspace marker 退场
   - Phase 2 已完成（P8 W2）：installer 5 文件解耦 + runtime/ 全删（46 文件 / ~15.6K LOC）+ legacy deep path 退场 + registry 退场 + state 2-file cutover
 - [ ] Plan intake checklist（后续新 plan 开包时手工回答以下问题）：
-  1. 主命中哪个蓝图活跃分层？主线里程碑（P4d / P5 / P6）、证据型候选（Adoption Proof / Compliance Phase 2 / Convention 证明）、独立产品线（CrossReview）？若不命中以上任一，须显式标记为"流程工具项"或"延后项"，不强行归类
+  1. 主命中哪个蓝图活跃分层？主线里程碑、证据型候选、外部 Verifier 接入、流程工具项或延后项？不得为迁就旧分类强行归类
   2. 这次改动定义的是 contract acceptance boundary，还是 execution strategy / implementation wave？（前者进 blueprint，后者留方案包）
   3. 是否新增、删除、替代 action / route / state / checkpoint / receipt 中的任一 machine truth？若是，对照 `design.md` 削减预算表
   4. 若涉及 legacy surface，替代 contract 是否已在 `design.md` sunset 表中对应里程碑稳定？
@@ -143,7 +140,7 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 - [ ] 轻量化产品指标与 acceptance gate（首次上手步骤数、必需文件数、默认 workflow 必需 contract 数）
 - [ ] 产品层 ↔ 实现层 contract matrix 正式化（ownership / admission / lifecycle responsibilities）
 - [x] GitHub Release pipeline 建立（首次 release 创建 + tag 规范 + install 脚本端到端验证）
-- [x] 测试套件健康基线（pass rate ≥ 99%；当前基线 226 tests / 226 passed = 100%，另含 34 passed subtests）
+- [x] 测试套件健康基线（pass rate ≥ 99%；当前基线 244 tests / 244 passed = 100%，另含 51 passed subtests）
 - [ ] Skill packaging / localization governance：skill 打包格式、多语言资产管理、bundle 内 i18n 分层规范
 - [ ] Stale stub 检测与错误可观测性：~~诊断信息~~（PR #49 已补 `_stale_stub_diagnostic`）；剩余：自动建议 `--target <host>` 重装或降级到已安装版本（layer 3 auto-fix，用户已明确延后为 opt-in）
 - [x] Runtime output renderer scope audit：runtime/output.py 已随 P8 W2.10 退场，develop 输出归宿主/skill 所有
