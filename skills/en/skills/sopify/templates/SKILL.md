@@ -84,15 +84,15 @@ Maintenance: keep only status, current goal, current focus, and read-next links 
 
 ## Formal Contracts
 - `knowledge_sync` is the only formal sync contract.
-- `active_plan = current_plan.path + current_plan.files`.
+- `state/active_plan.json` provides only `plan_id`; the active plan semantic entry is always `plan/<plan_id>/plan.md`.
 
 ## Consumption Contract
 
 | Context Profile | Reads | Fail-open Rule | Notes |
 |-----|------|------|------|
 | `consult` | `project.md`, `preferences.md`, `blueprint/README.md` | missing deep blueprint does not fail | do not force plan materialization |
-| `plan` | `L1` + `active_plan` | materialize deep blueprint by lifecycle when missing | history is not default context |
-| `finalize` | `active_plan`, `knowledge_sync`, `blueprint/*`, `history/index.md` | create `history/index.md` on demand when missing | block when `required` sync is not satisfied |
+| `plan` | `L1` + `active_plan.json → plan.md` | materialize deep blueprint by lifecycle when missing | history is not default context |
+| `finalize` | `active_plan.json → plan.md`, `knowledge_sync`, `blueprint/*`, `history/index.md` | create `history/index.md` on demand when missing | block when `required` sync is not satisfied |
 ```
 
 ### blueprint/tasks.md

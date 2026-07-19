@@ -7,8 +7,12 @@ import sys
 import tempfile
 import unittest
 
+from scripts._yaml_subset import load_yaml
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+BUILTIN_SKILL_IDS = ("analyze", "design", "develop", "kb", "templates")
+SUPPORTED_HOSTS = ["codex", "claude", "qoder", "copilot"]
 
 
 class PlanContractAssetTests(unittest.TestCase):
@@ -113,6 +117,68 @@ class PlanContractAssetTests(unittest.TestCase):
                     self.assertIn("plan_version", rendered)
                     self.assertIn("architecture", rendered)
                     self.assertNotIn("light/standard/full", rendered)
+
+    def test_develop_completion_requires_explicit_finalize(self) -> None:
+        retired_phrases = {
+            "zh": ("迁移方案至 history/", "方案完成后迁移到 `history/`", "## 步骤 4：方案迁移"),
+            "en": ("Migrate plan to history/", "Move completed plans into `history/`", "## Step 4: Plan migration"),
+        }
+        for language in ("zh", "en"):
+            with self.subTest(language=language):
+                language_root = REPO_ROOT / "skills" / language
+                sources = [
+                    language_root / "header.md.template",
+                    language_root / "skills" / "sopify" / "develop" / "SKILL.md",
+                    language_root
+                    / "skills"
+                    / "sopify"
+                    / "develop"
+                    / "references"
+                    / "develop-rules.md",
+                ]
+                contents: list[str] = []
+                for source in sources:
+                    content = source.read_text(encoding="utf-8")
+                    contents.append(content)
+                    self.assertIn("ready_to_archive", content)
+                    self.assertIn("~go finalize", content)
+                combined = "\n".join(contents)
+                for phrase in retired_phrases[language]:
+                    self.assertNotIn(phrase, combined)
+
+    def test_kb_and_templates_use_plan_md_as_active_plan_entry(self) -> None:
+        for language in ("zh", "en"):
+            with self.subTest(language=language):
+                skill_root = REPO_ROOT / "skills" / language / "skills" / "sopify"
+                for relative_path in ("kb/SKILL.md", "templates/SKILL.md"):
+                    content = (skill_root / relative_path).read_text(encoding="utf-8")
+                    self.assertIn("state/active_plan.json", content)
+                    self.assertIn("plan/<plan_id>/plan.md", content)
+                    self.assertNotIn("current_plan.path + current_plan.files", content)
+
+    def test_builtin_host_support_matches_catalog_and_product_contract(self) -> None:
+        catalog = json.loads(
+            (REPO_ROOT / "skills" / "catalog" / "builtin_catalog.generated.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        catalog_by_id = {item["id"]: item for item in catalog["skills"]}
+
+        for skill_id in BUILTIN_SKILL_IDS:
+            with self.subTest(skill_id=skill_id):
+                manifest = load_yaml(
+                    (
+                        REPO_ROOT / "skills" / "catalog" / skill_id / "skill.yaml"
+                    ).read_text(encoding="utf-8")
+                )
+                self.assertEqual(manifest["host_support"], SUPPORTED_HOSTS)
+                self.assertEqual(catalog_by_id[skill_id]["host_support"], SUPPORTED_HOSTS)
+
+        blueprint = (REPO_ROOT / ".sopify" / "blueprint" / "design.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("`host_support` 只声明官方适配器", blueprint)
+        self.assertIn("`HostCapability`", blueprint)
 
 
 if __name__ == "__main__":

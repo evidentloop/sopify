@@ -9,7 +9,7 @@ Implement the task list, maintain task state, sync V2 long-lived knowledge throu
 1. Read the task list.
 2. Execute each task through the fixed quality loop: implement change -> discover verification -> run verification -> retry once when needed -> perform two-stage review. Update task markers only after the minimum quality contract is satisfied.
 3. Sync KB and preference data through `knowledge_sync`.
-4. Move the completed plan into `history/`.
+4. Mark the completed plan `ready_to_archive` and keep it in `plan/`.
 5. Render the execution summary.
 
 ## Step 1: Read the task list
@@ -192,16 +192,15 @@ Disallowed:
 - Guesses from incomplete context.
 - Generalized conclusions unrelated to the task.
 
-## Step 4: Plan migration
+## Step 4: Plan completion state
 
-Migration path:
+After tasks, verification, and `knowledge_sync` are complete:
 
-```text
-.sopify/plan/YYYYMMDD_feature/
-  -> .sopify/history/YYYY-MM/YYYYMMDD_feature/
-```
+1. Set `lifecycle_state: ready_to_archive` and `archive_ready: true` in `plan.md`.
+2. Keep the package at `.sopify/plan/YYYYMMDD_feature/`.
+3. Develop does not move the directory, update the history index, or simulate finalize directly.
 
-Create and update `.sopify/history/index.md` on demand during the first explicit finalize.
+`ready_to_archive` is plan semantic metadata, not a new state file or lifecycle engine. Only explicit `~go finalize` lets the host use `sopify_writer` to validate the final `plan_version`, move the package, and update the history index.
 
 ## Output templates
 

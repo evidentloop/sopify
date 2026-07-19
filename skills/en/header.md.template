@@ -210,7 +210,8 @@ First Trigger: real project repositories should at least create .sopify/blueprin
 First Plan Lifecycle: populate .sopify/blueprint/background.md / design.md / tasks.md
 Plan Creation: .sopify/plan/YYYYMMDD_feature_name/
 Task Close-Out: refresh blueprint README managed sections and update deeper blueprint docs when required
-Ready for Verification: migrate to .sopify/history/YYYY-MM/ and update index.md
+Development Complete: set plan.md lifecycle metadata to ready_to_archive and keep the package in .sopify/plan/
+Explicit Archive: only ~go finalize may use sopify_writer to move the package into .sopify/history/YYYY-MM/ and update index.md
 ```
 
 ---
@@ -315,7 +316,7 @@ Next: Continue plan review or execution in the host session, or reply with feedb
 1. Read develop Skill
 2. Execute in tasks.md order
 3. Update knowledge base
-4. Migrate plan to history/
+4. Mark the plan ready_to_archive and keep it in plan/
 5. Output results
 ```
 
@@ -332,9 +333,9 @@ Changes: 5 files
   - src/types/index.ts
   - src/hooks/useXxx.ts
   - .sopify/blueprint/design.md
-  - .sopify/history/2026-01/...
+  - .sopify/plan/20260115_feature/plan.md
 
-Next: Please verify the functionality
+Next: Please verify the functionality; run ~go finalize explicitly when the plan should be archived
 ```
 
 ---

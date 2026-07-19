@@ -27,16 +27,21 @@
 
 ## Wave 3 | EvidentLoop 通用版本能力
 
-- [ ] 3.1 在 EvidentLoop 独立仓库重新核对 main、用户改动和公开版本状态，按其独立生命周期建立最小方案；范围仅为通用 `diff_version / report_version`，不包含任何 Sopify 名称或 plan 语义。
-- [ ] 3.2 复用 EvidentLoop 已有确定性哈希，在正式 `audit.json` 的 namespaced extension 和 `finalize / revise` 结构化结果中提供通用版本值；同步 API、CLI、Skill、数据模型和定向测试。
+- [x] 3.1 在 EvidentLoop 独立仓库重新核对 main、用户改动和公开版本状态，按其独立生命周期建立最小方案；范围仅为通用 `diff_version / report_version`，不包含任何 Sopify 名称或 plan 语义。
+- [x] 3.2 复用 EvidentLoop 已有确定性哈希，在正式 `audit.json` 的 namespaced extension 和 `finalize / revise` 结构化结果中提供通用版本值；同步 API、CLI、Skill、数据模型和定向测试。
   - 验收：`diff_version` 唯一对应本次实际 Git diff；`report_version` 唯一对应正式 `audit.json` 字节；正式 HTML 继续校验与 JSON 的 graph/run identity 一致，不单设版本字段。
   - 验收：新报告 finalize 返回非空两版本；带版本报告 revise 原样继承 `diff_version`；legacy schema `0.4` 报告缺失时仍可 revise，并明确返回 `diff_version: null`，不得猜测。
   - 验收：覆盖 legacy `0.4`、连续两轮 revise、copy、in-place、recovery 和 Skill 校验路径。
   - 验收：不升级 code-diff schema 版本，不迁移已发布字段，不增加 plan profile、宿主 adapter、模型 SDK、provider 配置或集成注册表。
-- [ ] 3.3 完成 EvidentLoop 定向与全量验证后，在 tag/PyPI/GitHub Release 前停车请求用户发布授权；获授权后发布下一 Alpha，并核对 package、schema、prompt、Release metadata 和 evidence asset 状态。
+- [x] 3.3 完成 EvidentLoop 定向与全量验证后，在 tag/PyPI/GitHub Release 前停车请求用户发布授权；获授权后发布 `v0.1.0a2`，并核对 package、schema、prompt、Release metadata 和 evidence asset 状态。
+  - 证据：[Publish run](https://github.com/evidentloop/evidentloop/actions/runs/29678876261) 成功；[PyPI](https://pypi.org/project/evidentloop/0.1.0a2/) 包含未撤回的 wheel 与 sdist；[GitHub prerelease](https://github.com/evidentloop/evidentloop/releases/tag/v0.1.0a2) 为非草稿，schema `0.4`、prompt `v0.5` 未变，Release 无额外 assets 不阻断。
 
 ## Wave 4 | 多宿主可选配套安装
 
+- [x] 4.0 收口当前分发契约的三处既有漂移，不重开 Wave 1–2，也不引入新状态或宿主框架。
+  - 验收：中英文 header 与 develop Skill/rules 统一为“develop 完成后更新 `plan.md` 的 `ready_to_archive` 生命周期元数据并保留在 `plan/`；只有显式 `~go finalize` 才通过 writer 归档”。
+  - 验收：中英文 `$kb/$templates` 使用 `state/active_plan.json → plan/<plan_id>/plan.md`，删除退役的 `current_plan.path + current_plan.files` 口径。
+  - 验收：五个内置 Skill 都声明 `codex / claude / qoder / copilot`，同步生成 catalog 和最小防漂移测试；`host_support` 只表示官方适配器可交付并消费 Skill 语义，不替代 `HostCapability` 的能力等级与 E2E 证据。
 - [ ] 4.1 在现有 Python installer、远程 shell/PowerShell wrapper 和用户文档中增加默认关闭的 `--with-evidentloop`；通过现有 HostAdapter 固定映射 `codex → codex`、`claude → claude-code`、`qoder → qoder`、`copilot → github-copilot`，并在核心写入前校验映射、`uv` 和 `npx`。
   - 验收：不带参数时不执行任何 EvidentLoop lookup、网络访问或提示，现有安装成功语义、payload 和 `stdlib_only` 依赖声明保持不变；只有 help/文档新增可选参数说明。缺少 Skill target 映射的新宿主明确停止可选分支。
 - [ ] 4.2 用一个 EvidentLoop 专用安装 helper 实现最小分支，不建立通用 component framework：兼容安装直接复用，缺失的 CLI/Skill 按固定 package 版本和 Git tag 补齐，已有不兼容项时不修改。

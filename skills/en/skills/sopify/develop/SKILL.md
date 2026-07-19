@@ -18,7 +18,7 @@ description: Develop phase entry; routes task execution, state updates, KB sync,
 2. Extract pending tasks and execute them in numbered order.
 3. Update task markers after each step (`[ ] -> [x] / [-] / [!]`).
 4. Sync KB files and conservative preference / feedback records.
-5. Move completed plans into `history/` and update the index.
+5. Set completed plans' `plan.md` lifecycle metadata to `ready_to_archive` and keep them in `plan/`.
 6. Render the matching result template.
 
 ## Resource navigation
@@ -43,4 +43,5 @@ The script returns JSON with pending tasks, status counts, and execution order.
 ## Boundaries
 
 - This skill executes and closes out work; it does not redefine the plan structure.
+- `ready_to_archive` is `plan.md` metadata only; archival happens only when explicit `~go finalize` delegates to `sopify_writer`.
 - Rollback remains an explicit user action and must keep a traceable record.

@@ -9,7 +9,7 @@
 1. 读取任务清单。
 2. 对每个任务按固定质量循环执行：实现修改 -> 发现验证 -> 执行验证 -> 必要时一次重试 -> 两阶段复审。仅在质量结果满足最小 contract 后更新任务状态。
 3. 按 `knowledge_sync` 同步知识库与偏好信息。
-4. 迁移方案包到 `history/`。
+4. 将完成方案更新为 `ready_to_archive`，保留在 `plan/`。
 5. 输出执行结果摘要。
 
 ## 步骤 1：读取任务清单
@@ -192,16 +192,15 @@ Stage B `code_quality` 至少检查：
 - 上下文不完整的猜测。
 - 与任务无关的泛化结论。
 
-## 步骤 4：方案迁移
+## 步骤 4：方案完成态
 
-迁移路径：
+任务、验证和 `knowledge_sync` 均完成后：
 
-```text
-.sopify/plan/YYYYMMDD_feature/
-  -> .sopify/history/YYYY-MM/YYYYMMDD_feature/
-```
+1. 在 `plan.md` 中把 `lifecycle_state` 更新为 `ready_to_archive`，并设置 `archive_ready: true`。
+2. 方案目录继续保留在 `.sopify/plan/YYYYMMDD_feature/`。
+3. develop 不迁移目录、不更新 history index，也不直接模拟 finalize。
 
-索引更新：在首次显式 finalize 时按需创建并更新 `.sopify/history/index.md`。
+`ready_to_archive` 只是方案语义元数据，不是新的 state 文件或生命周期引擎。只有用户显式运行 `~go finalize` 时，宿主才通过 `sopify_writer` 校验最终 `plan_version`、迁移目录并更新 history index。
 
 ## 输出模板
 

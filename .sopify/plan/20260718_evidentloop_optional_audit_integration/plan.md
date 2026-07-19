@@ -19,9 +19,9 @@ knowledge_sync:
 ## Plan Snapshot
 
 - **Goal**: 保留 Sopify 产品无关的验证证据能力，以 EvidentLoop 替代当前 CrossReview 集成，并提供不绑定运行时的一次性可选配套安装与公开版本 dogfood。
-- **Status**: Wave 1–2 主实现及审计修复已获两路独立审批和用户接受；247 tests、58 subtests 通过。
-- **Next**: 将 Wave 1–2 作为单个本地 checkpoint commit 提交后进入 Wave 3；不推送 Sopify 分支。
-- **Task**: 7/20。
+- **Status**: Wave 1–3 与 Task 4.0 已完成；EvidentLoop `v0.1.0a2` 已公开发布，当前分发契约漂移已收口。
+- **Next**: 等待用户审计 Task 4.0；确认前不进入 Wave 4.1 的可选安装实现。
+- **Task**: 11/21。
 
 评分:
 - 方案质量: 9/10
@@ -29,7 +29,7 @@ knowledge_sync:
 
 评分理由:
 - 优点: 统一复用现有 plan 入口、writer、Verifier 和 EvidentLoop 通用产物，不增加第二套审计协议或兼容层。
-- 扣分: EvidentLoop 新公开版本、多宿主配套安装和 Codex 完整 diff dogfood 尚需执行期证据确认；自动升级明确延后。
+- 扣分: 多宿主配套安装和 Codex 完整 diff dogfood 尚需执行期证据确认；自动升级明确延后。
 
 ## Context / Why
 
@@ -45,6 +45,7 @@ CrossReview 已被独立产品 EvidentLoop 替代，但 Wave 2 实施前，Sopif
 - 用 `plan_version` 表达完整方案版本，并使入口预检、并行推进检查和 receipt 使用同一语义。
 - 删除 Sopify 当前 CrossReview Skill、默认钩子、废弃方案和当前文档承诺；历史归档保持不变。
 - 在 EvidentLoop 独立仓库补充通用 `diff_version / report_version` 输出，并通过下一公开 Alpha 提供给所有消费者。
+- 在进入可选安装前收口当前分发契约：develop 完成态、active plan 读取入口和内置 Skill 的宿主支持声明保持一致。
 - 保持 Sopify 默认只提供产品无关的 Verifier evidence 消费；不安装验证器也能完整使用 plan、develop、handoff 和 receipt。
 - 为 Sopify 可安装宿主增加显式 `--with-evidentloop` 配套安装：只在用户选择时为目标宿主安装缺失的官方固定版本 CLI 与 Skill；不把该参数作为运行能力开关。
 - 允许用户直接使用已独立安装的 EvidentLoop 或其他验证组件，不要求经 Sopify 安装，不增加验证器注册表。
@@ -68,7 +69,7 @@ CrossReview 已被独立产品 EvidentLoop 替代，但 Wave 2 实施前，Sopif
 1. 对齐方案包结构、`plan_version`、入口预检和中英文分发资产。
 2. 删除 CrossReview 当前执行面，并收口 Sopify blueprint、protocol 与 ADR 当前真相。
 3. 在 EvidentLoop 独立仓库补齐通用 `diff_version / report_version`，经确认后发布下一 Alpha。
-4. 在现有 Sopify 多宿主安装器中加入 `--with-evidentloop` 最小分支，复用目标宿主映射并验证未选择、缺失安装、兼容复用和不兼容停车。
+4. 先收口当前分发契约漂移，再在现有 Sopify 多宿主安装器中加入 `--with-evidentloop` 最小分支，复用目标宿主映射并验证未选择、缺失安装、兼容复用和不兼容停车。
 5. 先完成全量验证、残留审计和知识同步，再以 Codex 作为首轮真实宿主，用该公开版本与配套安装路径审计最终“实现与契约 diff”；初次报告生成后显式停车等待用户裁定。
 6. 用户裁定闭环后附着报告、写 receipt，完成只读残留复核和标准 finalize 归档。
 
@@ -78,12 +79,14 @@ CrossReview 已被独立产品 EvidentLoop 替代，但 Wave 2 实施前，Sopif
 - `.sopify/history/**` 不做名称迁移、内容重写或样例重生成；旧字段和旧版本值保持历史事实。
 - 方案级别统一为：light 只有 `plan.md`；standard 为 `plan.md + tasks.md`；architecture 为 `plan.md + tasks.md + design.md`。不预建空 receipts、assets、ADR 或 diagrams。
 - `plan.md` 是统一入口，`plan_version` 是完整方案版本。底层使用 SHA-256，但字段名和用户文案不暴露算法术语。
+- develop 完成后只把 `plan.md` 生命周期元数据更新为 `ready_to_archive` 并保留在 `plan/`；只有显式 `~go finalize` 才通过 writer 归档。该状态不是新的 state 文件或生命周期引擎。
 - `plan_version` 先按 level 校验精确文件集合，再按固定顺序读取该级别的 `plan.md / tasks.md / design.md`；排除 `audits/`、`receipts/`、`assets/`、state 和其他派生产物。
 - EvidentLoop 通用提供 `diff_version` 与 `report_version`；Sopify 自己计算 `plan_version` 并建立 receipt 关联。EvidentLoop 不增加 `plan_id`、Sopify adapter、receipt 或 plan/design profile。
 - Sopify 默认能力是消费通用 `verdict / evidence / source`；EvidentLoop 是官方推荐、可选配套安装的首个验证器，不是默认安装、默认执行或唯一实现。
 - `--with-evidentloop` 默认关闭且只提供安装便利，不写 `evidentloop_enabled`、component registry、state 或持久安装来源。未选择时保持现有安装路径和 `stdlib_only` 核心依赖模型。
 - 配套安装面向 Sopify 已有可安装宿主，通过现有 host adapter 映射到标准 Skills CLI agent target：`codex → codex`、`claude → claude-code`、`qoder → qoder`、`copilot → github-copilot`。Skill 固定使用 `-g` 安装到目标宿主的用户级全局发现路径；新增宿主缺少映射时才明确返回未支持，不另建宿主框架。
 - Codex 是本方案首轮真实 E2E dogfood 宿主，不是配套安装的唯一宿主。其他宿主必须区分“安装链/结构已验证”和“Skill discovery/审计 E2E 已验证”，不把安装成功宣传为完整可用证据。
+- 内置 Skill 的 `host_support` 只表示其语义可由官方适配器交付到对应宿主的支持界面并被消费；它不代表原生 Skill discovery 或 E2E 已验证，能力等级继续由 `HostCapability` 表达。
 - 带参数时，缺失项按 Sopify 发布时固定的 EvidentLoop 公开版本与 tag 安装；已存在且通过兼容探针时直接复用；已存在但不兼容时停止并说明，不静默覆盖、降级或升级。
 - 本方案不自动管理 EvidentLoop 后续升级。用户可按 EvidentLoop 官方方式独立升级；升级后只要兼容探针通过，Sopify 即可使用。自动升级待真实需求出现后另行设计。
 - 用户使用其他验证器时沿用通用 Verifier evidence 与 receipt，不要求 `diff_version / report_version`、EvidentLoop 报告目录或安装参数。
@@ -127,8 +130,12 @@ CrossReview 已被独立产品 EvidentLoop 替代，但 Wave 2 实施前，Sopif
 - [x] 用户确认连续实施 Wave 1–2。
 - [x] Wave 1–2 实施、定向验证、全量回归和当前知识收口完成。
 - [x] Wave 1–2 审计问题最小修复与回归完成；两路独立审批 P0=0、P1=0，用户已接受。
-- [ ] Wave 3–6、公开版本 dogfood 和归档完成。
+- [x] Wave 1–2 已提交为本地 checkpoint `7dcd768`，Sopify 分支未推送。
+- [x] Wave 3 的 EvidentLoop 通用版本实现、定向验证与 370 项全量回归完成。
+- [x] EvidentLoop `v0.1.0a2` 已发布：[Publish](https://github.com/evidentloop/evidentloop/actions/runs/29678876261) 成功，[PyPI](https://pypi.org/project/evidentloop/0.1.0a2/) 包含未撤回的 wheel 与 sdist，[GitHub prerelease](https://github.com/evidentloop/evidentloop/releases/tag/v0.1.0a2) 为非草稿；schema `0.4`、prompt `v0.5` 保持不变，Release 无额外 assets 不阻断。
+- [x] Task 4.0 已完成：develop/finalize 生命周期、active-plan 读取入口和四宿主 `host_support` 已双语收口；96 tests、36 subtests 与 Ruff 通过。
+- [ ] Wave 4–6、公开版本 dogfood 和归档完成。
 
 ## Next
 
-Wave 1–2 形成本地 checkpoint commit 后进入 Wave 3。Wave 3 只实施 EvidentLoop 通用版本能力；发布前仍需用户单独授权。
+等待用户审计 Task 4.0；确认前不进入 Wave 4.1 的 `--with-evidentloop` 实现。

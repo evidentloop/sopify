@@ -82,12 +82,13 @@ First explicit long-term preference:
 4. `blueprint/background.md`
 5. `blueprint/design.md`
 6. `blueprint/tasks.md`
-7. `active_plan = current_plan.path + current_plan.files`
+7. `state/active_plan.json` → `plan/<plan_id>/plan.md`
 
 Rules:
 
 - consult / clarification routes prefer `L0/L1` and must not require deep blueprint files
 - planning / develop may enter `L2 active plan`
+- `active_plan.json` provides only `plan_id`; `plan.md` is the active plan's semantic entry. Read handoff and receipts only when continuation needs them, and never fall back to the retired current-plan projection.
 - `history/` is not the default long-lived context source; read it only for finalize lookups or human traceability
 
 ## Update Rules
