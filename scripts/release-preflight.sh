@@ -72,6 +72,7 @@ run_step "Run hard gate tests (protocol + smoke + distribution)" python3 -m pyte
   "$ROOT_DIR/tests/protocol/test_convention_compliance.py" \
   "$ROOT_DIR/tests/test_check_readme_links.py" \
   "$ROOT_DIR/tests/test_distribution.py" \
+  "$ROOT_DIR/tests/test_evidentloop_installer.py" \
   "$ROOT_DIR/tests/test_golden_snapshots.py" \
   "$ROOT_DIR/tests/test_release_hooks.py" \
   "$ROOT_DIR/tests/test_sopify_init_smoke.py" \
@@ -80,7 +81,7 @@ run_step "Run protocol smoke — new-plan" python3 "$ROOT_DIR/scripts/sopify_pro
 run_step "Run protocol smoke — continuation" python3 "$ROOT_DIR/scripts/sopify_protocol_check.py" check --scenario continuation --fixture "$ROOT_DIR/tests/fixtures/minimal_plan"
 run_step "Run protocol smoke — continuation (clarification pending)" python3 "$ROOT_DIR/scripts/sopify_protocol_check.py" check --scenario continuation --fixture "$ROOT_DIR/tests/fixtures/clarification_pending"
 run_step "Run protocol smoke — continuation (decision pending)" python3 "$ROOT_DIR/scripts/sopify_protocol_check.py" check --scenario continuation --fixture "$ROOT_DIR/tests/fixtures/decision_pending"
-run_step "Run protocol smoke — finalize" python3 "$ROOT_DIR/scripts/sopify_protocol_check.py" check --scenario finalize --fixture "$ROOT_DIR/tests/fixtures/minimal_plan"
+run_step "Run protocol smoke — finalize" python3 "$ROOT_DIR/scripts/sopify_protocol_check.py" check --scenario finalize --fixture "$ROOT_DIR/tests/fixtures/finalized_plan"
 run_step "Run install/payload bootstrap smoke" python3 "$ROOT_DIR/scripts/check-install-payload-bundle-smoke.py"
 
 echo "[release-preflight] All checks passed."

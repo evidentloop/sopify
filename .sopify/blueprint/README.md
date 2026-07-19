@@ -13,7 +13,7 @@
 ## 当前焦点
 
 <!-- sopify:auto:focus:start -->
-- 当前活动 plan：`../plan/20260718_evidentloop_optional_audit_integration/`；Wave 1–2 已实施并通过全量回归，等待用户审计后再决定是否进入 Wave 3。
+- 当前活动 plan：`../plan/20260718_evidentloop_optional_audit_integration/`；Wave 1–4 已完成，四宿主可选配套安装及独立复审已收口；正在等待用户确认 Wave 5。
 - MCP tool plane 已完成 Codex-first 持久注册验证和 Claude 会话级只读调用验证，Qoder / Claude / Copilot 的后续持久注册仍按证据推进。
 - P8 Protocol Kernel & Runtime Retirement 已归档至 `../history/2026-06/20260605_p8_protocol_kernel_runtime_retirement`。
 - history 归档：已可用；最近归档：`../history/2026-07/20260717_sopify_entry_preflight`。

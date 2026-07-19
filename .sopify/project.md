@@ -30,6 +30,7 @@
 - `sopify_writer/` 是 protocol state 与 receipts 的唯一写路径；`ProtocolStore` 通过 `sopify_writer.store` 访问。
 - `sopify_contracts/` 定义 schema 与共享数据结构（`RuntimeHandoff` 等），是所有写回操作的契约基线。
 - `installer/` 负责 payload 分发、workspace bootstrap、doctor/inspection；不再打包 `runtime/` 目录。
+- 公开 `install.sh / install.ps1` 要求 Python 3.11+；下载源码前按 `python3 → python → py -3` 选择第一个兼容解释器，没有兼容版本时明确停止，不自动安装 Python 或修改用户环境。
 - repo-local 测试统一使用 Python 3.11+ 执行 `python -m pytest tests -v`；测试文件按 `test_sopify_writer` / `test_installer` / `test_distribution` / `protocol/` 分组。
 - `runtime/` 目录已在 P8 W2.10 物理删除（46 文件 / ~15.6K LOC）；不再存在 runtime facade、runtime engine、runtime gate。
 - `scripts/sopify_protocol_check.py` 是 CI/preflight 协议合规 smoke（3 场景：new-plan / continuation / finalize）；不得 import runtime。
@@ -47,4 +48,4 @@
 - develop 质量结果的正式字段固定为：`verification_source / command / scope / result / reason_code / retry_count / root_cause / review_result`。
 - `result` 的稳定值域固定为：`passed / retried / failed / skipped / replan_required`；`root_cause` 的稳定值域固定为：`logic_regression / environment_or_dependency / missing_test_infra / scope_or_design_mismatch`。
 - 当 `result == replan_required` 或 `root_cause == scope_or_design_mismatch` 时，宿主不得继续盲修；必须停下来向用户报告根因并等待方向指示。
-- 当前仓库暂不在 `project.md` 固定单一默认 verify 命令；在解释器基线统一到 Python 3.11+ 之前，未识别到稳定命令时应走 `not_configured` 可见降级，而不是假定默认测试入口存在。
+- 当前仓库不因 Python 3.11+ 基线而假定单一默认 verify 命令；未识别到稳定命令时应走 `not_configured` 可见降级。

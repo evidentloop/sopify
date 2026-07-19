@@ -60,7 +60,7 @@ When the host detects `.sopify/` and the user request targets managed plan / con
 
 ### Optional Verifiers
 
-Sopify does not install or run a verifier by default. Sopify alone, an explicitly selected alternative verifier, and an independently installed EvidentLoop are all valid paths. `--with-evidentloop` is a planned one-command installation convenience and remains unavailable until its installer wave lands; it will not be a runtime switch.
+Sopify does not install or run a verifier by default. Sopify alone, another verifier, and an independently installed EvidentLoop are all valid paths. `--with-evidentloop` is an explicit install convenience, not a runtime switch: new components use versions and sources tested with the current Sopify release, while existing components are reused only after compatibility checks. Sopify does not claim a reused Skill is identical to the tested source, and it does not upgrade, remove, or track components. The Copilot Skill is project-owned content in `.github/skills/evidentloop/`; users review and commit it when needed, and Sopify does not commit or update it. Installation proves local placement and compatibility only; Skill discovery and audit E2E still require host evidence, and cloud agents do not inherit the locally installed CLI.
 
 Independent audits do not need a plan binding. A formal plan-wide audit may live in `audits/plan/`, while focused audits may use `audits/<scope>/`; the host writes a receipt only when the user adopts the result as formal evidence. `audits/` is not part of the default 4-step read chain.
 

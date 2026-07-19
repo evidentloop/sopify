@@ -52,6 +52,58 @@ git clone https://github.com/evidentloop/sopify.git /tmp/sopify
 python3 /tmp/sopify/scripts/sopify_init.py init --workspace .
 ```
 
+## Optional EvidentLoop Companion
+
+Sopify works without EvidentLoop. [EvidentLoop](https://github.com/evidentloop/evidentloop)
+turns a local Git diff into an interactive, feedback-ready HTML audit report. To install
+the versions tested with this Sopify release, or reuse compatible existing components,
+opt in explicitly:
+
+```bash
+curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | bash -s -- --target codex:en-US --with-evidentloop
+```
+
+If you downloaded the installer for inspection, pass the same flag to
+`bash sopify-install.sh`.
+
+The option is off by default and is not saved as a runtime setting. The CLI is a
+current-user `uv tool`; the Skill path depends on the target host:
+
+| Target | EvidentLoop Skill path | Scope |
+|--------|-------------------------|-------|
+| Codex | `$HOME/.agents/skills/evidentloop/` | Current user |
+| Claude | `$HOME/.claude/skills/evidentloop/` | Current user |
+| Qoder | `$HOME/.qoder/skills/evidentloop/` | Current user |
+| Copilot | `<workspace>/.github/skills/evidentloop/` | Current project |
+
+These locations follow the host documentation for
+[Codex](https://learn.chatgpt.com/docs/build-skills),
+[Claude Code](https://code.claude.com/docs/en/slash-commands),
+[Qoder](https://docs.qoder.com/en/cli/Skills), and
+[GitHub Copilot](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills).
+
+For new installs, Sopify uses EvidentLoop `0.1.0a2`, Skills CLI `1.5.9`, and the tested
+Skill source commit. Existing components are reused only after compatibility checks;
+Sopify does not claim they are identical to that source. `uv` is required only when the
+CLI is missing; Git and `npx` only when the Skill is missing. Incomplete or incompatible
+components are reported and left unchanged. Sopify is installed first and remains usable
+if the optional EvidentLoop install does not finish. You can install EvidentLoop separately
+later from its official repository, or rerun the same command.
+
+After a fresh CLI install, the installer also checks that a future host can resolve
+`evidentloop` from `PATH`. If the uv tool directory is not visible yet, it leaves the
+validated CLI in place and asks you to run `uv tool update-shell`, restart the shell and
+AI host, then rerun the same command. It never edits your shell profile automatically.
+
+For Copilot, pass `--workspace <path>` or run the installer from the target project.
+The installer writes only `.github/skills/evidentloop/`; it does not add a project
+`.agents/skills/` copy or `skills-lock.json`. That is GitHub's documented project Skill
+location and becomes part of your project: review it, and commit it yourself if a cloud
+workflow needs it. Sopify does not commit or update it. A cloud-hosted agent also does not
+automatically receive the EvidentLoop CLI installed on your local machine. This option
+proves local component placement and compatibility only; Skill discovery and audit E2E
+still require host evidence, and cloud CLI availability must be provisioned separately.
+
 ## Host-Specific Setup
 
 ### Codex / Claude

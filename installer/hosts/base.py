@@ -31,6 +31,8 @@ class HostAdapter:
     instruction_surface: str = field(default=INSTRUCTION_SURFACE_HEADER_EMBEDDED)
     instruction_file_relpath: str | None = field(default=None)
     default_language: str | None = field(default=None)
+    skills_cli_agent: str | None = field(default=None)
+    skill_install_dirname: str | None = field(default=None)
 
     @property
     def is_workspace_scope(self) -> bool:
@@ -72,6 +74,28 @@ class HostAdapter:
             payload_root / "bundles",
             payload_root / "helpers" / "bootstrap_workspace.py",
         )
+
+    def skill_install_path(
+        self,
+        *,
+        home_root: Path,
+        workspace_root: Path | None,
+        skill_name: str,
+    ) -> Path:
+        """Return the host-native install directory for an optional Skill."""
+        if self.skill_install_dirname is None:
+            raise InstallError(
+                f"Host '{self.host_name}' does not declare a Skill install path"
+            )
+        if self.is_workspace_scope:
+            if workspace_root is None:
+                raise InstallError(
+                    f"Host '{self.host_name}' requires a workspace for Skill installation"
+                )
+            root = workspace_root
+        else:
+            root = home_root
+        return root / self.skill_install_dirname / skill_name
 
 
 @dataclass(frozen=True)

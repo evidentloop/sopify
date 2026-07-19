@@ -9,7 +9,13 @@ from typing import Callable, TextIO
 
 from installer.hosts import get_host_adapter, iter_host_registrations, iter_installable_hosts
 from installer.inspection import build_doctor_payload, build_status_payload
-from installer.models import InstallError, InstallResult, InstallTarget, LANGUAGE_DIRECTORY_MAP
+from installer.models import (
+    EvidentLoopInstallResult,
+    InstallError,
+    InstallResult,
+    InstallTarget,
+    LANGUAGE_DIRECTORY_MAP,
+)
 from installer.outcome_contract import render_outcome_summary
 
 SOURCE_CHANNEL_REPO_LOCAL = "repo-local"
@@ -46,6 +52,7 @@ class DistributionRequest:
     interactive: bool
     source_channel: str
     source_metadata: DistributionSourceMetadata
+    with_evidentloop: bool = False
 
 
 @dataclass(frozen=True)
@@ -119,12 +126,15 @@ def run_distribution_install(
     resolved_home = (home_root or Path.home()).expanduser().resolve()
 
     try:
-        install_result = install_executor(
-            target_value=target_value,
-            workspace_value=request.workspace,
-            repo_root=repo_root,
-            home_root=resolved_home,
-        )
+        install_kwargs = {
+            "target_value": target_value,
+            "workspace_value": request.workspace,
+            "repo_root": repo_root,
+            "home_root": resolved_home,
+        }
+        if request.with_evidentloop:
+            install_kwargs["with_evidentloop"] = True
+        install_result = install_executor(**install_kwargs)
     except InstallError as exc:
         raise _map_install_error(exc) from exc
 
@@ -207,6 +217,18 @@ def render_distribution_result(report: DistributionInstallReport) -> str:
     payload_outcome = render_outcome_summary(payload_bundle)
     workspace_outcome = render_outcome_summary(workspace_bundle)
     workspace_line = _render_workspace_line(install_result)
+    action_lines = [
+        f"  host prompt: {install_result.host_install.action}",
+        f"  payload: {install_result.payload_install.action}",
+        f"  workspace bootstrap: {_workspace_bootstrap_action(install_result)}",
+    ]
+    if install_result.evidentloop_install is not None:
+        action_lines.extend(
+            _companion_action_lines(
+                install_result.evidentloop_install,
+                language="en-US",
+            )
+        )
     lines = [
         "Sopify already current:" if _is_noop_install(install_result) else "Installed Sopify successfully:",
         f"  target: {install_result.target.value}",
@@ -219,9 +241,7 @@ def render_distribution_result(report: DistributionInstallReport) -> str:
         f"  bundle root: {install_result.bundle_root if install_result.bundle_root is not None else '(not requested)'}",
         "",
         "Install actions:",
-        f"  host prompt: {install_result.host_install.action}",
-        f"  payload: {install_result.payload_install.action}",
-        f"  workspace bootstrap: {_workspace_bootstrap_action(install_result)}",
+        *action_lines,
         "",
         "Verification:",
         (
@@ -283,9 +303,14 @@ def render_distribution_user_result(report: DistributionInstallReport) -> str:
 
 def render_distribution_error(exc: DistributionError) -> str:
     """Render a stable error surface for shell, PowerShell, and repo-local installs."""
+    title = (
+        "Sopify installed; EvidentLoop was not installed:"
+        if exc.reason_code == "EVIDENTLOOP_COMPANION_INCOMPLETE"
+        else "Sopify install failed:"
+    )
     return "\n".join(
         [
-            "Sopify install failed:",
+            title,
             f"  phase: {exc.phase}",
             f"  reason_code: {exc.reason_code}",
             f"  detail: {exc.detail}",
@@ -296,6 +321,27 @@ def render_distribution_error(exc: DistributionError) -> str:
 
 def render_distribution_user_error(exc: DistributionError, *, language: str = "en-US") -> str:
     """Render a human-first install error while preserving diagnostic codes."""
+    if exc.reason_code == "EVIDENTLOOP_COMPANION_INCOMPLETE":
+        if language == "zh-CN":
+            return "\n".join(
+                [
+                    "Sopify 已安装，可以正常使用。",
+                    "EvidentLoop 未安装完成。",
+                    "",
+                    "下一步：",
+                    "  稍后单独安装 EvidentLoop，或重新运行同一命令：",
+                    "  https://github.com/evidentloop/evidentloop",
+                ]
+            )
+        return "\n".join(
+            [
+                "Sopify is installed and ready to use.",
+                "EvidentLoop was not installed.",
+                "",
+                "Next:",
+                f"  {exc.next_step}",
+            ]
+        )
     if language == "zh-CN":
         lines = [
             f"Sopify 安装失败：{exc.detail}",
@@ -418,6 +464,38 @@ def _map_install_error(exc: InstallError) -> DistributionError:
             detail=detail,
             next_step="Omit `--workspace` and trigger Sopify inside that project instead. On first activation, choose whether to enable the current directory or the repository root.",
         )
+    if detail.startswith("EvidentLoop companion install is not supported"):
+        return DistributionError(
+            phase="input",
+            reason_code="EVIDENTLOOP_HOST_UNSUPPORTED",
+            detail=detail,
+            next_step="Install Sopify without `--with-evidentloop`, or choose a host with a declared EvidentLoop Skill path.",
+        )
+    if detail.startswith("EvidentLoop companion preflight failed"):
+        return DistributionError(
+            phase="input",
+            reason_code="EVIDENTLOOP_PREREQUISITE_MISSING",
+            detail=detail,
+            next_step="Install the missing command named above, then rerun the same installer command.",
+        )
+    if detail.startswith("Existing EvidentLoop") or detail.startswith(
+        "EvidentLoop Skill directory is incomplete"
+    ):
+        return DistributionError(
+            phase="input",
+            reason_code="EVIDENTLOOP_INCOMPATIBLE",
+            detail=detail,
+            next_step="Keep the existing installation unchanged and resolve its version or directory contents using https://github.com/evidentloop/evidentloop#quick-start.",
+        )
+    if detail.startswith(
+        "Sopify core installation completed, but EvidentLoop was not installed"
+    ):
+        return DistributionError(
+            phase="install",
+            reason_code="EVIDENTLOOP_COMPANION_INCOMPLETE",
+            detail=detail,
+            next_step="Install EvidentLoop separately later, or rerun the same command: https://github.com/evidentloop/evidentloop",
+        )
     if detail.startswith("Missing source"):
         return DistributionError(
             phase="install",
@@ -486,16 +564,23 @@ def _render_distribution_user_result_en(report: DistributionInstallReport) -> st
     install_result = report.install_result
     title = "Sopify is already current." if _is_noop_install(install_result) else "Sopify installed successfully."
     host_name = _host_display_name(install_result.target.host)
-    lines = [
-        title,
-        "",
-        "Installed:",
+    installed_lines = [
         f"  Host: {host_name} ({install_result.target.value})",
         f"  Language: {_language_display_name(install_result.target.language, 'en-US')}",
         f"  Host prompt: {_action_label(install_result.host_install.action, 'en-US')}",
         f"  Runtime: {install_result.payload_root}",
         f"  Version: {install_result.payload_install.version or 'unknown'}",
         f"  Runtime action: {_action_label(install_result.payload_install.action, 'en-US')}",
+    ]
+    if install_result.evidentloop_install is not None:
+        installed_lines.extend(
+            _companion_action_lines(install_result.evidentloop_install, language="en-US")
+        )
+    lines = [
+        title,
+        "",
+        "Installed:",
+        *installed_lines,
         "",
         "Project:",
     ]
@@ -536,16 +621,23 @@ def _render_distribution_user_result_zh(report: DistributionInstallReport) -> st
     install_result = report.install_result
     title = "Sopify 已是最新。" if _is_noop_install(install_result) else "Sopify 安装完成。"
     host_name = _host_display_name(install_result.target.host)
-    lines = [
-        title,
-        "",
-        "已安装：",
+    installed_lines = [
         f"  宿主：{host_name}（{install_result.target.value}）",
         f"  语言：{_language_display_name(install_result.target.language, 'zh-CN')}",
         f"  宿主提示：{_action_label(install_result.host_install.action, 'zh-CN')}",
         f"  运行时：{install_result.payload_root}",
         f"  版本：{install_result.payload_install.version or 'unknown'}",
         f"  运行时操作：{_action_label(install_result.payload_install.action, 'zh-CN')}",
+    ]
+    if install_result.evidentloop_install is not None:
+        installed_lines.extend(
+            _companion_action_lines(install_result.evidentloop_install, language="zh-CN")
+        )
+    lines = [
+        title,
+        "",
+        "已安装：",
+        *installed_lines,
         "",
         "项目：",
     ]
@@ -596,6 +688,9 @@ def _render_workspace_scope_result_zh(report: DistributionInstallReport) -> str:
         f"  宿主提示：{_action_label(install_result.host_install.action, 'zh-CN')}",
         f"  版本：{install_result.host_install.version or 'unknown'}",
     ]
+    if install_result.evidentloop_install is not None:
+        companion = install_result.evidentloop_install
+        lines.extend(_companion_action_lines(companion, language="zh-CN"))
     for p in install_result.host_install.paths:
         lines.append(f"  文件：{p}")
     lines.extend(
@@ -623,6 +718,9 @@ def _render_workspace_scope_result_en(report: DistributionInstallReport) -> str:
         f"  Host prompt: {_action_label(install_result.host_install.action, 'en-US')}",
         f"  Version: {install_result.host_install.version or 'unknown'}",
     ]
+    if install_result.evidentloop_install is not None:
+        companion = install_result.evidentloop_install
+        lines.extend(_companion_action_lines(companion, language="en-US"))
     for p in install_result.host_install.paths:
         lines.append(f"  File: {p}")
     lines.extend(
@@ -707,10 +805,18 @@ def _workspace_bootstrap_action(install_result: InstallResult) -> str:
 
 
 def _is_noop_install(install_result: InstallResult) -> bool:
+    companion_noop = (
+        install_result.evidentloop_install is None
+        or (
+            install_result.evidentloop_install.cli_action == "reused"
+            and install_result.evidentloop_install.skill_action == "reused"
+        )
+    )
     return (
         install_result.host_install.action == "skipped"
         and install_result.payload_install.action == "skipped"
         and install_result.workspace_root is None
+        and companion_noop
     )
 
 
@@ -724,6 +830,52 @@ def _friendly_smoke_summary(smoke_output: str, language: str) -> str:
     if first_line.startswith("Runtime smoke check passed"):
         return "运行时自检已通过。" if language == "zh-CN" else "Runtime smoke check passed."
     return first_line
+
+
+def _companion_action_lines(
+    result: EvidentLoopInstallResult,
+    *,
+    language: str,
+) -> list[str]:
+    if language == "zh-CN":
+        lines = [
+            f"  EvidentLoop CLI（{result.package_version}）：{_companion_action_label(result.cli_action, language)}",
+            f"  EvidentLoop Skill：{_companion_action_label(result.skill_action, language)}",
+            f"  EvidentLoop Skill 路径：{result.skill_path}",
+        ]
+        if _is_copilot_project_skill(result.skill_path):
+            lines.append(
+                "  Copilot 项目 Skill：如需云端使用，请审查后自行提交；"
+                "Sopify 不会自动提交或更新。"
+            )
+        return lines
+    lines = [
+        f"  EvidentLoop CLI ({result.package_version}): {_companion_action_label(result.cli_action, language)}",
+        f"  EvidentLoop Skill: {_companion_action_label(result.skill_action, language)}",
+        f"  EvidentLoop Skill path: {result.skill_path}",
+    ]
+    if _is_copilot_project_skill(result.skill_path):
+        lines.append(
+            "  Copilot project Skill: review and commit it if your cloud workflow needs it; "
+            "Sopify will not commit or update it."
+        )
+    return lines
+
+
+def _is_copilot_project_skill(skill_path: Path) -> bool:
+    return skill_path.parts[-4:-1] == (".github", "skills", "evidentloop")
+
+
+def _companion_action_label(action: str, language: str) -> str:
+    if action == "installed":
+        return (
+            "已安装（本次 Sopify 发布验证版本）"
+            if language == "zh-CN"
+            else "installed (tested with this Sopify release)"
+        )
+    if action == "reused":
+        return "已复用（已通过兼容检查）" if language == "zh-CN" else "reused (compatibility checked)"
+    return _action_label(action, language)
 
 
 def _host_display_name(host_id: str) -> str:
@@ -753,11 +905,13 @@ def _action_label(action: str, language: str) -> str:
             "installed": "已安装",
             "updated": "已更新",
             "skipped": "已是最新",
+            "reused": "已复用",
             "bootstrapped": "已初始化",
         }.get(action, action)
     return {
         "installed": "installed",
         "updated": "updated",
         "skipped": "already current",
+        "reused": "reused",
         "bootstrapped": "initialized",
     }.get(action, action)

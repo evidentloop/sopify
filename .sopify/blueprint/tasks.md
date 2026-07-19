@@ -116,8 +116,7 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 
 Sopify 只保留通用 Verifier 证据消费。EvidentLoop 是首个官方推荐的可选实例，不是默认能力或唯一实现。
 
-- [ ] 完成 `plan/20260718_evidentloop_optional_audit_integration/` 剩余 Wave：EvidentLoop 通用版本输出、公开 Alpha、可选配套安装、真实 dogfood 与归档
-- [ ] `--with-evidentloop` 落地前不得在公开文档中宣称该参数已可用
+- [ ] 完成 `plan/20260718_evidentloop_optional_audit_integration/` 剩余 Wave：Codex 真实 dogfood、用户裁定、正式 receipt 与归档
 
 ## 流程与工具项
 

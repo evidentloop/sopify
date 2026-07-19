@@ -11,6 +11,8 @@ CODEX_ADAPTER = HostAdapter(
     destination_dirname=".codex",
     header_filename="AGENTS.md",
     config_dir="~/.codex",
+    skills_cli_agent="codex",
+    skill_install_dirname=".agents/skills",
 )
 
 CODEX_CAPABILITY = HostCapability(

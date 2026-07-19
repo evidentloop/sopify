@@ -12,6 +12,8 @@ QODER_ADAPTER = HostAdapter(
     header_filename="AGENTS.md",
     config_dir="~/.qoder",
     default_language="zh-CN",
+    skills_cli_agent="qoder",
+    skill_install_dirname=".qoder/skills",
 )
 
 QODER_CAPABILITY = HostCapability(

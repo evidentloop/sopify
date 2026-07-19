@@ -446,7 +446,7 @@ class ReleaseAssetRenderingTests(unittest.TestCase):
         install_sh = (REPO_ROOT / "install.sh").read_text(encoding="utf-8")
         install_ps1 = (REPO_ROOT / "install.ps1").read_text(encoding="utf-8")
 
-        for flag in ("--target", "--ref", "--verbose"):
+        for flag in ("--target", "--ref", "--verbose", "--with-evidentloop"):
             self.assertIn(flag, install_sh)
             self.assertIn(flag, install_ps1)
         self.assertIn("--workspace", install_sh)
@@ -455,8 +455,8 @@ class ReleaseAssetRenderingTests(unittest.TestCase):
         self.assertIn("scripts/install_sopify.py", install_ps1)
         self.assertIn("--source-channel", install_sh)
         self.assertIn("--source-channel", install_ps1)
-        self.assertIn("Usage: install.sh [--target <host[:lang]>] [--ref <tag-or-branch>]", install_sh)
-        self.assertIn("Usage: install.ps1 [--target <host[:lang]>] [--ref <tag-or-branch>]", install_ps1)
+        self.assertIn("Usage: install.sh [--target <host[:lang]>] [--with-evidentloop] [--ref <tag-or-branch>]", install_sh)
+        self.assertIn("Usage: install.ps1 [--target <host[:lang]>] [--with-evidentloop] [--ref <tag-or-branch>]", install_ps1)
         self.assertIn("Use `--target copilot` to bootstrap the current workspace", install_sh)
         self.assertIn("Use `--target copilot` to bootstrap the current workspace", install_ps1)
         self.assertIn("--language <lang>", install_sh)
@@ -464,17 +464,89 @@ class ReleaseAssetRenderingTests(unittest.TestCase):
         self.assertIn("--no-copilot", install_sh)
         self.assertIn("--no-copilot", install_ps1)
 
-    def test_powershell_installer_prefers_python3_probe(self) -> None:
+    def test_root_installers_probe_python_311_before_source_download(self) -> None:
+        install_sh = (REPO_ROOT / "install.sh").read_text(encoding="utf-8")
         install_ps1 = (REPO_ROOT / "install.ps1").read_text(encoding="utf-8")
-        lines = install_ps1.splitlines()
+        self.assertIn('@("python3", "python", "py")', install_ps1)
+        for content in (install_sh, install_ps1):
+            self.assertIn("sys.version_info >= (3, 11)", content)
+            self.assertIn("UNSUPPORTED_PYTHON", content)
+            self.assertIn("Sopify needs Python 3.11 or newer", content)
+        self.assertLess(
+            install_sh.index("sys.version_info >= (3, 11)"),
+            install_sh.index("ARCHIVE_URL"),
+        )
+        self.assertLess(
+            install_ps1.index("sys.version_info >= (3, 11)"),
+            install_ps1.index("$archiveUrl"),
+        )
 
-        python3_index = next(index for index, line in enumerate(lines) if "Get-Command python3 " in line)
-        python_index = next(index for index, line in enumerate(lines) if "Get-Command python " in line)
-        py_index = next(index for index, line in enumerate(lines) if "Get-Command py " in line)
+    def test_shell_installer_rejects_old_python_before_download(self) -> None:
+        bash = shutil.which("bash")
+        if bash is None:
+            self.skipTest("bash is required")
 
-        self.assertLess(python3_index, python_index)
-        self.assertLess(python_index, py_index)
-        self.assertIn("None of `python3`, `python`, or `py -3` is available.", install_ps1)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            tools_dir = Path(temp_dir)
+            self._write_shell_stub(tools_dir / "curl", "exit 99")
+            self._write_shell_stub(tools_dir / "tar", "exit 99")
+            self._write_shell_stub(
+                tools_dir / "python3",
+                "printf '3.9.6\\n'\nexit 1",
+            )
+            env = os.environ.copy()
+            env["PATH"] = str(tools_dir)
+            completed = subprocess.run(
+                [bash, str(REPO_ROOT / "install.sh"), "--target", "codex:en-US"],
+                capture_output=True,
+                text=True,
+                check=False,
+                env=env,
+            )
+
+        self.assertEqual(completed.returncode, 1)
+        self.assertIn("Sopify needs Python 3.11 or newer", completed.stderr)
+        self.assertIn("Found: python3 3.9.6", completed.stderr)
+        self.assertIn("Nothing was downloaded or installed", completed.stderr)
+        self.assertIn("reason_code: UNSUPPORTED_PYTHON", completed.stderr)
+        self.assertNotIn("Downloading Sopify source", completed.stderr)
+
+    def test_shell_installer_uses_later_compatible_python(self) -> None:
+        bash = shutil.which("bash")
+        if bash is None:
+            self.skipTest("bash is required")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            tools_dir = Path(temp_dir)
+            self._write_shell_stub(tools_dir / "curl", "exit 1")
+            self._write_shell_stub(tools_dir / "tar", "exit 99")
+            self._write_shell_stub(
+                tools_dir / "python3",
+                "printf '3.9.6\\n'\nexit 1",
+            )
+            self._write_shell_stub(
+                tools_dir / "python",
+                "printf '3.11.9\\n'\nexit 0",
+            )
+            env = os.environ.copy()
+            env["PATH"] = os.pathsep.join((str(tools_dir), os.defpath))
+            completed = subprocess.run(
+                [bash, str(REPO_ROOT / "install.sh"), "--target", "codex:en-US"],
+                capture_output=True,
+                text=True,
+                check=False,
+                env=env,
+            )
+
+        self.assertEqual(completed.returncode, 1)
+        self.assertIn("Downloading Sopify source", completed.stderr)
+        self.assertIn("reason_code: SOURCE_FETCH_FAILED", completed.stderr)
+        self.assertNotIn("UNSUPPORTED_PYTHON", completed.stderr)
+
+    @staticmethod
+    def _write_shell_stub(path: Path, body: str) -> None:
+        path.write_text(f"#!/bin/sh\n{body}\n", encoding="utf-8")
+        path.chmod(0o755)
 
     def test_render_release_installers_renders_stable_assets(self) -> None:
         with tempfile.TemporaryDirectory() as output_dir:

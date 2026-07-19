@@ -11,6 +11,8 @@ CLAUDE_ADAPTER = HostAdapter(
     destination_dirname=".claude",
     header_filename="CLAUDE.md",
     config_dir="~/.claude",
+    skills_cli_agent="claude-code",
+    skill_install_dirname=".claude/skills",
 )
 
 CLAUDE_CAPABILITY = HostCapability(

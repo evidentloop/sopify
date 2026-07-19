@@ -14,6 +14,8 @@ COPILOT_ADAPTER = HostAdapter(
     instruction_surface=INSTRUCTION_SURFACE_SINGLE_FILE,
     instruction_file_relpath=None,
     default_language="en-US",
+    skills_cli_agent="github-copilot",
+    skill_install_dirname=".github/skills",
 )
 
 COPILOT_CAPABILITY = HostCapability(

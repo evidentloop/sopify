@@ -56,6 +56,14 @@ No new editor, no new CLI. Install into the host you already use — Codex, Clau
 curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | bash -s -- --target codex:en-US
 ```
 
+Sopify requires Python 3.11 or newer; the installer checks before downloading. This
+installs Sopify only. [EvidentLoop](https://github.com/evidentloop/evidentloop) is an
+optional code-change audit tool: it turns a local Git diff into an interactive HTML report
+with findings linked to changed lines and user feedback. Sopify can keep that report as
+plan audit evidence. To install the versions tested with this Sopify release—or reuse
+compatible existing components—append `--with-evidentloop`. Without that flag, the
+installer does not inspect or install EvidentLoop.
+
 After install, use `~go` to start a managed workflow. See [Installation](#installation) for other hosts, audit-first install, and Windows.
 
 **Already in a Sopify-managed repo?** Explicitly ask to continue or use `~go` to resume the current plan. Ordinary questions and small fixes are handled directly without automatically entering the previous plan workflow.
@@ -134,6 +142,21 @@ Host support:
 | Copilot | BASELINE_SUPPORTED | `copilot:en-US` / `copilot:zh-CN` | Prompt-only; payload uplift planned |
 
 Pass `--workspace <path>` to target another repo, `--language <lang>` to control output language.
+
+The Quick Start flag also works with the audit-first script:
+
+```bash
+bash sopify-install.sh --target codex:en-US --with-evidentloop
+```
+
+The CLI is installed for the current user. The Skill uses the host's supported path:
+Codex `$HOME/.agents/skills/evidentloop/`, Claude `$HOME/.claude/skills/evidentloop/`,
+Qoder `$HOME/.qoder/skills/evidentloop/`, or Copilot
+`<workspace>/.github/skills/evidentloop/`. Existing components are compatibility-checked
+before reuse; Sopify does not claim they match the pinned source. Incompatible components
+are left unchanged. The Copilot path belongs to your project; Sopify does not commit or
+update it. See [Getting Started](./docs/getting-started.md#optional-evidentloop-companion)
+for prerequisites and the local/cloud boundary.
 
 For the full setup guide, see [Getting Started](./docs/getting-started.md). For a step-by-step demo, see [External Repo Quickstart](./examples/external-repo-quickstart/README.md).
 

@@ -23,9 +23,13 @@ from installer.distribution import (
     render_distribution_user_result,
     run_distribution_install,
 )
+from installer.evidentloop import (
+    install_evidentloop_companion,
+    prepare_evidentloop_install,
+)
 from installer.hosts import get_host_adapter, iter_host_registrations, iter_installable_hosts
-from installer.hosts.base import install_host_assets
-from installer.models import BootstrapResult, InstallError, InstallPhaseResult, InstallResult, LANGUAGE_DIRECTORY_MAP, parse_install_target
+from installer.hosts.base import HostAdapter, install_host_assets
+from installer.models import BootstrapResult, EvidentLoopInstallResult, InstallError, InstallPhaseResult, InstallResult, LANGUAGE_DIRECTORY_MAP, parse_install_target
 from installer.payload import install_global_payload, run_workspace_bootstrap
 from installer.validate import (
     validate_bundle_install,
@@ -79,6 +83,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Advanced: override the remote source ref. Not supported for repo-local installs.",
     )
     parser.add_argument("--verbose", action="store_true", help="Show full diagnostic install details.")
+    parser.add_argument(
+        "--with-evidentloop",
+        action="store_true",
+        help=(
+            "Install the EvidentLoop CLI and Skill versions tested with this Sopify release, "
+            "or reuse compatible existing components. This option is disabled by default "
+            "and is not a runtime switch."
+        ),
+    )
     parser.add_argument("--source-channel", default="repo-local", help=argparse.SUPPRESS)
     parser.add_argument("--source-resolved-ref", default="working-tree", help=argparse.SUPPRESS)
     parser.add_argument("--source-asset-name", default="scripts/install_sopify.py", help=argparse.SUPPRESS)
@@ -91,27 +104,33 @@ def run_install(
     workspace_value: str | None,
     repo_root: Path,
     home_root: Path | None = None,
+    with_evidentloop: bool = False,
 ) -> InstallResult | BootstrapOnlyResult:
     target = parse_install_target(target_value)
     workspace_root = Path(workspace_value).expanduser().resolve() if workspace_value is not None else None
+    adapter = get_host_adapter(target.host)
+    if adapter.is_workspace_scope and workspace_root is None:
+        workspace_root = Path.cwd().resolve()
     if workspace_root is not None and not workspace_root.exists():
         raise InstallError(f"Workspace does not exist: {workspace_root}")
     if workspace_root is not None and not workspace_root.is_dir():
         raise InstallError(f"Workspace is not a directory: {workspace_root}")
 
     resolved_home = (home_root or Path.home()).expanduser().resolve()
-    adapter = get_host_adapter(target.host)
-
     if adapter.is_workspace_scope:
         # Workspace-scope hosts (e.g. Copilot): render single file to workspace,
         # skip payload install and workspace bootstrap.
-        if workspace_root is None:
-            workspace_root = Path(workspace_value or ".").expanduser().resolve()
         host_install = install_host_assets(
             adapter,
             repo_root=repo_root,
             home_root=resolved_home,
             language_directory=target.language_directory,
+            workspace_root=workspace_root,
+        )
+        evidentloop_install = _install_evidentloop_if_requested(
+            enabled=with_evidentloop,
+            adapter=adapter,
+            home_root=resolved_home,
             workspace_root=workspace_root,
         )
         return InstallResult(
@@ -129,6 +148,7 @@ def run_install(
             ),
             workspace_bootstrap=None,
             smoke_output="",
+            evidentloop_install=evidentloop_install,
         )
 
     host_install = install_host_assets(
@@ -147,6 +167,13 @@ def run_install(
         workspace_bootstrap = run_workspace_bootstrap(payload_install.root, workspace_root)
         bundle_root = workspace_bootstrap.bundle_root
         validate_workspace_stub_manifest(workspace_root / ".sopify")
+
+    evidentloop_install = _install_evidentloop_if_requested(
+        enabled=with_evidentloop,
+        adapter=adapter,
+        home_root=resolved_home,
+        workspace_root=workspace_root,
+    )
 
     return InstallResult(
         target=target,
@@ -168,7 +195,30 @@ def run_install(
         ),
         workspace_bootstrap=workspace_bootstrap,
         smoke_output="",
+        evidentloop_install=evidentloop_install,
     )
+
+
+def _install_evidentloop_if_requested(
+    *,
+    enabled: bool,
+    adapter: HostAdapter,
+    home_root: Path,
+    workspace_root: Path | None,
+) -> EvidentLoopInstallResult | None:
+    if not enabled:
+        return None
+    try:
+        plan = prepare_evidentloop_install(
+            adapter,
+            home_root=home_root,
+            workspace_root=workspace_root,
+        )
+        return install_evidentloop_companion(plan)
+    except InstallError as exc:
+        raise InstallError(
+            "Sopify core installation completed, but EvidentLoop was not installed."
+        ) from exc
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -197,6 +247,7 @@ def main(argv: list[str] | None = None) -> int:
         interactive=sys.stdin.isatty() and sys.stdout.isatty(),
         source_channel=args.source_channel,
         source_metadata=source_metadata,
+        with_evidentloop=args.with_evidentloop,
     )
 
     try:

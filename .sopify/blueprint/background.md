@@ -27,6 +27,8 @@ Sopify 官方在 core 之上提供一个轻量、可插拔、收敛式的 bluepr
 
 **产品形态锚点**：Protocol 是宿主的唯一硬依赖；宿主执行、Sopify 保存、任意宿主恢复——这是 P8 runtime 退场后的三层分工。一切外部验证与生产能力通过 integration contract 外插，不进 kernel。
 
+**可选验证安装边界**：Sopify 不默认安装或运行 Verifier。用户显式传入 `--with-evidentloop` 时，先完成 Sopify，再独立尝试 EvidentLoop；后者失败不回滚或否定 Sopify。新装组件使用当前 Sopify 发布验证过的版本和来源，已有组件只做兼容检查；Sopify 不声明来源相同，不负责组件升级，也不自动提交 Copilot 项目 Skill。该参数不形成持久能力开关，也不改变通用 receipt 契约。
+
 ## 核心架构模式
 
 P8 后 Sopify 不再运行进程。一切交互通过纯文件协议：

@@ -42,15 +42,17 @@
   - 验收：中英文 header 与 develop Skill/rules 统一为“develop 完成后更新 `plan.md` 的 `ready_to_archive` 生命周期元数据并保留在 `plan/`；只有显式 `~go finalize` 才通过 writer 归档”。
   - 验收：中英文 `$kb/$templates` 使用 `state/active_plan.json → plan/<plan_id>/plan.md`，删除退役的 `current_plan.path + current_plan.files` 口径。
   - 验收：五个内置 Skill 都声明 `codex / claude / qoder / copilot`，同步生成 catalog 和最小防漂移测试；`host_support` 只表示官方适配器可交付并消费 Skill 语义，不替代 `HostCapability` 的能力等级与 E2E 证据。
-- [ ] 4.1 在现有 Python installer、远程 shell/PowerShell wrapper 和用户文档中增加默认关闭的 `--with-evidentloop`；通过现有 HostAdapter 固定映射 `codex → codex`、`claude → claude-code`、`qoder → qoder`、`copilot → github-copilot`，并在核心写入前校验映射、`uv` 和 `npx`。
-  - 验收：不带参数时不执行任何 EvidentLoop lookup、网络访问或提示，现有安装成功语义、payload 和 `stdlib_only` 依赖声明保持不变；只有 help/文档新增可选参数说明。缺少 Skill target 映射的新宿主明确停止可选分支。
-- [ ] 4.2 用一个 EvidentLoop 专用安装 helper 实现最小分支，不建立通用 component framework：兼容安装直接复用，缺失的 CLI/Skill 按固定 package 版本和 Git tag 补齐，已有不兼容项时不修改。
-  - 验收：CLI 与 Skill 分别探测后再写入；中途失败报告部分结果，同一命令可复用成功项后补齐，不删除外部产物。
-  - 验收：固定 Skills CLI 版本，使用 `-g -a <agent> -y` 非交互安装到目标 agent 的用户级全局 scope，不使用 `@latest`；仅在子进程环境关闭匿名遥测。
-  - 验收：兼容与结构探针分别检查 `~/.codex/skills/`、`~/.claude/skills/`、`~/.qoder/skills/`、`~/.copilot/skills/`，不从 Sopify `destination_dirname` 推导 Skill 路径。
-  - 验收：不写 `evidentloop_enabled`、安装来源、component registry 或 state；运行时不读取 installer flag。
-  - 验收：本轮不自动升级、降级或卸载。用户独立升级后只要兼容探针通过即可使用；不兼容时给出事实和官方处理入口，不静默修复。
-- [ ] 4.3 增加安装器定向测试和结构检查，覆盖各现有宿主的 Skills CLI target 映射、`-g` 全局 scope 和 agent 发现路径（包括 Copilot 不跟随 Sopify workspace destination），以及未选择、缺映射、缺少前置依赖、全新安装、单项缺失、兼容复用、不兼容停车和失败后重跑；另证明非 EvidentLoop verifier receipt 不需要 ELoop 专用字段。
+- [x] 4.1 在现有 Python installer、shell/PowerShell wrapper 和用户文档中增加默认关闭的 `--with-evidentloop`，并在 HostAdapter 明确四个宿主的 Skill 目标：Codex `$HOME/.agents/skills/`、Claude `$HOME/.claude/skills/`、Qoder `$HOME/.qoder/skills/`、Copilot `<workspace>/.github/skills/`。
+  - 验收：不带参数时不查找命令、不联网、不安装、不提示；现有核心安装、payload 和 `stdlib_only` 依赖声明不变。带参数时也先完成 Sopify；新宿主缺少映射或 EvidentLoop 未完成时只停止可选分支，不回滚或否定 Sopify。
+  - 验收：公开包装器在下载前选择 Python 3.11+；没有兼容解释器时说明检测结果和未发生下载/安装，不静默跳过、不自动安装 Python、不修改用户环境。
+- [x] 4.2 用一个 EvidentLoop 专用 helper 安装或复用 CLI 与 Skill，不建立通用组件框架。
+  - 验收：新装 CLI 固定为当前用户的 `evidentloop==0.1.0a2`；新装 Skill 固定到源码 commit `fcefb77083d32b034e56b04dcd085dcf5a835550`，Skills CLI 固定为 `1.5.9`，不使用可变 tag 或 `@latest`。
+  - 验收：只为缺失组件检查前置命令；CLI 缺失才要求 `uv`，Skill 缺失才要求 Git 和 `npx`。新装 CLI 必须能从 `PATH` 解析到同一文件；不可见时不改 shell，保留已安装 CLI 并给出 `uv tool update-shell`、重启和重跑提示。已有兼容组件直接复用，但只声明通过兼容检查，不声明来源相同；不完整或不兼容组件保持原样并停止。中途失败说明已完成部分，同一命令可继续补齐。
+  - 验收：Codex、Claude、Qoder 使用对应 agent target 的用户级安装；Copilot 在临时目录下载并校验后，只复制 Skill 到项目 `.github/skills/evidentloop/`，不写项目 `.agents/skills/` 或 `skills-lock.json`，也不自动提交或更新用户项目内容。仅子进程关闭匿名遥测。
+  - 验收：不写 `evidentloop_enabled`、安装来源、component registry 或 state；不自动升级、降级、覆盖或卸载。
+- [x] 4.3 用精简测试和隔离安装证据验证四宿主路径、固定命令、真实 Skill 目录结构、Copilot 定向复制、默认关闭、缺映射、按组件前置检查、兼容复用、不兼容停车、部分完成提示和输出错误码。
+  - 验收：安装/结构证据与 Skill discovery/E2E 结论分开；没有真实宿主证据时不宣称 discovery 已验证。Copilot 文档明确项目 Skill 与本机 CLI 的云端边界。
+  - 证据：268 tests、74 subtests、release preflight 99 项硬门禁与全部协议 smoke 通过；来源、Copilot 项目归属和“Sopify 先完成、EvidentLoop 失败可独立安装”的承诺已最小收窄，无外部错误诊断框架。
 
 ## Wave 5 | 验证冻结与公开版本真实 Dogfood
 
