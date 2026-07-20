@@ -1,84 +1,48 @@
-# Design 详细规则
+# Design 规则
 
 ## 目标
 
-设计技术方案，拆分可执行任务，生成可回放的方案包。
+把 Analyze 确认的目标和边界转成最小、可执行、可验证的方案。Design 负责技术取舍和任务拆分，不管理协议状态，也不执行代码。
 
-## 总流程
+## 1. 核对现状
 
-1. 判定方案包级别（`light/standard/architecture`）。
-2. 生成方案文件骨架。
-3. 拆分任务并标注验证标准。
-4. 输出摘要并等待宿主后续动作。
+在提出新实现前，按任务需要检查：项目已有代码、调用方和测试；正式协议、公开契约和兼容边界；适用的语言或平台原生能力；已安装且项目正在使用的依赖。
 
-## 步骤 1：方案包级别判定
+检查顺序不是固定技术梯子。目标是避免重复能力和不必要依赖，同时保证正确性、安全和用户价值。
 
-自动判定规则（`plan.level=auto`）：
+## 2. 选择最小充分方案
 
-- `light`：文件数 3-5，且无架构级变更，修改范围明确。
-- `standard`：文件数 >5，或新功能开发，或跨模块改动。
-- `architecture`：架构级变更、重大重构、新系统设计。
+- 说明推荐路径、关键取舍和明确非目标。
+- 优先修改最窄的共同边界；需要跨模块时说明原因。
+- 不为未知未来预建框架、状态或扩展点。
+- 只有会改变范围、方案路径或验收标准的选择才交给用户拍板。可逆的实现细节由 Develop 在批准边界内处理。
 
-## 步骤 2：生成方案文件
+## 3. 判定方案级别
 
-- `light`：生成 `plan.md`。
-- `standard`：生成 `plan.md + tasks.md`。
-- `architecture`：生成 `plan.md + tasks.md + design.md`。
-- 所有正式 plan 包都在 `plan.md` 中写入 `level` frontmatter、统一语义入口和评分区块。
-- ADR、diagram、assets、receipts 仅在真实需要时创建，不是任何级别的空目录或必备文件。
-- 方案摘要也必须显式输出：
-  - `方案质量`
-  - `落地就绪`
-  - `评分理由`
+- `light`：`plan.md`，适合范围明确的局部工作。
+- `standard`：`plan.md + tasks.md`，适合新功能、跨模块或较复杂工作。
+- `architecture`：`plan.md + tasks.md + design.md`，只用于真实架构变更、新系统或重大重构。
 
-模板来源统一使用 `assets/` 目录：
+ADR、图、assets 和 receipts 均按证据创建，不预建空目录。方案正文模板唯一来自本 Skill 的 `assets/`。
 
-1. `assets/plan-template.md`
-2. `assets/tasks-template.md`
-3. `assets/design-template.md`
-4. `assets/adr-template.md`（仅在确有架构决策时使用）
+## 4. 判定 readiness
 
-## 步骤 3：任务拆分
+- `Ready`：没有仍需用户选择、且会改变范围、方案路径或验收标准的事项。给出支撑依据。
+- `Needs decision`：列出具体选择、各自影响和推荐，随后停车。
 
-任务约束：
+动态版本、Git 交付、发布或其他不可逆动作属于执行期 checkpoint；只要方案路径已经确定，它们不自动把方案降为 `Needs decision`。
 
-1. 每项建议 30 分钟内可完成。
-2. 每项需具备可验证完成标准。
-3. 依赖关系清晰，避免隐藏前置条件。
+阶段转换：
 
-任务分类建议：
+- `strict` 模式在输出 Design 摘要后停车，确认后再进入 Develop。
+- `adaptive` 模式下，`~go` 可由宿主继续后续流程；`~go plan` 在摘要后停车。
 
-1. 核心功能实现
-2. 辅助功能
-3. 安全检查
-4. 测试
-5. 文档更新（`project.md / blueprint/*`）
+## 5. 拆分任务
 
-任务状态符号：
+每项任务应有明确产物、依赖和验收方式。按真实边界拆分，不为追求固定时长制造碎片。文档和知识同步只在方案的 `knowledge_sync` 要求时纳入。
 
-- `[ ]` 待执行
-- `[x]` 已完成
-- `[-]` 已跳过
-- `[!]` 阻塞中
+任务状态：`[ ]` 待执行、`[x]` 已完成、`[-]` 已跳过、`[!]` 阻塞。
 
-## 阶段转换
+## 协议边界
 
-- `workflow.mode=strict`：输出方案摘要后等待确认。
-- `workflow.mode=adaptive`：
-  - `~go` 触发：进入执行前确认或后续宿主链路。
-  - `~go plan` 触发：只输出方案摘要并停止。
-- 用户反馈修改意见：留在本阶段，更新文件后再次输出摘要。
-
-## 协议入口边界
-
-方案结构与任务拆分由本技能负责；协议状态写入（active_plan / current_handoff / receipts）统一走 `sopify_writer`，不在本技能直接写入。
-
-## 命名规则
-
-方案目录格式：`YYYYMMDD_feature_name`
-
-示例：
-
-- `20260115_user_auth`
-- `20260115_fix_login_bug`
-- `20260115_refactor_api`
+Design 只生成或更新方案语义文件。`active_plan`、handoff 和 receipts 由宿主按正式协议通过 `sopify_writer` 写入。

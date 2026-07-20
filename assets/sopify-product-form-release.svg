@@ -32,14 +32,14 @@
 
   <!-- Title (centered) -->
   <text x="700" y="54" text-anchor="middle" class="ttl" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">Sopify 产品形态</text>
-  <text x="700" y="78" text-anchor="middle" class="sub" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">HOST ASKS  ·  SKILL GUIDES  ·  ASSETS PRESERVED  ·  ANY HOST RESUMES</text>
+  <text x="700" y="78" text-anchor="middle" class="sub" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">HOST EXECUTES  ·  SKILL GUIDES  ·  ASSETS PERSIST  ·  RESUME WHEN ASKED</text>
 
   <!-- ════════════ STAGE 1 : HOST (x=70, w=204, right=274) ════════════ -->
   <g>
     <rect x="70" y="120" width="204" height="340" rx="10" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.4"/>
     <text x="84" y="144" class="stage-num" font-family="-apple-system,'Helvetica Neue',sans-serif">I</text>
     <text x="102" y="144" class="lbl" font-family="-apple-system,'Helvetica Neue',sans-serif">HOST</text>
-    <text x="84" y="170" class="stage-title" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">用户在任意宿主提需求</text>
+    <text x="84" y="170" class="stage-title" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">用户在受支持宿主提需求</text>
     <text x="84" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">同一协议，四个入口</text>
 
     <!-- 4 host cards, ALL 86px wide. L-col right=170, R-col right=262. Stage right=274. -->
@@ -69,8 +69,8 @@
     </g>
 
     <text x="84" y="336" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">同一 .sopify/ 项目</text>
-    <text x="84" y="352" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">任一宿主打开即消费</text>
-    <text x="84" y="368" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">同一份协议资产</text>
+    <text x="84" y="352" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">受支持宿主加载同一套规则</text>
+    <text x="84" y="368" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">项目记录保持一致</text>
 
     <text x="84" y="438" class="fn" font-family="'Cascadia Code','SF Mono','Courier New',monospace">~go</text>
     <text x="110" y="438" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif"> · 用户发出请求</text>
@@ -86,13 +86,13 @@
     <text x="348" y="144" class="stage-num" font-family="-apple-system,'Helvetica Neue',sans-serif">II</text>
     <text x="366" y="144" class="lbl" font-family="-apple-system,'Helvetica Neue',sans-serif">SKILL</text>
     <text x="348" y="170" class="stage-title" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Skill 约束宿主做事</text>
-    <text x="348" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">内置 workflow skill 沉淀社区哲学</text>
+    <text x="348" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">内置 workflow skill 承载共享规则</text>
 
     <!-- 4 skill pills, all 176px wide, stacked -->
     <g transform="translate(348,206)" filter="url(#shadowSoft)">
       <rect width="176" height="40" rx="6" fill="#ffffff" stroke="#a78bfa" stroke-width="1.3"/>
       <text x="12" y="17" class="pill" font-family="-apple-system,'Helvetica Neue',sans-serif">analyze</text>
-      <text x="12" y="32" class="pill-sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">需求评分 · 缺事实则停下追问</text>
+      <text x="12" y="32" class="pill-sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">先读证据 · 评分 · 必要时追问</text>
     </g>
     <g transform="translate(348,250)" filter="url(#shadowSoft)">
       <rect width="176" height="40" rx="6" fill="#ffffff" stroke="#a78bfa" stroke-width="1.3"/>
@@ -107,14 +107,14 @@
     <g transform="translate(348,338)" filter="url(#shadowSoft)">
       <rect width="176" height="40" rx="6" fill="#ffffff" stroke="#a78bfa" stroke-width="1.3"/>
       <text x="12" y="17" class="pill" font-family="-apple-system,'Helvetica Neue',sans-serif">kb / templates</text>
-      <text x="12" y="32" class="pill-sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">知识库回写 · 输出模板强约束</text>
+      <text x="12" y="32" class="pill-sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">知识政策 · 文档结构</text>
     </g>
 
     <!-- Philosophy annotation (CENTERED at x=436 = stage center) -->
     <line x1="372" y1="392" x2="500" y2="392" stroke="#2563eb" stroke-width="0.4" opacity="0.5"/>
-    <text x="436" y="410" text-anchor="middle" class="phi" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">评分机制 · 收敛优先 · 证据前置</text>
-    <text x="436" y="426" text-anchor="middle" class="phi" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">来自社区经验的哲学依据</text>
-    <text x="436" y="442" text-anchor="middle" class="phi" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">不是 prompt，是方法论</text>
+    <text x="436" y="410" text-anchor="middle" class="phi" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">证据优先 · 评分辅助 · 收敛决策</text>
+    <text x="436" y="426" text-anchor="middle" class="phi" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">共享实践写成工作流规则</text>
+    <text x="436" y="442" text-anchor="middle" class="phi" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">不只给提示，也约束行为</text>
   </g>
 
   <!-- Arrow 2 → 3 (gap 538→598, center x=568) -->
@@ -127,7 +127,7 @@
     <text x="612" y="144" class="stage-num" font-family="-apple-system,'Helvetica Neue',sans-serif">III</text>
     <text x="630" y="144" class="lbl" font-family="-apple-system,'Helvetica Neue',sans-serif">ASSETS</text>
     <text x="612" y="170" class="stage-title" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">过程资产沉淀 .sopify/</text>
-    <text x="612" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">方案 · 决策 · 交接 · 验证 全部留痕</text>
+    <text x="612" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">方案 · 决策 · 收据 · 知识按需留存</text>
 
     <!-- 5 asset folders, all 176px wide, stacked -->
     <g transform="translate(612,206)" filter="url(#shadowSoft)">
@@ -166,8 +166,8 @@
     <rect x="862" y="120" width="204" height="340" rx="10" fill="#fff7ed" stroke="#fed7aa" stroke-width="1.4"/>
     <text x="876" y="144" class="stage-num" font-family="-apple-system,'Helvetica Neue',sans-serif">IV</text>
     <text x="894" y="144" class="lbl" font-family="-apple-system,'Helvetica Neue',sans-serif">HANDOFF</text>
-    <text x="876" y="170" class="stage-title" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">停下 · 换宿主 · 继续</text>
-    <text x="876" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">缺事实时停下，换 session / host 仍接续</text>
+    <text x="876" y="170" class="stage-title" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">停下 · 换宿主 · 接续</text>
+    <text x="876" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">缺事实时停车，明确要求后再接续</text>
 
     <!-- 3 capability pills, all 176px wide, stacked -->
     <g transform="translate(876,206)" filter="url(#shadowSoft)">
@@ -178,7 +178,7 @@
     <g transform="translate(876,270)" filter="url(#shadowSoft)">
       <rect width="176" height="54" rx="8" fill="#ffffff" stroke="#ea580c" stroke-width="1.3"/>
       <text x="14" y="24" class="pill" fill="#ea580c" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">能接  RESUME</text>
-      <text x="14" y="42" class="pill-sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">state → plan → handoff → receipts</text>
+      <text x="14" y="42" class="pill-sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">先读 plan · handoff 只作提示</text>
     </g>
     <g transform="translate(876,334)" filter="url(#shadowSoft)">
       <rect width="176" height="54" rx="8" fill="#ffffff" stroke="#ea580c" stroke-width="1.3"/>
@@ -189,15 +189,15 @@
 
   <!-- Arrow 4 → 5 (gap 1066→1126, center x=1096) -->
   <line x1="1074" y1="290" x2="1118" y2="290" stroke="#2563eb" stroke-width="2" marker-end="url(#arr-flow)"/>
-  <text x="1096" y="282" text-anchor="middle" class="arr-lbl" font-family="-apple-system,'Helvetica Neue',sans-serif">RESUMES</text>
+  <text x="1096" y="282" text-anchor="middle" class="arr-lbl" font-family="-apple-system,'Helvetica Neue',sans-serif">FINALIZES</text>
 
   <!-- ════════════ STAGE 5 : ARCHIVE (x=1126, w=204, right=1330) ════════════ -->
   <g>
     <rect x="1126" y="120" width="204" height="340" rx="10" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.4"/>
     <text x="1140" y="144" class="stage-num" font-family="-apple-system,'Helvetica Neue',sans-serif">V</text>
     <text x="1158" y="144" class="lbl" font-family="-apple-system,'Helvetica Neue',sans-serif">ARCHIVE</text>
-    <text x="1140" y="170" class="stage-title" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">归档 · 永久可审计</text>
-    <text x="1140" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">方案与证据入 history，永久可回看</text>
+    <text x="1140" y="170" class="stage-title" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">归档 · 证据保持可检查</text>
+    <text x="1140" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">显式 finalize 后移入 history</text>
 
     <g transform="translate(1140,206)" filter="url(#shadowSoft)">
       <rect width="176" height="44" rx="5" fill="#ffffff" stroke="#16a34a" stroke-width="1.3"/>
@@ -206,22 +206,22 @@
     </g>
 
     <!-- Stage 5 descriptive lines (CENTERED at x=1228 = stage center) -->
-    <text x="1228" y="290" text-anchor="middle" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">一个月后、一年后</text>
-    <text x="1228" y="306" text-anchor="middle" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">任何人、任何宿主</text>
-    <text x="1228" y="322" text-anchor="middle" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">都能看懂项目演进</text>
+    <text x="1228" y="290" text-anchor="middle" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">一段时间之后</text>
+    <text x="1228" y="306" text-anchor="middle" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">团队仍可检查项目记录</text>
+    <text x="1228" y="322" text-anchor="middle" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">理解方案如何演进</text>
 
     <!-- Stage 5 philosophy (CENTERED at x=1228) -->
     <line x1="1164" y1="346" x2="1292" y2="346" stroke="#2563eb" stroke-width="0.4" opacity="0.5"/>
-    <text x="1228" y="366" text-anchor="middle" class="phi" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">审计链不是附加物</text>
-    <text x="1228" y="382" text-anchor="middle" class="phi" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">是项目的第二价值</text>
+    <text x="1228" y="366" text-anchor="middle" class="phi" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">方案与证据共同归档</text>
+    <text x="1228" y="382" text-anchor="middle" class="phi" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">便于后续检查</text>
 
     <text x="1228" y="438" text-anchor="middle" class="fn" font-family="'Cascadia Code','SF Mono','Courier New',monospace">~go finalize</text>
   </g>
 
   <!-- Tagline (centered) -->
   <line x1="70" y1="490" x2="1330" y2="490" stroke="#d1d5db" stroke-width="1"/>
-  <text x="700" y="524" text-anchor="middle" class="tag" font-family="Georgia,'Times New Roman','Songti SC',serif">"Host executes. Skill guides with community philosophy. .sopify/ preserves well-formed audit assets."</text>
-  <text x="700" y="548" text-anchor="middle" class="sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">宿主做事 · Skill 把哲学变成方法 · .sopify/ 留高质量的审计资产 · 任意宿主接续 · 永久可查</text>
+  <text x="700" y="524" text-anchor="middle" class="tag" font-family="Georgia,'Times New Roman','Songti SC',serif">"宿主负责执行，Skill 提供工作流规则，.sopify/ 保留项目记录。"</text>
+  <text x="700" y="548" text-anchor="middle" class="sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">宿主做事 · Skill 约束流程 · 项目记录随 Git 携带 · 明确要求后接续 · 显式收口</text>
 
   <!-- Legend -->
   <g transform="translate(70,590)">

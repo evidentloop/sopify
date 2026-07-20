@@ -5,7 +5,7 @@ description: Analyze phase entry. Aggregates scoring, follow-up, and scope-check
 
 # Analyze (Entry)
 
-> Core philosophy: Distinguish the user's "goal" from their "implementation path" — only commit to the goal.
+> Read the evidence first, then separate the objective, deliverable, and candidate path.
 
 ## When to activate
 
@@ -15,11 +15,11 @@ description: Analyze phase entry. Aggregates scoring, follow-up, and scope-check
 ## Execution skeleton
 
 1. Load `references/analyze-rules.md` first.
-2. Run Phase A (KB check, context acquisition, requirement typing, completeness scoring).
+2. Read user-supplied material and relevant code, separate the objective, deliverable, and candidate path, then score completeness.
 3. If the score is below threshold, follow `auto_decide`:
    - `false`: ask follow-up questions with `assets/question-output.md`.
    - `true`: state explicit assumptions, then continue.
-4. After the score passes, run Phase B (objective extraction, code analysis, technical prep).
+4. After the score passes, hand off confirmed success criteria, scope, evidence, and unknowns that could still affect the result.
 5. Render the phase summary with `assets/success-output.md`.
 
 ## Resource navigation

@@ -257,6 +257,30 @@ def _install_single_file_assets(
 
 _TEXT_SUFFIXES = {".md", ".py", ".yaml", ".yml", ".txt", ".json", ".toml"}
 _SKILL_DIRS_ORDER = ("analyze", "design", "develop", "kb", "templates")
+_SINGLE_FILE_SCRIPT_HEADINGS = {
+    "## 确定性逻辑（脚本优先）",
+    "## Deterministic logic first",
+}
+
+
+def _render_single_file_skill_entry(content: str) -> str:
+    """Remove tree-only script navigation from a flattened skill entry."""
+    rendered: list[str] = []
+    skipping_script_section = False
+    for line in content.splitlines():
+        if line in _SINGLE_FILE_SCRIPT_HEADINGS:
+            skipping_script_section = True
+            continue
+        if skipping_script_section:
+            if line.startswith("## "):
+                skipping_script_section = False
+            else:
+                continue
+        if "`scripts/" in line:
+            continue
+        line = line.replace("references/assets/scripts", "references/assets")
+        rendered.append(line)
+    return "\n".join(rendered).rstrip("\n")
 
 
 def render_single_file(
@@ -294,10 +318,13 @@ def render_single_file(
         skill_md = skill_dir / "SKILL.md"
         if not skill_md.is_file():
             continue
-        skill_content = skill_md.read_text(encoding="utf-8").rstrip("\n")
+        skill_content = _render_single_file_skill_entry(
+            skill_md.read_text(encoding="utf-8")
+        )
         parts.append(skill_content)
-        # Inline text assets from references/, assets/, scripts/
-        for subdir_name in ("references", "assets", "scripts"):
+        # Scripts are tree-only executable helpers. The flattened product keeps
+        # the equivalent rules from references/ and the user-facing assets.
+        for subdir_name in ("references", "assets"):
             subdir = skill_dir / subdir_name
             if not subdir.is_dir():
                 continue

@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "source_revision": "ea92482cec1e93f41cbe63b68e1b067805f5dfd0",
+  "copilot_baseline": {
+    "zh-CN": {"characters": 36745, "bytes": 56414, "lines": 1919},
+    "en-US": {"characters": 60734, "bytes": 61071, "lines": 1918}
+  },
+  "copilot_after": {
+    "zh-CN": {"characters": 24154, "bytes": 41941, "lines": 1227},
+    "en-US": {"characters": 45879, "bytes": 46086, "lines": 1226}
+  },
+  "scenarios": [
+    {
+      "scenario_id": "consult-readonly-zh-v1",
+      "language": "zh-CN",
+      "surface": "host/consult_readonly",
+      "input": "分析下，不改，等我确认。",
+      "evidence": [".sopify/blueprint/protocol.md#8"],
+      "expected_behavior": ["给出结论和必要证据", "仅在存在时列阻塞项或待决策项", "停车等待确认"],
+      "allowed_write_set": []
+    },
+    {
+      "scenario_id": "consult-readonly-en-v1",
+      "language": "en-US",
+      "surface": "host/consult_readonly",
+      "input": "Analyze this only. Do not change anything; wait for my confirmation.",
+      "evidence": [".sopify/blueprint/protocol.md#8"],
+      "expected_behavior": ["state the conclusion and necessary evidence", "include blockers or decisions only when present", "stop for confirmation"],
+      "allowed_write_set": []
+    },
+    {
+      "scenario_id": "analyze-user-material-v1",
+      "language": "bilingual",
+      "surface": "skill/analyze",
+      "input": "The user supplies a document, API material, design context, and a suggested implementation.",
+      "evidence": ["user material", "repository code", "governing contract"],
+      "expected_behavior": ["read accessible evidence first", "separate objective, deliverable, and candidate path", "ask only decision-relevant questions"],
+      "allowed_write_set": []
+    },
+    {
+      "scenario_id": "design-smallest-sufficient-v1",
+      "language": "bilingual",
+      "surface": "skill/design",
+      "input": "Choose between existing project capability and adding a new dependency.",
+      "evidence": ["existing implementation", "governing contract", "installed dependencies"],
+      "expected_behavior": ["check the current system", "choose the smallest sufficient path", "report Ready or Needs decision with evidence"],
+      "allowed_write_set": [".sopify/plan/<plan_id>/"]
+    },
+    {
+      "scenario_id": "develop-common-root-v1",
+      "language": "bilingual",
+      "surface": "skill/develop",
+      "input": "A bug crosses a shared boundary and affects several callers.",
+      "evidence": ["call sites", "tests", "approved plan"],
+      "expected_behavior": ["inspect affected callers", "fix the narrowest common root cause", "verify equivalent paths without widening scope"],
+      "allowed_write_set": ["approved implementation", "approved tests", "required knowledge sync"]
+    },
+    {
+      "scenario_id": "managed-plan-knowledge-sync-v1",
+      "language": "bilingual",
+      "surface": "host/managed-plan",
+      "input": "Finish implementation while preserving protocol and knowledge ownership.",
+      "evidence": ["active plan", "knowledge_sync", "verification results"],
+      "expected_behavior": ["keep plan lifecycle in protocol and writer", "write only reusable knowledge", "stop at explicit checkpoints"],
+      "allowed_write_set": ["approved implementation", "plan semantic files", "required knowledge sync", "approved audit evidence"]
+    }
+  ],
+  "comparison": [
+    {"scenario_id": "consult-readonly-zh-v1", "baseline": "protocol existed but no explicit host example", "after": "explicit zero-write contract in header and shared output contract"},
+    {"scenario_id": "consult-readonly-en-v1", "baseline": "protocol existed but no explicit host example", "after": "equivalent zero-write contract in English"},
+    {"scenario_id": "analyze-user-material-v1", "baseline": "context rules prioritized KB and could ask before reading supplied material", "after": "evidence-first handoff separates objective, deliverable, and candidate path"},
+    {"scenario_id": "design-smallest-sufficient-v1", "baseline": "subjective dual scores and duplicated plan templates", "after": "Ready or Needs decision with evidence; Design assets are the sole plan-template owner"},
+    {"scenario_id": "develop-common-root-v1", "baseline": "verification loop did not state the shared-root behavior", "after": "caller check, narrow common-root fix, and equivalent-path verification are explicit"},
+    {"scenario_id": "managed-plan-knowledge-sync-v1", "baseline": "KB and Templates entry files repeated responsibilities and plan shapes", "after": "KB owns long-lived policy, Templates owns KB shapes, and protocol owns lifecycle"}
+  ]
+}

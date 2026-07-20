@@ -146,14 +146,16 @@ class PlanContractAssetTests(unittest.TestCase):
                 for phrase in retired_phrases[language]:
                     self.assertNotIn(phrase, combined)
 
-    def test_kb_and_templates_use_plan_md_as_active_plan_entry(self) -> None:
+    def test_kb_and_templates_defer_plan_lifecycle_to_protocol(self) -> None:
         for language in ("zh", "en"):
             with self.subTest(language=language):
                 skill_root = REPO_ROOT / "skills" / language / "skills" / "sopify"
-                for relative_path in ("kb/SKILL.md", "templates/SKILL.md"):
-                    content = (skill_root / relative_path).read_text(encoding="utf-8")
-                    self.assertIn("state/active_plan.json", content)
-                    self.assertIn("plan/<plan_id>/plan.md", content)
+                kb = (skill_root / "kb/SKILL.md").read_text(encoding="utf-8")
+                templates = (skill_root / "templates/SKILL.md").read_text(encoding="utf-8")
+                for content in (kb, templates):
+                    self.assertIn("Protocol", content)
+                    self.assertNotIn("state/active_plan.json", content)
+                    self.assertNotIn("plan/<plan_id>/plan.md", content)
                     self.assertNotIn("current_plan.path + current_plan.files", content)
 
     def test_builtin_host_support_matches_catalog_and_product_contract(self) -> None:

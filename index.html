@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f3ea" />
+    <meta
+      name="description"
+      content="Sopify is a resumable, traceable workflow for AI coding. Plans, decisions, and verification evidence stay with your repo across tools and sessions."
+    />
+    <link rel="canonical" href="https://evidentloop.github.io/sopify/" />
+    <link rel="alternate" hreflang="en" href="https://evidentloop.github.io/sopify/" />
+    <link rel="alternate" hreflang="zh-CN" href="https://evidentloop.github.io/sopify/zh-CN.html" />
+    <link rel="alternate" hreflang="x-default" href="https://evidentloop.github.io/sopify/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Sopify" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="zh_CN" />
+    <meta property="og:title" content="Sopify — Resumable, traceable AI coding" />
+    <meta property="og:description" content="Ask before writing. Resume after approval. Plans, decisions, and verification evidence stay with your repo across AI coding hosts." />
+    <meta property="og:url" content="https://evidentloop.github.io/sopify/" />
+    <meta property="og:image" content="https://evidentloop.github.io/sopify/assets/sopify-og-en.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>Sopify — Resumable, traceable AI coding</title>
+    <link rel="icon" href="./assets/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./assets/sopify-site.css" />
+    <script src="./assets/sopify-site.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <nav class="nav" aria-label="Primary navigation">
+        <a class="brand" href="#top" aria-label="Sopify home">
+          <img src="./assets/logo.svg" alt="" width="34" height="34" />
+          <span>Sopify</span>
+        </a>
+        <div class="nav-links">
+          <a href="#why">Why</a>
+          <a href="#workflow">Workflow</a>
+          <a href="#install">Install</a>
+          <a href="#faq">FAQ</a>
+          <a href="https://github.com/evidentloop/sopify">GitHub</a>
+        </div>
+        <div class="language-switcher" aria-label="Language">
+          <a href="./index.html" lang="en" aria-current="page">EN</a>
+          <a href="./zh-CN.html" lang="zh-CN">中文</a>
+        </div>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="section hero" id="top">
+        <div class="hero-copy">
+          <p class="eyebrow">Sopify / workflow protocol</p>
+          <h1>Resumable, traceable AI coding</h1>
+          <p class="hero-lede">
+            <strong>Ask before writing. Resume after approval.</strong> Plans, decisions, and verification evidence stay
+            with your repo—even when you switch AI coding tools.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#install">Install Sopify <span aria-hidden="true">↓</span></a>
+            <a class="button button-secondary" href="https://github.com/evidentloop/sopify">View on GitHub</a>
+          </div>
+          <p class="hero-note">No new editor. No new CLI. Start with <code>~go</code> in the host you already use.</p>
+        </div>
+
+        <figure class="hero-visual">
+          <img
+            src="./assets/sopify-cover.jpg"
+            width="1536"
+            height="1024"
+            alt="Hand-drawn Sopify workspace showing an AI workflow that pauses, records a plan, and resumes"
+          />
+          <figcaption>plan → checkpoint → handoff → resume</figcaption>
+        </figure>
+      </section>
+
+      <section class="section section-rule" id="why">
+        <div class="section-heading">
+          <p class="eyebrow">What it prevents</p>
+          <h2>Move fast without avoidable rework</h2>
+          <p>Sopify keeps fast AI coding from outrunning the facts, the decision, or the project history.</p>
+        </div>
+
+        <div class="card-grid">
+          <article class="card">
+            <span class="card-index">01 / ASK</span>
+            <h3>Premature coding</h3>
+            <p>When a requirement or key choice is unresolved, Sopify pauses instead of guessing.</p>
+          </article>
+          <article class="card">
+            <span class="card-index">02 / RESUME</span>
+            <h3>Lost context</h3>
+            <p>Plans and evidence live with the repo, so a new session, tool, machine, or teammate can continue from the same record.</p>
+          </article>
+          <article class="card">
+            <span class="card-index">03 / TRACE</span>
+            <h3>Forgotten decisions</h3>
+            <p>Requirements, tradeoffs, reviews, and verification evidence remain inspectable project assets.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section section-rule" id="workflow">
+        <div class="section-heading">
+          <p class="eyebrow">How it works</p>
+          <h2>A workflow with deliberate stopping points</h2>
+          <p>Simple requests stay simple. Work that needs a plan moves through four explicit stages and pauses when you need to decide.</p>
+        </div>
+
+        <div class="steps" aria-label="Sopify workflow stages">
+          <article class="step">
+            <span class="step-number">STEP 01</span>
+            <h3>Analyze</h3>
+            <p>Clarify the outcome, evidence, and unresolved boundaries.</p>
+          </article>
+          <article class="step">
+            <span class="step-number">STEP 02</span>
+            <h3>Design</h3>
+            <p>Choose the smallest sufficient path and make decisions visible.</p>
+          </article>
+          <article class="step">
+            <span class="step-number">STEP 03</span>
+            <h3>Develop</h3>
+            <p>Implement the approved tasks and attach focused verification.</p>
+          </article>
+          <article class="step">
+            <span class="step-number">STEP 04</span>
+            <h3>Finalize</h3>
+            <p>Close the plan only when delivery evidence is ready.</p>
+          </article>
+        </div>
+
+        <div class="diagram-frame">
+          <img
+            src="./assets/sopify-workflow.svg?v=20260720-2"
+            width="1200"
+            height="720"
+            loading="lazy"
+            alt="Sopify workflow showing direct requests, managed plans, checkpoints, and finalization"
+          />
+        </div>
+      </section>
+
+      <section class="section section-rule" id="resume">
+        <div class="resume-layout">
+          <div class="resume-copy">
+            <p class="eyebrow">Product form</p>
+            <h2>The host executes. Sopify keeps the work resumable</h2>
+            <p>
+              Sopify is a workflow protocol layer for the AI coding host you already use. It supplies shared rules and
+              preserves plans, decisions, and verification evidence as project files in <code>.sopify/</code>.
+            </p>
+            <p>
+              Ask to continue or run <code>~go</code> in a supported host to resume an unfinished plan. A local handoff pointer
+              provides a same-workspace resume hint.
+            </p>
+            <span class="repo-path">.sopify/plan/…</span>
+            <ul class="host-list" aria-label="Supported AI coding hosts">
+              <li>Codex · verified</li>
+              <li>Claude · verified</li>
+              <li>Qoder · verified</li>
+              <li class="baseline">Copilot · baseline</li>
+            </ul>
+          </div>
+          <a
+            class="diagram-frame architecture-preview"
+            href="./assets/sopify-architecture.svg"
+            aria-label="Open the full Sopify architecture diagram"
+          >
+            <img
+              src="./assets/sopify-architecture.svg"
+              width="960"
+              height="600"
+              loading="lazy"
+              alt="Sopify architecture showing host adapters, shared workflow skills, writer boundaries, and repository state"
+            />
+            <span class="preview-link">Open the technical architecture →</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="section section-rule" id="install">
+        <div class="section-heading">
+          <p class="eyebrow">Install</p>
+          <h2>Add Sopify to the host you already use</h2>
+          <p>The installer checks for Python 3.11 or newer before downloading. You can inspect the script before running it.</p>
+        </div>
+
+        <div class="install-panel">
+          <div class="terminal" aria-label="Sopify install command">
+            <div class="terminal-bar">
+              <span class="terminal-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+              <button
+                class="copy-button"
+                type="button"
+                data-copy-target="install-command"
+                data-copy-success="Copied"
+                data-copy-error="Select command"
+              >Copy</button>
+            </div>
+            <div class="command"><span class="prompt" aria-hidden="true">$</span> <code id="install-command">curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | bash -s -- --target codex:en-US</code></div>
+          </div>
+
+          <aside class="install-note">
+            <h3>Then run <code>~go</code></h3>
+            <ul>
+              <li>Codex, Claude, Qoder, and Copilot targets</li>
+              <li>English and Simplified Chinese instructions</li>
+              <li>macOS, Linux, and Windows setup paths</li>
+            </ul>
+            <p class="install-trust">Installs host instructions and supporting assets. It adds no daemon, editor, or Sopify runtime.</p>
+            <div class="install-links">
+              <a class="text-link" href="./install.sh">Review install.sh →</a>
+              <a class="text-link" href="./docs/getting-started.md">Installation guide →</a>
+            </div>
+          </aside>
+        </div>
+
+        <aside class="companion">
+          <span class="companion-mark" aria-hidden="true">EL</span>
+          <div>
+            <h3>Optional: EvidentLoop</h3>
+            <p>Add auditable code-diff reports with the explicit <code>--with-evidentloop</code> installer flag.</p>
+          </div>
+          <a class="text-link" href="https://evidentloop.github.io/evidentloop/">Learn more →</a>
+        </aside>
+      </section>
+
+      <section class="section section-rule" id="faq">
+        <div class="section-heading">
+          <p class="eyebrow">FAQ</p>
+          <h2>The short version</h2>
+        </div>
+
+        <div class="faq-list">
+          <details>
+            <summary>Is Sopify another editor or agent CLI?</summary>
+            <p>No. Sopify installs workflow instructions and project conventions into supported AI coding hosts.</p>
+          </details>
+          <details>
+            <summary>Does every question start a plan?</summary>
+            <p>No. Ordinary questions and small fixes are handled directly. Sopify resumes an unfinished plan only when you ask to continue or use <code>~go</code>.</p>
+          </details>
+          <details>
+            <summary>What actually travels with the repo?</summary>
+            <p>Plans, decisions, and verification receipts can be tracked under <code>.sopify/</code>. The active-plan and handoff pointers stay gitignored by design.</p>
+          </details>
+          <details>
+            <summary>Does switching hosts give every host identical capabilities?</summary>
+            <p>Codex, Claude, and Qoder have protocol-verified paths. Copilot currently has baseline prompt support; its payload path is more limited.</p>
+          </details>
+          <details>
+            <summary>Is EvidentLoop required?</summary>
+            <p>No. Sopify works on its own. EvidentLoop is an optional companion for auditable reviews of local Git changes.</p>
+          </details>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>Sopify · AI work that can stop, resume, and be inspected.</span>
+      <nav class="footer-links" aria-label="Footer navigation">
+        <a href="https://github.com/evidentloop/sopify">GitHub</a>
+        <a href="./docs/how-sopify-works.en.md">How it works</a>
+        <a href="./LICENSE">Apache 2.0</a>
+        <a href="./LICENSE-docs">Docs CC BY 4.0</a>
+      </nav>
+    </footer>
+  </body>
+</html>

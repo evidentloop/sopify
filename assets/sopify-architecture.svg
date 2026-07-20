@@ -23,7 +23,7 @@
 
   <!-- Title -->
   <text x="480" y="28" text-anchor="middle" class="title">Sopify Architecture</text>
-  <text x="480" y="46" text-anchor="middle" class="subtitle">File-based development protocol — no runtime, rules live in .sopify/</text>
+  <text x="480" y="46" text-anchor="middle" class="subtitle">File-based development protocol — no runtime; project assets live in .sopify/</text>
 
   <!-- ═══ TIER 1 : HOST LAYER (y=58, h=62) ═══ -->
   <rect x="60" y="58" width="840" height="62" rx="8" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
@@ -47,7 +47,7 @@
   <text x="615" y="101" text-anchor="middle" class="node-name" style="font-size:11px">Copilot</text>
 
   <rect x="680" y="84" width="110" height="26" rx="6" fill="#f9fafb" stroke="#d1d5db" stroke-width="1" stroke-dasharray="4,2"/>
-  <text x="735" y="101" text-anchor="middle" class="node-desc">Any Host ...</text>
+  <text x="735" y="101" text-anchor="middle" class="node-desc">Other adapters</text>
 
   <!-- Arrow Tier 1 → 2 -->
   <line x1="480" y1="120" x2="480" y2="136" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a-gray)"/>
@@ -55,7 +55,7 @@
   <!-- ═══ TIER 2 : PROTOCOL KERNEL (y=138, h=112, irreplaceable) ═══ -->
   <rect x="60" y="138" width="840" height="112" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
   <text x="76" y="157" class="tier-label" fill="#2563eb">PROTOCOL KERNEL</text>
-  <text x="240" y="157" class="node-desc">Schema, contracts, sole write path — irreplaceable core</text>
+  <text x="240" y="157" class="node-desc">Schema, contracts, validated protocol writes — irreplaceable core</text>
 
   <rect x="80" y="177" width="138" height="48" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5"/>
   <text x="149" y="198" text-anchor="middle" class="node-name" style="font-size:12px">protocol.md</text>
@@ -67,7 +67,7 @@
 
   <rect x="381" y="177" width="138" height="48" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5"/>
   <text x="450" y="198" text-anchor="middle" class="node-name" style="font-size:12px">sopify_writer</text>
-  <text x="450" y="214" text-anchor="middle" class="node-desc">Sole write path</text>
+  <text x="450" y="214" text-anchor="middle" class="node-desc">Validated protocol writes</text>
 
   <rect x="529" y="177" width="138" height="48" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5"/>
   <text x="598" y="198" text-anchor="middle" class="node-name" style="font-size:12px">receipts</text>
@@ -75,7 +75,7 @@
 
   <!-- 4-step entry callout -->
   <rect x="690" y="165" width="196" height="78" rx="5" fill="#f8fafc" stroke="#93c5fd" stroke-width="0.8" stroke-dasharray="4,2"/>
-  <text x="700" y="180" class="callout-title">4-STEP PROTOCOL ENTRY</text>
+  <text x="700" y="180" class="callout-title">MANAGED PLAN 4-STEP ENTRY</text>
   <text x="700" y="196" class="callout-step">1. active_plan.json → locate plan</text>
   <text x="700" y="210" class="callout-step">2. plan.md → semantic entry point</text>
   <text x="700" y="224" class="callout-step">3. current_handoff.json → resume hint</text>
@@ -87,7 +87,7 @@
   <!-- ═══ TIER 3 : DEFAULT WORKFLOW (y=268, h=72, replaceable) ═══ -->
   <rect x="60" y="268" width="840" height="72" rx="6" fill="#fefce8" stroke="#fde68a" stroke-width="1"/>
   <text x="76" y="287" class="tier-label" fill="#a16207">DEFAULT WORKFLOW</text>
-  <text x="260" y="287" class="node-desc">Built-in skills guide host behavior — replaceable per project</text>
+  <text x="260" y="287" class="node-desc">Managed plan path — three phase skills + explicit finalize action</text>
 
   <rect x="170" y="296" width="130" height="28" rx="5" fill="#ffffff" stroke="#fbbf24" stroke-width="1"/>
   <text x="235" y="314" text-anchor="middle" class="node-name" style="font-size:11px">analyze</text>
@@ -102,7 +102,7 @@
   <line x1="620" y1="310" x2="650" y2="310" stroke="#a16207" stroke-width="1" marker-end="url(#a-orange)"/>
 
   <rect x="650" y="296" width="130" height="28" rx="5" fill="#ffffff" stroke="#fbbf24" stroke-width="1"/>
-  <text x="715" y="314" text-anchor="middle" class="node-name" style="font-size:11px">finalize</text>
+  <text x="715" y="314" text-anchor="middle" class="node-name" style="font-size:11px">~go finalize (action)</text>
 
   <!-- Arrow Tier 3 → 4 -->
   <line x1="380" y1="340" x2="380" y2="356" stroke="#059669" stroke-width="1.5" marker-end="url(#a-green)"/>
@@ -125,15 +125,15 @@
 
   <rect x="490" y="388" width="195" height="48" rx="8" fill="#ffffff" stroke="#059669" stroke-width="1.2"/>
   <text x="588" y="409" text-anchor="middle" class="node-name" style="font-size:12px">History</text>
-  <text x="588" y="425" text-anchor="middle" class="node-desc">Archived decisions</text>
+  <text x="588" y="425" text-anchor="middle" class="node-desc">Archived plans + receipts</text>
 
   <rect x="695" y="388" width="195" height="48" rx="8" fill="#ffffff" stroke="#059669" stroke-width="1.2"/>
   <text x="793" y="409" text-anchor="middle" class="node-name" style="font-size:12px">project.md</text>
   <text x="793" y="425" text-anchor="middle" class="node-desc">Conventions</text>
 
   <!-- Bottom slogans -->
-  <text x="480" y="475" text-anchor="middle" class="slogan">Plans, decisions, handoffs, and receipts persist as project assets — not chat history</text>
-  <text x="480" y="491" text-anchor="middle" class="slogan">Same work, any host — stop, resume, and trace from .sopify/ state</text>
+  <text x="480" y="475" text-anchor="middle" class="slogan">Plans, decisions, and receipts persist as project assets — not chat history</text>
+  <text x="480" y="491" text-anchor="middle" class="slogan">Supported hosts resume from project records when asked; handoff pointers stay local</text>
 
   <!-- Legend -->
   <rect x="60" y="510" width="840" height="66" rx="6" fill="#f9fafb" stroke="#e5e7eb" stroke-width="0.8"/>

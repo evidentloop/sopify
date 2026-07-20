@@ -90,6 +90,7 @@ Next: {下一步提示}
 - 详细内容写入文件
 - 避免冗余描述
 - 标题行可根据 `title_color` 轻量着色（仅标题行），不支持颜色时自动回退纯文本
+- `consult_readonly` 只给结论和必要证据；阻塞项或待决策项仅在存在时展示，然后停车。不得写代码、方案、state、知识库、audit、receipt 或 Git index。
 
 ### C3 | 工作流模式
 
@@ -244,99 +245,9 @@ progressive: 按需创建文件 (默认)
 
 ---
 
-## 阶段执行
+## 阶段路由
 
-### P1 | 需求分析
-
-**目标：** 验证需求完整性，分析代码现状
-
-**执行流程：**
-```
-1. 检查知识库状态
-2. 获取项目上下文
-3. 需求评分 (10分制)
-   - 目标清晰 (0-3)
-   - 预期结果 (0-3)
-   - 边界范围 (0-2)
-   - 约束条件 (0-2)
-4. 评分 ≥ require_score → 继续
-   评分 < require_score → 追问或 AI 决策 (看 auto_decide)
-```
-
-**输出：**
-```
-[my-app-ai] 需求分析 ✓
-
-需求: {一句话描述}
-评分: {X}/10
-范围: {N} files
-
----
-Next: 继续方案设计？(Y/n)
-```
-
-### P2 | 方案设计
-
-**目标：** 设计技术方案，拆分任务
-
-**执行流程：**
-```
-1. 读取 design Skill
-2. 确定方案包级别 (light/standard/architecture)
-3. 生成方案文件
-4. 输出摘要
-```
-
-**输出：**
-```
-[my-app-ai] 方案设计 ✓
-
-方案: .sopify/plan/20260115_feature/
-概要: {一句话技术方案}
-任务: {N} 项
-方案质量: {X}/10
-落地就绪: {Y}/10
-评分理由: {1 行}
-
----
-Changes: 3 files
-  - .sopify/plan/20260115_feature/plan.md
-  - .sopify/plan/20260115_feature/tasks.md
-  - .sopify/plan/20260115_feature/design.md
-
-Next: 在宿主会话中继续评审或执行方案，或直接回复修改意见
-```
-
-### P3 | 开发实施
-
-**目标：** 执行任务，同步知识库
-
-**执行流程：**
-```
-1. 读取 develop Skill
-2. 按 tasks.md 顺序执行
-3. 更新知识库
-4. 将方案更新为 ready_to_archive，保留在 plan/
-5. 输出结果
-```
-
-**输出：**
-```
-[my-app-ai] 开发实施 ✓
-
-完成: {N}/{M} 任务
-测试: {通过/失败/跳过}
-
----
-Changes: 5 files
-  - src/components/xxx.vue
-  - src/types/index.ts
-  - src/hooks/useXxx.ts
-  - .sopify/blueprint/design.md
-  - .sopify/plan/20260115_feature/plan.md
-
-Next: 请验证功能；需要归档时显式运行 ~go finalize
-```
+宿主选择当前入口并加载对应 Skill。阶段判断、输出结构和资源导航以该 Skill 为准；header 只保留路由、协议、授权和通用 footer 契约，不复制阶段流程或模板。
 
 ---
 
@@ -348,9 +259,9 @@ Next: 请验证功能；需要归档时显式运行 ~go finalize
 | `design` | 进入方案设计 | 方案生成、任务拆分 |
 | `develop` | 进入开发实施 | 代码执行、KB同步 |
 | `kb` | 知识库操作 | 初始化、更新策略 |
-| `templates` | 创建文档 | 所有模板定义 |
+| `templates` | 创建知识库文档 | 知识库模板与导航 |
 
-**读取方式：** 以上为当前全部 builtin skill，均为 host 消费的工作流 prompt/skill 资产，不支持独立调用。权威技能清单以 `skills/catalog/builtin_catalog.generated.json` 为准。
+**读取方式：** 以上为当前全部 builtin skill，均由宿主消费；宿主也可按请求直接路由单个 Skill。它们共享 Sopify 的协议与表达边界，不是五个独立产品。权威技能清单以 `skills/catalog/builtin_catalog.generated.json` 为准。
 
 ---
 

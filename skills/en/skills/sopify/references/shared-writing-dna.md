@@ -1,36 +1,28 @@
-# Sopify Shared Writing Standards
+# Sopify Shared Writing Rules
 
-All skills (analyze / design / develop) must follow these 6 rules. Each prevents one class of LLM output accident.
+These rules apply to every skill and consult response. They shape the writing; they do not make phase-specific decisions.
 
-## Rule 1: Separate Facts from Inference
+## Lead with the result
 
-- Inferences must be labeled "inferred" or "likely"
-- Quantitative claims need a source or calculation method; otherwise use "approximately N" or omit
-- Never present guesses as conclusions
+- Answer the user's immediate question before adding evidence or next steps.
+- Name the actor and action: what changed, who must decide, and why. Avoid abstract updates such as “optimization completed” or “closure advanced.”
+- Separate facts, inferences, and recommendations. State the basis for an inference instead of presenting it as fact.
 
-## Rule 2: One Concept, One Term
+## Keep only useful information
 
-- Use the same name for the same entity throughout; no synonym switching
-- Use backticks for code identifiers: ✅ `app_access_token` ❌ application access token
+- Match the response to the task. Do not add sections the user did not ask for.
+- Omit empty optional sections instead of leaving headings or boilerplate.
+- Use one term for one concept. Preserve exact identifiers, paths, and commands, and verify references before citing them.
+- Give a source or calculation for numbers. Label estimates as estimates.
 
-## Rule 3: Minimize Output Scope
+## Write naturally
 
-- Output scope = task scope; do not add unrequested sections
-- No speculative abstractions — do not expand extension points that are not currently needed
-- Optional template blocks with no content should be omitted entirely, not left as empty shells
+- Prefer concrete subjects and verbs. Avoid noun stacks, corporate filler, slogans, and forced conversational phrasing.
+- Chinese and English outputs share facts, boundaries, and conclusions, but should each follow their own language rather than mirror sentence structure.
+- Keep one point per paragraph. Use a table or extra headings only when the information is easier to scan that way.
 
-## Rule 4: Formatting
+## Formatting
 
-- Use consistent capitalization for proper nouns: ✅ `GitHub` `JavaScript`
-- Use standard punctuation consistently
-- Code identifiers in backticks
-
-## Rule 5: Paragraph Constraints
-
-- Paragraphs must not exceed 7 lines; one point per paragraph
-- Use at most three heading levels (`#` `##` `###`); do not use `####`
-
-## Rule 6: Verifiable References
-
-- File paths, function names, and class name references must actually exist
-- Do not reference fabricated APIs, configuration keys, or documentation sections
+- Preserve official capitalization such as `GitHub` and `JavaScript`.
+- Use no more than three heading levels.
+- Do not use decorative emoji in the body.

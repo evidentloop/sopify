@@ -1,104 +1,55 @@
-# Analyze Detailed Rules
+# Analyze Rules
 
 ## Goal
 
-Verify requirement completeness, analyze the current codebase, and provide stable input for downstream design.
+Turn the request and accessible evidence into a stable objective, deliverable, and boundary for host routing or Design. Analyze decides what must be solved; it does not choose the implementation.
 
-## Overall flow
+## 1. Read evidence first
 
-```text
-Phase A (steps 1-4) -> check score >= require_score?
-  ├─ yes  -> Phase B (steps 5-6) -> render summary
-  └─ no   -> check auto_decide
-       ├─ true  -> continue with explicit assumptions
-       └─ false -> ask follow-up questions and wait for user input
-```
+1. Read the current request, material and links the user supplied, and confirmed long-term preferences.
+2. As the task requires, read relevant evidence supplied by the user or available in the current environment, such as documents, API material, designs, code, tests, previous plans, and governing protocols. These examples are not an exhaustive source list. Do not ask for an answer already present in accessible evidence.
+3. Separate the desired outcome, the deliverable for this task, and any suggested implementation path. A suggested path becomes a boundary only when the user states it as one.
+4. When sources conflict, state the conflict, its effect on this delivery, and a recommendation. Do not block on differences that cannot change the result.
 
-## Phase A: Requirement assessment
+The `kb` skill owns knowledge-base loading and materialization. Analyze consumes only the context relevant to the current objective.
 
-### Step 1: Check knowledge-base status
+## 2. Assess completeness
 
-- Condition: project code exists and the task is not "new project bootstrap".
-- Action: check whether `.sopify/` exists.
-- Mark the KB as missing when the directory does not exist.
+The score totals 10 points: goal clarity 0–3, expected outcome 0–3, scope boundary 0–2, and constraints 0–2.
 
-### Step 2: Acquire project context
+- `score >= require_score`: continue and prepare the handoff.
+- Below the threshold with `auto_decide=true`: make only explicit assumptions that are low-risk, reversible, and do not change the objective.
+- Below the threshold with `auto_decide=false`: stop and ask.
 
-- Read `.sopify/user/preferences.md` and KB files first.
-- Scan the codebase only when KB context is insufficient.
-- Follow the `kb` skill for KB-specific rules.
+Ask only when the answer can change the objective, deliverable, scope, success criteria, or whether the current path is safe to execute. Explain the impact of each question. Let the evidence determine the number of questions.
 
-Preference rules:
+## 3. Prepare the handoff
 
-1. Use only explicit long-term user preferences.
-2. Current-task instructions override historical preferences.
-3. Fall back to defaults when no preference matches.
+Analyze returns:
 
-### Step 3: Determine requirement type
+- A one-sentence objective and the current deliverable.
+- Confirmed success criteria, scope, and constraints.
+- The key material or code evidence behind the conclusion.
+- Unknowns that can still change the result; omit this section when there are none.
+- The reason to continue as a consult, quick fix, or Design task.
 
-Candidate types:
+If the suggested path clearly adds cost or risk, Analyze may identify a safer direction and its tradeoff. Design still owns the technical choice.
 
-1. New project bootstrap
-2. New feature development
-3. Feature modification / enhancement
-4. Bug fix
-5. Refactor / optimization
-6. Technical change
+## 4. Routing signal
 
-### Step 4: Score requirement completeness
+- Clear, simple work, usually no more than 2 files: quick fix may be enough.
+- Local work that needs a plan, usually 3–5 files: light plan.
+- More than 5 files, a new feature, cross-module work, or architecture change: standard or architecture Design.
 
-Scoring dimensions (10 total):
+File count is a signal, not an override for safety, protocol, or actual complexity.
 
-- Goal clarity: 0-3
-- Expected outcome: 0-3
-- Scope boundary: 0-2
-- Constraints: 0-2
+Workflow transition:
 
-Scoring rules:
+- In `strict` mode, render the Analyze summary and wait for confirmation before Design.
+- In `adaptive` mode, return the routing signal to the host, which follows the current request and protocol state.
 
-- `score >= require_score`: continue to Phase B.
-- `score < require_score` and `auto_decide=true`: continue with explicit assumptions.
-- `score < require_score` and `auto_decide=false`: ask follow-up questions with `assets/question-output.md`.
+## Boundaries
 
-Follow-up rules:
-
-1. Do not ask for information that code can already provide.
-2. Ask only for user-facing gaps: business logic, target behavior, constraints.
-3. Ask 3-5 questions.
-4. Do not re-ask preferences that are already captured as long-term preferences.
-
-## Phase B: Code analysis
-
-### Step 5: Extract key objectives
-
-- Compress the request into one core objective sentence.
-- Distinguish whether the user provided a real goal or only an implementation path.
-- When the input is mostly a path, treat that path as a candidate approach rather than the success criterion itself.
-- Define verifiable success criteria, and close them in a SMART-style form: deliverable, boundary, constraints, verification, and next stop-point.
-
-### Step 6: Code analysis and technical preparation
-
-- Estimate project and change scale.
-- Locate related modules and key files.
-- Run baseline quality checks (stale information, security risks).
-- Pull external documentation only when necessary.
-
-Stable subset rules:
-
-1. When the goal is still fuzzy, clarify key facts first; only continue with explicit assumptions when `auto_decide=true`.
-2. When the current path is clearly suboptimal, include at least one lower-cost or lower-risk alternative in the analysis summary.
-3. Every alternative path should state the tradeoff instead of giving a bare conclusion.
-4. Do not force deep challenge mode for `quick_fix`, pure state explanation, or lightweight consult flows.
-
-## Adaptive routing
-
-- Simple task (`<=2` files and clear scope): go straight to quick fix.
-- Medium task (`3-5` files): enter the light plan path.
-- Complex task (`>5` files or architectural change): enter full design.
-
-## Phase transitions
-
-- Score below threshold and no auto-decide: keep asking until the score passes or the user cancels.
-- `workflow.mode=strict`: render summary and wait for confirmation.
-- `workflow.mode=adaptive`: continue automatically according to complexity.
-- User says `cancel`: terminate with the cancellation path.
+- Do not generate a plan package or modify code.
+- Do not add host intent types, keyword rules, or regex routing.
+- The host handles `consult_readonly` through the existing protocol; Analyze does not turn a read-only request into a write path.

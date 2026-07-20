@@ -11,13 +11,8 @@ archive_ready: false
 
 # {Feature Name}
 
-Scoring:
-- Solution quality: {X}/10
-- Implementation readiness: {Y}/10
-
-Scoring rationale:
-- Strengths: {1 line}
-- Deductions: {1 line}
+Readiness: {Ready / Needs decision}
+Evidence: {why the path is settled, or which choice can still change scope, the solution path, or acceptance}
 
 ## Context / Why
 

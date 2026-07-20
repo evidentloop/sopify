@@ -13,7 +13,7 @@
 ## 当前焦点
 
 <!-- sopify:auto:focus:start -->
-- 当前无活动 plan；EvidentLoop 可选配套安装、Codex 公开版本 dogfood 与正式 receipt 已收口，归档见 `../history/2026-07/20260718_evidentloop_optional_audit_integration/`。
+- 当前活动 plan：`../plan/20260720_plain_language_output/`；Skill、推广页、产品形态和架构图文字边界已最小收口，方案内审计发现的两项问题已修复并通过全量验证；当前交付只执行已授权的本地 commit 与当前分支 push。
 - MCP tool plane 已完成 Codex-first 持久注册验证和 Claude 会话级只读调用验证，Qoder / Claude / Copilot 的后续持久注册仍按证据推进。
 - P8 Protocol Kernel & Runtime Retirement 已归档至 `../history/2026-06/20260605_p8_protocol_kernel_runtime_retirement`。
 - history 归档：已可用；最近归档：`../history/2026-07/20260717_sopify_entry_preflight`。

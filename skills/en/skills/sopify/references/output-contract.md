@@ -1,74 +1,38 @@
 # Sopify Output Contract
 
-All stages (analyze / design / develop / consult) must follow this contract for final replies. Each section governs one output decision dimension.
+The final response should make the result, evidence, and next step easy to find. Phase templates define required information, not empty sections that must always be rendered.
 
-## 1. Output Path Responsibilities
+## Output path
 
-- **Gate summary**: Routing status from the gate/routing phase. Contains phase title, status line, Context, Changes, Next. Does not contain verification tables, review conclusions, or other skill-level content.
-- **Host completion reply**: The final summary after skill execution. Must follow the corresponding template, including required sections and enhancements when triggered.
-- Gate summary ≠ final reply. The gate tells the host what to do; the host outputs results per template after completing the work.
+- A gate summary reports routing, current state, and the next action only.
+- After a skill or consult finishes, the host renders the final response from the actual outcome. Gate text is not a delivery report.
 
-## 2. Required Sections
+## Required content
 
-| Output Type | Required Sections | Required Tables | Status Symbol |
-|------------|------------------|----------------|---------------|
-| develop/success | Review conclusion, verification summary, Changes, Next | Verification table | ✓ only when all passed |
-| develop/partial | Incomplete items, verification summary, Changes, Next | Incomplete table + verification table | Must use ! |
-| develop/quick-fix | Verification summary, Changes, Next | Simplified verification table | ✓ only when all passed |
-| analyze/success | Assumptions, identified gaps, next-step rationale, Changes, Next | — | — |
-| analyze/question | Question list, Next | — | Must use ? |
-| design/summary | Score lines, Changes, Next | — | — |
-| consult | Changes, Next | — (adaptive) | — |
+| Output | Required content | Status rule |
+|--------|------------------|-------------|
+| `analyze/success` | Objective, deliverable, completeness score, confirmed evidence, explicit assumptions when used, material gaps, next step | Do not mark incomplete input as complete |
+| `analyze/question` | A few decision-relevant questions, their impact, `Next` | `?` |
+| `design/summary` | Approach, task count, `Ready` or `Needs decision` with evidence, `Changes`, `Next` | Do not use `Ready` while a material choice remains |
+| `develop/success` | Result, review conclusion, verification summary, `Changes`, `Next` | Use `✓` only when all checks pass |
+| `develop/partial` | Incomplete work, reason, completed verification, `Changes`, `Next` | `!` |
+| `develop/quick-fix` | Result, relevant verification, `Changes`, `Next` | Use `✓` only when all checks pass |
+| `consult` | Conclusion, necessary evidence, `Changes`, `Next` | Match the actual state |
 
-Table column rule: only show columns that carry meaningful information for the current scenario. Column omission only affects final display, not internal verification logic. `reason_code` is an internal verification field and is not shown in user-facing output.
+`consult_readonly` writes no code, plan, state, knowledge base, audit, receipt, or Git index. Give the conclusion and necessary evidence first; include blockers or decisions only when they exist, then stop.
 
-## 3. Conditional Enhancement & Format Selection
+## Structure and density
 
-Do not force structure on every scenario. Decide whether and how to enhance based on information shape and trigger conditions:
+- Use short paragraphs for a simple answer or one-file change. Do not add a table merely to fill a template.
+- Use a comparison table for several options, numbered steps for a process, or a tree for a directory relationship. Choose at most one main structure per response.
+- Group repeated results by deliverable instead of listing the same “passed” line for every task.
+- Put `Changes` before the final `Next:` line. Use `Changes: 0 files` when nothing changed.
 
-| Trigger Condition | Recommended Format | Typical Scenarios |
-|------------------|-------------------|-------------------|
-| Multi-item comparison/tradeoff (>2 options) | Table | Solution tradeoffs, risk comparison, host capability comparison |
-| Flow/invocation/lifecycle | Numbered sequence | SDK flows, gate → route → handoff |
-| File/component/module composition | Tree structure | Component breakdown, module structure, plan file organization |
-| Score dimensions need visibility | Score table | analyze scoring |
-| Simple Q&A/status confirmation | Keep concise | Single question answers, status confirmations |
+## Before sending
 
-Constraint: use at most one primary structure per reply; avoid stacking table + tree + flow.
-
-### 3.1 Output Density Gradient
-
-Select output density based on scenario complexity. Avoid heavy output for simple tasks:
-
-| Density Level | Applicable Scenarios | Verification Summary |
-|--------------|---------------------|---------------------|
-| Minimal | quick-fix, single-file change, Q&A | Simplified table (≤3 columns), omit review conclusion |
-| Standard | 3-5 task regular develop | Table, omit zero-info columns |
-| Full | 6+ tasks or cross-module delivery | Full table + phased review conclusions |
-
-Density level is auto-inferred from task count and change scope; no user specification needed.
-
-**DO:**
-- Use a comparison table when multi-option tradeoffs are present — make differences visible at a glance
-- Simplify verification summary on success when all passed — omit columns with no information
-- Keep plain text when information shape does not match any structure
-- Trim output by density gradient: quick-fix should not produce a full verification table
-- Group by deliverable when completing 3+ independent tasks; merge same conclusions into one line
-- No decorative emoji in body text (verification summaries, review conclusions, Changes section)
-
-**DON'T:**
-- Multi-option tradeoffs without comparison structure = missed enhancement
-- Forcing tables on simple Q&A = over-enhancement
-- Mixing two or more primary structures in one reply = cognitive overload
-- Expanding 5 identical `passed` conclusions item-by-item = information dilution
-
-## 4. Pre-output Self-check
-
-Before outputting the final reply, verify:
-
-1. Required sections present: check §2 for the current output type.
-2. Status symbol correct: `✓` only when all verifications passed with no degradation or skips; otherwise `!`.
-3. Footer complete: `Changes:` + `Next:` must be present.
-4. Conditional enhancement applied: if the reply meets a §3 trigger condition, use the corresponding structured format.
-5. Density level matched: quick-fix should not produce a full verification table; complex delivery should not lack review conclusions.
-6. Desensitization: rewrite raw `root_cause` enums as human descriptions; do not expose internal scoring weights; do not display gate/handoff JSON fields (`resolution_id`, `run_stage`, etc.).
+1. Does the opening answer the current question?
+2. Does the status symbol match the verification result?
+3. Does `Ready / Needs decision` follow the Design rule?
+4. Have empty sections, repeated conclusions, and internal fields been removed?
+5. Are paths, commands, numbers, and references verifiable?
+6. Are `Changes` and the final `Next:` line present?

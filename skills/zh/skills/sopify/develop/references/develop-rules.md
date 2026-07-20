@@ -46,6 +46,9 @@
 - 没有验证证据，不算完成。
 - `overbuild`、`underbuild`、`应该没问题` 这类主观判断不能替代验证或复审结果。
 - 不允许静默跳过验证，也不允许无限重试。
+- Bug 或共享边界变更先检查受影响调用方，在最窄的共同根因处修复，并验证同类路径。
+- 批准范围内的可逆实现细节由 Develop 处理；只有新事实会改变范围、方案路径或验收标准时才重新规划。
+- Quick Fix 没有 Design 产物时，只做完成当前请求所需的局部选择，不补建方案或复制 Design 规则。
 
 ### 2.2 最小 verify contract
 
@@ -160,37 +163,7 @@ Stage B `code_quality` 至少检查：
 
 ## 步骤 3：知识库同步
 
-同步时机：
-
-1. 每完成一个模块任务后。
-2. 阶段收尾时做统一复核。
-
-同步目标：
-
-- `project.md`
-- `blueprint/background.md`
-- `blueprint/design.md`
-- `blueprint/tasks.md`
-- `user/preferences.md`（仅长期偏好）
-- `user/feedback.jsonl`
-
-正式判断口径：
-
-- `knowledge_sync.skip`：本轮不要求同步。
-- `knowledge_sync.review`：finalize 前至少复核。
-- `knowledge_sync.required`：未更新则 finalize 阻断。
-
-偏好写入（保守策略）：
-
-允许写入：
-
-- 用户明确表达长期偏好（如“以后默认...”）。
-
-禁止写入：
-
-- 一次性指令。
-- 上下文不完整的猜测。
-- 与任务无关的泛化结论。
+实施收尾时调用 KB，按当前方案声明的 `knowledge_sync` 执行并记录结果。同步目标、长期知识判据和偏好写入政策由 KB 唯一负责；Develop 不在这里重新定义。
 
 ## 步骤 4：方案完成态
 

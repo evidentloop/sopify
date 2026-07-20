@@ -1,0 +1,874 @@
+{
+  "schema_version": "0.4",
+  "graph_id": "audit:run-c08dcb466f7d41d79030659d64e2410d",
+  "source": {
+    "type": "git_diff",
+    "ref": "staged",
+    "description": "Sopify 本地 Git diff 审计"
+  },
+  "runs": [
+    {
+      "id": "run-c08dcb466f7d41d79030659d64e2410d",
+      "label": "Sopify 代码变更审计",
+      "status": "concerns",
+      "summary": "改动整体边界清楚，中英文 Skill 所有权、单文件渲染和静态页面均增加了针对性约束，但当前还不是无 finding 的交付候选：应先统一公开页面对 handoff 持久化边界的表述，并补上 Open Graph 图片真实尺寸验证。",
+      "kind": "model_review"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "change-001",
+      "type": "change",
+      "title": "Sopify 变更",
+      "summary": "共 50 个文件发生变更（+2941/-1655，其中 2 个二进制文件）。"
+    },
+    {
+      "id": "file-001",
+      "type": "file",
+      "path": ".nojekyll",
+      "change_type": "added",
+      "additions": 1,
+      "deletions": 0
+    },
+    {
+      "id": "file-002",
+      "type": "file",
+      "path": ".sopify/blueprint/README.md",
+      "change_type": "modified",
+      "additions": 1,
+      "deletions": 1
+    },
+    {
+      "id": "file-003",
+      "type": "file",
+      "path": ".sopify/blueprint/design.md",
+      "change_type": "modified",
+      "additions": 13,
+      "deletions": 4
+    },
+    {
+      "id": "file-004",
+      "type": "file",
+      "path": ".sopify/plan/20260720_plain_language_output/plan.md",
+      "change_type": "added",
+      "additions": 145,
+      "deletions": 0
+    },
+    {
+      "id": "file-005",
+      "type": "file",
+      "path": ".sopify/plan/20260720_plain_language_output/tasks.md",
+      "change_type": "added",
+      "additions": 108,
+      "deletions": 0
+    },
+    {
+      "id": "file-006",
+      "type": "file",
+      "path": "README.md",
+      "change_type": "modified",
+      "additions": 6,
+      "deletions": 7
+    },
+    {
+      "id": "file-007",
+      "type": "file",
+      "path": "README.zh-CN.md",
+      "change_type": "modified",
+      "additions": 6,
+      "deletions": 7
+    },
+    {
+      "id": "file-008",
+      "type": "file",
+      "path": "assets/sopify-architecture.svg",
+      "change_type": "modified",
+      "additions": 10,
+      "deletions": 10
+    },
+    {
+      "id": "file-009",
+      "type": "file",
+      "path": "assets/sopify-og-en.jpg",
+      "change_type": "binary",
+      "additions": 0,
+      "deletions": 0
+    },
+    {
+      "id": "file-010",
+      "type": "file",
+      "path": "assets/sopify-og-zh-CN.jpg",
+      "change_type": "binary",
+      "additions": 0,
+      "deletions": 0
+    },
+    {
+      "id": "file-011",
+      "type": "file",
+      "path": "assets/sopify-product-form-release-en.svg",
+      "change_type": "modified",
+      "additions": 17,
+      "deletions": 17
+    },
+    {
+      "id": "file-012",
+      "type": "file",
+      "path": "assets/sopify-product-form-release.svg",
+      "change_type": "modified",
+      "additions": 24,
+      "deletions": 24
+    },
+    {
+      "id": "file-013",
+      "type": "file",
+      "path": "assets/sopify-site.css",
+      "change_type": "added",
+      "additions": 979,
+      "deletions": 0
+    },
+    {
+      "id": "file-014",
+      "type": "file",
+      "path": "assets/sopify-site.js",
+      "change_type": "added",
+      "additions": 52,
+      "deletions": 0
+    },
+    {
+      "id": "file-015",
+      "type": "file",
+      "path": "assets/sopify-workflow-cn.svg",
+      "change_type": "modified",
+      "additions": 99,
+      "deletions": 101
+    },
+    {
+      "id": "file-016",
+      "type": "file",
+      "path": "assets/sopify-workflow.svg",
+      "change_type": "modified",
+      "additions": 99,
+      "deletions": 102
+    },
+    {
+      "id": "file-017",
+      "type": "file",
+      "path": "index.html",
+      "change_type": "added",
+      "additions": 274,
+      "deletions": 0
+    },
+    {
+      "id": "file-018",
+      "type": "file",
+      "path": "installer/hosts/base.py",
+      "change_type": "modified",
+      "additions": 30,
+      "deletions": 3
+    },
+    {
+      "id": "file-019",
+      "type": "file",
+      "path": "skills/en/header.md.template",
+      "change_type": "modified",
+      "additions": 5,
+      "deletions": 94
+    },
+    {
+      "id": "file-020",
+      "type": "file",
+      "path": "skills/en/skills/sopify/analyze/SKILL.md",
+      "change_type": "modified",
+      "additions": 3,
+      "deletions": 3
+    },
+    {
+      "id": "file-021",
+      "type": "file",
+      "path": "skills/en/skills/sopify/analyze/assets/success-output.md",
+      "change_type": "modified",
+      "additions": 10,
+      "deletions": 7
+    },
+    {
+      "id": "file-022",
+      "type": "file",
+      "path": "skills/en/skills/sopify/analyze/references/analyze-rules.md",
+      "change_type": "modified",
+      "additions": 34,
+      "deletions": 83
+    },
+    {
+      "id": "file-023",
+      "type": "file",
+      "path": "skills/en/skills/sopify/design/SKILL.md",
+      "change_type": "modified",
+      "additions": 6,
+      "deletions": 5
+    },
+    {
+      "id": "file-024",
+      "type": "file",
+      "path": "skills/en/skills/sopify/design/assets/output-summary.md",
+      "change_type": "modified",
+      "additions": 6,
+      "deletions": 7
+    },
+    {
+      "id": "file-025",
+      "type": "file",
+      "path": "skills/en/skills/sopify/design/assets/plan-template.md",
+      "change_type": "modified",
+      "additions": 2,
+      "deletions": 7
+    },
+    {
+      "id": "file-026",
+      "type": "file",
+      "path": "skills/en/skills/sopify/design/references/design-rules.md",
+      "change_type": "modified",
+      "additions": 27,
+      "deletions": 63
+    },
+    {
+      "id": "file-027",
+      "type": "file",
+      "path": "skills/en/skills/sopify/develop/references/develop-rules.md",
+      "change_type": "modified",
+      "additions": 4,
+      "deletions": 31
+    },
+    {
+      "id": "file-028",
+      "type": "file",
+      "path": "skills/en/skills/sopify/kb/SKILL.md",
+      "change_type": "modified",
+      "additions": 37,
+      "deletions": 138
+    },
+    {
+      "id": "file-029",
+      "type": "file",
+      "path": "skills/en/skills/sopify/references/output-contract.md",
+      "change_type": "modified",
+      "additions": 27,
+      "deletions": 63
+    },
+    {
+      "id": "file-030",
+      "type": "file",
+      "path": "skills/en/skills/sopify/references/shared-writing-dna.md",
+      "change_type": "modified",
+      "additions": 19,
+      "deletions": 27
+    },
+    {
+      "id": "file-031",
+      "type": "file",
+      "path": "skills/en/skills/sopify/templates/SKILL.md",
+      "change_type": "modified",
+      "additions": 62,
+      "deletions": 160
+    },
+    {
+      "id": "file-032",
+      "type": "file",
+      "path": "skills/zh/header.md.template",
+      "change_type": "modified",
+      "additions": 5,
+      "deletions": 94
+    },
+    {
+      "id": "file-033",
+      "type": "file",
+      "path": "skills/zh/skills/sopify/analyze/SKILL.md",
+      "change_type": "modified",
+      "additions": 3,
+      "deletions": 3
+    },
+    {
+      "id": "file-034",
+      "type": "file",
+      "path": "skills/zh/skills/sopify/analyze/assets/success-output.md",
+      "change_type": "modified",
+      "additions": 10,
+      "deletions": 7
+    },
+    {
+      "id": "file-035",
+      "type": "file",
+      "path": "skills/zh/skills/sopify/analyze/references/analyze-rules.md",
+      "change_type": "modified",
+      "additions": 34,
+      "deletions": 83
+    },
+    {
+      "id": "file-036",
+      "type": "file",
+      "path": "skills/zh/skills/sopify/design/SKILL.md",
+      "change_type": "modified",
+      "additions": 6,
+      "deletions": 5
+    },
+    {
+      "id": "file-037",
+      "type": "file",
+      "path": "skills/zh/skills/sopify/design/assets/output-summary.md",
+      "change_type": "modified",
+      "additions": 5,
+      "deletions": 6
+    },
+    {
+      "id": "file-038",
+      "type": "file",
+      "path": "skills/zh/skills/sopify/design/assets/plan-template.md",
+      "change_type": "modified",
+      "additions": 2,
+      "deletions": 7
+    },
+    {
+      "id": "file-039",
+      "type": "file",
+      "path": "skills/zh/skills/sopify/design/references/design-rules.md",
+      "change_type": "modified",
+      "additions": 27,
+      "deletions": 63
+    },
+    {
+      "id": "file-040",
+      "type": "file",
+      "path": "skills/zh/skills/sopify/develop/references/develop-rules.md",
+      "change_type": "modified",
+      "additions": 4,
+      "deletions": 31
+    },
+    {
+      "id": "file-041",
+      "type": "file",
+      "path": "skills/zh/skills/sopify/kb/SKILL.md",
+      "change_type": "modified",
+      "additions": 37,
+      "deletions": 138
+    },
+    {
+      "id": "file-042",
+      "type": "file",
+      "path": "skills/zh/skills/sopify/references/output-contract.md",
+      "change_type": "modified",
+      "additions": 31,
+      "deletions": 67
+    },
+    {
+      "id": "file-043",
+      "type": "file",
+      "path": "skills/zh/skills/sopify/references/shared-writing-dna.md",
+      "change_type": "modified",
+      "additions": 19,
+      "deletions": 27
+    },
+    {
+      "id": "file-044",
+      "type": "file",
+      "path": "skills/zh/skills/sopify/templates/SKILL.md",
+      "change_type": "modified",
+      "additions": 43,
+      "deletions": 141
+    },
+    {
+      "id": "file-045",
+      "type": "file",
+      "path": "tests/behavior-scenarios/plain-language-output-v1.json",
+      "change_type": "added",
+      "additions": 76,
+      "deletions": 0
+    },
+    {
+      "id": "file-046",
+      "type": "file",
+      "path": "tests/golden-snapshots.json",
+      "change_type": "modified",
+      "additions": 8,
+      "deletions": 8
+    },
+    {
+      "id": "file-047",
+      "type": "file",
+      "path": "tests/test_golden_snapshots.py",
+      "change_type": "modified",
+      "additions": 6,
+      "deletions": 6
+    },
+    {
+      "id": "file-048",
+      "type": "file",
+      "path": "tests/test_plain_language_contracts.py",
+      "change_type": "added",
+      "additions": 245,
+      "deletions": 0
+    },
+    {
+      "id": "file-049",
+      "type": "file",
+      "path": "tests/test_plan_contract_assets.py",
+      "change_type": "modified",
+      "additions": 7,
+      "deletions": 5
+    },
+    {
+      "id": "file-050",
+      "type": "file",
+      "path": "zh-CN.html",
+      "change_type": "added",
+      "additions": 267,
+      "deletions": 0
+    },
+    {
+      "id": "finding-001",
+      "type": "finding",
+      "category": "scope",
+      "severity": "medium",
+      "status": "open",
+      "title": "公开页面声称 handoff 会随仓库携带，与本次变更明确规定的本地 handoff 边界冲突。",
+      "detail": "同一 diff 中的 README、架构图和 FAQ 都说明 handoff 指针只留在当前机器且不进入 Git，但英文页面的 description、Open Graph 文案和 Hero 仍写着 “Plans, handoffs, and evidence stay with your repo”，中文页面也重复了“方案、交接和证据跟着项目走”。用户可能因此误以为跨机器或跨队友时 handoff 本身会随仓库恢复。",
+      "fingerprint": "sha256:6f3e40a0db63ea8f509392375ad126cab8816a00bdad6a761f6d917d5006c3b7",
+      "model_judgment": {
+        "status": "open",
+        "severity": "medium"
+      },
+      "extensions": {
+        "evidentloop": {
+          "review_finding_id": "f-001",
+          "original_category": "spec_mismatch",
+          "confidence": "speculative"
+        }
+      },
+      "file_path": "index.html",
+      "hunk_id": "hunk:0eb547304658805a:1:1",
+      "start_line": 9,
+      "end_line": 9,
+      "line_side": "new",
+      "highlight_lines": [
+        9
+      ],
+      "hunk": "@@ -0,0 +1,274 @@\n+<!doctype html>\n+<html lang=\"en\">\n+  <head>\n+    <meta charset=\"utf-8\" />\n+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n+    <meta name=\"theme-color\" content=\"#f7f3ea\" />\n+    <meta\n+      name=\"description\"\n+      content=\"Sopify is a resumable, traceable workflow for AI coding. Plans, handoffs, and evidence stay with your repo across tools and sessions.\"\n+    />\n+    <link rel=\"canonical\" href=\"https://evidentloop.github.io/sopify/\" />\n+    <link rel=\"alternate\" hreflang=\"en\" href=\"https://evidentloop.github.io/sopify/\" />\n+    <link rel=\"alternate\" hreflang=\"zh-CN\" href=\"https://evidentloop.github.io/sopify/zh-CN.html\" />\n+    <link rel=\"alternate\" hreflang=\"x-default\" href=\"https://evidentloop.github.io/sopify/\" />\n+    <meta property=\"og:type\" content=\"website\" />\n+    <meta property=\"og:site_name\" content=\"Sopify\" />\n+    <meta property=\"og:locale\" content=\"en_US\" />\n+    <meta property=\"og:locale:alternate\" content=\"zh_CN\" />\n+    <meta property=\"og:title\" content=\"Sopify — Resumable, traceable AI coding\" />\n+    <meta property=\"og:description\" content=\"Ask before writing. Resume after approval. Plans, handoffs, and evidence stay with your repo across AI coding hosts.\" />\n+    <meta property=\"og:url\" content=\"https://evidentloop.github.io/sopify/\" />\n+    <meta property=\"og:image\" content=\"https://evidentloop.github.io/sopify/assets/sopify-og-en.jpg\" />\n+    <meta property=\"og:image:width\" content=\"1200\" />\n+    <meta property=\"og:image:height\" content=\"630\" />\n+    <meta name=\"twitter:card\" content=\"summary_large_image\" />\n+    <title>Sopify — Resumable, traceable AI coding</title>\n+    <link rel=\"icon\" href=\"./assets/logo.svg\" type=\"image/svg+xml\" />\n+    <link rel=\"stylesheet\" href=\"./assets/sopify-site.css\" />\n+    <script src=\"./assets/sopify-site.js\" defer></script>\n+  </head>\n+  <body>\n+    <a class=\"skip-link\" href=\"#main\">Skip to content</a>\n+\n+    <header class=\"site-header\">\n+      <nav class=\"nav\" aria-label=\"Primary navigation\">\n+        <a class=\"brand\" href=\"#top\" aria-label=\"Sopify home\">\n+          <img src=\"./assets/logo.svg\" alt=\"\" width=\"34\" height=\"34\" />\n+          <span>Sopify</span>\n+        </a>\n+        <div class=\"nav-links\">\n+          <a href=\"#why\">Why</a>\n+          <a href=\"#workflow\">Workflow</a>\n+          <a href=\"#install\">Install</a>\n+          <a href=\"#faq\">FAQ</a>\n+          <a href=\"https://github.com/evidentloop/sopify\">GitHub</a>\n+        </div>\n+        <div class=\"language-switcher\" aria-label=\"Language\">\n+          <a href=\"./index.html\" lang=\"en\" aria-current=\"page\">EN</a>\n+          <a href=\"./zh-CN.html\" lang=\"zh-CN\">中文</a>\n+        </div>\n+      </nav>\n+    </header>\n+\n+    <main id=\"main\">\n+      <section class=\"section hero\" id=\"top\">\n+        <div class=\"hero-copy\">\n+          <p class=\"eyebrow\">Sopify / workflow protocol</p>\n+          <h1>Resumable, traceable AI coding</h1>\n+          <p class=\"hero-lede\">\n+            <strong>Ask before writing. Resume after approval.</strong> Plans, handoffs, and evidence stay\n+            with your repo—even when you switch AI coding tools.\n+          </p>\n+          <div class=\"hero-actions\">\n+            <a class=\"button button-primary\" href=\"#install\">Install Sopify <span aria-hidden=\"true\">↓</span></a>\n+            <a class=\"button button-secondary\" href=\"https://github.com/evidentloop/sopify\">View on GitHub</a>\n+          </div>\n+          <p class=\"hero-note\">No new editor. No new CLI. Start with <code>~go</code> in the host you already use.</p>\n+        </div>\n+\n+        <figure class=\"hero-visual\">\n+          <img\n+            src=\"./assets/sopify-cover.jpg\"\n+            width=\"1536\"\n+            height=\"1024\"\n+            alt=\"Hand-drawn Sopify workspace showing an AI workflow that pauses, records a plan, and resumes\"\n+          />\n+          <figcaption>plan → checkpoint → handoff → resume</figcaption>\n+        </figure>\n+      </section>\n+\n+      <section class=\"section section-rule\" id=\"why\">\n+        <div class=\"section-heading\">\n+          <p class=\"eyebrow\">What it prevents</p>\n+          <h2>Move fast without avoidable rework</h2>\n+          <p>Sopify keeps fast AI coding from outrunning the facts, the decision, or the project history.</p>\n+        </div>\n+\n+        <div class=\"card-grid\">\n+          <article class=\"card\">\n+            <span class=\"card-index\">01 / ASK</span>\n+            <h3>Premature coding</h3>\n+            <p>When a requirement or key choice is unresolved, Sopify pauses instead of guessing.</p>\n+          </article>\n+          <article class=\"card\">\n+            <span class=\"card-index\">02 / RESUME</span>\n+            <h3>Lost context</h3>\n+            <p>Plans and evidence live with the repo, so a new session, tool, machine, or teammate can continue from the same record.</p>\n+          </article>\n+          <article class=\"card\">\n+            <span class=\"card-index\">03 / TRACE</span>\n+            <h3>Forgotten decisions</h3>\n+            <p>Requirements, tradeoffs, reviews, and verification evidence remain inspectable project assets.</p>\n+          </article>\n+        </div>\n+      </section>\n+\n+      <section class=\"section section-rule\" id=\"workflow\">\n+        <div class=\"section-heading\">\n+          <p class=\"eyebrow\">How it works</p>\n+          <h2>A workflow with deliberate stopping points</h2>\n+          <p>Simple requests stay simple. Work that needs a plan moves through four explicit stages and pauses when you need to decide.</p>\n+        </div>\n+\n+        <div class=\"steps\" aria-label=\"Sopify workflow stages\">\n+          <article class=\"step\">\n+            <span class=\"step-number\">STEP 01</span>\n+            <h3>Analyze</h3>\n+            <p>Clarify the outcome, evidence, and unresolved boundaries.</p>\n+          </article>\n+          <article class=\"step\">\n+            <span class=\"step-number\">STEP 02</span>\n+            <h3>Design</h3>\n+            <p>Choose the smallest sufficient path and make decisions visible.</p>\n+          </article>\n+          <article class=\"step\">\n+            <span class=\"step-number\">STEP 03</span>\n+            <h3>Develop</h3>\n+            <p>Implement the approved tasks and attach focused verification.</p>\n+          </article>\n+          <article class=\"step\">\n+            <span class=\"step-number\">STEP 04</span>\n+            <h3>Finalize</h3>\n+            <p>Close the plan only when delivery evidence is ready.</p>\n+          </article>\n+        </div>\n+\n+        <div class=\"diagram-frame\">\n+          <img\n+            src=\"./assets/sopify-workflow.svg?v=20260720-2\"\n+            width=\"1200\"\n+            height=\"720\"\n+            loading=\"lazy\"\n+            alt=\"Sopify workflow showing direct requests, managed plans, checkpoints, and finalization\"\n+          />\n+        </div>\n+      </section>\n+\n+      <section class=\"section section-rule\" id=\"resume\">\n+        <div class=\"resume-layout\">\n+          <div class=\"resume-copy\">\n+            <p class=\"eyebrow\">Product form</p>\n+            <h2>The host executes. Sopify keeps the work resumable</h2>\n+            <p>\n+              Sopify is a workflow protocol layer for the AI coding host you already use. It supplies shared rules and\n+              preserves plans, decisions, and verification evidence as project files in <code>.sopify/</code>.\n+            </p>\n+            <p>\n+              Ask to continue or run <code>~go</code> in a supported host to resume an unfinished plan. A local handoff pointer\n+              provides a same-workspace resume hint.\n+            </p>\n+            <span class=\"repo-path\">.sopify/plan/…</span>\n+            <ul class=\"host-list\" aria-label=\"Supported AI coding hosts\">\n+              <li>Codex · verified</li>\n+              <li>Claude · verified</li>\n+              <li>Qoder · verified</li>\n+              <li class=\"baseline\">Copilot · baseline</li>\n+            </ul>\n+          </div>\n+          <a\n+            class=\"diagram-frame architecture-preview\"\n+            href=\"./assets/sopify-architecture.svg\"\n+            aria-label=\"Open the full Sopify architecture diagram\"\n+          >\n+            <img\n+              src=\"./assets/sopify-architecture.svg\"\n+              width=\"960\"\n+              height=\"600\"\n+              loading=\"lazy\"\n+              alt=\"Sopify architecture showing host adapters, shared workflow skills, writer boundaries, and repository state\"\n+            />\n+            <span class=\"preview-link\">Open the technical architecture →</span>\n+          </a>\n+        </div>\n+      </section>\n+\n+      <section class=\"section section-rule\" id=\"install\">\n+        <div class=\"section-heading\">\n+          <p class=\"eyebrow\">Install</p>\n+          <h2>Add Sopify to the host you already use</h2>\n+          <p>The installer checks for Python 3.11 or newer before downloading. You can inspect the script before running it.</p>\n+        </div>\n+\n+        <div class=\"install-panel\">\n+          <div class=\"terminal\" aria-label=\"Sopify install command\">\n+            <div class=\"terminal-bar\">\n+              <span class=\"terminal-dots\" aria-hidden=\"true\"><span></span><span></span><span></span></span>\n+              <button\n+                class=\"copy-button\"\n+                type=\"button\"\n+                data-copy-target=\"install-command\"\n+                data-copy-success=\"Copied\"\n+                data-copy-error=\"Select command\"\n+              >Copy</button>\n+            </div>\n+            <div class=\"command\"><span class=\"prompt\" aria-hidden=\"true\">$</span> <code id=\"install-command\">curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | bash -s -- --target codex:en-US</code></div>\n+          </div>\n+\n+          <aside class=\"install-note\">\n+            <h3>Then run <code>~go</code></h3>\n+            <ul>\n+              <li>Codex, Claude, Qoder, and Copilot targets</li>\n+              <li>English and Simplified Chinese instructions</li>\n+              <li>macOS, Linux, and Windows setup paths</li>\n+            </ul>\n+            <p class=\"install-trust\">Installs host instructions and supporting assets. It adds no daemon, editor, or Sopify runtime.</p>\n+            <div class=\"install-links\">\n+              <a class=\"text-link\" href=\"./install.sh\">Review install.sh →</a>\n+              <a class=\"text-link\" href=\"./docs/getting-started.md\">Installation guide →</a>\n+            </div>\n+          </aside>\n+        </div>\n+\n+        <aside class=\"companion\">\n+          <span class=\"companion-mark\" aria-hidden=\"true\">EL</span>\n+          <div>\n+            <h3>Optional: EvidentLoop</h3>\n+            <p>Add auditable code-diff reports with the explicit <code>--with-evidentloop</code> installer flag.</p>\n+          </div>\n+          <a class=\"text-link\" href=\"https://evidentloop.github.io/evidentloop/\">Learn more →</a>\n+        </aside>\n+      </section>\n+\n+      <section class=\"section section-rule\" id=\"faq\">\n+        <div class=\"section-heading\">\n+          <p class=\"eyebrow\">FAQ</p>\n+          <h2>The short version</h2>\n+        </div>\n+\n+        <div class=\"faq-list\">\n+          <details>\n+            <summary>Is Sopify another editor or agent CLI?</summary>\n+            <p>No. Sopify installs workflow instructions and project conventions into supported AI coding hosts.</p>\n+          </details>\n+          <details>\n+            <summary>Does every question start a plan?</summary>\n+            <p>No. Ordinary questions and small fixes are handled directly. Sopify resumes an unfinished plan only when you ask to continue or use <code>~go</code>.</p>\n+          </details>\n+          <details>\n+            <summary>What actually travels with the repo?</summary>\n+            <p>Plans, decisions, and verification receipts can be tracked under <code>.sopify/</code>. The active-plan and handoff pointers stay gitignored by design.</p>\n+          </details>\n+          <details>\n+            <summary>Does switching hosts give every host identical capabilities?</summary>\n+            <p>Codex, Claude, and Qoder have protocol-verified paths. Copilot currently has baseline prompt support; its payload path is more limited.</p>\n+          </details>\n+          <details>\n+            <summary>Is EvidentLoop required?</summary>\n+            <p>No. Sopify works on its own. EvidentLoop is an optional companion for auditable reviews of local Git changes.</p>\n+          </details>\n+        </div>\n+      </section>\n+    </main>\n+\n+    <footer class=\"site-footer\">\n+      <span>Sopify · AI work that can stop, resume, and be inspected.</span>\n+      <nav class=\"footer-links\" aria-label=\"Footer navigation\">\n+        <a href=\"https://github.com/evidentloop/sopify\">GitHub</a>\n+        <a href=\"./docs/how-sopify-works.en.md\">How it works</a>\n+        <a href=\"./LICENSE\">Apache 2.0</a>\n+        <a href=\"./LICENSE-docs\">Docs CC BY 4.0</a>\n+      </nav>\n+    </footer>\n+  </body>\n+</html>"
+    },
+    {
+      "id": "evidence-001",
+      "type": "evidence",
+      "source": "host_llm",
+      "status": "fail",
+      "summary": "宿主语义审查结论：公开页面声称 handoff 会随仓库携带，与本次变更明确规定的本地 handoff 边界冲突。",
+      "detail": "同一 diff 中的 README、架构图和 FAQ 都说明 handoff 指针只留在当前机器且不进入 Git，但英文页面的 description、Open Graph 文案和 Hero 仍写着 “Plans, handoffs, and evidence stay with your repo”，中文页面也重复了“方案、交接和证据跟着项目走”。用户可能因此误以为跨机器或跨队友时 handoff 本身会随仓库恢复。"
+    },
+    {
+      "id": "finding-002",
+      "type": "finding",
+      "category": "risk",
+      "severity": "low",
+      "status": "open",
+      "title": "Open Graph 图片测试只验证文件存在，没有验证图片实际为声明的 `1200×630`。",
+      "detail": "测试只检查 HTML 中的宽高 metadata 和 JPG 的 `.is_file()`；任意尺寸或损坏的 JPG 都能通过，同时页面仍会发布错误的分享图尺寸声明。",
+      "fingerprint": "sha256:11cbbb629e14adaae49701e9fc2e81ff0b29207ff32863b6d3cb1aced92fdd73",
+      "model_judgment": {
+        "status": "open",
+        "severity": "low"
+      },
+      "extensions": {
+        "evidentloop": {
+          "review_finding_id": "f-002",
+          "original_category": "missing_validation",
+          "confidence": "plausible"
+        }
+      },
+      "file_path": "tests/test_plain_language_contracts.py",
+      "hunk_id": "hunk:ece9fe95cc9ccd93:1:1",
+      "start_line": 173,
+      "end_line": 173,
+      "line_side": "new",
+      "highlight_lines": [
+        173
+      ],
+      "hunk": "@@ -0,0 +1,245 @@\n+from __future__ import annotations\n+\n+import json\n+from pathlib import Path\n+import tempfile\n+\n+import pytest\n+\n+from installer.hosts.base import HEADER_TEMPLATE_NAME, install_host_assets, render_single_file\n+from installer.hosts.copilot import COPILOT_ADAPTER\n+from installer.hosts.qoder import QODER_ADAPTER\n+from installer.validate import validate_host_install\n+\n+\n+REPO_ROOT = Path(__file__).resolve().parents[1]\n+SCENARIOS = REPO_ROOT / \"tests\" / \"behavior-scenarios\" / \"plain-language-output-v1.json\"\n+\n+\n+def _skill_file(language: str, relative: str) -> str:\n+    return (\n+        REPO_ROOT / \"skills\" / language / \"skills\" / \"sopify\" / relative\n+    ).read_text(encoding=\"utf-8\")\n+\n+\n+def test_bilingual_skill_trees_have_the_same_files() -> None:\n+    roots = [REPO_ROOT / \"skills\" / language / \"skills\" / \"sopify\" for language in (\"zh\", \"en\")]\n+    trees = [\n+        {path.relative_to(root).as_posix() for path in root.rglob(\"*\") if path.is_file()}\n+        for root in roots\n+    ]\n+    assert trees[0] == trees[1]\n+\n+\n+def test_behavior_scenarios_are_versioned_and_bounded() -> None:\n+    payload = json.loads(SCENARIOS.read_text(encoding=\"utf-8\"))\n+    assert payload[\"schema_version\"] == 1\n+    assert len(payload[\"scenarios\"]) == 6\n+    assert len(payload[\"comparison\"]) == 6\n+    assert len(payload[\"source_revision\"]) == 40\n+\n+    required = {\n+        \"scenario_id\",\n+        \"language\",\n+        \"surface\",\n+        \"input\",\n+        \"evidence\",\n+        \"expected_behavior\",\n+        \"allowed_write_set\",\n+    }\n+    assert all(required <= scenario.keys() for scenario in payload[\"scenarios\"])\n+    readonly = [\n+        scenario\n+        for scenario in payload[\"scenarios\"]\n+        if scenario[\"surface\"] == \"host/consult_readonly\"\n+    ]\n+    assert {scenario[\"language\"] for scenario in readonly} == {\"zh-CN\", \"en-US\"}\n+    assert all(scenario[\"allowed_write_set\"] == [] for scenario in readonly)\n+    for language, locale in ((\"zh\", \"zh-CN\"), (\"en\", \"en-US\")):\n+        source_root = REPO_ROOT / \"skills\" / language\n+        rendered = render_single_file(\n+            source_root / HEADER_TEMPLATE_NAME,\n+            source_root / \"skills\" / \"sopify\",\n+            COPILOT_ADAPTER,\n+        )\n+        current = {\n+            \"characters\": len(rendered),\n+            \"bytes\": len(rendered.encode(\"utf-8\")),\n+            \"lines\": len(rendered.splitlines()),\n+        }\n+        baseline = payload[\"copilot_baseline\"][locale]\n+        observed_after = payload[\"copilot_after\"][locale]\n+        assert current.keys() == baseline.keys() == observed_after.keys()\n+        assert all(current[metric] < baseline[metric] for metric in current)\n+        assert all(observed_after[metric] < baseline[metric] for metric in observed_after)\n+\n+\n+@pytest.mark.parametrize(\"language\", [\"zh\", \"en\"])\n+def test_design_owns_plan_templates_and_uses_readiness(language: str) -> None:\n+    design_rules = _skill_file(language, \"design/references/design-rules.md\")\n+    plan_template = _skill_file(language, \"design/assets/plan-template.md\")\n+    summary = _skill_file(language, \"design/assets/output-summary.md\")\n+    templates = _skill_file(language, \"templates/SKILL.md\")\n+\n+    assert \"Ready\" in design_rules and \"Needs decision\" in design_rules\n+    assert \"`strict`\" in design_rules and \"`adaptive`\" in design_rules\n+    assert \"Ready\" in plan_template and \"Needs decision\" in plan_template\n+    assert \"Ready\" in summary and \"Needs decision\" in summary\n+    assert \"Solution quality\" not in plan_template\n+    assert \"方案质量\" not in plan_template\n+    assert \"## A2\" not in templates\n+    assert \"Protocol\" in templates\n+    assert \"plan/<plan_id>/plan.md\" not in templates\n+\n+\n+@pytest.mark.parametrize(\"language\", [\"zh\", \"en\"])\n+def test_phase_owners_keep_their_boundaries(language: str) -> None:\n+    analyze = _skill_file(language, \"analyze/references/analyze-rules.md\")\n+    analyze_output = _skill_file(language, \"analyze/assets/success-output.md\")\n+    develop = _skill_file(language, \"develop/references/develop-rules.md\")\n+    kb = _skill_file(language, \"kb/SKILL.md\")\n+    output_contract = _skill_file(language, \"references/output-contract.md\")\n+\n+    assert \"consult_readonly\" in analyze\n+    assert \"`strict`\" in analyze and \"`adaptive`\" in analyze\n+    assert \"证据来源不限\" in analyze or \"not an exhaustive source list\" in analyze\n+    assert \"Deliverable:\" in analyze_output or \"交付物:\" in analyze_output\n+    assert \"Assumptions used\" in analyze_output or \"本次采用的假设\" in analyze_output\n+    assert \"Type:\" not in analyze_output and \"类型:\" not in analyze_output\n+    assert \"explicit assumptions when used\" in output_contract or \"实际采用的假设\" in output_contract\n+    assert \"common root cause\" in develop or \"共同根因\" in develop\n+    assert \"knowledge_sync\" in kb\n+    assert \"sopify_writer\" in kb\n+\n+\n+@pytest.mark.parametrize(\"language\", [\"zh\", \"en\"])\n+def test_copilot_single_file_has_no_script_source_or_dangling_path(language: str) -> None:\n+    source_root = REPO_ROOT / \"skills\" / language\n+    rendered = render_single_file(\n+        source_root / HEADER_TEMPLATE_NAME,\n+        source_root / \"skills\" / \"sopify\",\n+        COPILOT_ADAPTER,\n+    )\n+\n+    assert \"<!-- inlined: analyze/scripts/\" not in rendered\n+    assert \"<!-- inlined: design/scripts/\" not in rendered\n+    assert \"scripts/score_requirement.py\" not in rendered\n+    assert \"scripts/select_plan_level.py\" not in rendered\n+    assert \"references/assets/scripts\" not in rendered\n+    assert \"import argparse\" not in rendered\n+    assert \"Ready\" in rendered and \"Needs decision\" in rendered\n+\n+\n+def test_qoder_real_install_consumes_header_and_skill_tree() -> None:\n+    with tempfile.TemporaryDirectory() as temp_dir:\n+        home_root = Path(temp_dir)\n+        install_host_assets(\n+            QODER_ADAPTER,\n+            repo_root=REPO_ROOT,\n+            home_root=home_root,\n+            language_directory=\"CN\",\n+        )\n+        validate_host_install(QODER_ADAPTER, home_root=home_root)\n+\n+        installed = home_root / \".qoder\"\n+        header = (installed / \"AGENTS.md\").read_text(encoding=\"utf-8\")\n+        analyze = (\n+            installed / \"skills\" / \"sopify\" / \"analyze\" / \"references\" / \"analyze-rules.md\"\n+        ).read_text(encoding=\"utf-8\")\n+        assert \"直接路由单个 Skill\" in header\n+        assert \"先读证据\" in analyze\n+\n+\n+@pytest.mark.parametrize(\n+    \"page,image_name,canonical\",\n+    [\n+        (\"index.html\", \"sopify-og-en.jpg\", \"https://evidentloop.github.io/sopify/\"),\n+        (\n+            \"zh-CN.html\",\n+            \"sopify-og-zh-CN.jpg\",\n+            \"https://evidentloop.github.io/sopify/zh-CN.html\",\n+        ),\n+    ],\n+)\n+def test_static_pages_keep_release_metadata(\n+    page: str, image_name: str, canonical: str\n+) -> None:\n+    html = (REPO_ROOT / page).read_text(encoding=\"utf-8\")\n+    assert f'<link rel=\"canonical\" href=\"{canonical}\"' in html\n+    assert 'hreflang=\"en\"' in html and 'hreflang=\"zh-CN\"' in html\n+    assert f\"/assets/{image_name}\" in html\n+    assert 'property=\"og:image:width\" content=\"1200\"' in html\n+    assert 'property=\"og:image:height\" content=\"630\"' in html\n+    assert (REPO_ROOT / \"assets\" / image_name).is_file()\n+    assert (REPO_ROOT / \".nojekyll\").is_file()\n+\n+\n+@pytest.mark.parametrize(\n+    \"page,readme,asset,label,required\",\n+    [\n+        (\n+            \"index.html\",\n+            \"README.md\",\n+            \"sopify-product-form-release-en.svg\",\n+            \"Product form\",\n+            (\">HOST</text>\", \">SKILL</text>\", \">ASSETS</text>\", \">HANDOFF</text>\", \">ARCHIVE</text>\", \"RESUME WHEN ASKED\", \"Read evidence · score · ask if blocked\", \"Knowledge policy · document structure\", \">FINALIZES</text>\"),\n+        ),\n+        (\n+            \"zh-CN.html\",\n+            \"README.zh-CN.md\",\n+            \"sopify-product-form-release.svg\",\n+            \"产品形态\",\n+            (\">HOST</text>\", \">SKILL</text>\", \">ASSETS</text>\", \">HANDOFF</text>\", \">ARCHIVE</text>\", \"明确要求后再接续\", \"先读证据 · 评分 · 必要时追问\", \"知识政策 · 文档结构\", \">FINALIZES</text>\"),\n+        ),\n+    ],\n+)\n+def test_product_form_is_clear_without_duplicating_the_homepage(\n+    page: str,\n+    readme: str,\n+    asset: str,\n+    label: str,\n+    required: tuple[str, ...],\n+) -> None:\n+    html = (REPO_ROOT / page).read_text(encoding=\"utf-8\")\n+    readme_text = (REPO_ROOT / readme).read_text(encoding=\"utf-8\")\n+    svg = (REPO_ROOT / \"assets\" / asset).read_text(encoding=\"utf-8\")\n+\n+    assert label in html\n+    assert \"./assets/sopify-architecture.svg\" in html\n+    assert \"sopify-product-form-release\" not in html\n+    assert f\"./assets/{asset}\" in readme_text\n+    assert all(term in svg for term in required)\n+    lowered_svg = svg.lower()\n+    assert \"any host resumes\" not in lowered_svg\n+    assert \"always auditable\" not in lowered_svg\n+    assert \"community philosophy\" not in lowered_svg\n+    assert \"任一宿主打开即消费\" not in svg\n+    assert \"社区哲学\" not in svg\n+    assert \"永久可审计\" not in svg\n+    assert \">RESUMES</text>\" not in svg\n+\n+\n+def test_architecture_copy_matches_protocol_boundaries() -> None:\n+    svg = (REPO_ROOT / \"assets\" / \"sopify-architecture.svg\").read_text(\n+        encoding=\"utf-8\"\n+    )\n+\n+    entry_steps = (\n+        \"active_plan.json → locate plan\",\n+        \"plan.md → semantic entry point\",\n+        \"current_handoff.json → resume hint\",\n+        \"receipts/ → latest evidence\",\n+    )\n+    assert all(step in svg for step in entry_steps)\n+    assert [svg.index(step) for step in entry_steps] == sorted(\n+        svg.index(step) for step in entry_steps\n+    )\n+    assert \"MANAGED PLAN 4-STEP ENTRY\" in svg\n+    assert \"three phase skills + explicit finalize action\" in svg\n+    assert \"~go finalize (action)\" in svg\n+    assert \"Validated protocol writes\" in svg\n+    assert \"handoff pointers stay local\" in svg\n+    assert \"Any Host\" not in svg\n+    assert \"any host\" not in svg\n+    assert \"rules live in .sopify\" not in svg\n+    assert \"Sole write path\" not in svg"
+    },
+    {
+      "id": "evidence-002",
+      "type": "evidence",
+      "source": "host_llm",
+      "status": "fail",
+      "summary": "宿主语义审查结论：Open Graph 图片测试只验证文件存在，没有验证图片实际为声明的 `1200×630`。",
+      "detail": "测试只检查 HTML 中的宽高 metadata 和 JPG 的 `.is_file()`；任意尺寸或损坏的 JPG 都能通过，同时页面仍会发布错误的分享图尺寸声明。"
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-001",
+      "type": "contains_change",
+      "from": "run-c08dcb466f7d41d79030659d64e2410d",
+      "to": "change-001"
+    },
+    {
+      "id": "edge-002",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-001"
+    },
+    {
+      "id": "edge-003",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-002"
+    },
+    {
+      "id": "edge-004",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-003"
+    },
+    {
+      "id": "edge-005",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-004"
+    },
+    {
+      "id": "edge-006",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-005"
+    },
+    {
+      "id": "edge-007",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-006"
+    },
+    {
+      "id": "edge-008",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-007"
+    },
+    {
+      "id": "edge-009",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-008"
+    },
+    {
+      "id": "edge-010",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-009"
+    },
+    {
+      "id": "edge-011",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-010"
+    },
+    {
+      "id": "edge-012",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-011"
+    },
+    {
+      "id": "edge-013",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-012"
+    },
+    {
+      "id": "edge-014",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-013"
+    },
+    {
+      "id": "edge-015",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-014"
+    },
+    {
+      "id": "edge-016",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-015"
+    },
+    {
+      "id": "edge-017",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-016"
+    },
+    {
+      "id": "edge-018",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-017"
+    },
+    {
+      "id": "edge-019",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-018"
+    },
+    {
+      "id": "edge-020",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-019"
+    },
+    {
+      "id": "edge-021",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-020"
+    },
+    {
+      "id": "edge-022",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-021"
+    },
+    {
+      "id": "edge-023",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-022"
+    },
+    {
+      "id": "edge-024",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-023"
+    },
+    {
+      "id": "edge-025",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-024"
+    },
+    {
+      "id": "edge-026",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-025"
+    },
+    {
+      "id": "edge-027",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-026"
+    },
+    {
+      "id": "edge-028",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-027"
+    },
+    {
+      "id": "edge-029",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-028"
+    },
+    {
+      "id": "edge-030",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-029"
+    },
+    {
+      "id": "edge-031",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-030"
+    },
+    {
+      "id": "edge-032",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-031"
+    },
+    {
+      "id": "edge-033",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-032"
+    },
+    {
+      "id": "edge-034",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-033"
+    },
+    {
+      "id": "edge-035",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-034"
+    },
+    {
+      "id": "edge-036",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-035"
+    },
+    {
+      "id": "edge-037",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-036"
+    },
+    {
+      "id": "edge-038",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-037"
+    },
+    {
+      "id": "edge-039",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-038"
+    },
+    {
+      "id": "edge-040",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-039"
+    },
+    {
+      "id": "edge-041",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-040"
+    },
+    {
+      "id": "edge-042",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-041"
+    },
+    {
+      "id": "edge-043",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-042"
+    },
+    {
+      "id": "edge-044",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-043"
+    },
+    {
+      "id": "edge-045",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-044"
+    },
+    {
+      "id": "edge-046",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-045"
+    },
+    {
+      "id": "edge-047",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-046"
+    },
+    {
+      "id": "edge-048",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-047"
+    },
+    {
+      "id": "edge-049",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-048"
+    },
+    {
+      "id": "edge-050",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-049"
+    },
+    {
+      "id": "edge-051",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-050"
+    },
+    {
+      "id": "edge-052",
+      "type": "finding_in_file",
+      "from": "finding-001",
+      "to": "file-017"
+    },
+    {
+      "id": "edge-053",
+      "type": "supported_by_evidence",
+      "from": "finding-001",
+      "to": "evidence-001"
+    },
+    {
+      "id": "edge-054",
+      "type": "finding_in_file",
+      "from": "finding-002",
+      "to": "file-048"
+    },
+    {
+      "id": "edge-055",
+      "type": "supported_by_evidence",
+      "from": "finding-002",
+      "to": "evidence-002"
+    }
+  ],
+  "summary": {
+    "review_status": "complete",
+    "verdict": "concerns",
+    "risk_score": 28,
+    "finding_count": 2,
+    "unscored_finding_count": 0,
+    "open_finding_count": 2,
+    "fix_count": 0,
+    "fix_done_count": 0,
+    "summary_audit_status": "not_audited",
+    "basis": "model_review",
+    "extensions": {
+      "evidentloop": {
+        "review_diagnostics": {
+          "intent_coverage": "partial",
+          "files_reviewed": 50,
+          "files_total": 50,
+          "pack_completeness": 0.65,
+          "raw_findings_count": 2,
+          "emitted_findings_count": 2,
+          "reviewer_failure_reason": null,
+          "advisory_verdict": "concerns",
+          "advisory_rationale": "review found medium/high-severity issues"
+        }
+      }
+    }
+  },
+  "extensions": {
+    "evidentloop": {
+      "profile": "code_diff",
+      "run_id": "run-c08dcb466f7d41d79030659d64e2410d",
+      "adapter": "gitdiff/v0",
+      "diff_version": "sha256:970feb79b5d4fdc6ef23b5b5da5a8ccb5fb886dc7d4e55132683306c66ad8a45",
+      "reviewer_prompt": {
+        "source": "product",
+        "version": "v0.5",
+        "sha256": "sha256:4cca90acea77993964a158db97814f627407a3c1a7036eda41200fd3a6f091e6"
+      }
+    }
+  }
+}

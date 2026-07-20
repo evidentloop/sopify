@@ -1,0 +1,40 @@
+{
+  "evidence": {
+    "audit_html": ".sopify/plan/20260720_plain_language_output/audits/plan/audit.html",
+    "audit_path": ".sopify/plan/20260720_plain_language_output/audits/plan/audit.json",
+    "findings": [
+      {
+        "id": "f-001",
+        "status": "fixed",
+        "verification": "Public copy now tracks plans, decisions, and verification evidence; handoff remains a local pointer."
+      },
+      {
+        "id": "f-002",
+        "status": "fixed",
+        "verification": "The existing contract test decodes both JPEG files and verifies 1200x630 dimensions."
+      }
+    ],
+    "report_review_status": "complete",
+    "report_verdict": "concerns",
+    "risk_score": 28,
+    "source": "evidentloop",
+    "verification": {
+      "pytest": "280 passed, 71 subtests passed",
+      "responsive_width": "375px without horizontal overflow",
+      "scoped_ruff": "passed",
+      "svg_geometry_and_composition": "passed"
+    }
+  },
+  "provenance": {
+    "diff_version": "sha256:970feb79b5d4fdc6ef23b5b5da5a8ccb5fb886dc7d4e55132683306c66ad8a45",
+    "plan_id": "20260720_plain_language_output",
+    "plan_version": "sha256:6aa97395001ed8e8890876796bc9d15199478664edd0eeeec98a8836aab336ee",
+    "receipt_id": "verify_001",
+    "report_version": "sha256:43348d575ff6944c105e5fe48021128f1be635e63059b197f4d973c4f14b068e",
+    "review_context": "fresh_agent_nonisolated",
+    "run_id": "run-c08dcb466f7d41d79030659d64e2410d",
+    "source": "evidentloop"
+  },
+  "timestamp": "2026-07-20T13:54:42+00:00",
+  "verdict": "pass_with_resolved_findings"
+}
