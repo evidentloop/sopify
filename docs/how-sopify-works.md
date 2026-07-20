@@ -60,7 +60,7 @@ Sopify 把 AI 开发过程中的**方案、决策、交接、执行/验证证据
 
 ### 可选验证器
 
-Sopify 不默认安装或运行验证器。只用 Sopify、使用其他 Verifier、使用已独立安装的 EvidentLoop 都是完整路径。`--with-evidentloop` 只是显式安装便利，不是运行开关：新装组件使用本次 Sopify 发布验证过的版本和来源，已有组件只在兼容检查通过后复用。Sopify 不声明复用的 Skill 与固定来源完全相同，也不升级、卸载或记录组件状态。Copilot Skill 是项目中的 `.github/skills/evidentloop/` 内容；用户按需审查和提交，Sopify 不会自动提交或更新。安装成功只证明本地放置和兼容性；Skill discovery 与审计 E2E 仍需宿主证据，云端也不会自动获得本机安装的 CLI。
+Sopify 不默认安装或运行验证器。只用 Sopify、使用其他 Verifier、使用已独立安装的 EvidentLoop 都是完整路径。`--with-evidentloop` 只是显式安装便利，不是运行开关：新装组件使用 EvidentLoop 当前官方来源，已有组件通过健康检查后复用且不自动升级。兼容性由 EvidentLoop 自身负责，Sopify 不维护版本矩阵，也不卸载或记录组件状态。Copilot Skill 是项目中的 `.github/skills/evidentloop/` 内容；用户按需审查和提交，Sopify 不会自动提交或更新。安装成功只证明本地放置和健康检查；Skill discovery 与审计 E2E 仍需宿主证据，云端也不会自动获得本机安装的 CLI。
 
 独立审计不必绑定方案。正式方案主审计可放在 `audits/plan/`，针对性审计可放在 `audits/<scope>/`；只有用户采用为正式证据时，宿主才通过 writer 写 receipt。`audits/` 不进入 4 步默认读取链。
 

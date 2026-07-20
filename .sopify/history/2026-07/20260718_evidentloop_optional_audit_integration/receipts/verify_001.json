@@ -1,0 +1,20 @@
+{
+  "evidence": {
+    "audit_path": "audits/plan/audit.json",
+    "diff_version": "sha256:4146c123c0a2e4aac9392e5e3917b1f7c6f252614a171fc07a01ddd60bbbd8f3",
+    "package_version": "0.1.0a2",
+    "prompt_version": "v0.5",
+    "report_version": "sha256:98b12be84e5a57f7d4f3f848ef6e4212d895eaf7b93f9f4762c9efd92661c1ef",
+    "review_status": "complete",
+    "run_id": "run-feedback-00fbe17d21db032d",
+    "schema_version": "0.4",
+    "source": "evidentloop"
+  },
+  "provenance": {
+    "plan_id": "20260718_evidentloop_optional_audit_integration",
+    "plan_version": "sha256:dc699fb7fba4b99afe4264903a0940647fe74ca526ee66878f931da813f13c90",
+    "receipt_id": "verify_001"
+  },
+  "timestamp": "2026-07-20T04:41:49+00:00",
+  "verdict": "pass_candidate"
+}

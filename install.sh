@@ -26,9 +26,9 @@ Options:
   --language <lang>      Copilot only: bootstrap output language (en-US/zh-CN).
   --no-copilot           Copilot only: skip Copilot instruction file
                          distribution and only write workspace markers.
-  --with-evidentloop     Install the EvidentLoop CLI and Skill versions tested
-                         with this Sopify release, or reuse compatible existing
-                         components. Disabled by default.
+  --with-evidentloop     Install the current EvidentLoop CLI and Skill from
+                         official sources, or reuse healthy existing components.
+                         Disabled by default.
   --verbose              Show full diagnostic install details.
   --ref <tag-or-branch>  Advanced: override the source ref.
   -h, --help             Show this help.

@@ -56,8 +56,8 @@ python3 /tmp/sopify/scripts/sopify_init.py init --workspace .
 
 Sopify works without EvidentLoop. [EvidentLoop](https://github.com/evidentloop/evidentloop)
 turns a local Git diff into an interactive, feedback-ready HTML audit report. To install
-the versions tested with this Sopify release, or reuse compatible existing components,
-opt in explicitly:
+the current EvidentLoop CLI and Skill from their official sources, or reuse healthy
+existing components, opt in explicitly:
 
 ```bash
 curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | bash -s -- --target codex:en-US --with-evidentloop
@@ -82,13 +82,17 @@ These locations follow the host documentation for
 [Qoder](https://docs.qoder.com/en/cli/Skills), and
 [GitHub Copilot](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills).
 
-For new installs, Sopify uses EvidentLoop `0.1.0a2`, Skills CLI `1.5.9`, and the tested
-Skill source commit. Existing components are reused only after compatibility checks;
-Sopify does not claim they are identical to that source. `uv` is required only when the
-CLI is missing; Git and `npx` only when the Skill is missing. Incomplete or incompatible
-components are reported and left unchanged. Sopify is installed first and remains usable
-if the optional EvidentLoop install does not finish. You can install EvidentLoop separately
-later from its official repository, or rerun the same command.
+For new installs, Sopify follows EvidentLoop's current official commands: `uv tool install
+evidentloop` for the CLI and `npx skills@latest add evidentloop/evidentloop --skill
+evidentloop` for the Skill. Existing components are reused when the CLI doctor is healthy
+and the Skill front matter declares `name: evidentloop`; Sopify does not upgrade them or
+maintain an EvidentLoop compatibility matrix. `uv` is required only when the CLI is
+missing; Git and `npx` only when the Skill is missing.
+
+Sopify is installed first and remains usable if the optional setup does not finish. Skill
+downloads happen in a temporary directory and are copied to the final host path only after
+validation, so a failed attempt does not leave a partial Skill there. Rerun the same
+command, or install EvidentLoop independently from its official repository.
 
 After a fresh CLI install, the installer also checks that a future host can resolve
 `evidentloop` from `PATH`. If the uv tool directory is not visible yet, it leaves the
@@ -101,7 +105,7 @@ The installer writes only `.github/skills/evidentloop/`; it does not add a proje
 location and becomes part of your project: review it, and commit it yourself if a cloud
 workflow needs it. Sopify does not commit or update it. A cloud-hosted agent also does not
 automatically receive the EvidentLoop CLI installed on your local machine. This option
-proves local component placement and compatibility only; Skill discovery and audit E2E
+proves local component placement and health only; Skill discovery and audit E2E
 still require host evidence, and cloud CLI availability must be provisioned separately.
 
 ## Host-Specific Setup

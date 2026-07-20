@@ -87,8 +87,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--with-evidentloop",
         action="store_true",
         help=(
-            "Install the EvidentLoop CLI and Skill versions tested with this Sopify release, "
-            "or reuse compatible existing components. This option is disabled by default "
+            "Install the current EvidentLoop CLI and Skill from their official sources, "
+            "or reuse healthy existing components. This option is disabled by default "
             "and is not a runtime switch."
         ),
     )
@@ -217,7 +217,7 @@ def _install_evidentloop_if_requested(
         return install_evidentloop_companion(plan)
     except InstallError as exc:
         raise InstallError(
-            "Sopify core installation completed, but EvidentLoop was not installed."
+            "Sopify core installation completed, but EvidentLoop setup did not complete."
         ) from exc
 
 

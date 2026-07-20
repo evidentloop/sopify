@@ -1,0 +1,15 @@
+{
+  "evidence": {
+    "audit_path": "audits/plan/audit.json",
+    "protocol_smokes": "5 passed",
+    "targeted_tests": "55 passed, 48 subtests passed",
+    "verification_receipt": "receipts/verify_001.json"
+  },
+  "provenance": {
+    "plan_id": "20260718_evidentloop_optional_audit_integration",
+    "plan_version": "sha256:f6f1d87168a690b0bcde68ae9a942ef1a8a23aca816efeb0cb6ca0d347c05fea",
+    "receipt_id": "final"
+  },
+  "timestamp": "2026-07-20T04:47:10+00:00",
+  "verdict": "finalized"
+}

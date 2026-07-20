@@ -304,7 +304,7 @@ def render_distribution_user_result(report: DistributionInstallReport) -> str:
 def render_distribution_error(exc: DistributionError) -> str:
     """Render a stable error surface for shell, PowerShell, and repo-local installs."""
     title = (
-        "Sopify installed; EvidentLoop was not installed:"
+        "Sopify installed; EvidentLoop setup did not complete:"
         if exc.reason_code == "EVIDENTLOOP_COMPANION_INCOMPLETE"
         else "Sopify install failed:"
     )
@@ -326,17 +326,17 @@ def render_distribution_user_error(exc: DistributionError, *, language: str = "e
             return "\n".join(
                 [
                     "Sopify 已安装，可以正常使用。",
-                    "EvidentLoop 未安装完成。",
+                    "EvidentLoop 安装未完成。",
                     "",
                     "下一步：",
-                    "  稍后单独安装 EvidentLoop，或重新运行同一命令：",
+                    "  可重新运行同一命令，或单独安装 EvidentLoop：",
                     "  https://github.com/evidentloop/evidentloop",
                 ]
             )
         return "\n".join(
             [
                 "Sopify is installed and ready to use.",
-                "EvidentLoop was not installed.",
+                "EvidentLoop setup did not complete.",
                 "",
                 "Next:",
                 f"  {exc.next_step}",
@@ -464,37 +464,14 @@ def _map_install_error(exc: InstallError) -> DistributionError:
             detail=detail,
             next_step="Omit `--workspace` and trigger Sopify inside that project instead. On first activation, choose whether to enable the current directory or the repository root.",
         )
-    if detail.startswith("EvidentLoop companion install is not supported"):
-        return DistributionError(
-            phase="input",
-            reason_code="EVIDENTLOOP_HOST_UNSUPPORTED",
-            detail=detail,
-            next_step="Install Sopify without `--with-evidentloop`, or choose a host with a declared EvidentLoop Skill path.",
-        )
-    if detail.startswith("EvidentLoop companion preflight failed"):
-        return DistributionError(
-            phase="input",
-            reason_code="EVIDENTLOOP_PREREQUISITE_MISSING",
-            detail=detail,
-            next_step="Install the missing command named above, then rerun the same installer command.",
-        )
-    if detail.startswith("Existing EvidentLoop") or detail.startswith(
-        "EvidentLoop Skill directory is incomplete"
-    ):
-        return DistributionError(
-            phase="input",
-            reason_code="EVIDENTLOOP_INCOMPATIBLE",
-            detail=detail,
-            next_step="Keep the existing installation unchanged and resolve its version or directory contents using https://github.com/evidentloop/evidentloop#quick-start.",
-        )
     if detail.startswith(
-        "Sopify core installation completed, but EvidentLoop was not installed"
+        "Sopify core installation completed, but EvidentLoop setup did not complete"
     ):
         return DistributionError(
             phase="install",
             reason_code="EVIDENTLOOP_COMPANION_INCOMPLETE",
             detail=detail,
-            next_step="Install EvidentLoop separately later, or rerun the same command: https://github.com/evidentloop/evidentloop",
+            next_step="Rerun the same command, or install EvidentLoop separately: https://github.com/evidentloop/evidentloop",
         )
     if detail.startswith("Missing source"):
         return DistributionError(
@@ -868,13 +845,9 @@ def _is_copilot_project_skill(skill_path: Path) -> bool:
 
 def _companion_action_label(action: str, language: str) -> str:
     if action == "installed":
-        return (
-            "已安装（本次 Sopify 发布验证版本）"
-            if language == "zh-CN"
-            else "installed (tested with this Sopify release)"
-        )
+        return "已安装" if language == "zh-CN" else "installed"
     if action == "reused":
-        return "已复用（已通过兼容检查）" if language == "zh-CN" else "reused (compatibility checked)"
+        return "已复用（健康检查通过）" if language == "zh-CN" else "reused (health check passed)"
     return _action_label(action, language)
 
 

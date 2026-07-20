@@ -4,6 +4,7 @@
 
 ## 索引
 
+- `2026-07-20` [`20260718_evidentloop_optional_audit_integration`](2026-07/20260718_evidentloop_optional_audit_integration/) - architecture - 产品无关 Verifier 契约、EvidentLoop 可选配套安装与公开版本 Codex dogfood 收口；正式报告经用户裁定并由 receipt 绑定方案、diff 与报告版本
 - `2026-07-17` [`20260717_sopify_entry_preflight`](2026-07/20260717_sopify_entry_preflight/) - standard - 会话入口状态预检：显式 managed 意图才接续；lite 客观状态、writer 原子收据、防重复询问与并行信号边界闭环，Codex 代表回放及产品/架构双审通过
 - `2026-07-16` [`20260626_mcp_tool_plane_pilot`](2026-07/20260626_mcp_tool_plane_pilot/) - standard - MCP tool plane pilot：确定性协议读/检查与 guarded plan receipt 写入；Codex-first repo-local 注册、真实配置和 stdio tool smoke 通过；其他宿主扩展保持证据门控
 - `2026-06-10` [`20260605_p8_protocol_kernel_runtime_retirement`](2026-06/20260605_p8_protocol_kernel_runtime_retirement/) - architecture - P8 Protocol Kernel & Runtime Retirement: runtime 物理删除（46 files / ~15.6K LOC），canonical root .sopify-skills→.sopify，state model 6→2 files，Qoder PROTOCOL_VERIFIED host proof，产品定位"开发过程协议层"，蓝图/README/架构图全量对齐

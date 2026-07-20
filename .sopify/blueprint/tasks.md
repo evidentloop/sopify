@@ -112,12 +112,6 @@ P0→P4c 主航道已全部完成。后续执行遵循以下原则：
 - 服务主线：P5（决定哪些 handoff 生产面是 deep-only vs 可降级为 convention 自驱）
 - 最小交付证据：Gap 分析报告，覆盖 RuntimeHandoff / RunState / DecisionState 的生产 vs 消费拆分判定
 
-## 外部验证器接入
-
-Sopify 只保留通用 Verifier 证据消费。EvidentLoop 是首个官方推荐的可选实例，不是默认能力或唯一实现。
-
-- [ ] 完成 `plan/20260718_evidentloop_optional_audit_integration/` 剩余 Wave：Codex 真实 dogfood、用户裁定、正式 receipt 与归档
-
 ## 流程与工具项
 
 - [x] Runtime retirement cutover（`target-state-first` 已于 2026-05-22 拍板）：先解耦 installer 5 文件，再同步删除 `runtime/` 与 legacy deep path
