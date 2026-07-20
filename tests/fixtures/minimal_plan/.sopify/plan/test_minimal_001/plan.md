@@ -1,3 +1,7 @@
+---
+level: light
+---
+
 # Test Minimal Plan
 
 ## Plan Snapshot

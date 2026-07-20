@@ -8,10 +8,9 @@
 
 1. 读取任务清单。
 2. 对每个任务按固定质量循环执行：实现修改 -> 发现验证 -> 执行验证 -> 必要时一次重试 -> 两阶段复审。仅在质量结果满足最小 contract 后更新任务状态。
-3. 若工作区存在 `post_develop` advisory skill 且前置条件满足，执行一次 post-develop advisory review。
-4. 按 `knowledge_sync` 同步知识库与偏好信息。
-5. 迁移方案包到 `history/`。
-6. 输出执行结果摘要。
+3. 按 `knowledge_sync` 同步知识库与偏好信息。
+4. 将完成方案更新为 `ready_to_archive`，保留在 `plan/`。
+5. 输出执行结果摘要。
 
 ## 步骤 1：读取任务清单
 
@@ -159,24 +158,7 @@ Stage B `code_quality` 至少检查：
 3. 复审结论行是否存在：success 必须有 `spec_compliance` + `code_quality` 各一句依据。
 4. footer 是否完整：`Changes:` + `Next:` 必须存在。
 
-## 步骤 3：Post-develop advisory review
-
-开发任务完成、验证与两阶段复审通过后，若工作区 `.agents/skills/` 下存在 triggers 包含 `post_develop` 且 mode 为 `advisory` 的技能，可按其 SKILL.md 执行一次 post-develop advisory review。当前仅 CrossReview Phase 4a 纳入此路径。
-
-触发条件：
-
-1. 所有任务已通过质量循环（Step 2 完成）。
-2. 工作区存在未评审的代码变更（已提交的 review range `git diff <REF>..HEAD` 非空，或存在未提交变更须按 advisory skill Step 0 确认处理）。
-3. 对应 advisory skill 的前置条件满足（如 CLI 已安装，且 host-integrated 审查所需的隔离执行上下文可用）。
-
-执行约束：
-
-- 执行失败或结果 `inconclusive` 不阻断主流程。
-- `concerns` / `needs_human_triage` 只展示并等待用户决定，不自动写 checkpoint、不自动改代码。
-- 若前置条件不满足（如 CLI 未安装），跳过并记录原因，不阻断。
-- 注释：Phase 4a 仅采用 Convention 模式；这里不引入 `bridge.py` 或 `pipeline_hooks`。
-
-## 步骤 4：知识库同步
+## 步骤 3：知识库同步
 
 同步时机：
 
@@ -210,16 +192,15 @@ Stage B `code_quality` 至少检查：
 - 上下文不完整的猜测。
 - 与任务无关的泛化结论。
 
-## 步骤 5：方案迁移
+## 步骤 4：方案完成态
 
-迁移路径：
+任务、验证和 `knowledge_sync` 均完成后：
 
-```text
-.sopify/plan/YYYYMMDD_feature/
-  -> .sopify/history/YYYY-MM/YYYYMMDD_feature/
-```
+1. 在 `plan.md` 中把 `lifecycle_state` 更新为 `ready_to_archive`，并设置 `archive_ready: true`。
+2. 方案目录继续保留在 `.sopify/plan/YYYYMMDD_feature/`。
+3. develop 不迁移目录、不更新 history index，也不直接模拟 finalize。
 
-索引更新：在首次显式 finalize 时按需创建并更新 `.sopify/history/index.md`。
+`ready_to_archive` 只是方案语义元数据，不是新的 state 文件或生命周期引擎。只有用户显式运行 `~go finalize` 时，宿主才通过 `sopify_writer` 校验最终 `plan_version`、迁移目录并更新 history index。
 
 ## 输出模板
 

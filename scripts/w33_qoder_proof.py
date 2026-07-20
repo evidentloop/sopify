@@ -14,6 +14,7 @@ This script:
 
 Output: structured proof transcript to stdout.
 """
+
 from __future__ import annotations
 
 import json
@@ -66,21 +67,35 @@ def main() -> None:
     print()
     print(f"- Date: {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}")
     print(f"- Payload: `{bundle_dir}`")
-    print(f"- sys.path: repo-local paths filtered out; installed payload inserted at front; stdlib + site-packages retained")
+    print(
+        "- sys.path: repo-local paths filtered out; installed payload inserted at front; stdlib + site-packages retained"
+    )
     print()
-    print("> **Scope**: This transcript is a writer-level durable proof. Session A/B are")
-    print("> simulated ProtocolStore instances, not real Qoder LLM sessions. Receipt evidence")
-    print("> values are examples, not live command outputs. Protocol entry instructions are")
-    print("> installed to ~/.qoder/AGENTS.md (L131-135), but this transcript does not verify")
-    print("> that the LLM autonomously follows those instructions (host behavioral proof is")
-    print("> out of scope). Note: .qoder/rules/ overrides AGENTS.md if user/project rules exist.")
+    print(
+        "> **Scope**: This transcript is a writer-level durable proof. Session A/B are"
+    )
+    print(
+        "> simulated ProtocolStore instances, not real Qoder LLM sessions. Receipt evidence"
+    )
+    print(
+        "> values are examples, not live command outputs. Protocol entry instructions are"
+    )
+    print(
+        "> installed to ~/.qoder/AGENTS.md (L131-135), but this transcript does not verify"
+    )
+    print(
+        "> that the LLM autonomously follows those instructions (host behavioral proof is"
+    )
+    print(
+        "> out of scope). Note: .qoder/rules/ overrides AGENTS.md if user/project rules exist."
+    )
     print()
 
     # ── Step 1: Import from installed payload ──
     print("## Step 1: Import from Installed Payload")
     print()
     try:
-        from sopify_writer import ProtocolStore, InvariantViolationError
+        from sopify_writer import ProtocolStore
         from sopify_contracts import RuntimeHandoff
     except ImportError as exc:
         print(f"FAIL: import error: {exc}")
@@ -90,7 +105,7 @@ def main() -> None:
     handoff_origin = RuntimeHandoff.__module__
     print(f"- `sopify_writer.ProtocolStore` from: `{writer_origin}`")
     print(f"- `sopify_contracts.RuntimeHandoff` from: `{handoff_origin}`")
-    print(f"- **PASS**: imports resolved from installed payload")
+    print("- **PASS**: imports resolved from installed payload")
     print()
 
     # ── Step 2: Session A — create plan, write state + receipts ──
@@ -104,16 +119,51 @@ def main() -> None:
 
         plan_id = "20260610_w33_e2e_proof"
         store_a = ProtocolStore(sopify_root)
+        plan_dir = sopify_root / "plan" / plan_id
+        plan_dir.mkdir(parents=True)
+        (plan_dir / "plan.md").write_text(
+            """---
+level: light
+---
+
+# W3.3 E2E Proof
+
+## Context / Why
+Prove installed payload behavior.
+
+## Scope
+Writer-level protocol proof.
+
+## Approach
+Simulate two sessions.
+
+## Waves / Steps
+- [ ] Complete proof.
+
+## Key Decisions
+- Use installed payload only.
+
+## Constraints / Not-in-scope
+- No live host behavior claim.
+
+## Status / Progress
+In progress.
+
+## Next
+Finalize the proof.
+""",
+            encoding="utf-8",
+        )
 
         # 2a: Write active_plan
         store_a.set_active_plan(plan_id=plan_id)
         active_plan = json.loads(
             (sopify_root / "state" / "active_plan.json").read_text()
         )
-        print(f"### 2a: active_plan.json")
-        print(f"```json")
+        print("### 2a: active_plan.json")
+        print("```json")
         print(json.dumps(active_plan, indent=2))
-        print(f"```")
+        print("```")
         print(f"- **PASS**: plan_id = `{active_plan['plan_id']}`")
         print()
 
@@ -129,10 +179,10 @@ def main() -> None:
         handoff_data = json.loads(
             (sopify_root / "state" / "current_handoff.json").read_text()
         )
-        print(f"### 2b: current_handoff.json")
-        print(f"```json")
+        print("### 2b: current_handoff.json")
+        print("```json")
         print(json.dumps(handoff_data, indent=2))
-        print(f"```")
+        print("```")
         print(
             f"- **PASS**: plan_id=`{handoff_data['plan_id']}`, "
             f"action=`{handoff_data['required_host_action']}`"
@@ -151,14 +201,12 @@ def main() -> None:
             },
             provenance={"session_id": "w33-session-a", "host": "qoder"},
         )
-        exec_path = (
-            sopify_root / "plan" / plan_id / "receipts" / "exec_001.json"
-        )
+        exec_path = sopify_root / "plan" / plan_id / "receipts" / "exec_001.json"
         exec_data = json.loads(exec_path.read_text())
-        print(f"### 2c: receipts/exec_001.json")
-        print(f"```json")
+        print("### 2c: receipts/exec_001.json")
+        print("```json")
         print(json.dumps(exec_data, indent=2))
-        print(f"```")
+        print("```")
         print(f"- **PASS**: verdict=`{exec_data['verdict']}`")
         print()
 
@@ -173,18 +221,16 @@ def main() -> None:
             },
             provenance={"session_id": "w33-session-a", "host": "qoder"},
         )
-        print(f"### 2d: receipts/verify_001.json")
-        print(f"- **PASS**: written successfully")
+        print("### 2d: receipts/verify_001.json")
+        print("- **PASS**: written successfully")
         print()
 
         # 2e: State file check
-        state_files = sorted(
-            f.name for f in (sopify_root / "state").iterdir()
-        )
-        print(f"### 2e: State File Check")
+        state_files = sorted(f.name for f in (sopify_root / "state").iterdir())
+        print("### 2e: State File Check")
         print(f"- Files in `state/`: `{state_files}`")
         assert state_files == ["active_plan.json", "current_handoff.json"]
-        print(f"- **PASS**: exactly 2 files (2-file model)")
+        print("- **PASS**: exactly 2 files (2-file model)")
         print()
 
         # ── Step 3: Session B — read via 4-step chain + write ──
@@ -196,25 +242,25 @@ def main() -> None:
 
         # 3a: Step 1 of read chain — active_plan
         active_b = store_b.get_active_plan()
-        print(f"### 3a: Read Chain Step 1 — active_plan.json")
-        print(f"```json")
+        print("### 3a: Read Chain Step 1 — active_plan.json")
+        print("```json")
         print(json.dumps(active_b, indent=2))
-        print(f"```")
+        print("```")
         assert active_b is not None
         assert active_b["plan_id"] == plan_id
         print(f"- **PASS**: located plan_id = `{plan_id}`")
         print()
 
-        # 3b: Step 2 of read chain — plan.md (simulated check)
-        print(f"### 3b: Read Chain Step 2 — plan.md")
-        print(f"- plan.md would be read at: `.sopify/plan/{plan_id}/plan.md`")
-        print(f"- (Not created in this proof — protocol allows fallback to handoff)")
-        print(f"- **PASS**: read chain handles missing plan.md gracefully")
+        # 3b: Step 2 of read chain — plan.md
+        print("### 3b: Read Chain Step 2 — plan.md")
+        print(f"- plan.md read at: `.sopify/plan/{plan_id}/plan.md`")
+        assert (plan_dir / "plan.md").is_file()
+        print("- **PASS**: semantic entry exists")
         print()
 
         # 3c: Step 3 of read chain — current_handoff
         handoff_b = store_b.get_current_handoff()
-        print(f"### 3c: Read Chain Step 3 — current_handoff.json")
+        print("### 3c: Read Chain Step 3 — current_handoff.json")
         if handoff_b:
             print(f"- plan_id: `{handoff_b.plan_id}`")
             print(f"- required_host_action: `{handoff_b.required_host_action}`")
@@ -222,17 +268,17 @@ def main() -> None:
         assert handoff_b is not None
         assert handoff_b.plan_id == plan_id
         assert handoff_b.required_host_action == "continue_host_develop"
-        print(f"- **PASS**: session B recovered context from handoff")
+        print("- **PASS**: session B recovered context from handoff")
         print()
 
         # 3d: Step 4 of read chain — receipts
         receipts_dir = sopify_root / "plan" / plan_id / "receipts"
         receipt_files = sorted(f.name for f in receipts_dir.iterdir())
-        print(f"### 3d: Read Chain Step 4 — receipts/")
+        print("### 3d: Read Chain Step 4 — receipts/")
         print(f"- Receipt files: `{receipt_files}`")
         assert "exec_001.json" in receipt_files
         assert "verify_001.json" in receipt_files
-        print(f"- **PASS**: session B can see what was verified")
+        print("- **PASS**: session B can see what was verified")
         print()
 
         # 3e: Session B writes new receipt
@@ -247,17 +293,17 @@ def main() -> None:
             provenance={"session_id": "w33-session-b", "host": "qoder"},
         )
         updated_receipts = sorted(f.name for f in receipts_dir.iterdir())
-        print(f"### 3e: Session B Writes exec_002.json")
+        print("### 3e: Session B Writes exec_002.json")
         print(f"- Receipts after write: `{updated_receipts}`")
         assert "exec_002.json" in updated_receipts
-        print(f"- **PASS**: cross-session continuation verified")
+        print("- **PASS**: cross-session continuation verified")
         print()
 
         # ── Step 4: Finalize ──
         print("## Step 4: Finalize — Clear State + Final Receipt + History")
         print()
 
-        store_b.finalize_plan(
+        finalize_result = store_b.finalize_plan(
             plan_id=plan_id,
             outcome="completed",
             summary="W3.3 end-to-end proof: Session A created plan and wrote receipts; Session B resumed via 4-step read chain and continued; finalize cleared state.",
@@ -270,34 +316,32 @@ def main() -> None:
 
         # 4a: State cleared
         remaining = list((sopify_root / "state").iterdir())
-        print(f"### 4a: State Cleared")
+        print("### 4a: State Cleared")
         print(f"- Files in `state/`: `{[f.name for f in remaining]}`")
         assert len(remaining) == 0
-        print(f"- **PASS**: state/ empty after finalize")
+        print("- **PASS**: state/ empty after finalize")
         print()
 
         # 4b: final.json
-        final_path = sopify_root / "plan" / plan_id / "receipts" / "final.json"
+        final_path = finalize_result["final_receipt"]
         final_data = json.loads(final_path.read_text())
-        print(f"### 4b: receipts/final.json")
-        print(f"```json")
+        print("### 4b: receipts/final.json")
+        print("```json")
         print(json.dumps(final_data, indent=2))
-        print(f"```")
+        print("```")
         print(f"- **PASS**: verdict=`{final_data['verdict']}`")
         print()
 
         # 4c: history receipt
         month = datetime.now().strftime("%Y-%m")
-        history_receipt = (
-            sopify_root / "history" / month / plan_id / "receipt.md"
-        )
+        history_receipt = sopify_root / "history" / month / plan_id / "receipt.md"
         assert history_receipt.exists()
         hr_preview = history_receipt.read_text()[:300]
         print(f"### 4c: history/{month}/{plan_id}/receipt.md")
-        print(f"```markdown")
+        print("```markdown")
         print(hr_preview)
-        print(f"```")
-        print(f"- **PASS**: history receipt generated")
+        print("```")
+        print("- **PASS**: history receipt generated")
         print()
 
         # ── Step 5: Negative Checks ──
@@ -319,14 +363,18 @@ def main() -> None:
         print(f"- **PASS**: No retired state files produced ({len(retired)} checked)")
 
         # 5b: No runtime import
-        print(f"- **PASS**: No `runtime` module imported (repo paths filtered; stdlib + site-packages retained)")
+        print(
+            "- **PASS**: No `runtime` module imported (repo paths filtered; stdlib + site-packages retained)"
+        )
 
         # 5c: No _registry.yaml
         assert not (sopify_root / "plan" / "_registry.yaml").exists()
-        print(f"- **PASS**: No `_registry.yaml` dependency")
+        print("- **PASS**: No `_registry.yaml` dependency")
 
         # 5d: sopify_writer does not route or execute
-        print(f"- **PASS**: sopify_writer only writes protocol files (no routing, no execution)")
+        print(
+            "- **PASS**: sopify_writer only writes protocol files (no routing, no execution)"
+        )
         print()
 
         # ── Summary ──

@@ -9,7 +9,7 @@ SOURCE_REF="main"
 
 usage() {
   cat <<'EOF'
-Usage: install.sh [--target <host[:lang]>] [--ref <tag-or-branch>]
+Usage: install.sh [--target <host[:lang]>] [--with-evidentloop] [--ref <tag-or-branch>]
 
 Install Sopify for a supported AI host.
 
@@ -26,6 +26,9 @@ Options:
   --language <lang>      Copilot only: bootstrap output language (en-US/zh-CN).
   --no-copilot           Copilot only: skip Copilot instruction file
                          distribution and only write workspace markers.
+  --with-evidentloop     Install the current EvidentLoop CLI and Skill from
+                         official sources, or reuse healthy existing components.
+                         Disabled by default.
   --verbose              Show full diagnostic install details.
   --ref <tag-or-branch>  Advanced: override the source ref.
   -h, --help             Show this help.
@@ -154,20 +157,47 @@ spin_start "Checking requirements..."
 require_command "curl" "MISSING_CURL" "Install curl, or use the inspect-first flow to download the release asset manually."
 require_command "tar" "MISSING_TAR" "Install tar, or use a machine with basic archive support."
 
-# Python fallback chain: python3 → python → py -3 (aligned with install.ps1)
+# Select the first available Python 3.11+ before downloading any source.
 PYTHON_CMD=""
+PYTHON_ARGS=()
+FOUND_PYTHON_COMMAND=0
+DETECTED_PYTHON=""
+PYTHON_PROBE='import sys; print(".".join(map(str, sys.version_info[:3]))); raise SystemExit(0 if sys.version_info >= (3, 11) else 1)'
 for _candidate in python3 python py; do
   if command -v "$_candidate" >/dev/null 2>&1; then
-    PYTHON_CMD="$_candidate"
-    break
+    FOUND_PYTHON_COMMAND=1
+    _probe_succeeded=0
+    if [[ "$_candidate" == "py" ]]; then
+      if _version="$("$_candidate" -3 -c "$PYTHON_PROBE" 2>/dev/null)"; then
+        _probe_succeeded=1
+      fi
+    elif _version="$("$_candidate" -c "$PYTHON_PROBE" 2>/dev/null)"; then
+      _probe_succeeded=1
+    fi
+    if (( _probe_succeeded == 1 )); then
+      PYTHON_CMD="$_candidate"
+      if [[ "$_candidate" == "py" ]]; then
+        PYTHON_ARGS=("-3")
+      fi
+      break
+    fi
+    if [[ -z "$DETECTED_PYTHON" && -n "$_version" ]]; then
+      DETECTED_PYTHON="$_candidate $_version"
+    fi
   fi
 done
 if [[ -z "$PYTHON_CMD" ]]; then
-  fail "preflight" "MISSING_PYTHON" "None of python3, python, or py is available." "Install Python 3, then rerun the installer."
-fi
-PYTHON_ARGS=()
-if [[ "$PYTHON_CMD" == "py" ]]; then
-  PYTHON_ARGS+=("-3")
+  if (( FOUND_PYTHON_COMMAND == 0 )); then
+    _python_reason="MISSING_PYTHON"
+    _python_detail="Sopify needs Python 3.11 or newer, but no Python command was found. Nothing was downloaded or installed."
+  elif [[ -n "$DETECTED_PYTHON" ]]; then
+    _python_reason="UNSUPPORTED_PYTHON"
+    _python_detail="Sopify needs Python 3.11 or newer. Found: $DETECTED_PYTHON. Nothing was downloaded or installed."
+  else
+    _python_reason="UNSUPPORTED_PYTHON"
+    _python_detail="A Python command was found, but it could not run Python 3.11 or newer. Nothing was downloaded or installed."
+  fi
+  fail "preflight" "$_python_reason" "$_python_detail" "Install Python 3.11 or newer, then rerun the same command."
 fi
 
 spin_stop "Requirements OK"

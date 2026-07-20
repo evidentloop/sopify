@@ -1,0 +1,1234 @@
+<!doctype html>
+<html lang="zh-CN" data-renderer-version="0.3">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>反馈修订 2 · EvidentLoop</title>
+  <style>:root {
+  color-scheme: light;
+  --bg: #f3f5f8;
+  --panel: #ffffff;
+  --text: #172033;
+  --muted: #667085;
+  --line: #d7dee8;
+  --line-strong: #b7c2d1;
+  --green: #17753b;
+  --green-soft: #e7f6ec;
+  --red: #bd2f35;
+  --red-soft: #fff0f1;
+  --amber: #a66c12;
+  --amber-soft: #fff6df;
+  --blue: #245f91;
+  --blue-soft: #edf6ff;
+  --code-bg: #fbfcfe;
+  --code-add-bg: #e6ffed;
+  --code-del-bg: #ffebe9;
+  --code-add-text: #116329;
+  --code-del-text: #82071e;
+  --focus: #0e7490;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  background: linear-gradient(180deg, #e7ebf1 0, var(--bg) 230px);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.55;
+}
+
+a { color: var(--blue); }
+h1, h2, h3, p { margin-top: 0; }
+h1 { margin-bottom: 6px; font-size: clamp(1.65rem, 4vw, 2rem); line-height: 1.2; }
+h2 { margin-bottom: 0; font-size: 1.18rem; }
+h3 { margin-bottom: 8px; font-size: 1rem; }
+code { padding: 1px 5px; border-radius: 5px; background: #eef2f7; }
+
+.report-shell {
+  display: grid;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 28px 20px 52px;
+  gap: 16px;
+}
+
+.panel,
+.hero {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: 0 1px 2px rgba(23, 32, 51, .04);
+}
+
+.hero {
+  padding: 22px;
+  border-left: 6px solid var(--blue);
+  box-shadow: 0 10px 28px rgba(23, 32, 51, .08);
+}
+
+.hero.concerns { border-left-color: var(--red); }
+.hero.pass_candidate { border-left-color: var(--green); }
+.hero.needs_human_triage { border-left-color: var(--amber); }
+.hero.inconclusive { border-left-color: var(--blue); }
+
+.hero-top,
+.section-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hero-copy { min-width: 0; overflow-wrap: anywhere; }
+
+.kicker {
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.muted,
+.ref { color: var(--muted); }
+.ref { font-size: .8rem; overflow-wrap: anywhere; }
+
+.verdict-box {
+  flex: 0 0 240px;
+  padding: 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--blue-soft);
+  text-align: right;
+}
+
+.verdict-box strong { display: block; font-size: 1.08rem; overflow-wrap: anywhere; }
+.human-notice { margin-top: 6px; color: var(--amber); font-size: .78rem; font-weight: 800; }
+.hero.concerns .verdict-box { border-color: #f0b5b7; background: var(--red-soft); }
+.hero.pass_candidate .verdict-box { border-color: #acd8bb; background: var(--green-soft); }
+.hero.needs_human_triage .verdict-box { border-color: #ead09f; background: var(--amber-soft); }
+
+.judgment-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.judgment-card,
+.finding-judgments > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfe;
+  overflow-wrap: anywhere;
+}
+
+.judgment-card > span,
+.finding-judgments > div > span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: .74rem;
+  font-weight: 800;
+}
+
+.judgment-card strong,
+.finding-judgments strong { display: block; }
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.metric {
+  min-width: 0;
+  min-height: 88px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfe;
+}
+
+.metric > span:first-child { display: block; color: var(--muted); font-size: .75rem; font-weight: 750; }
+.metric strong { display: block; margin: 4px 0 6px; font-size: 1.45rem; line-height: 1.15; overflow-wrap: anywhere; }
+
+.panel { padding: 20px; }
+.section-title { align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.badge.ok { background: var(--green); }
+.badge.risk { background: var(--red); }
+.badge.warn { background: var(--amber); }
+.badge.info { background: var(--blue); }
+.badge.soft { color: var(--text); background: #eef2f7; }
+
+.status-callout,
+.claim,
+.finding-note,
+.fix-inline,
+.feedback-placeholder {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.status-callout { margin-top: 14px; }
+.status-callout.clean { border-color: #acd8bb; background: var(--green-soft); }
+.status-callout.warning { border-color: #ead09f; background: var(--amber-soft); }
+.status-callout.failure { border-color: #f0b5b7; background: var(--red-soft); }
+
+.overall-summary { margin-bottom: 16px; font-size: .96rem; }
+.summary-grid { display: grid; grid-template-columns: 1.2fr .8fr; align-items: start; gap: 16px; }
+.summary-grid p,
+.summary-grid strong { overflow-wrap: anywhere; }
+.change-files { margin-top: 12px; }
+.change-files > summary { cursor: pointer; color: var(--blue); font-size: .84rem; font-weight: 800; }
+.change-files[open] > summary { margin-bottom: 10px; }
+.change-list { display: grid; gap: 10px; margin-top: 12px; }
+.file-change { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfe; }
+.file-path { color: var(--blue); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .82rem; overflow-wrap: anywhere; }
+.diff-stat { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .8rem; white-space: nowrap; }
+.add { color: var(--green); }
+.del { color: var(--red); }
+.claim-list { display: grid; align-self: start; align-content: start; gap: 10px; }
+.claim-empty { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 11px; }
+.claim-empty .muted { font-size: .78rem; }
+.claim[data-status="challenged"] { border-left: 5px solid var(--red); background: var(--red-soft); }
+.claim[data-status="supported"] { border-left: 5px solid var(--green); background: var(--green-soft); }
+.claim[data-status="partial"] { border-left: 5px solid var(--amber); background: var(--amber-soft); }
+
+.finding-stack { display: grid; gap: 14px; }
+.finding-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+.finding-card.high { border-left: 6px solid var(--red); }
+.finding-card.medium { border-left: 6px solid var(--amber); }
+.finding-card.low,
+.finding-card.note { border-left: 6px solid var(--blue); }
+
+.finding-header { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: start; gap: 9px; padding: 14px 16px; border-bottom: 1px solid var(--line); background: #fbfcfe; }
+.finding-title { display: block; font-weight: 800; overflow-wrap: anywhere; }
+.location { display: block; margin-top: 3px; color: var(--blue); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; overflow-wrap: anywhere; }
+.finding-body { padding: 16px; }
+.finding-layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 14px; }
+.finding-note { margin-bottom: 12px; }
+.unanchored { border-color: #ead09f; background: var(--amber-soft); }
+
+.hunk { min-width: 0; overflow: hidden; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--code-bg); }
+.hunk-caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--line); background: #eef2f7; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; }
+.hunk-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
+.hunk-table { width: 100%; min-width: 0; border-collapse: collapse; table-layout: fixed; }
+.hunk-table th { padding: 5px 8px; background: #f6f8fb; color: var(--muted); font-size: .68rem; text-align: right; }
+.hunk-table th:first-child { width: 5px; padding: 0; }
+.hunk-table th:nth-child(2),
+.hunk-table th:nth-child(3) { width: 54px; }
+.hunk-table th:last-child { text-align: left; }
+.hunk-table td { border: 0; padding: 0; vertical-align: top; }
+.hunk-stripe { width: 5px; background: transparent; }
+.hunk-line-active .hunk-stripe { background: #f59e0b; }
+.hunk-line-active .hunk-num { color: #7a4b00; background: #fff3cd; font-weight: 800; }
+.hunk-line-active .hunk-code { box-shadow: inset 4px 0 0 #f59e0b; font-weight: 700; }
+.hunk-num { width: 54px; padding: 2px 8px !important; border-right: 1px solid var(--line) !important; color: #7a8699; background: #f7f9fc; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .75rem; text-align: right; user-select: none; }
+.hunk-code { padding: 2px 10px !important; color: #1f2937; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+.hunk-add .hunk-code { color: var(--code-add-text); background: var(--code-add-bg); }
+.hunk-delete .hunk-code { color: var(--code-del-text); background: var(--code-del-bg); }
+.hunk-meta .hunk-code { color: var(--muted); background: #f7f9fc; font-style: italic; }
+.hunk-omitted-cell { padding: 5px 10px !important; color: var(--muted); background: #eef2f7; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; text-align: center; }
+.hunk-hit-key { color: #7a4b00; font-weight: 800; }
+.hunk-hit-key::before { content: "● "; color: #f59e0b; }
+
+.chain { display: grid; align-content: start; gap: 8px; }
+.chain-row { padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: #f8fafc; overflow-wrap: anywhere; }
+.chain-label { display: block; margin-bottom: 3px; color: var(--muted); font-size: .7rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.fix-inline { margin-top: 12px; border-color: #b8d5ef; background: var(--blue-soft); }
+.finding-judgments { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.feedback-placeholder { display: block; margin-top: 12px; }
+.feedback-heading,
+.feedback-toolbar,
+.feedback-comment-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.feedback-toolbar { align-items: flex-start; }
+.feedback-toolbar p:last-child { margin-bottom: 0; }
+.feedback-export-actions { display: grid; justify-items: end; gap: 6px; flex: 0 0 auto; }
+.feedback-controls { display: grid; gap: 10px; margin-top: 10px; }
+.feedback-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.feedback-more,
+.evidence-details,
+.revision-details { margin-top: 10px; }
+.feedback-more > summary,
+.evidence-details > summary,
+.revision-details > summary { cursor: pointer; color: var(--blue); font-size: .82rem; font-weight: 800; }
+.feedback-controls label { display: grid; gap: 5px; color: var(--muted); font-size: .78rem; font-weight: 750; }
+.feedback-controls select,
+.feedback-controls textarea { width: 100%; border: 1px solid var(--line-strong); border-radius: 7px; background: #fff; color: var(--text); font: inherit; }
+.feedback-controls select { min-height: 36px; padding: 6px 9px; }
+.feedback-controls textarea { min-height: 78px; padding: 9px; resize: vertical; }
+.button { min-height: 34px; padding: 6px 11px; border: 1px solid var(--line-strong); border-radius: 7px; background: #fff; color: var(--text); font: inherit; font-size: .82rem; font-weight: 750; cursor: pointer; }
+.button:hover { border-color: var(--blue); background: var(--blue-soft); }
+.button:focus-visible,
+.feedback-controls select:focus-visible,
+.feedback-controls textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--focus) 35%, transparent); outline-offset: 2px; }
+.button[aria-pressed="true"] { border-color: var(--blue); background: var(--blue); color: #fff; }
+.button.primary { border-color: var(--blue); background: var(--blue); color: #fff; }
+.button.primary:hover { background: #194d77; }
+.button.secondary { min-height: 30px; padding: 4px 9px; color: var(--blue); font-size: .76rem; }
+
+.data-table-wrap { max-width: 100%; overflow-x: auto; }
+.data-table { width: 100%; min-width: 620px; border-collapse: collapse; }
+.data-table th,
+.data-table td { padding: 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.data-table th { color: var(--muted); font-size: .74rem; text-transform: uppercase; }
+
+@media (max-width: 780px) {
+  .report-shell { padding: 16px 12px 36px; }
+  .hero-top,
+  .section-title,
+  .feedback-toolbar,
+  .feedback-heading,
+  .feedback-comment-actions { flex-direction: column; align-items: flex-start; }
+  .section-title { align-items: flex-start; }
+  .feedback-export-actions { width: 100%; justify-items: start; }
+  .verdict-box { width: 100%; flex-basis: auto; text-align: left; }
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .judgment-grid,
+  .finding-judgments,
+  .summary-grid,
+  .finding-layout { grid-template-columns: minmax(0, 1fr); }
+  .finding-header { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .finding-header .category-badge { display: none; }
+  .file-change { grid-template-columns: minmax(0, 1fr); }
+  .diff-stat { white-space: normal; }
+}
+
+@media (max-width: 330px) {
+  .metric-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 420px) {
+  .panel,
+  .hero { padding: 15px; }
+  .finding-body { padding: 12px; }
+  .claim-empty { align-items: flex-start; flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+  <main class="report-shell" data-graph-id="audit:run-8d72fe3ae6f34c2d8021eadd1adf5d12" data-audit-sha256="sha256:98b12be84e5a57f7d4f3f848ef6e4212d895eaf7b93f9f4762c9efd92661c1ef" data-run-id="run-feedback-00fbe17d21db032d">
+    <header class="hero pass_candidate" data-node-id="run-feedback-00fbe17d21db032d" data-node-type="run">
+      <div class="hero-top">
+        <div class="hero-copy">
+          <div class="kicker">EvidentLoop · 代码变更</div>
+          <h1>反馈修订 2</h1>
+          <div class="muted">
+运行：run-feedback-00fbe17d21db032d ·             来源：staged · schema：0.4 · 审查状态：输出完整
+          </div>
+        </div>
+        <div class="verdict-box">
+          <span class="muted">当前结论</span>
+          <strong>候选通过</strong>
+          <div class="human-notice">基于人工裁定，未重新审查代码</div>
+        </div>
+      </div>
+
+      <div class="judgment-grid" aria-label="模型判断、人工裁定与当前状态">
+        <div class="judgment-card">
+          <span>模型原判断</span>
+          <strong>存在待处理问题</strong>
+          <div class="ref">原风险分：20</div>
+        </div>
+        <div class="judgment-card">
+          <span>我的裁定</span>
+          <strong>1 项结论裁定</strong>
+          <div class="ref">1 项严重度调整 · 1 条评论</div>
+        </div>
+        <div class="judgment-card">
+          <span>当前剩余问题</span>
+          <strong>0 项</strong>
+          <div class="ref">当前结论：候选通过 · 风险分：0</div>
+        </div>
+      </div>
+
+      <div class="metric-grid">
+        <div class="metric">
+          <span>已计分风险分</span>
+          <strong>0</strong>
+          <span class="badge ok">低</span>
+        </div>
+        <div class="metric">
+          <span>待处理问题</span>
+          <strong>0</strong>
+          <span class="badge ok">已清空</span>
+        </div>
+        <div class="metric">
+          <span>未计分问题</span>
+          <strong>0</strong>
+          <span class="badge soft">无</span>
+        </div>
+        <div class="metric">
+          <span>影响文件</span>
+          <strong>16</strong>
+          <span class="badge soft">已采集</span>
+        </div>
+      </div>
+
+      <div class="status-callout clean">
+        <strong>审查输出已完整接收</strong>
+        <div>这只表示审查者输出满足结构契约，不代表上下文覆盖充分；请结合结论、问题与未计分项人工判断。</div>
+      </div>
+    </header>
+
+    <section class="panel" data-node-id="change-001" data-node-type="change">
+      <div class="section-title">
+        <h2>1. 变更摘要与审计结论</h2>
+        <span class="badge soft">变更目标：未审计</span>
+      </div>
+<p class="overall-summary">基于人工裁定，未重新审查代码</p>      <div class="summary-grid summary-grid-empty-claim">
+        <div>
+            <article data-node-id="change-001" data-node-type="change">
+              <h3>Sopify 变更</h3>
+              <p>共 16 个文件发生变更（+390/-667）。</p>
+            </article>
+          <details class="change-files">
+            <summary>影响文件（16）· 查看全部</summary>
+          <div class="change-list">
+            <div class="file-change" data-node-id="file-001" data-node-type="file" data-edge-id="edge-002">
+              <span class="file-path">.sopify/blueprint/background.md</span>
+              <span class="diff-stat">
+                <span class="add">+1</span>
+                <span class="del">-1</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-002" data-node-type="file" data-edge-id="edge-003">
+              <span class="file-path">.sopify/blueprint/design.md</span>
+              <span class="diff-stat">
+                <span class="add">+1</span>
+                <span class="del">-1</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-003" data-node-type="file" data-edge-id="edge-004">
+              <span class="file-path">.sopify/plan/20260718_evidentloop_optional_audit_integration/design.md</span>
+              <span class="diff-stat">
+                <span class="add">+15</span>
+                <span class="del">-15</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-004" data-node-type="file" data-edge-id="edge-005">
+              <span class="file-path">.sopify/plan/20260718_evidentloop_optional_audit_integration/plan.md</span>
+              <span class="diff-stat">
+                <span class="add">+17</span>
+                <span class="del">-14</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-005" data-node-type="file" data-edge-id="edge-006">
+              <span class="file-path">.sopify/plan/20260718_evidentloop_optional_audit_integration/tasks.md</span>
+              <span class="diff-stat">
+                <span class="add">+12</span>
+                <span class="del">-9</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-006" data-node-type="file" data-edge-id="edge-007">
+              <span class="file-path">README.md</span>
+              <span class="diff-stat">
+                <span class="add">+13</span>
+                <span class="del">-11</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-007" data-node-type="file" data-edge-id="edge-008">
+              <span class="file-path">README.zh-CN.md</span>
+              <span class="diff-stat">
+                <span class="add">+9</span>
+                <span class="del">-9</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-008" data-node-type="file" data-edge-id="edge-009">
+              <span class="file-path">docs/getting-started.md</span>
+              <span class="diff-stat">
+                <span class="add">+14</span>
+                <span class="del">-10</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-009" data-node-type="file" data-edge-id="edge-010">
+              <span class="file-path">docs/how-sopify-works.en.md</span>
+              <span class="diff-stat">
+                <span class="add">+1</span>
+                <span class="del">-1</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-010" data-node-type="file" data-edge-id="edge-011">
+              <span class="file-path">docs/how-sopify-works.md</span>
+              <span class="diff-stat">
+                <span class="add">+1</span>
+                <span class="del">-1</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-011" data-node-type="file" data-edge-id="edge-012">
+              <span class="file-path">install.ps1</span>
+              <span class="diff-stat">
+                <span class="add">+3</span>
+                <span class="del">-3</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-012" data-node-type="file" data-edge-id="edge-013">
+              <span class="file-path">install.sh</span>
+              <span class="diff-stat">
+                <span class="add">+3</span>
+                <span class="del">-3</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-013" data-node-type="file" data-edge-id="edge-014">
+              <span class="file-path">installer/distribution.py</span>
+              <span class="diff-stat">
+                <span class="add">+8</span>
+                <span class="del">-35</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-014" data-node-type="file" data-edge-id="edge-015">
+              <span class="file-path">installer/evidentloop.py</span>
+              <span class="diff-stat">
+                <span class="add">+87</span>
+                <span class="del">-204</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-015" data-node-type="file" data-edge-id="edge-016">
+              <span class="file-path">scripts/install_sopify.py</span>
+              <span class="diff-stat">
+                <span class="add">+3</span>
+                <span class="del">-3</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-016" data-node-type="file" data-edge-id="edge-017">
+              <span class="file-path">tests/test_evidentloop_installer.py</span>
+              <span class="diff-stat">
+                <span class="add">+202</span>
+                <span class="del">-347</span>
+                · 修改              </span>
+            </div>
+          </div>
+</details>        </div>
+        <div class="claim-list claim-list-empty">
+          <div class="claim claim-empty" data-status="unknown">
+            <strong>暂无摘要声明审计</strong>
+            <span class="muted">未生成结构化 claim</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel findings-section" data-category="risk">
+      <div class="section-title">
+        <h2>2. 风险</h2>
+        <span class="badge soft">1 条</span>
+      </div>
+      <div class="finding-stack">
+        <article class="finding-card medium" data-node-id="finding-001" data-node-type="finding" data-category="risk" data-severity="medium" data-fingerprint="sha256:a13749027576eceaeed7a10a769854ffcb16887accffc52788d670e48d09e3e6" data-edge-id="edge-018">
+          <div class="finding-header">
+            <span class="badge warn">中</span>
+            <span class="badge soft category-badge">风险</span>
+            <div>
+              <span class="finding-title">CLI 健康检查把 `doctor --json` 返回的 `warning` 状态也视为可复用的健康安装。</span>
+              <span class="location">
+installer/evidentloop.py:204              </span>
+            </div>
+            <span class="badge soft">已忽略</span>
+          </div>
+          <div class="finding-body">
+            <div class="finding-layout">
+              <div>
+                <div class="finding-note">
+<strong>为什么是问题：</strong>                  条件 `payload.get(&#34;status&#34;) not in {&#34;ok&#34;, &#34;warning&#34;}` 明确接受 `warning`，但同一 diff 的设计、文档及测试均将复用条件描述为 doctor 健康或 `status=ok`；这会让已报告警告的 CLI 被直接复用，同时跳过安装或修复路径。
+                </div>
+
+                <div class="hunk" data-hunk-id="hunk:18f1882bd959e1ad:129:5">
+                  <div class="hunk-caption">
+                    <span>@@ -169,89 +129,48 @@ def install_evidentloop_companion(</span>
+                    <span>可信节选 · 展示 17/113 行 · <span class="hunk-hit-key">橙色标记</span>：旧文件第 204 行</span>
+                  </div>
+                  <div class="hunk-scroll">
+                    <table class="hunk-table" aria-label="可信 unified diff 证据">
+                      <thead><tr><th></th><th>旧行</th><th>新行</th><th>代码</th></tr></thead>
+                      <tbody>
+                        <tr class="hunk-omitted">
+                          <td class="hunk-omitted-cell" colspan="4">… 省略 27 行可信 diff 内容 …</td>
+                        </tr>
+                        <tr class="hunk-delete">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num">196</td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-code">-                str(source_root),</td>
+                        </tr>
+                        <tr class="hunk-delete">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num">197</td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-code">-            ],</td>
+                        </tr>
+                        <tr class="hunk-delete">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num">198</td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-code">-            env=source_env,</td>
+                        </tr>
+                        <tr class="hunk-delete">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num">199</td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-code">-            label=&#34;EvidentLoop Skill source download&#34;,</td>
+                        </tr>
+                        <tr class="hunk-delete">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num">200</td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-code">-        )</td>
+                        </tr>
+                        <tr class="hunk-delete">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num">201</td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-code">-        resolved_commit = _run_command(</td>
+                        </tr>
+                        <tr class="hunk-delete">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num">202</td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-code">-            [plan.git_path, &#34;-C&#34;, str(source_root), &#34;rev-parse&#34;, &#34;HEAD&#34;],</td>
+                        </tr>
+                        <tr class="hunk-delete">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num">203</td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-code">-            env=source_env,</td>
+                        </tr>
+                        <tr class="hunk-delete hunk-line-active" data-highlighted="true">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num">204</td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-code">-            label=&#34;EvidentLoop Skill source verification&#34;,</td>
+                        </tr>
+                        <tr class="hunk-delete">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num">205</td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-code">-        ).stdout.strip()</td>
+                        </tr>
+                        <tr class="hunk-delete">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num">206</td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-code">-        if resolved_commit != EVIDENTLOOP_SKILL_COMMIT:</td>
+                        </tr>
+                        <tr class="hunk-delete">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num">207</td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-code">-            raise InstallError(</td>
+                        </tr>
+                        <tr class="hunk-delete">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num">208</td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-code">-                &#34;EvidentLoop Skill source commit changed: &#34;</td>
+                        </tr>
+                        <tr class="hunk-delete">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num">209</td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-code">-                f&#34;expected {EVIDENTLOOP_SKILL_COMMIT}, got {resolved_commit or &#39;(empty)&#39;}&#34;</td>
+                        </tr>
+                        <tr class="hunk-delete">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num">210</td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-code">-            )</td>
+                        </tr>
+                        <tr class="hunk-delete">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num">211</td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-code">-</td>
+                        </tr>
+                        <tr class="hunk-delete">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num">212</td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-code">-        source_skill = source_root / &#34;skills&#34; / _SKILL_NAME</td>
+                        </tr>
+                        <tr class="hunk-omitted">
+                          <td class="hunk-omitted-cell" colspan="4">… 省略 69 行可信 diff 内容 …</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <aside class="chain">
+                <div class="chain-row">
+                  <span class="chain-label">审查依据</span>
+                  <span data-node-id="evidence-001" data-node-type="evidence" data-edge-id="edge-019">宿主语义审查结论：CLI 健康检查把 `doctor --json` 返回的 `warning` 状态也视为可复用的健康安装。</span>
+                </div>
+              </aside>
+            </div>
+
+
+            <div class="finding-judgments" aria-label="该问题的人机判断">
+              <div>
+                <span>模型原判断</span>
+                <strong>待处理 · 中</strong>
+              </div>
+              <div>
+                <span>我的裁定</span>
+                <strong>误报</strong>
+                <div class="ref">
+严重度改为中 · 评论：批判看看要不要优化 不要过度设计                </div>
+              </div>
+              <div>
+                <span>当前状态</span>
+                <strong>已忽略 · 中</strong>
+              </div>
+            </div>
+
+            <div class="feedback-placeholder" data-feedback-for="finding-001" data-fingerprint="sha256:a13749027576eceaeed7a10a769854ffcb16887accffc52788d670e48d09e3e6" data-applied-disposition="false_positive" data-applied-comment="批判看看要不要优化 不要过度设计" data-applied-severity="medium">
+              <div class="feedback-heading">
+                <div><strong>更新我的裁定</strong><div class="ref">只记录相对当前报告的新变化，不触发代码修改或模型复审。</div></div>
+                <span class="badge soft" data-feedback-state>待决策</span>
+              </div>
+              <div class="feedback-actions" role="group" aria-label="问题决策">
+                <button type="button" class="button" data-feedback-action="accept" aria-pressed="false">确认有效</button>
+                <button type="button" class="button" data-feedback-action="false_positive" aria-pressed="false">标记误报</button>
+              </div>
+              <details class="feedback-more">
+                <summary>评论与严重度调整</summary>
+                <div class="feedback-controls">
+                <label>
+                  严重度调整
+                  <select data-feedback-severity>
+                    <option value="">恢复模型原严重度</option>
+                    <option value="high">高</option>
+                    <option value="medium">中</option>
+                    <option value="low">低</option>
+                    <option value="note">提示</option>
+                  </select>
+                </label>
+                <label>
+                  评论
+                  <textarea rows="3" maxlength="4000" placeholder="可选；清空后保存会移除已有评论" data-feedback-comment></textarea>
+                </label>
+                <div class="feedback-comment-actions">
+                  <button type="button" class="button" data-feedback-action="comment">保存评论</button>
+                  <span class="ref" role="status" aria-live="polite" data-feedback-message>尚未记录决策</span>
+                </div>
+                </div>
+              </details>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel feedback-toolbar" aria-labelledby="feedback-export-title">
+      <div>
+        <h2 id="feedback-export-title">把裁定交给 AI 更新报告</h2>
+        <p class="muted">待更新内容仅保存在当前浏览器，并按 graph、run 与 finding fingerprint 隔离；点击复制前不会离开本页。</p>
+        <p class="ref" data-feedback-summary>0 项决策 · 0 条评论 · 不自动上传</p>
+        <p class="ref" data-feedback-storage-status>本地保存可用</p>
+      </div>
+      <div class="feedback-export-actions">
+        <button type="button" class="button primary" data-feedback-copy>复制给 AI 更新报告</button>
+        <button type="button" class="button secondary" data-feedback-export>下载 JSONL</button>
+        <span class="ref" role="status" aria-live="polite" data-feedback-export-status>尚未复制</span>
+      </div>
+    </section>
+
+
+    <section class="panel">
+      <div class="section-title">
+        <h2>3. 多轮对比</h2>
+        <span class="badge soft">3 轮</span>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>运行</th><th>状态</th><th>摘要</th></tr></thead>
+          <tbody>
+            <tr data-node-id="run-8d72fe3ae6f34c2d8021eadd1adf5d12" data-node-type="run">
+              <td>Sopify 代码变更审计<div class="ref">模型审查</div></td>
+              <td>存在待处理问题</td>
+              <td>
+                实现整体围绕临时目录安装、最终路径校验和简化错误界面进行了较一致的调整，但 CLI 健康判定与文档承诺不一致：`warning` 被当作健康状态复用。建议仅接受明确的 `status=ok`，或同步修改契约并补充针对 `warning` 的预期行为测试。
+              </td>
+            </tr>
+            <tr data-node-id="run-feedback-fc634e01b8909cf7" data-node-type="run">
+              <td>反馈修订 1<div class="ref">人工反馈修订</div></td>
+              <td>存在待处理问题</td>
+              <td>
+                基于人工裁定，未重新审查代码
+                <details class="revision-details">
+                  <summary>修订详情 · 本轮采用 3 条反馈</summary>
+                  <div class="ref">source run：run-8d72fe3ae6f34c2d8021eadd1adf5d12</div>
+                  <div class="ref">source audit：sha256:c7e985fd4b3157eb56933caa3335a535da0327fbe8dc3f43e9bad416cd078d98</div>
+                  <div class="ref">feedback：sha256:c750132cdddb17bb98368c2636256087f18cc58d493d72a3b72eb2adceeb2c20</div>
+                </details>
+              </td>
+            </tr>
+            <tr data-node-id="run-feedback-00fbe17d21db032d" data-node-type="run">
+              <td>反馈修订 2<div class="ref">人工反馈修订</div></td>
+              <td>候选通过</td>
+              <td>
+                基于人工裁定，未重新审查代码
+                <details class="revision-details">
+                  <summary>修订详情 · 本轮采用 1 条反馈</summary>
+                  <div class="ref">source run：run-feedback-fc634e01b8909cf7</div>
+                  <div class="ref">source audit：sha256:f51aa6f85a0061db64f047d4ba2dafc951709ef0dd923454de3246879d429cef</div>
+                  <div class="ref">feedback：sha256:ace7aa88ad7eabfe037e3bb098c768ab933c8cd8738aab97525388963609f616</div>
+                </details>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-title">
+        <h2>4. 审查依据详情</h2>
+        <span class="badge soft">1 条</span>
+      </div>
+      <details class="evidence-details">
+        <summary>查看全部 1 条审查依据</summary>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>证据</th><th>来源</th><th>状态</th><th>关联</th></tr></thead>
+          <tbody>
+            <tr data-node-id="evidence-001" data-node-type="evidence" data-status="fail">
+              <td>宿主语义审查结论：CLI 健康检查把 `doctor --json` 返回的 `warning` 状态也视为可复用的健康安装。<div class="ref">条件 `payload.get(&#34;status&#34;) not in {&#34;ok&#34;, &#34;warning&#34;}` 明确接受 `warning`，但同一 diff 的设计、文档及测试均将复用条件描述为 doctor 健康或 `status=ok`；这会让已报告警告的 CLI 被直接复用，同时跳过安装或修复路径。</div></td>
+              <td>宿主语义审查</td>
+              <td><span class="badge risk">发现问题</span></td>
+              <td class="ref">finding-001</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      </details>
+    </section>
+  </main>
+  <script>(function attachEvidentLoopFeedback(root, factory) {
+  "use strict";
+  const api = factory();
+  if (typeof module !== "undefined" && module.exports) {
+    module.exports = api;
+  }
+  if (root) {
+    root.EvidentLoopFeedback = api;
+    if (root.document) {
+      api.init(root.document, root);
+    }
+  }
+})(typeof window !== "undefined" ? window : null, function createEvidentLoopFeedback() {
+  "use strict";
+
+  const PREFIX = "evidentloop.feedback.v2";
+  const SEVERITIES = new Set(["high", "medium", "low", "note"]);
+  const MACHINE_BLOCK_BEGIN = "<<<EVIDENTLOOP_FEEDBACK_JSONL>>>";
+  const MACHINE_BLOCK_END = "<<<END_EVIDENTLOOP_FEEDBACK_JSONL>>>";
+  const COPY_INSTRUCTION = "请使用 EvidentLoop 按以下裁定更新当前报告；不要修改业务代码，也不要重新审查代码。";
+
+  function storageKey(identity) {
+    return [PREFIX, identity.graph_id, identity.run_id, identity.fingerprint]
+      .map((value) => encodeURIComponent(String(value)))
+      .join(":");
+  }
+
+  function defaultState(identity) {
+    return {
+      graph_id: identity.graph_id,
+      run_id: identity.run_id,
+      target_type: "finding",
+      target_id: identity.target_id,
+      fingerprint: identity.fingerprint,
+      disposition: null,
+      comment: null,
+      comment_changed: false,
+      severity_override: null,
+      severity_changed: false,
+      timestamps: {},
+      updated_at: null,
+    };
+  }
+
+  function matchesIdentity(state, identity) {
+    return state
+      && state.graph_id === identity.graph_id
+      && state.run_id === identity.run_id
+      && state.target_id === identity.target_id
+      && state.fingerprint === identity.fingerprint;
+  }
+
+  function validState(state, identity) {
+    if (!matchesIdentity(state, identity) || state.target_type !== "finding") return false;
+    if (![null, "accept", "false_positive"].includes(state.disposition)) return false;
+    if (state.comment !== null && typeof state.comment !== "string") return false;
+    if (typeof state.comment_changed !== "boolean") return false;
+    if (state.severity_override !== null && !SEVERITIES.has(state.severity_override)) return false;
+    if (typeof state.severity_changed !== "boolean") return false;
+    if (!state.timestamps || typeof state.timestamps !== "object") return false;
+    if (state.disposition && typeof state.timestamps.disposition !== "string") return false;
+    if (state.comment_changed && typeof state.timestamps.comment !== "string") return false;
+    if (state.severity_changed && typeof state.timestamps.severity_override !== "string") return false;
+    return true;
+  }
+
+  function loadState(storage, identity) {
+    try {
+      const raw = storage.getItem(storageKey(identity));
+      if (!raw) return defaultState(identity);
+      const state = JSON.parse(raw);
+      return validState(state, identity) ? state : defaultState(identity);
+    } catch (_error) {
+      return defaultState(identity);
+    }
+  }
+
+  function saveState(storage, state) {
+    storage.setItem(storageKey(state), JSON.stringify(state));
+    return state;
+  }
+
+  function applyAction(state, action, value, now) {
+    const next = JSON.parse(JSON.stringify(state));
+    const timestamp = now || new Date().toISOString();
+    if (action === "accept" || action === "false_positive") {
+      next.disposition = action;
+      next.timestamps.disposition = timestamp;
+    } else if (action === "comment") {
+      next.comment = String(value || "").trim() || null;
+      next.comment_changed = true;
+      next.timestamps.comment = timestamp;
+    } else if (action === "severity_override") {
+      const severity = String(value || "");
+      if (severity && !SEVERITIES.has(severity)) {
+        throw new Error("invalid severity override");
+      }
+      next.severity_override = severity || null;
+      next.severity_changed = true;
+      next.timestamps.severity_override = timestamp;
+    } else {
+      throw new Error("unknown feedback action");
+    }
+    next.updated_at = timestamp;
+    return next;
+  }
+
+  function clearPending(state, field) {
+    const next = JSON.parse(JSON.stringify(state));
+    if (field === "disposition") {
+      next.disposition = null;
+      delete next.timestamps.disposition;
+    } else if (field === "comment") {
+      next.comment = null;
+      next.comment_changed = false;
+      delete next.timestamps.comment;
+    } else if (field === "severity_override") {
+      next.severity_override = null;
+      next.severity_changed = false;
+      delete next.timestamps.severity_override;
+    } else {
+      throw new Error("unknown pending field");
+    }
+    next.updated_at = new Date().toISOString();
+    return next;
+  }
+
+  function applyPendingChange(state, action, value, appliedValue, now) {
+    if ((action === "accept" || action === "false_positive") && action === appliedValue) {
+      return clearPending(state, "disposition");
+    }
+    if (action === "comment" && String(value || "").trim() === (appliedValue || "")) {
+      return clearPending(state, "comment");
+    }
+    if (action === "severity_override" && String(value || "") === (appliedValue || "")) {
+      return clearPending(state, "severity_override");
+    }
+    return applyAction(state, action, value, now);
+  }
+
+  function baseEvent(state, action, createdAt, sourceAuditSha256) {
+    return {
+      target_type: "finding",
+      target_id: state.target_id,
+      action,
+      fingerprint: state.fingerprint,
+      graph_id: state.graph_id,
+      run_id: state.run_id,
+      created_at: createdAt,
+      source_audit_sha256: sourceAuditSha256,
+    };
+  }
+
+  function stateToEvents(state, sourceAuditSha256) {
+    const events = [];
+    if (state.disposition) {
+      events.push(baseEvent(state, state.disposition, state.timestamps.disposition, sourceAuditSha256));
+    }
+    if (state.comment_changed) {
+      events.push({
+        ...baseEvent(state, "comment", state.timestamps.comment, sourceAuditSha256),
+        comment: state.comment,
+      });
+    }
+    if (state.severity_changed) {
+      events.push({
+        ...baseEvent(state, "severity_override", state.timestamps.severity_override, sourceAuditSha256),
+        severity: state.severity_override,
+      });
+    }
+    return events;
+  }
+
+  function exportJsonl(states, sourceAuditSha256) {
+    const lines = states
+      .flatMap((state) => stateToEvents(state, sourceAuditSha256))
+      .map((event) => JSON.stringify(event));
+    return lines.length ? `${lines.join("\n")}\n` : "";
+  }
+
+  function buildCopyText(states, sourceAuditSha256) {
+    const jsonl = exportJsonl(states, sourceAuditSha256);
+    if (!jsonl) return "";
+    return `${COPY_INSTRUCTION}\n\n${MACHINE_BLOCK_BEGIN}\n${jsonl}${MACHINE_BLOCK_END}`;
+  }
+
+  function feedbackCounts(states, sourceAuditSha256) {
+    const events = states.flatMap((state) => stateToEvents(state, sourceAuditSha256));
+    return {
+      decisions: events.filter((event) => event.action !== "comment").length,
+      comments: events.filter((event) => event.action === "comment").length,
+      total: events.length,
+    };
+  }
+
+  function memoryStorage() {
+    const values = new Map();
+    return {
+      getItem(key) { return values.has(key) ? values.get(key) : null; },
+      setItem(key, value) { values.set(key, String(value)); },
+      removeItem(key) { values.delete(key); },
+    };
+  }
+
+  function appliedState(panel) {
+    return {
+      disposition: panel.dataset.appliedDisposition || null,
+      comment: panel.dataset.appliedComment || null,
+      severity_override: panel.dataset.appliedSeverity || null,
+    };
+  }
+
+  function renderState(panel, state, applied, syncInputs) {
+    const disposition = state.disposition || applied.disposition;
+    panel.querySelectorAll("[data-feedback-action='accept'], [data-feedback-action='false_positive']")
+      .forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.feedbackAction === disposition));
+      });
+    const badge = panel.querySelector("[data-feedback-state]");
+    const hasPending = state.disposition || state.comment_changed || state.severity_changed;
+    const hasApplied = applied.disposition || applied.comment || applied.severity_override;
+    badge.textContent = hasPending ? "有待更新裁定" : hasApplied ? "已应用" : "待决策";
+    if (syncInputs) {
+      panel.querySelector("[data-feedback-comment]").value = state.comment_changed
+        ? state.comment || ""
+        : applied.comment || "";
+      panel.querySelector("[data-feedback-severity]").value = state.severity_changed
+        ? state.severity_override || ""
+        : applied.severity_override || "";
+    }
+  }
+
+  async function copyText(documentObject, rootObject, value) {
+    if (
+      rootObject.navigator
+      && rootObject.navigator.clipboard
+      && typeof rootObject.navigator.clipboard.writeText === "function"
+    ) {
+      await rootObject.navigator.clipboard.writeText(value);
+      return;
+    }
+    const textarea = documentObject.createElement("textarea");
+    textarea.value = value;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    documentObject.body.appendChild(textarea);
+    textarea.select();
+    const copied = documentObject.execCommand && documentObject.execCommand("copy");
+    textarea.remove();
+    if (!copied) throw new Error("clipboard unavailable");
+  }
+
+  function init(documentObject, rootObject) {
+    const shell = documentObject.querySelector("[data-graph-id][data-run-id]");
+    if (!shell) return;
+    let storage;
+    let persistentStorage = true;
+    try {
+      storage = rootObject.localStorage;
+      const probe = `${PREFIX}:probe`;
+      storage.setItem(probe, "1");
+      storage.removeItem(probe);
+    } catch (_error) {
+      storage = memoryStorage();
+      persistentStorage = false;
+    }
+
+    const sourceAuditSha256 = shell.dataset.auditSha256;
+    const storageStatus = documentObject.querySelector("[data-feedback-storage-status]");
+    if (storageStatus && !persistentStorage) {
+      storageStatus.textContent = "仅临时保存，刷新会丢失";
+    }
+
+    const panels = Array.from(documentObject.querySelectorAll("[data-feedback-for][data-fingerprint]"));
+    const entries = panels.map((panel) => {
+      const identity = {
+        graph_id: shell.dataset.graphId,
+        run_id: shell.dataset.runId,
+        target_id: panel.dataset.feedbackFor,
+        fingerprint: panel.dataset.fingerprint,
+      };
+      let state = loadState(storage, identity);
+      const applied = appliedState(panel);
+      renderState(panel, state, applied, true);
+      const message = panel.querySelector("[data-feedback-message]");
+
+      panel.querySelectorAll("[data-feedback-action]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const action = button.dataset.feedbackAction;
+          const value = action === "comment"
+            ? panel.querySelector("[data-feedback-comment]").value
+            : null;
+          const appliedValue = action === "comment"
+            ? applied.comment
+            : applied.disposition;
+          state = applyPendingChange(state, action, value, appliedValue);
+          try { saveState(storage, state); } catch (_error) { /* in-memory state remains usable */ }
+          renderState(panel, state, applied, false);
+          message.textContent = action === "comment" && state.comment_changed && !state.comment
+            ? "待移除当前评论"
+            : "待更新裁定已保存在当前浏览器";
+          updateToolbar();
+        });
+      });
+      panel.querySelector("[data-feedback-severity]").addEventListener("change", (event) => {
+        state = applyPendingChange(
+          state,
+          "severity_override",
+          event.target.value,
+          applied.severity_override,
+        );
+        try { saveState(storage, state); } catch (_error) { /* in-memory state remains usable */ }
+        renderState(panel, state, applied, false);
+        message.textContent = state.severity_changed ? "严重度变化待更新" : "已恢复当前报告值";
+        updateToolbar();
+      });
+      return { getState: () => state };
+    });
+
+    const exportButton = documentObject.querySelector("[data-feedback-export]");
+    const copyButton = documentObject.querySelector("[data-feedback-copy]");
+    const exportStatus = documentObject.querySelector("[data-feedback-export-status]");
+    const summary = documentObject.querySelector("[data-feedback-summary]");
+    function currentStates() {
+      return entries.map((entry) => entry.getState());
+    }
+    function updateToolbar() {
+      if (!summary) return;
+      const counts = feedbackCounts(currentStates(), sourceAuditSha256);
+      summary.textContent = `${counts.decisions} 项决策 · ${counts.comments} 条评论 · 不自动上传`;
+    }
+    if (copyButton && exportStatus) {
+      copyButton.addEventListener("click", async () => {
+        const text = buildCopyText(currentStates(), sourceAuditSha256);
+        if (!text) {
+          exportStatus.textContent = "暂无待更新裁定";
+          return;
+        }
+        try {
+          await copyText(documentObject, rootObject, text);
+          exportStatus.textContent = "已复制，请粘贴给 AI 更新报告";
+        } catch (_error) {
+          exportStatus.textContent = "复制失败，请改用下载 JSONL";
+        }
+      });
+    }
+    if (exportButton && exportStatus) {
+      exportButton.addEventListener("click", () => {
+        const jsonl = exportJsonl(currentStates(), sourceAuditSha256);
+        if (!jsonl) {
+          exportStatus.textContent = "暂无可导出的决策";
+          return;
+        }
+        const blob = new rootObject.Blob([jsonl], { type: "application/x-ndjson;charset=utf-8" });
+        const url = rootObject.URL.createObjectURL(blob);
+        const link = documentObject.createElement("a");
+        link.href = url;
+        link.download = "audit-feedback.jsonl";
+        documentObject.body.appendChild(link);
+        link.click();
+        link.remove();
+        rootObject.URL.revokeObjectURL(url);
+        exportStatus.textContent = `已下载 ${jsonl.trimEnd().split("\n").length} 条反馈`;
+      });
+    }
+    updateToolbar();
+    documentObject.documentElement.dataset.evidentloopReady = "true";
+  }
+
+  return {
+    PREFIX,
+    MACHINE_BLOCK_BEGIN,
+    MACHINE_BLOCK_END,
+    applyAction,
+    applyPendingChange,
+    buildCopyText,
+    clearPending,
+    defaultState,
+    exportJsonl,
+    feedbackCounts,
+    init,
+    loadState,
+    memoryStorage,
+    saveState,
+    stateToEvents,
+    storageKey,
+    validState,
+  };
+});
+</script>
+</body>
+</html>

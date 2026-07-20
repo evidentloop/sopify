@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-07T06:13:51.963293+00:00",
+  "generated_at": "2026-07-19T08:14:29.246893+00:00",
   "schema_version": "1",
   "skills": [
     {
@@ -15,7 +15,9 @@
       "handoff_kind": "analysis",
       "host_support": [
         "codex",
-        "claude"
+        "claude",
+        "qoder",
+        "copilot"
       ],
       "id": "analyze",
       "metadata": {},
@@ -44,7 +46,9 @@
       "handoff_kind": "plan",
       "host_support": [
         "codex",
-        "claude"
+        "claude",
+        "qoder",
+        "copilot"
       ],
       "id": "design",
       "metadata": {},
@@ -73,7 +77,9 @@
       "handoff_kind": "develop",
       "host_support": [
         "codex",
-        "claude"
+        "claude",
+        "qoder",
+        "copilot"
       ],
       "id": "develop",
       "metadata": {},
@@ -103,7 +109,9 @@
       "handoff_kind": "kb",
       "host_support": [
         "codex",
-        "claude"
+        "claude",
+        "qoder",
+        "copilot"
       ],
       "id": "kb",
       "metadata": {},
@@ -133,7 +141,9 @@
       "handoff_kind": "template",
       "host_support": [
         "codex",
-        "claude"
+        "claude",
+        "qoder",
+        "copilot"
       ],
       "id": "templates",
       "metadata": {},

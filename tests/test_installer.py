@@ -21,12 +21,13 @@ _FOOTER_TIME_LABELS = ("Generated At:", "生成时间:")
 _CN_PREFLIGHT_CONTRACT_SENTENCES = (
     "consult / quick_fix 不自动接续 active plan，也不展示无关状态异常。",
     "MCP 只可选聚合客观事实，不可用时仍按文件协议继续。",
+    "active plan 只有在 level 对应语义文件精确成立时才有效：light 为 `plan.md`，standard 再含 `tasks.md`，architecture 再含 `design.md`。",
     "无效旧指针遇到明确 new plan 或明确且有效的 continue 目标时，由 writer 直接切换，不追加清理确认；有效旧方案切换仍须用户确认。",
     "用户正在回答匹配 checkpoint 时先消费回答，不重显同一问题。",
     "machine truth 只通过 `sopify_writer` 写入；`active_plan` 只含 `plan_id`，Wave 和任务进度来自方案文件。",
-    "显式审计非 active plan 时，审计器只读；宿主校验目标 `plan.md` digest 后通过 writer 写 `verify_NNN` receipt，active pointer / handoff 不变。",
+    "显式审计非 active plan 时，审计器的语义审查对目标只读；宿主可按用户选定审计器的官方流程执行受限取证和独立报告生成，校验目标 `plan_version` 后通过 writer 写 `verify_NNN` receipt，active pointer / handoff 不变。",
     "session 标识只作 provenance，不单独阻断。",
-    "仅当用户明确要求同时开发、宿主确认另一任务仍在运行，或写入前出现非本轮已知的目标 plan digest / 匹配 handoff 变化时，才停止当前有副作用的开发",
+    "仅当用户明确要求同时开发、宿主确认另一任务仍在运行，或写入前出现非本轮已知的目标 `plan_version` / 匹配 handoff 变化时，才停止当前有副作用的开发",
     "并只提示一次：`方案状态出现并行推进信号，本会话暂不写入。你可以继续只读审计，或确认其他开发已停止后在这里继续。`",
     "用户确认后，先重读最新方案状态再继续。",
 )
@@ -34,12 +35,13 @@ _CN_PREFLIGHT_CONTRACT_SENTENCES = (
 _EN_PREFLIGHT_CONTRACT_SENTENCES = (
     "consult / quick_fix do not auto-resume the active plan or surface unrelated state errors.",
     "MCP may only aggregate objective facts; if unavailable, continue with the file protocol.",
+    "An active plan is valid only when its level has the exact semantic files: light has `plan.md`, standard adds `tasks.md`, and architecture adds `design.md`.",
     "When a stale invalid pointer meets an explicit new plan or an explicit valid continue target, let the writer switch directly without a cleanup confirmation; switching away from a still-valid plan still requires user confirmation.",
     "When the user is answering the matching checkpoint, consume the answer before continuing and do not repeat the same question.",
     "Write machine truth only through `sopify_writer`. `active_plan` contains only `plan_id`; Wave and task progress come from plan files.",
-    "For an explicit audit of a non-active plan, the verifier stays read-only; after revalidating the target `plan.md` digest, the host writes a `verify_NNN` receipt through the writer without changing the active pointer or handoff.",
+    "For an explicit audit of a non-active plan, the verifier's semantic review stays read-only on the target; the host may follow the user-selected verifier's official workflow for bounded evidence collection and independent report generation, then revalidates the target `plan_version` and writes a `verify_NNN` receipt through the writer without changing the active pointer or handoff.",
     "A session ID is provenance only and does not block continuation by itself.",
-    "Stop side-effecting development only when the user explicitly requests simultaneous development, the host confirms another task is still running, or the target plan digest / matching handoff changes before the first write due to an unknown write.",
+    "Stop side-effecting development only when the user explicitly requests simultaneous development, the host confirms another task is still running, or the target `plan_version` / matching handoff changes before the first write due to an unknown write.",
     "Show this once: `The plan state shows a parallel-advance signal, so this session will not write. You can continue read-only review, or confirm that the other development has stopped and then continue here.`",
     "After the user confirms, reread the latest plan state before continuing.",
 )

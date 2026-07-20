@@ -16,4 +16,6 @@ allowed_paths:
 host_support:
   - codex
   - claude
+  - qoder
+  - copilot
 permission_mode: default

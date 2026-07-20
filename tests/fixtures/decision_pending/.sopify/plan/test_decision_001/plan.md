@@ -1,3 +1,7 @@
+---
+level: light
+---
+
 # Decision Pending Fixture
 
 ## Context / Why

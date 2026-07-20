@@ -26,7 +26,7 @@ def main() -> int:
     reasons: List[str] = []
 
     if args.architecture_change or args.major_refactor or args.new_system:
-        level = "full"
+        level = "architecture"
         if args.architecture_change:
             reasons.append("architecture_change")
         if args.major_refactor:

@@ -133,6 +133,17 @@ class InstallResult:
     payload_install: "InstallPhaseResult"
     workspace_bootstrap: "BootstrapResult | None"
     smoke_output: str
+    evidentloop_install: "EvidentLoopInstallResult | None" = None
+
+
+@dataclass(frozen=True)
+class EvidentLoopInstallResult:
+    """Result of the explicitly requested EvidentLoop companion install."""
+
+    cli_action: str
+    skill_action: str
+    package_version: str
+    skill_path: Path
 
 
 @dataclass(frozen=True)

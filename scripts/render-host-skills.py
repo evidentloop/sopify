@@ -125,7 +125,7 @@ def main() -> None:
         help="Path to hosts.yaml",
     )
     parser.add_argument("--lang", help="Language code (en or zh)")
-    parser.add_argument("--host", help="Host id (claude, codex, copilot)")
+    parser.add_argument("--host", help="Host id (claude, codex, qoder, copilot)")
     parser.add_argument("--output", type=Path, help="Output file path (default: stdout)")
     parser.add_argument(
         "--verify-all",

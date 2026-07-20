@@ -8,6 +8,7 @@ Covers:
   - Finalize: write final receipt + history receipt + clear state
   - No retired state files produced
 """
+
 from __future__ import annotations
 
 import json
@@ -32,6 +33,20 @@ _RETIRED_STATE_FILES = (
     "current_gate_receipt.json",
     "current_archive_receipt.json",
 )
+
+
+def _write_plan_package(sopify_root: Path, plan_id: str, level: str = "light") -> Path:
+    plan_dir = sopify_root / "plan" / plan_id
+    plan_dir.mkdir(parents=True, exist_ok=True)
+    (plan_dir / "plan.md").write_text(
+        f"---\nlevel: {level}\n---\n\n# Test plan\n",
+        encoding="utf-8",
+    )
+    if level in {"standard", "architecture"}:
+        (plan_dir / "tasks.md").write_text("# Tasks\n", encoding="utf-8")
+    if level == "architecture":
+        (plan_dir / "design.md").write_text("# Design\n", encoding="utf-8")
+    return plan_dir
 
 
 class ProtocolStoreActivePlanTests(unittest.TestCase):
@@ -73,7 +88,7 @@ class ProtocolStoreActivePlanTests(unittest.TestCase):
     def test_set_active_plan_empty_plan_id_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             store = ProtocolStore(Path(temp_dir))
-            for bad_id in ("", "   "):
+            for bad_id in ("", "   ", "../escape", "bad-id", "bad/name"):
                 with self.subTest(plan_id=bad_id):
                     with self.assertRaises(InvariantViolationError):
                         store.set_active_plan(plan_id=bad_id)
@@ -142,9 +157,14 @@ class ProtocolStoreHandoffTests(unittest.TestCase):
 
 
 class ProtocolStorePlanReceiptTests(unittest.TestCase):
+    def _store(self, temp_dir: str, plan_id: str = "plan_001") -> ProtocolStore:
+        store = ProtocolStore(Path(temp_dir))
+        _write_plan_package(store.root, plan_id)
+        return store
+
     def test_write_exec_receipt(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
-            store = ProtocolStore(Path(temp_dir))
+            store = self._store(temp_dir)
             path = store.write_plan_receipt(
                 plan_id="plan_001",
                 receipt_id="exec_001",
@@ -158,11 +178,14 @@ class ProtocolStorePlanReceiptTests(unittest.TestCase):
             self.assertEqual(payload["evidence"], {"files_changed": 3})
             self.assertEqual(payload["provenance"]["plan_id"], "plan_001")
             self.assertEqual(payload["provenance"]["receipt_id"], "exec_001")
+            self.assertRegex(
+                payload["provenance"]["plan_version"], r"^sha256:[0-9a-f]{64}$"
+            )
             self.assertIn("timestamp", payload)
 
     def test_write_verify_receipt(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
-            store = ProtocolStore(Path(temp_dir))
+            store = self._store(temp_dir)
             path = store.write_plan_receipt(
                 plan_id="plan_001",
                 receipt_id="verify_002",
@@ -174,7 +197,7 @@ class ProtocolStorePlanReceiptTests(unittest.TestCase):
 
     def test_existing_receipt_is_not_overwritten(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
-            store = ProtocolStore(Path(temp_dir))
+            store = self._store(temp_dir)
             path = store.write_plan_receipt(
                 plan_id="plan_001",
                 receipt_id="verify_001",
@@ -195,7 +218,7 @@ class ProtocolStorePlanReceiptTests(unittest.TestCase):
 
     def test_concurrent_receipt_writes_create_exactly_one_file(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
-            store = ProtocolStore(Path(temp_dir))
+            store = self._store(temp_dir)
             barrier = Barrier(2)
             original_write = write_json_exclusive
 
@@ -215,10 +238,13 @@ class ProtocolStorePlanReceiptTests(unittest.TestCase):
                     return "exists"
                 return "created"
 
-            with patch(
-                "sopify_writer.store.write_json_exclusive",
-                side_effect=synchronized_write,
-            ), ThreadPoolExecutor(max_workers=2) as pool:
+            with (
+                patch(
+                    "sopify_writer.store.write_json_exclusive",
+                    side_effect=synchronized_write,
+                ),
+                ThreadPoolExecutor(max_workers=2) as pool,
+            ):
                 results = list(pool.map(write, ("first", "second")))
 
             self.assertCountEqual(results, ["created", "exists"])
@@ -235,7 +261,7 @@ class ProtocolStorePlanReceiptTests(unittest.TestCase):
 
     def test_receipt_id_pattern_rejects_invalid(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
-            store = ProtocolStore(Path(temp_dir))
+            store = self._store(temp_dir)
             for bad_id in ("exec_1", "exec_0001", "final_001", "EXEC_001", "", "foo"):
                 with self.subTest(receipt_id=bad_id):
                     with self.assertRaises(InvariantViolationError):
@@ -247,8 +273,14 @@ class ProtocolStorePlanReceiptTests(unittest.TestCase):
 
     def test_receipt_id_pattern_accepts_valid(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
-            store = ProtocolStore(Path(temp_dir))
-            for valid_id in ("exec_001", "exec_999", "verify_001", "verify_100", "final"):
+            store = self._store(temp_dir)
+            for valid_id in (
+                "exec_001",
+                "exec_999",
+                "verify_001",
+                "verify_100",
+                "final",
+            ):
                 with self.subTest(receipt_id=valid_id):
                     path = store.write_plan_receipt(
                         plan_id="plan_001",
@@ -259,7 +291,7 @@ class ProtocolStorePlanReceiptTests(unittest.TestCase):
 
     def test_empty_verdict_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
-            store = ProtocolStore(Path(temp_dir))
+            store = self._store(temp_dir)
             with self.assertRaises(InvariantViolationError):
                 store.write_plan_receipt(
                     plan_id="plan_001",
@@ -269,7 +301,7 @@ class ProtocolStorePlanReceiptTests(unittest.TestCase):
 
     def test_empty_plan_id_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
-            store = ProtocolStore(Path(temp_dir))
+            store = self._store(temp_dir)
             with self.assertRaises(InvariantViolationError):
                 store.write_plan_receipt(
                     plan_id="",
@@ -279,7 +311,7 @@ class ProtocolStorePlanReceiptTests(unittest.TestCase):
 
     def test_provenance_plan_id_conflict_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
-            store = ProtocolStore(Path(temp_dir))
+            store = self._store(temp_dir)
             with self.assertRaises(InvariantViolationError):
                 store.write_plan_receipt(
                     plan_id="plan_001",
@@ -290,7 +322,7 @@ class ProtocolStorePlanReceiptTests(unittest.TestCase):
 
     def test_provenance_receipt_id_conflict_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
-            store = ProtocolStore(Path(temp_dir))
+            store = self._store(temp_dir)
             with self.assertRaises(InvariantViolationError):
                 store.write_plan_receipt(
                     plan_id="plan_001",
@@ -301,7 +333,7 @@ class ProtocolStorePlanReceiptTests(unittest.TestCase):
 
     def test_provenance_passthrough_extra_fields(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
-            store = ProtocolStore(Path(temp_dir))
+            store = self._store(temp_dir)
             path = store.write_plan_receipt(
                 plan_id="plan_001",
                 receipt_id="exec_001",
@@ -313,6 +345,32 @@ class ProtocolStorePlanReceiptTests(unittest.TestCase):
             self.assertEqual(payload["provenance"]["session_id"], "sess_abc")
             self.assertEqual(payload["provenance"]["host"], "codex")
             self.assertEqual(payload["provenance"]["plan_id"], "plan_001")
+
+    def test_expected_plan_version_conflict_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            store = self._store(temp_dir)
+
+            with self.assertRaises(InvariantViolationError):
+                store.write_plan_receipt(
+                    plan_id="plan_001",
+                    receipt_id="exec_001",
+                    verdict="pass",
+                    expected_plan_version="sha256:stale",
+                )
+
+    def test_invalid_plan_package_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            store = self._store(temp_dir)
+            (store.root / "plan" / "plan_001" / "background.md").write_text(
+                "legacy", encoding="utf-8"
+            )
+
+            with self.assertRaises(InvariantViolationError):
+                store.write_plan_receipt(
+                    plan_id="plan_001",
+                    receipt_id="exec_001",
+                    verdict="pass",
+                )
 
 
 class ProtocolStoreHistoryReceiptTests(unittest.TestCase):
@@ -345,7 +403,9 @@ class ProtocolStoreHistoryReceiptTests(unittest.TestCase):
                 month="2026-06",
             )
 
-            expected = Path(temp_dir) / "history" / "2026-06" / "plan_001" / "receipt.md"
+            expected = (
+                Path(temp_dir) / "history" / "2026-06" / "plan_001" / "receipt.md"
+            )
             self.assertEqual(path, expected)
 
     def test_empty_outcome_rejected(self) -> None:
@@ -408,14 +468,16 @@ class ProtocolStoreHistoryReceiptTests(unittest.TestCase):
     def test_empty_month_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             store = ProtocolStore(Path(temp_dir))
-            with self.assertRaises(InvariantViolationError):
-                store.write_history_receipt(
-                    plan_id="plan_001",
-                    outcome="completed",
-                    summary="Done.",
-                    key_decisions=["A"],
-                    month="",
-                )
+            for bad_month in ("", "2026-7", "2026-13", "../../escaped"):
+                with self.subTest(month=bad_month):
+                    with self.assertRaises(InvariantViolationError):
+                        store.write_history_receipt(
+                            plan_id="plan_001",
+                            outcome="completed",
+                            summary="Done.",
+                            key_decisions=["A"],
+                            month=bad_month,
+                        )
 
     def test_multiple_key_decisions_rendered(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -436,6 +498,7 @@ class ProtocolStoreHistoryReceiptTests(unittest.TestCase):
 
 class ProtocolStoreFinalizeTests(unittest.TestCase):
     def _setup_active_plan(self, store: ProtocolStore, plan_id: str) -> None:
+        _write_plan_package(store.root, plan_id)
         store.set_active_plan(plan_id=plan_id)
         store.set_current_handoff(
             RuntimeHandoff(
@@ -461,7 +524,9 @@ class ProtocolStoreFinalizeTests(unittest.TestCase):
 
             # Final receipt written
             self.assertTrue(result["final_receipt"].exists())
-            final_payload = json.loads(result["final_receipt"].read_text(encoding="utf-8"))
+            final_payload = json.loads(
+                result["final_receipt"].read_text(encoding="utf-8")
+            )
             self.assertEqual(final_payload["verdict"], "finalized")
             self.assertEqual(final_payload["evidence"], {"waves_completed": 3})
             self.assertEqual(final_payload["provenance"]["plan_id"], "finalize_001")
@@ -479,6 +544,7 @@ class ProtocolStoreFinalizeTests(unittest.TestCase):
     def test_finalize_clears_state_even_when_no_prior_state(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             store = ProtocolStore(Path(temp_dir))
+            _write_plan_package(store.root, "no_state_001")
 
             result = store.finalize_plan(
                 plan_id="no_state_001",
@@ -496,6 +562,7 @@ class ProtocolStoreFinalizeTests(unittest.TestCase):
     def test_finalize_receipt_paths(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             store = ProtocolStore(Path(temp_dir))
+            _write_plan_package(store.root, "paths_001")
 
             result = store.finalize_plan(
                 plan_id="paths_001",
@@ -505,10 +572,103 @@ class ProtocolStoreFinalizeTests(unittest.TestCase):
                 month="2026-06",
             )
 
-            expected_final = Path(temp_dir) / "plan" / "paths_001" / "receipts" / "final.json"
-            expected_history = Path(temp_dir) / "history" / "2026-06" / "paths_001" / "receipt.md"
+            expected_final = (
+                Path(temp_dir)
+                / "history"
+                / "2026-06"
+                / "paths_001"
+                / "receipts"
+                / "final.json"
+            )
+            expected_history = (
+                Path(temp_dir) / "history" / "2026-06" / "paths_001" / "receipt.md"
+            )
             self.assertEqual(result["final_receipt"], expected_final)
             self.assertEqual(result["history_receipt"], expected_history)
+            self.assertEqual(
+                result["archive_dir"],
+                Path(temp_dir) / "history" / "2026-06" / "paths_001",
+            )
+
+    def test_finalize_version_conflict_preserves_plan_and_state(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            store = ProtocolStore(Path(temp_dir))
+            self._setup_active_plan(store, "conflict_001")
+
+            with self.assertRaises(InvariantViolationError):
+                store.finalize_plan(
+                    plan_id="conflict_001",
+                    outcome="completed",
+                    summary="Done.",
+                    key_decisions=["A"],
+                    month="2026-06",
+                    expected_plan_version="sha256:stale",
+                )
+
+            self.assertTrue((store.root / "plan" / "conflict_001").is_dir())
+            self.assertIsNotNone(store.get_active_plan())
+            self.assertIsNotNone(store.get_current_handoff())
+            self.assertFalse(
+                (store.root / "history" / "2026-06" / "conflict_001").exists()
+            )
+
+    def test_finalize_rejects_history_path_escape(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            store = ProtocolStore(Path(temp_dir))
+            self._setup_active_plan(store, "escape_001")
+
+            with self.assertRaises(InvariantViolationError):
+                store.finalize_plan(
+                    plan_id="escape_001",
+                    outcome="completed",
+                    summary="Done.",
+                    key_decisions=["A"],
+                    month="../../escaped",
+                )
+
+            self.assertTrue((store.root / "plan" / "escape_001").is_dir())
+            self.assertIsNotNone(store.get_active_plan())
+            self.assertFalse((store.root.parent / "escaped" / "escape_001").exists())
+
+    def test_finalize_archive_failure_preserves_plan_and_state(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            store = ProtocolStore(Path(temp_dir))
+            self._setup_active_plan(store, "failure_001")
+
+            with patch("pathlib.Path.rename", side_effect=OSError("rename failed")):
+                with self.assertRaises(OSError):
+                    store.finalize_plan(
+                        plan_id="failure_001",
+                        outcome="completed",
+                        summary="Done.",
+                        key_decisions=["A"],
+                        month="2026-06",
+                    )
+
+            plan_dir = store.root / "plan" / "failure_001"
+            self.assertTrue(plan_dir.is_dir())
+            self.assertFalse((plan_dir / "receipts" / "final.json").exists())
+            self.assertFalse((plan_dir / "receipt.md").exists())
+            self.assertIsNotNone(store.get_active_plan())
+            self.assertIsNotNone(store.get_current_handoff())
+
+    def test_finalize_rejects_mismatched_active_plan(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            store = ProtocolStore(Path(temp_dir))
+            _write_plan_package(store.root, "target_001")
+            store.set_active_plan(plan_id="other_001")
+
+            with self.assertRaises(InvariantViolationError):
+                store.finalize_plan(
+                    plan_id="target_001",
+                    outcome="completed",
+                    summary="Done.",
+                    key_decisions=["A"],
+                    month="2026-06",
+                )
+
+            self.assertTrue((store.root / "plan" / "target_001").is_dir())
+            self.assertEqual(store.get_active_plan(), {"plan_id": "other_001"})
 
 
 class ProtocolStoreNoRetiredFilesTests(unittest.TestCase):
@@ -516,6 +676,7 @@ class ProtocolStoreNoRetiredFilesTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             sopify_root = Path(temp_dir)
             store = ProtocolStore(sopify_root)
+            _write_plan_package(sopify_root, "no_retired_001")
 
             store.set_active_plan(plan_id="no_retired_001")
             store.set_current_handoff(
@@ -566,6 +727,7 @@ class ProtocolStoreNoRetiredFilesTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             sopify_root = Path(temp_dir)
             store = ProtocolStore(sopify_root)
+            _write_plan_package(sopify_root, "clear_after_001")
 
             store.set_active_plan(plan_id="clear_after_001")
             store.set_current_handoff(

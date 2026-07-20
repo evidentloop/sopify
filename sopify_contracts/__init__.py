@@ -5,7 +5,14 @@ All runtime and sopify_writer modules import types from here.
 """
 
 from .artifacts import KbArtifact, PlanArtifact
-from .core import ExecutionGate, ExecutionSummary, RouteDecision, RunState, RuntimeConfig, SkillMeta
+from .core import (
+    ExecutionGate,
+    ExecutionSummary,
+    RouteDecision,
+    RunState,
+    RuntimeConfig,
+    SkillMeta,
+)
 from .decision import (
     ClarificationState,
     DecisionCheckpoint,
@@ -20,6 +27,7 @@ from .decision import (
 )
 from .handoff import RecoveredContext, RuntimeHandoff, RuntimeResult, SkillActivation
 from .proposal import PlanProposalState
+from .plan_package import PLAN_FILES_BY_LEVEL, PlanPackageSnapshot, inspect_plan_package
 
 __all__ = [
     "ClarificationState",
@@ -37,6 +45,8 @@ __all__ = [
     "KbArtifact",
     "PlanArtifact",
     "PlanProposalState",
+    "PLAN_FILES_BY_LEVEL",
+    "PlanPackageSnapshot",
     "RecoveredContext",
     "RouteDecision",
     "RunState",
@@ -45,4 +55,5 @@ __all__ = [
     "RuntimeResult",
     "SkillActivation",
     "SkillMeta",
+    "inspect_plan_package",
 ]

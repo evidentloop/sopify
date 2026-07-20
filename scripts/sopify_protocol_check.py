@@ -19,6 +19,12 @@ import re
 import sys
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from sopify_contracts import inspect_plan_package  # noqa: E402
+
 REQUIRED_SECTIONS = [
     "Context / Why",
     "Scope",
@@ -51,10 +57,17 @@ FORBIDDEN_STATE_FILES = [
 ]
 
 ALLOWANCE_MARKERS = [
-    "[retired", "[deprecated", "[superseded",
-    "must not", "must_not",
-    "禁止", "不得", "退场",
-    "~~", "pre-p8", "legacy",
+    "[retired",
+    "[deprecated",
+    "[superseded",
+    "must not",
+    "must_not",
+    "禁止",
+    "不得",
+    "退场",
+    "~~",
+    "pre-p8",
+    "legacy",
 ]
 
 
@@ -85,32 +98,63 @@ def check_required_sections(plan_md: Path) -> list[str]:
     for i, sec in enumerate(REQUIRED_SECTIONS):
         if sec not in found:
             failures.append(f"Missing required section: '{sec}'")
-        elif i > 0 and found.index(sec) < found.index(REQUIRED_SECTIONS[i - 1]) if REQUIRED_SECTIONS[i - 1] in found else False:
-            failures.append(f"Section '{sec}' out of order (must come after '{REQUIRED_SECTIONS[i - 1]}')")
+        elif (
+            i > 0 and found.index(sec) < found.index(REQUIRED_SECTIONS[i - 1])
+            if REQUIRED_SECTIONS[i - 1] in found
+            else False
+        ):
+            failures.append(
+                f"Section '{sec}' out of order (must come after '{REQUIRED_SECTIONS[i - 1]}')"
+            )
     return failures
+
+
+def check_plan_package(plan_dir: Path) -> list[str]:
+    """Validate the same semantic package used by writer and entry preflight."""
+    snapshot = inspect_plan_package(plan_dir)
+    if snapshot.valid:
+        return []
+    return [f"Invalid plan package: {snapshot.error or 'unknown error'}"]
 
 
 def check_forbidden_patterns(target_file: Path) -> list[str]:
     failures = []
     try:
-        for line_num, line in enumerate(target_file.read_text(encoding="utf-8").splitlines(), 1):
+        for line_num, line in enumerate(
+            target_file.read_text(encoding="utf-8").splitlines(), 1
+        ):
             if is_allowance_line(line):
                 continue
             for pattern, desc in FORBIDDEN_PATTERNS:
                 if re.search(pattern, line):
-                    failures.append(f"{target_file.name}:{line_num}: active reference to {desc}")
+                    failures.append(
+                        f"{target_file.name}:{line_num}: active reference to {desc}"
+                    )
             for sf in FORBIDDEN_STATE_FILES:
                 # Only flag if it looks like an active read reference, not a retirement note
-                if sf in line and not any(kw in line for kw in [
-                    "删除", "P8 删除", "RETIRED", "折叠", "替代", "退场", "legacy"
-                ]):
-                    failures.append(f"{target_file.name}:{line_num}: active reference to retired state file '{sf}'")
+                if sf in line and not any(
+                    kw in line
+                    for kw in [
+                        "删除",
+                        "P8 删除",
+                        "RETIRED",
+                        "折叠",
+                        "替代",
+                        "退场",
+                        "legacy",
+                    ]
+                ):
+                    failures.append(
+                        f"{target_file.name}:{line_num}: active reference to retired state file '{sf}'"
+                    )
     except FileNotFoundError:
         pass
     return failures
 
 
-def check_active_plan(state_dir: Path, expected_plan_id: str | None = None) -> tuple[dict | None, list[str]]:
+def check_active_plan(
+    state_dir: Path, expected_plan_id: str | None = None
+) -> tuple[dict | None, list[str]]:
     failures = []
     ap_file = state_dir / "active_plan.json"
     if not ap_file.exists():
@@ -129,14 +173,18 @@ def check_active_plan(state_dir: Path, expected_plan_id: str | None = None) -> t
     if not isinstance(data.get("plan_id"), str) or not data["plan_id"]:
         failures.append("active_plan.json 'plan_id' must be a non-empty string")
     if expected_plan_id and data.get("plan_id") != expected_plan_id:
-        failures.append(f"active_plan.json plan_id '{data.get('plan_id')}' != expected '{expected_plan_id}'")
+        failures.append(
+            f"active_plan.json plan_id '{data.get('plan_id')}' != expected '{expected_plan_id}'"
+        )
     extra = set(data.keys()) - {"plan_id"}
     if extra:
         failures.append(f"active_plan.json has unexpected fields: {extra}")
     return data, failures
 
 
-def check_current_handoff(state_dir: Path, expected_plan_id: str | None = None) -> tuple[dict | None, list[str]]:
+def check_current_handoff(
+    state_dir: Path, expected_plan_id: str | None = None
+) -> tuple[dict | None, list[str]]:
     failures = []
     ch_file = state_dir / "current_handoff.json"
     if not ch_file.exists():
@@ -154,18 +202,27 @@ def check_current_handoff(state_dir: Path, expected_plan_id: str | None = None) 
         if field not in data:
             failures.append(f"current_handoff.json missing required field '{field}'")
     valid_actions = [
-        "continue_host_develop", "answer_questions", "confirm_decision",
-        "continue_host_consult", "resolve_state_conflict",
+        "continue_host_develop",
+        "answer_questions",
+        "confirm_decision",
+        "continue_host_consult",
+        "resolve_state_conflict",
     ]
     action = data.get("required_host_action")
     if action and action not in valid_actions:
-        failures.append(f"current_handoff.json invalid required_host_action: '{action}'")
+        failures.append(
+            f"current_handoff.json invalid required_host_action: '{action}'"
+        )
     retired = ["route_name", "run_id", "handoff_kind", "resolution_id"]
     for f in retired:
         if f in data:
-            failures.append(f"current_handoff.json has retired field '{f}' (move to observability.provenance)")
+            failures.append(
+                f"current_handoff.json has retired field '{f}' (move to observability.provenance)"
+            )
     if expected_plan_id and data.get("plan_id") != expected_plan_id:
-        failures.append(f"current_handoff.json plan_id mismatch: '{data.get('plan_id')}' != '{expected_plan_id}'")
+        failures.append(
+            f"current_handoff.json plan_id mismatch: '{data.get('plan_id')}' != '{expected_plan_id}'"
+        )
     # W2.5: artifact conventions for folded clarification/decision
     if action == "answer_questions":
         artifacts = data.get("artifacts")
@@ -206,7 +263,32 @@ def check_receipts(plan_dir: Path, require_final: bool = False) -> list[str]:
                     return failures
                 for field in ["verdict", "evidence", "provenance", "timestamp"]:
                     if field not in data:
-                        failures.append(f"receipts/final.json missing required field '{field}'")
+                        failures.append(
+                            f"receipts/final.json missing required field '{field}'"
+                        )
+                provenance = data.get("provenance")
+                if not isinstance(provenance, dict):
+                    failures.append(
+                        "receipts/final.json field 'provenance' must be an object"
+                    )
+                elif "plan_version" in provenance:
+                    expected_version = provenance.get("plan_version")
+                    if not isinstance(expected_version, str) or not expected_version:
+                        failures.append(
+                            "receipts/final.json provenance.plan_version must be a non-empty string"
+                        )
+                    else:
+                        snapshot = inspect_plan_package(plan_dir)
+                        if not snapshot.valid or snapshot.version is None:
+                            failures.append(
+                                "Archived plan package is invalid: "
+                                f"{snapshot.error or 'unknown error'}"
+                            )
+                        elif snapshot.version != expected_version:
+                            failures.append(
+                                "Archived plan_version does not match "
+                                "receipts/final.json provenance.plan_version"
+                            )
             except json.JSONDecodeError as e:
                 failures.append(f"Invalid JSON in receipts/final.json: {e}")
     elif receipts_dir.exists():
@@ -214,7 +296,9 @@ def check_receipts(plan_dir: Path, require_final: bool = False) -> list[str]:
             if f.name == "final.json":
                 continue
             if not re.match(r"^(exec|verify)_\d{3}\.json$", f.name):
-                failures.append(f"receipts/{f.name} doesn't match naming convention (exec_NNN/verify_NNN.json)")
+                failures.append(
+                    f"receipts/{f.name} doesn't match naming convention (exec_NNN/verify_NNN.json)"
+                )
     return failures
 
 
@@ -222,9 +306,9 @@ def check_state_empty(state_dir: Path) -> list[str]:
     failures = []
     if state_dir.exists():
         for f in state_dir.iterdir():
-            if f.name in ("active_plan.json", "current_handoff.json"):
-                continue
-            failures.append(f"state/ should be empty after finalize, but found: {f.name}")
+            failures.append(
+                f"state/ should be empty after finalize, but found: {f.name}"
+            )
     return failures
 
 
@@ -257,6 +341,7 @@ def run_new_plan(fixture: Path) -> dict:
         if not plan_md.exists():
             failures.append(f"plan/{plan_id}/plan.md not found")
         else:
+            failures.extend(check_plan_package(plan_dir))
             failures.extend(check_required_sections(plan_md))
             failures.extend(check_forbidden_patterns(plan_md))
 
@@ -282,11 +367,14 @@ def run_continuation(fixture: Path) -> dict:
         if not plan_md.exists():
             failures.append(f"plan/{plan_id}/plan.md not found (state inconsistency)")
         else:
+            failures.extend(check_plan_package(plan_dir))
             failures.extend(check_required_sections(plan_md))
             failures.extend(check_forbidden_patterns(plan_md))
 
     # Step 3: current_handoff
-    ch_data, ch_failures = check_current_handoff(state, expected_plan_id=plan_id or None)
+    ch_data, ch_failures = check_current_handoff(
+        state, expected_plan_id=plan_id or None
+    )
     failures.extend(ch_failures)
 
     # Step 4: receipts (latest-only)
@@ -299,11 +387,23 @@ def run_continuation(fixture: Path) -> dict:
         failures.extend(check_forbidden_patterns(protocol_md))
     else:
         # Fallback: scan the repo's own protocol.md if fixture doesn't have one
-        repo_protocol = Path(__file__).resolve().parent.parent / ".sopify" / "blueprint" / "protocol.md"
+        repo_protocol = (
+            Path(__file__).resolve().parent.parent
+            / ".sopify"
+            / "blueprint"
+            / "protocol.md"
+        )
         if repo_protocol.exists():
             failures.extend(check_forbidden_patterns(repo_protocol))
         # Also scan host prompt entry spec
-        repo_prompt_spec = Path(__file__).resolve().parent.parent / ".sopify" / "plan" / "20260605_p8_protocol_kernel_runtime_retirement" / "assets" / "host-prompt-protocol-entry.md"
+        repo_prompt_spec = (
+            Path(__file__).resolve().parent.parent
+            / ".sopify"
+            / "plan"
+            / "20260605_p8_protocol_kernel_runtime_retirement"
+            / "assets"
+            / "host-prompt-protocol-entry.md"
+        )
         if repo_prompt_spec.exists():
             failures.extend(check_forbidden_patterns(repo_prompt_spec))
 
@@ -355,13 +455,17 @@ def run_protocol_check(workspace_root: Path | str, scenario: str) -> dict:
     if scenario not in SCENARIOS:
         return make_result(
             scenario,
-            [f"Unsupported scenario: {scenario!r}; expected one of {', '.join(SCENARIOS)}"],
+            [
+                f"Unsupported scenario: {scenario!r}; expected one of {', '.join(SCENARIOS)}"
+            ],
             fixture,
         )
     if not fixture.exists():
         return make_result(scenario, [f"fixture not found: {fixture}"], fixture)
     if not fixture.is_dir():
-        return make_result(scenario, [f"fixture is not a directory: {fixture}"], fixture)
+        return make_result(
+            scenario, [f"fixture is not a directory: {fixture}"], fixture
+        )
 
     runners = {
         "new-plan": run_new_plan,
@@ -392,7 +496,9 @@ def main():
         sys.exit(1)
 
     if not args.fixture.exists():
-        print(json.dumps({"error": f"fixture not found: {args.fixture}"}), file=sys.stderr)
+        print(
+            json.dumps({"error": f"fixture not found: {args.fixture}"}), file=sys.stderr
+        )
         sys.exit(2)
 
     result = run_protocol_check(args.fixture, args.scenario)

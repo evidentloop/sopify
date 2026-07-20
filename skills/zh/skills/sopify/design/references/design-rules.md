@@ -6,7 +6,7 @@
 
 ## 总流程
 
-1. 判定方案包级别（`light/standard/full`）。
+1. 判定方案包级别（`light/standard/architecture`）。
 2. 生成方案文件骨架。
 3. 拆分任务并标注验证标准。
 4. 输出摘要并等待宿主后续动作。
@@ -17,16 +17,15 @@
 
 - `light`：文件数 3-5，且无架构级变更，修改范围明确。
 - `standard`：文件数 >5，或新功能开发，或跨模块改动。
-- `full`：架构级变更、重大重构、新系统设计。
+- `architecture`：架构级变更、重大重构、新系统设计。
 
 ## 步骤 2：生成方案文件
 
 - `light`：生成 `plan.md`。
-- `standard`：生成 `background.md + design.md + tasks.md`。
-- `full`：在 standard 基础上补 `adr/` 与 `diagrams/`。
-- 正式 plan 包默认带评分区块：
-  - `light`：写入 `plan.md`
-  - `standard/full`：写入 `background.md`
+- `standard`：生成 `plan.md + tasks.md`。
+- `architecture`：生成 `plan.md + tasks.md + design.md`。
+- 所有正式 plan 包都在 `plan.md` 中写入 `level` frontmatter、统一语义入口和评分区块。
+- ADR、diagram、assets、receipts 仅在真实需要时创建，不是任何级别的空目录或必备文件。
 - 方案摘要也必须显式输出：
   - `方案质量`
   - `落地就绪`
@@ -34,11 +33,10 @@
 
 模板来源统一使用 `assets/` 目录：
 
-1. `assets/plan-light-template.md`
-2. `assets/background-template.md`
+1. `assets/plan-template.md`
+2. `assets/tasks-template.md`
 3. `assets/design-template.md`
-4. `assets/tasks-template.md`
-5. `assets/adr-template.md`
+4. `assets/adr-template.md`（仅在确有架构决策时使用）
 
 ## 步骤 3：任务拆分
 

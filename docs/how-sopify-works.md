@@ -54,9 +54,15 @@ Sopify 把 AI 开发过程中的**方案、决策、交接、执行/验证证据
 4. plan/<id>/receipts/        → 最新 1-3 个 receipt（哪些已验证）
 ```
 
-**设计原则**：先读 `plan.md` 建立语义真相，再读 `current_handoff` 作为恢复提示。handoff 永远不是第二真相源；`active_plan.json` 只保存 `plan_id`，Wave 和任务进度留在方案文件中。MCP 可帮助读取这些事实，但不是协议入口的依赖。
+**设计原则**：先读 `plan.md` 建立语义真相，再读 `current_handoff` 作为恢复提示。handoff 永远不是第二真相源；`active_plan.json` 只保存 `plan_id`，Wave 和任务进度留在方案文件中。完整方案用 `plan_version` 识别，standard 的 tasks 和 architecture 的 design 都参与版本。MCP 可帮助读取这些事实，但不是协议入口的依赖。
 
 **状态文件缺失时**（如新机器 fresh clone）：`active_plan.json` 和 `current_handoff.json` 按设计被 gitignore。只有用户要新建、继续或收口方案时，宿主才浏览 `plan/` 发现候选并按用户意图处理；普通问答不会因此自动恢复旧方案。方案和收据始终在 git 里——只有"我现在在哪"的指针是本地的。
+
+### 可选验证器
+
+Sopify 不默认安装或运行验证器。只用 Sopify、使用其他 Verifier、使用已独立安装的 EvidentLoop 都是完整路径。`--with-evidentloop` 只是显式安装便利，不是运行开关：新装组件使用 EvidentLoop 当前官方来源，已有组件通过健康检查后复用且不自动升级。兼容性由 EvidentLoop 自身负责，Sopify 不维护版本矩阵，也不卸载或记录组件状态。Copilot Skill 是项目中的 `.github/skills/evidentloop/` 内容；用户按需审查和提交，Sopify 不会自动提交或更新。安装成功只证明本地放置和健康检查；Skill discovery 与审计 E2E 仍需宿主证据，云端也不会自动获得本机安装的 CLI。
+
+独立审计不必绑定方案。正式方案主审计可放在 `audits/plan/`，针对性审计可放在 `audits/<scope>/`；只有用户采用为正式证据时，宿主才通过 writer 写 receipt。`audits/` 不进入 4 步默认读取链。
 
 ## 目录结构与层级
 
@@ -73,6 +79,7 @@ Sopify 把 AI 开发过程中的**方案、决策、交接、执行/验证证据
 │       ├── plan.md              # 唯一语义入口
 │       ├── tasks.md             # 可选（standard+）
 │       ├── design.md            # 可选（architecture 级）
+│       ├── audits/              # 可选审计报告，不进入默认读取链
 │       └── receipts/            # 执行/验证证据
 ├── history/                     # L3 已归档方案（git tracked）
 │   ├── index.md

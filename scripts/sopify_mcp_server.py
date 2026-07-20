@@ -19,6 +19,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.sopify_protocol_check import run_protocol_check  # noqa: E402
+from sopify_contracts import inspect_plan_package  # noqa: E402
 from sopify_writer import ProtocolStore  # noqa: E402
 
 MCP_DEPENDENCY = "mcp[cli]>=1.27,<2"
@@ -68,7 +69,9 @@ def workspace_status_lite(workspace_root: str | Path) -> dict[str, Any]:
     active_plan_path = state_root / "active_plan.json"
     active_plan_file_exists = active_plan_path.is_file()
     active_plan = read_active_plan(workspace) if active_plan_file_exists else None
-    active_plan_id = _validated_plan_id(active_plan) if active_plan_file_exists else None
+    active_plan_id = (
+        _validated_plan_id(active_plan) if active_plan_file_exists else None
+    )
     active_plan_dir = (
         _safe_child_path(sopify_root / "plan", active_plan_id)
         if active_plan_id is not None
@@ -84,6 +87,11 @@ def workspace_status_lite(workspace_root: str | Path) -> dict[str, Any]:
     handoff_matches_active_plan = (
         handoff_plan_id == active_plan_id
         if handoff_plan_id and active_plan_id
+        else None
+    )
+    active_plan_package = (
+        inspect_plan_package(active_plan_dir).to_dict()
+        if active_plan_dir is not None
         else None
     )
 
@@ -102,6 +110,7 @@ def workspace_status_lite(workspace_root: str | Path) -> dict[str, Any]:
         "active_plan_md_exists": (
             (active_plan_dir / "plan.md").is_file() if active_plan_dir else None
         ),
+        "active_plan_package": active_plan_package,
         "handoff_exists": (state_root / "current_handoff.json").is_file(),
         "handoff_plan_id": handoff_plan_id,
         "handoff_matches_active_plan": handoff_matches_active_plan,
@@ -156,6 +165,7 @@ def write_plan_receipt(
     verdict: str,
     evidence: Mapping[str, Any] | None = None,
     provenance: Mapping[str, Any] | None = None,
+    expected_plan_version: str | None = None,
 ) -> dict[str, str]:
     """Write a receipt for the current active plan after S2A MCP guards pass."""
     workspace = resolve_workspace_root(workspace_root)
@@ -173,6 +183,7 @@ def write_plan_receipt(
         verdict=verdict,
         evidence=evidence,
         provenance=provenance,
+        expected_plan_version=expected_plan_version,
     )
     return {"path": str(receipt_path)}
 
@@ -232,6 +243,7 @@ def create_mcp_server() -> Any:
         verdict: str,
         evidence: dict[str, Any] | None = None,
         provenance: dict[str, Any] | None = None,
+        expected_plan_version: str | None = None,
     ) -> dict[str, Any]:
         """Write a plan receipt only after the host has authorized the protocol write."""
         return _safe_tool(
@@ -243,6 +255,7 @@ def create_mcp_server() -> Any:
             verdict,
             evidence,
             provenance,
+            expected_plan_version,
         )
 
     return server

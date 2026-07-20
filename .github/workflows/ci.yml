@@ -60,6 +60,7 @@ jobs:
             tests/protocol/test_convention_compliance.py \
             tests/test_check_readme_links.py \
             tests/test_distribution.py \
+            tests/test_evidentloop_installer.py \
             tests/test_golden_snapshots.py \
             tests/test_release_hooks.py \
             tests/test_sopify_init_smoke.py \
@@ -78,7 +79,7 @@ jobs:
         run: python3 scripts/sopify_protocol_check.py check --scenario continuation --fixture tests/fixtures/decision_pending
 
       - name: Run protocol smoke — finalize
-        run: python3 scripts/sopify_protocol_check.py check --scenario finalize --fixture tests/fixtures/minimal_plan
+        run: python3 scripts/sopify_protocol_check.py check --scenario finalize --fixture tests/fixtures/finalized_plan
 
       - name: Run install/payload bootstrap smoke
         run: python3 scripts/check-install-payload-bundle-smoke.py

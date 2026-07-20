@@ -1,3 +1,7 @@
+---
+level: light
+---
+
 # Clarification Pending Fixture
 
 ## Context / Why

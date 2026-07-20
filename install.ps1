@@ -9,13 +9,13 @@ $SourceRef = "main"
 
 function Show-Usage {
   @"
-Usage: install.ps1 [--target <host[:lang]>] [--ref <tag-or-branch>]
+Usage: install.ps1 [--target <host[:lang]>] [--with-evidentloop] [--ref <tag-or-branch>]
 
 Install Sopify for a supported AI host.
 
 Use `--target copilot` to bootstrap the current workspace and write Copilot
 instruction files. For Codex / Claude, this installs the host prompt and
-Sopify runtime only. Project files are initialized later when you run `~go`
+Sopify protocol kernel only. Project files are initialized later when you run `~go`
 inside a workspace.
 
 Options:
@@ -26,6 +26,9 @@ Options:
   --language <lang>      Copilot only: bootstrap output language (en-US/zh-CN).
   --no-copilot           Copilot only: skip Copilot instruction file
                          distribution.
+  --with-evidentloop     Install the current EvidentLoop CLI and Skill from
+                         official sources, or reuse healthy existing components.
+                         Disabled by default.
   --verbose              Show full diagnostic install details.
   --ref <tag-or-branch>  Advanced: override the source ref.
   -h, --help             Show this help.
@@ -57,31 +60,45 @@ function Write-InstallStep {
 }
 
 function Resolve-PythonCommand {
-  $python3 = Get-Command python3 -ErrorAction SilentlyContinue
-  if ($null -ne $python3) {
-    return @{
-      executable = $python3.Path
-      prefixArgs = @()
+  $foundPythonCommand = $false
+  $detectedPython = $null
+  $pythonProbe = 'import sys; print(".".join(map(str, sys.version_info[:3]))); raise SystemExit(0 if sys.version_info >= (3, 11) else 1)'
+
+  foreach ($candidateName in @("python3", "python", "py")) {
+    $command = Get-Command $candidateName -ErrorAction SilentlyContinue
+    if ($null -eq $command) {
+      continue
+    }
+    $foundPythonCommand = $true
+    $prefixArgs = if ($candidateName -eq "py") { @("-3") } else { @() }
+    $probeArgs = @()
+    $probeArgs += $prefixArgs
+    $probeArgs += @("-c", $pythonProbe)
+    $probeOutput = & $command.Path @probeArgs 2>$null
+    $probeExitCode = $LASTEXITCODE
+    $versionText = (($probeOutput | ForEach-Object { "$_" }) -join "").Trim()
+    if ($null -eq $detectedPython -and -not [string]::IsNullOrWhiteSpace($versionText)) {
+      $detectedPython = "$candidateName $versionText"
+    }
+    if ($probeExitCode -eq 0) {
+      return @{
+        executable = $command.Path
+        prefixArgs = $prefixArgs
+      }
     }
   }
 
-  $python = Get-Command python -ErrorAction SilentlyContinue
-  if ($null -ne $python) {
-    return @{
-      executable = $python.Path
-      prefixArgs = @()
-    }
+  if (-not $foundPythonCommand) {
+    $reasonCode = "MISSING_PYTHON"
+    $detail = "Sopify needs Python 3.11 or newer, but no Python command was found. Nothing was downloaded or installed."
+  } elseif (-not [string]::IsNullOrWhiteSpace($detectedPython)) {
+    $reasonCode = "UNSUPPORTED_PYTHON"
+    $detail = "Sopify needs Python 3.11 or newer. Found: $detectedPython. Nothing was downloaded or installed."
+  } else {
+    $reasonCode = "UNSUPPORTED_PYTHON"
+    $detail = "A Python command was found, but it could not run Python 3.11 or newer. Nothing was downloaded or installed."
   }
-
-  $py = Get-Command py -ErrorAction SilentlyContinue
-  if ($null -ne $py) {
-    return @{
-      executable = $py.Path
-      prefixArgs = @("-3")
-    }
-  }
-
-  Fail-Install -Phase "preflight" -ReasonCode "MISSING_PYTHON" -Detail "None of `python3`, `python`, or `py -3` is available." -NextStep "Install Python 3, then rerun the installer."
+  Fail-Install -Phase "preflight" -ReasonCode $reasonCode -Detail $detail -NextStep "Install Python 3.11 or newer, then rerun the same command."
 }
 
 $forwardedArgs = New-Object System.Collections.Generic.List[string]

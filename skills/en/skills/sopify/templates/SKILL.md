@@ -84,15 +84,15 @@ Maintenance: keep only status, current goal, current focus, and read-next links 
 
 ## Formal Contracts
 - `knowledge_sync` is the only formal sync contract.
-- `active_plan = current_plan.path + current_plan.files`.
+- `state/active_plan.json` provides only `plan_id`; the active plan semantic entry is always `plan/<plan_id>/plan.md`.
 
 ## Consumption Contract
 
 | Context Profile | Reads | Fail-open Rule | Notes |
 |-----|------|------|------|
 | `consult` | `project.md`, `preferences.md`, `blueprint/README.md` | missing deep blueprint does not fail | do not force plan materialization |
-| `plan` | `L1` + `active_plan` | materialize deep blueprint by lifecycle when missing | history is not default context |
-| `finalize` | `active_plan`, `knowledge_sync`, `blueprint/*`, `history/index.md` | create `history/index.md` on demand when missing | block when `required` sync is not satisfied |
+| `plan` | `L1` + `active_plan.json → plan.md` | materialize deep blueprint by lifecycle when missing | history is not default context |
+| `finalize` | `active_plan.json → plan.md`, `knowledge_sync`, `blueprint/*`, `history/index.md` | create `history/index.md` on demand when missing | block when `required` sync is not satisfied |
 ```
 
 ### blueprint/tasks.md
@@ -138,84 +138,49 @@ No confirmed long-term preferences yet.
 
 ## A2 | Plan Package Templates
 
-### Light Level - plan.md
+Every level starts with a `plan.md` carrying `level` frontmatter. Standard adds `tasks.md`; architecture adds `design.md`. Create supporting ADRs, diagrams, and evidence only when needed, without empty directories.
+
+### All Levels - plan.md
 
 ```markdown
+---
+title: {Feature Name}
+plan_id: {YYYYMMDD_feature}
+level: {light|standard|architecture}
+---
+
 # {Feature Name}
 
-## Background
-{1-2 sentences describing the requirement background}
-
 Scoring:
 - Solution quality: {X}/10
 - Implementation readiness: {Y}/10
 
-Scoring rationale:
-- Strengths: {1 line}
-- Deductions: {1 line}
+## Context / Why
+{Why this change is needed}
 
-## Solution
-- {technical point 1}
-- {technical point 2}
+## Scope
+{What this plan includes}
 
-## Tasks
-- [ ] {task1}
-- [ ] {task2}
+## Approach
+{Smallest viable approach}
 
-## Changed Files
-- {file1}
-- {file2}
+## Waves / Steps
+- [ ] {Step 1}
+
+## Key Decisions
+- {Confirmed decision}
+
+## Constraints / Not-in-scope
+- {Explicit exclusion}
+
+## Status / Progress
+- [ ] {Current status}
+
+## Next
+{Next action or decision checkpoint}
 ```
 
-### Standard Level - background.md
-
-```markdown
-# Change Proposal: {Feature Name}
-
-## Requirement Background
-{Describe the current state, pain points, and change drivers}
-
-Scoring:
-- Solution quality: {X}/10
-- Implementation readiness: {Y}/10
-
-Scoring rationale:
-- Strengths: {1 line}
-- Deductions: {1 line}
-
-## Change Content
-1. {change point 1}
-2. {change point 2}
-
-## Impact Scope
-- Modules: {list}
-- Files: {list}
-
-## Risk Assessment
-- Risk: {description}
-- Mitigation: {measures}
-```
-
-### Standard Level - design.md
-
-```markdown
-# Technical Design: {Feature Name}
-
-## Technical Solution
-- Core technology: {language/framework/library}
-- Implementation points:
-  - {point1}
-  - {point2}
-
-## Architecture Design
-{Include a mermaid diagram when the architecture changes}
-
-## Security and Performance
-- Security: {measures}
-- Performance: {optimizations}
-```
-
-### Standard Level - tasks.md
+### Standard / Architecture - tasks.md
 
 ```markdown
 # Task List: {Feature Name}
@@ -233,22 +198,19 @@ Directory: `.sopify/plan/{YYYYMMDD}_{feature}/`
 - [ ] 3.1 Update `project.md / blueprint/background.md / blueprint/design.md / blueprint/tasks.md`
 ```
 
-### Full Level - adr/{NNN}-{title}.md
+### Architecture - design.md
 
 ```markdown
-# ADR-{NNN}: {Decision Title}
+# Technical Design: {Feature Name}
 
-## Status
-Adopted | Pending | Deprecated
+## Technical Solution
+- {Implementation point}
 
-## Date
-{YYYY-MM-DD}
+## Architecture Boundaries
+{Module relationships and responsibilities}
 
-## Context
-{Background and problem statement}
-
-## Decision
-{Core decision content}
+## Verification Strategy
+- {Verification method}
 ```
 
 ## A3 | Task Markers

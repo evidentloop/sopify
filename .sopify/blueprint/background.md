@@ -14,7 +14,7 @@ Sopify 官方在 core 之上提供一个轻量、可插拔、收敛式的 bluepr
 |----|------|--------|
 | **Protocol Kernel**（协议内核） | 协议规范 + sopify_writer + 收据/接力/归档 truth | Durable：不随宿主生态变化而 sunset |
 | **Default Workflow** | blueprint 驱动的分析 → 计划讨论 → 标准方案包 → 开发验证 → 归档回写 | 用户买到的主体验，建构在 protocol kernel 之上 |
-| **Plugins / Skills** | cross-review、graphify、宿主自带分析/开发/验证增强 | Sopify 定义接入点，不做 skill 分发 |
+| **Plugins / Skills** | EvidentLoop（可选）、其他 Verifier、graphify、宿主自带增强 | Sopify 定义通用接入点，不绑定单一实现 |
 
 核心价值不在于"能调 skill"或"能编排 workflow"，而在于：
 
@@ -26,6 +26,8 @@ Sopify 官方在 core 之上提供一个轻量、可插拔、收敛式的 bluepr
 **外插原则**：谁负责"把事做好"（生产、验证、知识处理），谁外插；谁负责"把结果变成可验证事实"（证据规范、收据生成），谁进 Sopify protocol kernel。
 
 **产品形态锚点**：Protocol 是宿主的唯一硬依赖；宿主执行、Sopify 保存、任意宿主恢复——这是 P8 runtime 退场后的三层分工。一切外部验证与生产能力通过 integration contract 外插，不进 kernel。
+
+**可选验证安装边界**：Sopify 不默认安装或运行 Verifier。用户显式传入 `--with-evidentloop` 时，先完成 Sopify，再按 EvidentLoop 当前官方方式尝试安装；后者失败不回滚或否定 Sopify，且不在最终 Skill 目录留下未验证内容。已有健康组件直接复用且不自动升级；兼容性由 EvidentLoop 自身负责，Sopify 不维护版本矩阵，也不自动提交 Copilot 项目 Skill。该参数不形成持久能力开关，也不改变通用 receipt 契约。
 
 ## 核心架构模式
 

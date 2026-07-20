@@ -1,0 +1,500 @@
+{
+  "schema_version": "0.4",
+  "graph_id": "audit:run-8d72fe3ae6f34c2d8021eadd1adf5d12",
+  "source": {
+    "type": "git_diff",
+    "ref": "staged",
+    "description": "Sopify 本地 Git diff 审计"
+  },
+  "runs": [
+    {
+      "id": "run-8d72fe3ae6f34c2d8021eadd1adf5d12",
+      "label": "Sopify 代码变更审计",
+      "status": "concerns",
+      "summary": "实现整体围绕临时目录安装、最终路径校验和简化错误界面进行了较一致的调整，但 CLI 健康判定与文档承诺不一致：`warning` 被当作健康状态复用。建议仅接受明确的 `status=ok`，或同步修改契约并补充针对 `warning` 的预期行为测试。",
+      "kind": "model_review"
+    },
+    {
+      "id": "run-feedback-fc634e01b8909cf7",
+      "label": "反馈修订 1",
+      "status": "concerns",
+      "summary": "基于人工裁定，未重新审查代码",
+      "kind": "feedback_revision",
+      "revision": {
+        "source_run_id": "run-8d72fe3ae6f34c2d8021eadd1adf5d12",
+        "source_audit_sha256": "sha256:c7e985fd4b3157eb56933caa3335a535da0327fbe8dc3f43e9bad416cd078d98",
+        "feedback_sha256": "sha256:c750132cdddb17bb98368c2636256087f18cc58d493d72a3b72eb2adceeb2c20",
+        "source_summary": {
+          "review_status": "complete",
+          "verdict": "concerns",
+          "risk_score": 20,
+          "finding_count": 1,
+          "unscored_finding_count": 0,
+          "open_finding_count": 1,
+          "fix_count": 0,
+          "fix_done_count": 0,
+          "summary_audit_status": "not_audited",
+          "basis": "model_review",
+          "extensions": {
+            "evidentloop": {
+              "review_diagnostics": {
+                "intent_coverage": "covered",
+                "files_reviewed": 16,
+                "files_total": 16,
+                "pack_completeness": 0.65,
+                "raw_findings_count": 1,
+                "emitted_findings_count": 1,
+                "reviewer_failure_reason": null,
+                "advisory_verdict": "concerns",
+                "advisory_rationale": "review found medium/high-severity issues"
+              }
+            }
+          }
+        },
+        "events": [
+          {
+            "graph_id": "audit:run-8d72fe3ae6f34c2d8021eadd1adf5d12",
+            "created_at": "2026-07-20T03:26:44.369Z",
+            "fingerprint": "sha256:a13749027576eceaeed7a10a769854ffcb16887accffc52788d670e48d09e3e6",
+            "action": "accept",
+            "run_id": "run-8d72fe3ae6f34c2d8021eadd1adf5d12",
+            "target_id": "finding-001",
+            "source_audit_sha256": "sha256:c7e985fd4b3157eb56933caa3335a535da0327fbe8dc3f43e9bad416cd078d98",
+            "target_type": "finding"
+          },
+          {
+            "graph_id": "audit:run-8d72fe3ae6f34c2d8021eadd1adf5d12",
+            "created_at": "2026-07-20T03:26:57.808Z",
+            "fingerprint": "sha256:a13749027576eceaeed7a10a769854ffcb16887accffc52788d670e48d09e3e6",
+            "action": "comment",
+            "run_id": "run-8d72fe3ae6f34c2d8021eadd1adf5d12",
+            "target_id": "finding-001",
+            "source_audit_sha256": "sha256:c7e985fd4b3157eb56933caa3335a535da0327fbe8dc3f43e9bad416cd078d98",
+            "target_type": "finding",
+            "comment": "批判看看要不要优化 不要过度设计"
+          },
+          {
+            "graph_id": "audit:run-8d72fe3ae6f34c2d8021eadd1adf5d12",
+            "created_at": "2026-07-20T03:26:46.032Z",
+            "fingerprint": "sha256:a13749027576eceaeed7a10a769854ffcb16887accffc52788d670e48d09e3e6",
+            "action": "severity_override",
+            "run_id": "run-8d72fe3ae6f34c2d8021eadd1adf5d12",
+            "target_id": "finding-001",
+            "source_audit_sha256": "sha256:c7e985fd4b3157eb56933caa3335a535da0327fbe8dc3f43e9bad416cd078d98",
+            "target_type": "finding",
+            "severity": "medium"
+          }
+        ],
+        "notice": "基于人工裁定，未重新审查代码"
+      }
+    },
+    {
+      "id": "run-feedback-00fbe17d21db032d",
+      "label": "反馈修订 2",
+      "status": "pass_candidate",
+      "summary": "基于人工裁定，未重新审查代码",
+      "kind": "feedback_revision",
+      "revision": {
+        "source_run_id": "run-feedback-fc634e01b8909cf7",
+        "source_audit_sha256": "sha256:f51aa6f85a0061db64f047d4ba2dafc951709ef0dd923454de3246879d429cef",
+        "feedback_sha256": "sha256:ace7aa88ad7eabfe037e3bb098c768ab933c8cd8738aab97525388963609f616",
+        "source_summary": {
+          "review_status": "complete",
+          "verdict": "concerns",
+          "risk_score": 20,
+          "finding_count": 1,
+          "unscored_finding_count": 0,
+          "open_finding_count": 1,
+          "fix_count": 0,
+          "fix_done_count": 0,
+          "summary_audit_status": "not_audited",
+          "risk_delta": 0,
+          "basis": "human_adjudication",
+          "model_verdict": "concerns",
+          "model_risk_score": 20,
+          "notice": "基于人工裁定，未重新审查代码",
+          "extensions": {
+            "evidentloop": {
+              "review_diagnostics": {
+                "intent_coverage": "covered",
+                "files_reviewed": 16,
+                "files_total": 16,
+                "pack_completeness": 0.65,
+                "raw_findings_count": 1,
+                "emitted_findings_count": 1,
+                "reviewer_failure_reason": null,
+                "advisory_verdict": "concerns",
+                "advisory_rationale": "review found medium/high-severity issues"
+              }
+            }
+          }
+        },
+        "events": [
+          {
+            "run_id": "run-feedback-fc634e01b8909cf7",
+            "created_at": "2026-07-20T03:36:53.533Z",
+            "target_id": "finding-001",
+            "graph_id": "audit:run-8d72fe3ae6f34c2d8021eadd1adf5d12",
+            "action": "false_positive",
+            "source_audit_sha256": "sha256:f51aa6f85a0061db64f047d4ba2dafc951709ef0dd923454de3246879d429cef",
+            "target_type": "finding",
+            "fingerprint": "sha256:a13749027576eceaeed7a10a769854ffcb16887accffc52788d670e48d09e3e6"
+          }
+        ],
+        "notice": "基于人工裁定，未重新审查代码"
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "id": "change-001",
+      "type": "change",
+      "title": "Sopify 变更",
+      "summary": "共 16 个文件发生变更（+390/-667）。"
+    },
+    {
+      "id": "file-001",
+      "type": "file",
+      "path": ".sopify/blueprint/background.md",
+      "change_type": "modified",
+      "additions": 1,
+      "deletions": 1
+    },
+    {
+      "id": "file-002",
+      "type": "file",
+      "path": ".sopify/blueprint/design.md",
+      "change_type": "modified",
+      "additions": 1,
+      "deletions": 1
+    },
+    {
+      "id": "file-003",
+      "type": "file",
+      "path": ".sopify/plan/20260718_evidentloop_optional_audit_integration/design.md",
+      "change_type": "modified",
+      "additions": 15,
+      "deletions": 15
+    },
+    {
+      "id": "file-004",
+      "type": "file",
+      "path": ".sopify/plan/20260718_evidentloop_optional_audit_integration/plan.md",
+      "change_type": "modified",
+      "additions": 17,
+      "deletions": 14
+    },
+    {
+      "id": "file-005",
+      "type": "file",
+      "path": ".sopify/plan/20260718_evidentloop_optional_audit_integration/tasks.md",
+      "change_type": "modified",
+      "additions": 12,
+      "deletions": 9
+    },
+    {
+      "id": "file-006",
+      "type": "file",
+      "path": "README.md",
+      "change_type": "modified",
+      "additions": 13,
+      "deletions": 11
+    },
+    {
+      "id": "file-007",
+      "type": "file",
+      "path": "README.zh-CN.md",
+      "change_type": "modified",
+      "additions": 9,
+      "deletions": 9
+    },
+    {
+      "id": "file-008",
+      "type": "file",
+      "path": "docs/getting-started.md",
+      "change_type": "modified",
+      "additions": 14,
+      "deletions": 10
+    },
+    {
+      "id": "file-009",
+      "type": "file",
+      "path": "docs/how-sopify-works.en.md",
+      "change_type": "modified",
+      "additions": 1,
+      "deletions": 1
+    },
+    {
+      "id": "file-010",
+      "type": "file",
+      "path": "docs/how-sopify-works.md",
+      "change_type": "modified",
+      "additions": 1,
+      "deletions": 1
+    },
+    {
+      "id": "file-011",
+      "type": "file",
+      "path": "install.ps1",
+      "change_type": "modified",
+      "additions": 3,
+      "deletions": 3
+    },
+    {
+      "id": "file-012",
+      "type": "file",
+      "path": "install.sh",
+      "change_type": "modified",
+      "additions": 3,
+      "deletions": 3
+    },
+    {
+      "id": "file-013",
+      "type": "file",
+      "path": "installer/distribution.py",
+      "change_type": "modified",
+      "additions": 8,
+      "deletions": 35
+    },
+    {
+      "id": "file-014",
+      "type": "file",
+      "path": "installer/evidentloop.py",
+      "change_type": "modified",
+      "additions": 87,
+      "deletions": 204
+    },
+    {
+      "id": "file-015",
+      "type": "file",
+      "path": "scripts/install_sopify.py",
+      "change_type": "modified",
+      "additions": 3,
+      "deletions": 3
+    },
+    {
+      "id": "file-016",
+      "type": "file",
+      "path": "tests/test_evidentloop_installer.py",
+      "change_type": "modified",
+      "additions": 202,
+      "deletions": 347
+    },
+    {
+      "id": "finding-001",
+      "type": "finding",
+      "category": "risk",
+      "severity": "medium",
+      "status": "dismissed",
+      "title": "CLI 健康检查把 `doctor --json` 返回的 `warning` 状态也视为可复用的健康安装。",
+      "detail": "条件 `payload.get(\"status\") not in {\"ok\", \"warning\"}` 明确接受 `warning`，但同一 diff 的设计、文档及测试均将复用条件描述为 doctor 健康或 `status=ok`；这会让已报告警告的 CLI 被直接复用，同时跳过安装或修复路径。",
+      "fingerprint": "sha256:a13749027576eceaeed7a10a769854ffcb16887accffc52788d670e48d09e3e6",
+      "model_judgment": {
+        "status": "open",
+        "severity": "medium"
+      },
+      "extensions": {
+        "evidentloop": {
+          "review_finding_id": "f-001",
+          "original_category": "missing_validation",
+          "confidence": "plausible"
+        }
+      },
+      "file_path": "installer/evidentloop.py",
+      "hunk_id": "hunk:18f1882bd959e1ad:129:5",
+      "start_line": 204,
+      "end_line": 204,
+      "line_side": "old",
+      "highlight_lines": [
+        204
+      ],
+      "hunk": "@@ -169,89 +129,48 @@ def install_evidentloop_companion(\n def _install_skill(plan: EvidentLoopInstallPlan) -> None:\n     if plan.npx_path is None:  # Defensive: prepare() owns prerequisite checks.\n         raise InstallError(\"EvidentLoop Skill install requires npx\")\n-    if plan.git_path is None:\n-        raise InstallError(\"EvidentLoop Skill install requires git\")\n     if _path_is_occupied(plan.skill_dir):\n         raise InstallError(\n             f\"EvidentLoop Skill path changed after preflight: {plan.skill_dir}\"\n         )\n \n-    source_env = _base_child_env(plan.home_root)\n-    skills_cli_env = dict(source_env)\n-    skills_cli_env[\"DISABLE_TELEMETRY\"] = \"1\"\n-    skills_cli_env[\"DO_NOT_TRACK\"] = \"1\"\n     with tempfile.TemporaryDirectory(prefix=\"sopify-evidentloop-\") as temp_dir:\n         staging_root = Path(temp_dir)\n-        source_root = staging_root / \"source\"\n-        _run_command(\n-            [\n-                plan.git_path,\n-                \"clone\",\n-                \"--quiet\",\n-                \"--depth\",\n-                \"1\",\n-                \"--branch\",\n-                EVIDENTLOOP_SKILL_TAG,\n-                EVIDENTLOOP_SKILL_REPOSITORY,\n-                str(source_root),\n-            ],\n-            env=source_env,\n-            label=\"EvidentLoop Skill source download\",\n-        )\n-        resolved_commit = _run_command(\n-            [plan.git_path, \"-C\", str(source_root), \"rev-parse\", \"HEAD\"],\n-            env=source_env,\n-            label=\"EvidentLoop Skill source verification\",\n-        ).stdout.strip()\n-        if resolved_commit != EVIDENTLOOP_SKILL_COMMIT:\n-            raise InstallError(\n-                \"EvidentLoop Skill source commit changed: \"\n-                f\"expected {EVIDENTLOOP_SKILL_COMMIT}, got {resolved_commit or '(empty)'}\"\n-            )\n-\n-        source_skill = source_root / \"skills\" / _SKILL_NAME\n-        _validate_skill(source_skill)\n+        staging_home = staging_root / \"home\"\n+        staging_home.mkdir()\n+        env = _base_child_env(staging_home)\n+        env[\"DISABLE_TELEMETRY\"] = \"1\"\n+        env[\"DO_NOT_TRACK\"] = \"1\"\n         argv = [\n             plan.npx_path,\n             \"--yes\",\n-            f\"skills@{SKILLS_CLI_VERSION}\",\n+            SKILLS_CLI_PACKAGE,\n             \"add\",\n-            str(source_skill),\n+            EVIDENTLOOP_SKILL_SOURCE,\n+            \"--skill\",\n+            _SKILL_NAME,\n         ]\n \n         if plan.adapter.is_workspace_scope:\n-            # Skills CLI targets Copilot through .agents/skills and a lockfile.\n-            # Keep those staging files out of the project and copy only the Skill.\n-            _run_command(\n-                [\n-                    *argv,\n-                    \"-a\",\n-                    str(plan.adapter.skills_cli_agent),\n-                    \"-y\",\n-                    \"--copy\",\n-                ],\n-                env=skills_cli_env,\n-                label=\"EvidentLoop Skill download\",\n-                cwd=staging_root,\n-            )\n+            argv.extend([\"-a\", str(plan.adapter.skills_cli_agent), \"-y\", \"--copy\"])\n             staged_skill = staging_root / _SKILLS_CLI_PROJECT_DIR / _SKILL_NAME\n-            _validate_skill(staged_skill)\n-            _copy_skill_directory(staged_skill, plan.skill_dir)\n         else:\n-            _run_command(\n-                [\n-                    *argv,\n-                    \"-g\",\n-                    \"-a\",\n-                    str(plan.adapter.skills_cli_agent),\n-                    \"-y\",\n-                    \"--copy\",\n-                ],\n-                env=skills_cli_env,\n-                label=\"EvidentLoop Skill install\",\n-                cwd=staging_root,\n+            argv.extend(\n+                [\"-g\", \"-a\", str(plan.adapter.skills_cli_agent), \"-y\", \"--copy\"]\n+            )\n+            staged_skill = (\n+                staging_home / str(plan.adapter.skill_install_dirname) / _SKILL_NAME\n             )\n \n+        _run_command(\n+            argv,\n+            env=env,\n+            label=\"EvidentLoop Skill install\",\n+            cwd=staging_root,\n+        )\n+        _validate_skill(staged_skill)\n+        _copy_skill_directory(staged_skill, plan.skill_dir)\n+\n     _validate_skill(plan.skill_dir)\n \n ",
+      "human_adjudication": {
+        "disposition": "false_positive",
+        "comment": "批判看看要不要优化 不要过度设计",
+        "severity_override": "medium",
+        "applied_run_id": "run-feedback-00fbe17d21db032d"
+      }
+    },
+    {
+      "id": "evidence-001",
+      "type": "evidence",
+      "source": "host_llm",
+      "status": "fail",
+      "summary": "宿主语义审查结论：CLI 健康检查把 `doctor --json` 返回的 `warning` 状态也视为可复用的健康安装。",
+      "detail": "条件 `payload.get(\"status\") not in {\"ok\", \"warning\"}` 明确接受 `warning`，但同一 diff 的设计、文档及测试均将复用条件描述为 doctor 健康或 `status=ok`；这会让已报告警告的 CLI 被直接复用，同时跳过安装或修复路径。"
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-001",
+      "type": "contains_change",
+      "from": "run-8d72fe3ae6f34c2d8021eadd1adf5d12",
+      "to": "change-001"
+    },
+    {
+      "id": "edge-002",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-001"
+    },
+    {
+      "id": "edge-003",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-002"
+    },
+    {
+      "id": "edge-004",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-003"
+    },
+    {
+      "id": "edge-005",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-004"
+    },
+    {
+      "id": "edge-006",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-005"
+    },
+    {
+      "id": "edge-007",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-006"
+    },
+    {
+      "id": "edge-008",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-007"
+    },
+    {
+      "id": "edge-009",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-008"
+    },
+    {
+      "id": "edge-010",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-009"
+    },
+    {
+      "id": "edge-011",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-010"
+    },
+    {
+      "id": "edge-012",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-011"
+    },
+    {
+      "id": "edge-013",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-012"
+    },
+    {
+      "id": "edge-014",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-013"
+    },
+    {
+      "id": "edge-015",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-014"
+    },
+    {
+      "id": "edge-016",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-015"
+    },
+    {
+      "id": "edge-017",
+      "type": "changes_file",
+      "from": "change-001",
+      "to": "file-016"
+    },
+    {
+      "id": "edge-018",
+      "type": "finding_in_file",
+      "from": "finding-001",
+      "to": "file-014"
+    },
+    {
+      "id": "edge-019",
+      "type": "supported_by_evidence",
+      "from": "finding-001",
+      "to": "evidence-001"
+    },
+    {
+      "id": "edge-run-feedback-fc634e01b8909cf7-supersedes",
+      "type": "supersedes_run",
+      "from": "run-feedback-fc634e01b8909cf7",
+      "to": "run-8d72fe3ae6f34c2d8021eadd1adf5d12"
+    },
+    {
+      "id": "edge-run-feedback-00fbe17d21db032d-supersedes",
+      "type": "supersedes_run",
+      "from": "run-feedback-00fbe17d21db032d",
+      "to": "run-feedback-fc634e01b8909cf7"
+    }
+  ],
+  "summary": {
+    "review_status": "complete",
+    "verdict": "pass_candidate",
+    "risk_score": 0,
+    "finding_count": 1,
+    "unscored_finding_count": 0,
+    "open_finding_count": 0,
+    "fix_count": 0,
+    "fix_done_count": 0,
+    "summary_audit_status": "not_audited",
+    "risk_delta": -20,
+    "basis": "human_adjudication",
+    "model_verdict": "concerns",
+    "model_risk_score": 20,
+    "notice": "基于人工裁定，未重新审查代码",
+    "extensions": {
+      "evidentloop": {
+        "review_diagnostics": {
+          "intent_coverage": "covered",
+          "files_reviewed": 16,
+          "files_total": 16,
+          "pack_completeness": 0.65,
+          "raw_findings_count": 1,
+          "emitted_findings_count": 1,
+          "reviewer_failure_reason": null,
+          "advisory_verdict": "concerns",
+          "advisory_rationale": "review found medium/high-severity issues"
+        }
+      }
+    }
+  },
+  "extensions": {
+    "evidentloop": {
+      "profile": "code_diff",
+      "run_id": "run-8d72fe3ae6f34c2d8021eadd1adf5d12",
+      "adapter": "gitdiff/v0",
+      "diff_version": "sha256:4146c123c0a2e4aac9392e5e3917b1f7c6f252614a171fc07a01ddd60bbbd8f3",
+      "reviewer_prompt": {
+        "source": "product",
+        "version": "v0.5",
+        "sha256": "sha256:b3f437c0ea776dc994cca90b049d45b8b54d48f657be1841cf7f8ac87af78907"
+      }
+    }
+  }
+}

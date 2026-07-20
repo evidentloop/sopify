@@ -56,7 +56,13 @@ No new editor, no new CLI. Install into the host you already use — Codex, Clau
 curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | bash -s -- --target codex:en-US
 ```
 
-After install, use `~go` to start a managed workflow. See [Installation](#installation) for other hosts, audit-first install, and Windows.
+Sopify requires Python 3.11 or newer; the installer checks before downloading. This command
+installs Sopify only.
+
+Optional: append `--with-evidentloop` to the same command to install EvidentLoop; see
+[Installation](#installation).
+
+After install, use `~go` to start a managed workflow. See [Installation](#installation) for other hosts, Windows, and how to review the installer before running it.
 
 **Already in a Sopify-managed repo?** Explicitly ask to continue or use `~go` to resume the current plan. Ordinary questions and small fixes are handled directly without automatically entering the previous plan workflow.
 
@@ -89,7 +95,7 @@ A month later, someone asks why the cache key includes the user ID. The answer i
 <img src="./assets/sopify-product-form-release-en.svg" width="900" alt="Sopify Product Form — host executes, skill guides, assets preserved, any host resumes" />
 </div>
 
-The host LLM executes. Sopify preserves auditable development assets — plans, decisions, handoffs, and verification evidence — in `.sopify/`, accessible across sessions, hosts, and teammates.
+The host LLM executes. Sopify preserves traceable development assets — plans, decisions, handoffs, and verification evidence — in `.sopify/`, accessible across sessions, hosts, and teammates.
 
 How Sopify achieves stability and quality:
 
@@ -108,7 +114,7 @@ For readers who want the internal layering behind the product form, the technica
 
 ## Installation
 
-Audit-first install:
+Review before running:
 
 ```bash
 curl -fsSL -o sopify-install.sh https://github.com/evidentloop/sopify/releases/latest/download/install.sh
@@ -134,6 +140,21 @@ Host support:
 | Copilot | BASELINE_SUPPORTED | `copilot:en-US` / `copilot:zh-CN` | Prompt-only; payload uplift planned |
 
 Pass `--workspace <path>` to target another repo, `--language <lang>` to control output language.
+
+[EvidentLoop](https://github.com/evidentloop/evidentloop) is an optional code-change audit
+tool. It turns a local Git diff into an interactive report, ties audit findings to changed
+lines, and lets users update the report through feedback. To install the current official
+CLI and Skill with Sopify, or reuse healthy existing components, pass
+`--with-evidentloop` explicitly:
+
+```bash
+bash sopify-install.sh --target codex:en-US --with-evidentloop
+```
+
+Healthy existing components are reused without automatic upgrades. The Copilot Skill is
+project-scoped; Sopify does not commit or update it. See
+[Getting Started](./docs/getting-started.md#optional-evidentloop-companion) for
+prerequisites, host-specific paths, and the local/cloud boundary.
 
 For the full setup guide, see [Getting Started](./docs/getting-started.md). For a step-by-step demo, see [External Repo Quickstart](./examples/external-repo-quickstart/README.md).
 

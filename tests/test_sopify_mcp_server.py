@@ -7,7 +7,7 @@ import tempfile
 import unittest
 
 from sopify_contracts import RuntimeHandoff
-from sopify_writer import ProtocolStore
+from sopify_writer import InvariantViolationError, ProtocolStore
 
 from scripts.sopify_mcp_server import (
     _safe_tool,
@@ -27,6 +27,10 @@ def _write_plan_md(path: Path) -> None:
     path.write_text(
         "\n".join(
             [
+                "---",
+                "level: light",
+                "---",
+                "",
                 "# Test Plan",
                 "",
                 "## Context / Why",
@@ -124,6 +128,7 @@ class SopifyMcpServerCoreTests(unittest.TestCase):
             self.assertFalse(status["active_plan_file_exists"])
             self.assertIsNone(status["active_plan_dir_exists"])
             self.assertIsNone(status["active_plan_md_exists"])
+            self.assertIsNone(status["active_plan_package"])
             self.assertFalse(status["handoff_exists"])
             self.assertIsNone(status["handoff_plan_id"])
             self.assertIsNone(status["handoff_matches_active_plan"])
@@ -149,6 +154,8 @@ class SopifyMcpServerCoreTests(unittest.TestCase):
             self.assertTrue(status["active_plan_file_exists"])
             self.assertTrue(status["active_plan_dir_exists"])
             self.assertFalse(status["active_plan_md_exists"])
+            self.assertFalse(status["active_plan_package"]["valid"])
+            self.assertEqual(status["active_plan_package"]["error"], "missing plan.md")
             self.assertFalse(status["handoff_exists"])
             self.assertIsNone(status["handoff_plan_id"])
             self.assertIsNone(status["handoff_matches_active_plan"])
@@ -168,6 +175,12 @@ class SopifyMcpServerCoreTests(unittest.TestCase):
             status = workspace_status_lite(workspace)
 
             self.assertTrue(status["active_plan_md_exists"])
+            self.assertTrue(status["active_plan_package"]["valid"])
+            self.assertEqual(status["active_plan_package"]["level"], "light")
+            self.assertRegex(
+                status["active_plan_package"]["version"],
+                r"^sha256:[0-9a-f]{64}$",
+            )
             self.assertEqual(status["handoff_plan_id"], plan_id)
             self.assertTrue(status["handoff_matches_active_plan"])
 
@@ -189,7 +202,10 @@ class SopifyMcpServerCoreTests(unittest.TestCase):
 
     def test_workspace_status_lite_rejects_invalid_active_plan_payloads(self) -> None:
         for payload in (None, [], {}, {"plan_id": ""}):
-            with self.subTest(payload=payload), tempfile.TemporaryDirectory() as temp_dir:
+            with (
+                self.subTest(payload=payload),
+                tempfile.TemporaryDirectory() as temp_dir,
+            ):
                 workspace = Path(temp_dir)
                 sopify = workspace / ".sopify"
                 _write_active_plan_payload(sopify, payload)
@@ -254,6 +270,129 @@ class SopifyMcpServerCoreTests(unittest.TestCase):
             self.assertEqual(result["verdict"], "FAIL")
             self.assertIn("Unsupported scenario", result["failures"][0])
 
+    def test_protocol_check_rejects_incomplete_standard_package(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            plan_id = "plan_001"
+            sopify = workspace / ".sopify"
+            ProtocolStore(sopify).set_active_plan(plan_id=plan_id)
+            _write_plan_md(sopify / "plan" / plan_id / "plan.md")
+            plan_md = sopify / "plan" / plan_id / "plan.md"
+            plan_md.write_text(
+                plan_md.read_text(encoding="utf-8").replace(
+                    "level: light", "level: standard"
+                ),
+                encoding="utf-8",
+            )
+
+            result = protocol_check(workspace, "new-plan")
+
+            self.assertEqual(result["verdict"], "FAIL")
+            self.assertIn("missing semantic files: tasks.md", result["failures"][0])
+
+    def test_protocol_check_accepts_writer_finalize_archive(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            plan_id = "plan_001"
+            sopify = workspace / ".sopify"
+            store = ProtocolStore(sopify)
+            _write_plan_md(sopify / "plan" / plan_id / "plan.md")
+            store.set_active_plan(plan_id=plan_id)
+            store.finalize_plan(
+                plan_id=plan_id,
+                outcome="completed",
+                summary="Done.",
+                key_decisions=["Keep the plan contract small"],
+                month="2026-07",
+            )
+
+            result = protocol_check(workspace, "finalize")
+
+            self.assertEqual(result["verdict"], "PASS")
+            self.assertEqual(result["failures"], [])
+
+    def test_finalize_check_rejects_remaining_runtime_state(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            plan_id = "plan_001"
+            sopify = workspace / ".sopify"
+            store = ProtocolStore(sopify)
+            _write_plan_md(sopify / "plan" / plan_id / "plan.md")
+            store.finalize_plan(
+                plan_id=plan_id,
+                outcome="completed",
+                summary="Done.",
+                key_decisions=["Keep the plan contract small"],
+                month="2026-07",
+            )
+            store.set_active_plan(plan_id="stale_001")
+
+            result = protocol_check(workspace, "finalize")
+
+            self.assertEqual(result["verdict"], "FAIL")
+            self.assertTrue(
+                any("active_plan.json" in failure for failure in result["failures"])
+            )
+
+    def test_finalize_check_rejects_tampered_archived_plan(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            plan_id = "plan_001"
+            sopify = workspace / ".sopify"
+            store = ProtocolStore(sopify)
+            _write_plan_md(sopify / "plan" / plan_id / "plan.md")
+            result = store.finalize_plan(
+                plan_id=plan_id,
+                outcome="completed",
+                summary="Done.",
+                key_decisions=["Keep the plan contract small"],
+                month="2026-07",
+            )
+            plan_md = result["archive_dir"] / "plan.md"
+            plan_md.write_text(
+                plan_md.read_text(encoding="utf-8") + "\nTampered.\n",
+                encoding="utf-8",
+            )
+
+            check = protocol_check(workspace, "finalize")
+
+            self.assertEqual(check["verdict"], "FAIL")
+            self.assertTrue(
+                any(
+                    "plan_version does not match" in failure
+                    for failure in check["failures"]
+                )
+            )
+
+    def test_finalize_check_does_not_recompute_legacy_history_plan(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            archive = workspace / ".sopify" / "history" / "2026-06" / "legacy_plan"
+            (archive / "receipts").mkdir(parents=True)
+            (archive / "plan.md").write_text(
+                "# Legacy plan without level frontmatter\n", encoding="utf-8"
+            )
+            (archive / "receipt.md").write_text(
+                "# completed\n\n## Outcome\nDone.\n\n## Summary\nDone.\n\n"
+                "## Key Decisions\n- Preserve history.\n",
+                encoding="utf-8",
+            )
+            (archive / "receipts" / "final.json").write_text(
+                json.dumps(
+                    {
+                        "verdict": "finalized",
+                        "evidence": {},
+                        "provenance": {},
+                        "timestamp": "2026-06-01T00:00:00Z",
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            result = protocol_check(workspace, "finalize")
+
+            self.assertEqual(result["verdict"], "PASS")
+
     def test_mcp_dependency_hint_pins_stable_sdk_line(self) -> None:
         hint = get_mcp_dependency_hint()
         self.assertIn("mcp[cli]>=1.27,<2", hint)
@@ -285,6 +424,26 @@ class SopifyMcpServerWritePlanReceiptTests(unittest.TestCase):
             self.assertEqual(payload["provenance"]["actor"], "test")
             self.assertEqual(payload["provenance"]["plan_id"], plan_id)
             self.assertEqual(payload["provenance"]["receipt_id"], "exec_001")
+            self.assertRegex(
+                payload["provenance"]["plan_version"], r"^sha256:[0-9a-f]{64}$"
+            )
+
+    def test_write_plan_receipt_rejects_stale_expected_version(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            plan_id = "plan_001"
+            sopify = workspace / ".sopify"
+            ProtocolStore(sopify).set_active_plan(plan_id=plan_id)
+            _write_plan_md(sopify / "plan" / plan_id / "plan.md")
+
+            with self.assertRaises(InvariantViolationError):
+                write_plan_receipt(
+                    workspace,
+                    plan_id,
+                    "exec_001",
+                    "PASS",
+                    expected_plan_version="sha256:stale",
+                )
 
     def test_write_plan_receipt_rejects_missing_active_plan(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
