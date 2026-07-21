@@ -6,6 +6,24 @@ Format: Summary → Changed → Plan Packages. File-level details live in `git l
 
 ## [Unreleased]
 
+## [2026-07-21] - 2026-07-21
+
+### Summary
+
+Added optional EvidentLoop installation and made Sopify's bilingual workflow, repository handoff, and public product surface easier to understand.
+
+### Changed
+
+- **Optional audit companion**: Added explicit `--with-evidentloop` installation with host-native Skill paths, prerequisite checks, healthy-component reuse, and clear partial-success recovery.
+- **Workflow contracts**: Clarified the responsibilities and handoffs of Analyze, Design, Develop, KB, and Templates while keeping consultation read-only and archival explicit.
+- **Public product surface**: Added responsive English and Chinese product pages, refreshed workflow and architecture visuals, and documented the optional companion and Python 3.11 requirement.
+- **Protocol and verification**: Tightened plan-package, writer, distribution, and host-consumption contracts with targeted scenarios and full regression coverage.
+
+### Plan Packages
+
+- `20260718_evidentloop_optional_audit_integration` → archived to `history/2026-07/`
+- `20260720_plain_language_output` → release candidate; archive follows verified publication
+
 ## [2026-07-17.194640] - 2026-07-17
 
 ### Summary
