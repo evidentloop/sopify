@@ -196,7 +196,7 @@
     <rect x="1240" y="120" width="230" height="340" rx="10" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.4"/>
     <text x="1254" y="144" class="stage-num" font-family="-apple-system,'Helvetica Neue',sans-serif">V</text>
     <text x="1272" y="144" class="lbl" font-family="-apple-system,'Helvetica Neue',sans-serif">ARCHIVE</text>
-    <text x="1254" y="170" class="stage-title" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Archive · evidence stays inspectable</text>
+    <text x="1254" y="170" class="stage-title" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Archive · inspectable evidence</text>
     <text x="1254" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Plans and receipts move to history</text>
 
     <g transform="translate(1254,206)" filter="url(#shadowSoft)">

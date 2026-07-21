@@ -5,7 +5,7 @@ status: in_progress
 lifecycle_state: in_progress
 level: standard
 created: 2026-07-20
-updated: 2026-07-20
+updated: 2026-07-21
 archive_ready: false
 knowledge_sync:
   project: review
@@ -19,8 +19,8 @@ knowledge_sync:
 ## Plan Snapshot
 
 - **Goal**: 让 Sopify 的中英文方案包、宿主回复和公开推广页更清楚、自然、符合用户心智，同时用更少重复内容提升高频工作流的判断质量。
-- **Status**: Wave 0–4.4 和交付候选已完成。方案内正式报告保留模型的两个 finding，相关问题已修复并通过全量验证；用户已授权本地 commit 和当前分支 push，PR、merge、Pages、release 与 finalize 仍未授权。
-- **Next**: 完成当前分支 commit / push 后停车，等待后续 Git 或发布授权。
+- **Status**: Wave 0–4.4 和交付候选已完成。PR #68 已合并；PR #69 已改为以 `main` 为 base 的 Draft，并在原交付提交 `8b5e2dd` 之上收口审计确认的局部图文修复；merge、Pages、release 与 finalize 仍未授权。
+- **Next**: 保持 PR #69 为 Draft 并停车等待审计；不合并、不发布、不 finalize。
 - **Task**: 20/22。
 
 就绪状态: Ready

@@ -74,12 +74,12 @@
   <text x="598" y="214" text-anchor="middle" class="node-desc">Post-exec evidence</text>
 
   <!-- 4-step entry callout -->
-  <rect x="690" y="165" width="196" height="78" rx="5" fill="#f8fafc" stroke="#93c5fd" stroke-width="0.8" stroke-dasharray="4,2"/>
-  <text x="700" y="180" class="callout-title">MANAGED PLAN 4-STEP ENTRY</text>
-  <text x="700" y="196" class="callout-step">1. active_plan.json → locate plan</text>
-  <text x="700" y="210" class="callout-step">2. plan.md → semantic entry point</text>
-  <text x="700" y="224" class="callout-step">3. current_handoff.json → resume hint</text>
-  <text x="700" y="238" class="callout-step">4. receipts/ → latest evidence</text>
+  <rect x="690" y="162" width="196" height="78" rx="5" fill="#f8fafc" stroke="#93c5fd" stroke-width="0.8" stroke-dasharray="4,2"/>
+  <text x="700" y="177" class="callout-title">MANAGED PLAN 4-STEP ENTRY</text>
+  <text x="700" y="193" class="callout-step">1. active_plan.json → locate plan</text>
+  <text x="700" y="207" class="callout-step">2. plan.md → semantic entry point</text>
+  <text x="700" y="221" class="callout-step">3. current_handoff.json → resume hint</text>
+  <text x="700" y="235" class="callout-step">4. receipts/ → latest evidence</text>
 
   <!-- Arrow Tier 2 → 3 -->
   <line x1="480" y1="250" x2="480" y2="266" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a-gray)"/>
@@ -128,8 +128,8 @@
   <text x="588" y="425" text-anchor="middle" class="node-desc">Archived plans + receipts</text>
 
   <rect x="695" y="388" width="195" height="48" rx="8" fill="#ffffff" stroke="#059669" stroke-width="1.2"/>
-  <text x="793" y="409" text-anchor="middle" class="node-name" style="font-size:12px">project.md</text>
-  <text x="793" y="425" text-anchor="middle" class="node-desc">Conventions</text>
+  <text x="793" y="409" text-anchor="middle" class="node-name" style="font-size:12px">Project</text>
+  <text x="793" y="425" text-anchor="middle" class="node-desc">Conventions · project.md</text>
 
   <!-- Bottom slogans -->
   <text x="480" y="475" text-anchor="middle" class="slogan">Plans, decisions, and receipts persist as project assets — not chat history</text>
