@@ -87,12 +87,12 @@ Checkpoint P1（用户动作，已通过）：用户已批准本地执行 Wave 1
 - [x] 5.1 形成经审计的交付候选。
   - 动作：Wave 4 闭环且 required knowledge sync 完成后，核对本方案改动、验证、EvidentLoop 证据和工作区状态；记录用户已授权的本地 commit 与当前分支 push 范围。
   - 验收：交付时只暂存本方案允许路径并保护其他工作；commit 与远端分支指向同一 SHA。PR、merge、Pages、release 和 finalize 仍停车，不包含新的 EvidentLoop 发布动作。
-- [ ] 5.2 动态确定版本并执行发布授权停车。
-  - 动作：运行 release preflight，根据发布时状态确定 Sopify 版本；在 tag、push、GitHub Release 和首次启用 `main / root` GitHub Pages 前分别请求明确授权，获授权后核对元数据、资产、Pages 地址和公开页面。
-  - 验收：未获对应授权不执行该发布动作；统一 release 包含上一个方案的四个提交 `7dcd768`、`00db38b`、`d41f4b6`、`ea92482` 和本方案变化；Pages 目标为 `https://evidentloop.github.io/sopify/`，英文与中文入口均可达；不修改或发布 EvidentLoop。
-- [ ] 5.3 显式 finalize，并单独交付归档变更。
-  - 动作：Sopify release 证据可用后，将方案置为 `ready_to_archive`，由用户显式 `~go finalize`；通过 writer 将最终 `plan_version`、EvidentLoop 证据引用和 Sopify release 结果写入结构化 `receipts/final.json`，`receipt.md` 只保留人类可读 outcome、summary 与 key decisions；随后报告归档 diff 并等待其 commit / push 授权。
-  - 验收：finalize 前 required knowledge sync 已完成；归档失败时保留 plan 与 state；history index 可追溯两个方案；未获归档 Git 授权不 commit / push，也不重做已完成 release。
+- [x] 5.2 动态确定版本并执行发布授权停车。
+  - 动作：release preflight 通过后确定版本 `2026-07-21`；PR #69 以 squash 合并到 `main@b4e2cad`，随后推送同名 annotated tag、发布 GitHub Release，并首次启用 `main / root` GitHub Pages。
+  - 验收：Latest Release 为 `2026-07-21`，`install.sh` 与 `install.ps1` 已上传且 digest 与本地渲染结果一致；Pages 地址为 `https://evidentloop.github.io/sopify/`，英文与中文入口均通过系统 Chrome 打开；未修改或发布 EvidentLoop。
+- [x] 5.3 显式 finalize，并单独交付归档变更。
+  - 动作：Release 与 Pages 证据可用后，将方案置为 `ready_to_archive`，并按用户显式授权通过 `sopify_writer.finalize_plan` 写入最终结构化证据、迁移完整方案并清理运行态指针。
+  - 验收：required knowledge sync 已完成；`final.json` 绑定最终 `plan_version`、EvidentLoop 报告、Release、资产与 Pages 证据；history index 可追溯两个方案；归档 Git 变更作为独立小 PR 交付。
 
 ## 总体验收
 
@@ -105,4 +105,4 @@ Checkpoint P1（用户动作，已通过）：用户已批准本地执行 Wave 1
 - [x] 中英文推广页使用原创暖白技术手账视觉、真实产品事实和现有 Sopify 素材；U0 后只同步受影响事实，不建设前端平台或重做已接受风格。
 - [x] P0 只执行本地 Demo 并在 U0 停车；U0 已通过，旧 P1 未继承到新 `plan_version`，用户已重新审计并批准当前 P1。
 - [x] P1 已在首次 EvidentLoop 报告后停车并完成 U1 裁定；方案内报告、两项修复验证与 `verify_NNN` 已按用户要求关联，不重复模型审查。
-- [ ] 最终只发布一个包含两个方案变化的 Sopify release；GitHub Pages、finalize 证据和归档 Git 交付可追溯且分别授权。
+- [x] 最终只发布一个包含两个方案变化的 Sopify release；GitHub Pages、finalize 证据和归档 Git 交付可追溯且分别授权。

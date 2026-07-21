@@ -1,0 +1,53 @@
+{
+  "evidence": {
+    "audit": {
+      "report": "audits/plan/audit.json",
+      "verdict": "pass_with_resolved_findings",
+      "verification_receipt": "receipts/verify_001.json"
+    },
+    "pages": {
+      "build_commit": "b4e2cad55f99fab86d7da1f6ac0f33a1c46de3f6",
+      "build_id": 1106397076,
+      "chinese_browser_render": "passed",
+      "english_browser_render": "passed",
+      "source": "main / root",
+      "status": "built",
+      "url": "https://evidentloop.github.io/sopify/"
+    },
+    "pull_request": {
+      "head_sha": "455eb4bfbe7cf5bb3b7e08f0f6b560e1d96f13db",
+      "main_sha": "b4e2cad55f99fab86d7da1f6ac0f33a1c46de3f6",
+      "merge_method": "squash",
+      "number": 69,
+      "url": "https://github.com/evidentloop/sopify/pull/69"
+    },
+    "release": {
+      "assets": {
+        "install.ps1": "sha256:36c5a5b6bdc728f3eaadc419a3e25a165a32d92579835d79448d74219be23d6e",
+        "install.sh": "sha256:5d37aec360719d19867ca99f34dab4c314c081ce47c3d5ace969b2066154587e"
+      },
+      "latest": true,
+      "published_at": "2026-07-21T03:45:34Z",
+      "tag": "2026-07-21",
+      "tag_commit": "b4e2cad55f99fab86d7da1f6ac0f33a1c46de3f6",
+      "url": "https://github.com/evidentloop/sopify/releases/tag/2026-07-21"
+    },
+    "verification": {
+      "main_ci": "success",
+      "main_ci_run": 29799253403,
+      "pytest": "280 passed, 71 subtests passed",
+      "release_asset_roundtrip": "byte-identical",
+      "release_preflight": "passed"
+    }
+  },
+  "provenance": {
+    "plan_id": "20260720_plain_language_output",
+    "plan_version": "sha256:b5d2fcd70e86866152f532a4b24f5a75bc7e97eaffa43a0ea73de013ed4b76c3",
+    "receipt_id": "final",
+    "release_commit": "b4e2cad55f99fab86d7da1f6ac0f33a1c46de3f6",
+    "release_tag": "2026-07-21",
+    "source": "codex_host"
+  },
+  "timestamp": "2026-07-21T04:39:24+00:00",
+  "verdict": "finalized"
+}
