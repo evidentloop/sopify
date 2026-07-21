@@ -1,126 +1,61 @@
 ---
 name: kb
-description: 知识库管理技能；知识库操作时读取；包含初始化、更新、同步策略
+description: 管理 `.sopify/` 长期知识；负责初始化、渐进物化、读取、保留和 knowledge_sync 政策。
 ---
 
-# 知识库管理 - V2 规则
+# 知识库管理
 
-**目标：** 管理 `.sopify/` 的 V2 分层知识，保持长期知识、活动方案与归档层职责清晰。
+KB 负责长期知识，不替 Analyze、Design 或 Develop 做阶段判断，也不直接管理活动方案、handoff、receipt 或 finalize。文档结构来自 Templates，协议状态由 `sopify_writer` 管理。
 
-## 知识库结构
+## 目录职责
 
 ```text
 .sopify/
-├── blueprint/
-│   ├── README.md           # 纯索引页，只保留索引必需区块
-│   ├── background.md       # 长期目标、范围、非目标
-│   ├── design.md           # 模块/宿主/目录/消费契约
-│   └── tasks.md            # 未完成长期项与明确延后项
-├── project.md              # 项目技术约定
-├── user/
-│   ├── preferences.md      # 用户长期偏好
-│   └── feedback.jsonl      # 原始反馈事件
-├── plan/
-│   └── YYYYMMDD_feature/   # 当前活动方案
-├── history/
-│   ├── index.md            # 归档索引
-│   └── YYYY-MM/
-└── state/                  # protocol state
+├── project.md              # 跨任务技术约定
+├── user/                   # 长期偏好与原始反馈
+├── blueprint/              # 长期目标、设计边界、未完成长期项及索引
+├── plan/                   # 当前方案语义文件
+├── history/                # 已归档方案与索引
+└── state/                  # 本地协议状态
 ```
 
-## 初始化策略
+`blueprint/README.md` 只保留状态、维护方式、当前目标、当前焦点和阅读入口。深层内容进入对应 blueprint 文件。
 
-### Full 模式 (`kb_init: full`)
+## 初始化与渐进物化
 
-首次 bootstrap 直接创建：
+`kb_init: full` 首次创建 `project.md`、`user/preferences.md`、`user/feedback.jsonl` 和四个 blueprint 文件；不预建方案正文、history 或空目录。
 
-```yaml
-创建文件:
-  - .sopify/project.md
-  - .sopify/user/preferences.md
-  - .sopify/user/feedback.jsonl
-  - .sopify/blueprint/README.md
-  - .sopify/blueprint/background.md
-  - .sopify/blueprint/design.md
-  - .sopify/blueprint/tasks.md
-```
+`kb_init: progressive` 为默认策略：
 
-注意：
+- 首次真实项目触发：创建 `project.md`、`user/preferences.md`、`blueprint/README.md`。
+- 首次进入 plan 生命周期：补齐 `blueprint/background.md`、`blueprint/design.md`、`blueprint/tasks.md` 和当前方案目录。
+- 首次显式 `~go finalize`：由协议流程创建 `history/index.md` 和归档目录。
+- 首次出现明确长期反馈：按需要创建 `user/feedback.jsonl`。
 
-- 不预建 `plan/` 正文。
-- 不预建 `history/index.md` 或任何 archive。
+## 知识上下文读取
 
-### Progressive 模式 (`kb_init: progressive`) [默认]
-
-按生命周期创建：
-
-```yaml
-首次真实项目触发:
-  - .sopify/project.md
-  - .sopify/user/preferences.md
-  - .sopify/blueprint/README.md
-
-首次进入 plan 生命周期:
-  - .sopify/blueprint/background.md
-  - .sopify/blueprint/design.md
-  - .sopify/blueprint/tasks.md
-  - .sopify/plan/YYYYMMDD_feature/
-
-首次显式 ~go finalize:
-  - .sopify/history/index.md
-  - .sopify/history/YYYY-MM/YYYYMMDD_feature/
-
-首次出现明确长期偏好:
-  - .sopify/user/feedback.jsonl
-```
-
-## 上下文读取顺序
+宿主先按正式 Protocol 完成 managed plan、handoff 和 receipts 的入口读取。本节只规定 KB 自己的长期知识顺序：
 
 1. `project.md`
 2. `user/preferences.md`
 3. `blueprint/README.md`
-4. `blueprint/background.md`
-5. `blueprint/design.md`
-6. `blueprint/tasks.md`
-7. `state/active_plan.json` → `plan/<plan_id>/plan.md`
+4. 与当前任务有关的 `blueprint/background.md`、`design.md`、`tasks.md`
 
-读取规则：
+Consult 和 quick fix 不因缺少深层 blueprint 失败。`history/` 只在追溯或 finalize 时读取。
 
-- 咨询/澄清优先消费 `L0/L1`，不强制要求 deep blueprint。
-- planning / develop 才进入 `L2 active plan`。
-- `active_plan.json` 只提供 `plan_id`；`plan.md` 是活动方案语义入口。接续时再按协议读取 handoff 与 receipts，不能回退到已退役的 current-plan 投影。
-- `history/` 不是默认长期上下文，只在 finalize 后查询或人工追溯时读取。
+## 保留与更新
 
-## 更新规则
+只保留跨任务仍有价值的信息：
 
-### L0 索引约束
+- `project.md`：可复用技术约定。
+- `background.md`：长期目标、范围和非目标。
+- `design.md`：模块、宿主、目录和消费契约。
+- `tasks.md`：未完成长期项及有重访条件的明确延后项。
+- `preferences.md`：用户明确声明的长期偏好。
 
-- `blueprint/README.md` 只保留 `状态 / 维护方式 / 当前目标 / 当前焦点 / 深入阅读入口`。
-- 不把绝对工作目录、架构正文、正式契约正文写进 `blueprint/README.md`。
-- 若 `blueprint/` 根层存在额外长期专题文档，必须在 `blueprint/README.md` 显式列出入口。
+不要写入一次性实现细节、当前 plan 的任务拆解、临时取舍、已完成任务或 history 正文副本。代码与文档冲突时先核对代码事实，再修正文档；当前用户指令优先于历史偏好。
 
-### `blueprint/tasks.md` 边界
-
-- 只保留未完成长期项与明确延后项。
-- `[x]` 已完成项不应继续保留在 `blueprint/tasks.md`。
-
-### 必须更新
-
-- `project.md`：跨任务可复用的技术约定变化。
-- `blueprint/background.md`：长期目标、范围、非目标变化。
-- `blueprint/design.md`：模块/宿主/目录/消费契约变化。
-- `blueprint/tasks.md`：长期未完成项或明确延后项变化。
-- `user/preferences.md`：用户明确声明长期偏好。
-
-### 不应写入长期知识
-
-- 一次性实现细节。
-- 当前 plan 的短期拆解。
-- 仅属于本轮任务的临时取舍。
-- 已完成任务清单继续滞留在 `blueprint/tasks.md`。
-- history 正文回灌到 blueprint。
-
-## `knowledge_sync` 同步契约
+## `knowledge_sync`
 
 ```yaml
 knowledge_sync:
@@ -130,48 +65,12 @@ knowledge_sync:
   tasks: skip|review|required
 ```
 
-执行要求：
+- `skip`：本轮不检查该文件。
+- `review`：finalize 前确认是否需要更新。
+- `required`：交付候选形成前必须更新；未完成时阻断 finalize。
 
-- `skip`：本轮不要求同步。
-- `review`：finalize 前至少复核。
-- `required`：未更新则 finalize 阻断。
+KB 只执行方案声明的同步政策，不改变 plan 生命周期。同步时更新最窄的长期知识位置，避免在多个文件重复同一正文。
 
-## 冲突处理
+## 输出
 
-- 代码与文档冲突：以代码现状为准，文档随后修正。
-- 当前任务与长期偏好冲突：当前任务明确要求 > `user/preferences.md` > 默认规则。
-
-## 输出格式
-
-**初始化完成：**
-
-```text
-[{BRAND_NAME}] 知识库初始化 ✓
-
-创建: {N} 文件
-策略: {full/progressive}
-
----
-Changes: {N} files
-  - .sopify/project.md
-  - .sopify/blueprint/README.md
-  - ...
-
-Next: 知识库已就绪
-```
-
-**同步完成：**
-
-```text
-[{BRAND_NAME}] 知识库同步 ✓
-
-更新: {N} 文件
-
----
-Changes: {N} files
-  - .sopify/project.md
-  - .sopify/blueprint/design.md
-  - ...
-
-Next: 文档已更新
-```
+初始化或同步完成后，先说明实际结果，再列 `Changes`，最后给 `Next:`。没有变化时明确写 `Changes: 0 files`。

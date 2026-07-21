@@ -46,6 +46,9 @@ Hard requirements:
 - No verification evidence means the task is not complete.
 - Subjective claims such as `overbuild`, `underbuild`, or "it should be fine" never replace verification or review evidence.
 - Do not silently skip verification and do not retry indefinitely.
+- For a bug or shared-boundary change, inspect affected callers, fix the narrowest common root cause, and verify equivalent paths.
+- Develop decides reversible implementation details inside the approved boundary. Replan only when new facts change scope, the solution path, or acceptance.
+- When a Quick Fix has no Design artifact, make only the local choices required for the request. Do not create a plan or copy the full Design rules.
 
 ### 2.2 Minimum verify contract
 
@@ -160,37 +163,7 @@ After completing the two-stage review, before outputting the final summary:
 
 ## Step 3: Sync the knowledge base
 
-Sync timing:
-
-1. After each module-level task batch.
-2. Once again during phase close-out.
-
-Sync targets:
-
-- `project.md`
-- `blueprint/background.md`
-- `blueprint/design.md`
-- `blueprint/tasks.md`
-- `user/preferences.md` (long-term preferences only)
-- `user/feedback.jsonl`
-
-Formal rule:
-
-- `knowledge_sync.skip`: no sync required
-- `knowledge_sync.review`: at least review before finalize
-- `knowledge_sync.required`: finalize must block until updated
-
-Conservative preference writes:
-
-Allowed:
-
-- Explicit long-term user preferences such as "use this by default going forward".
-
-Disallowed:
-
-- One-off instructions.
-- Guesses from incomplete context.
-- Generalized conclusions unrelated to the task.
+During implementation close-out, invoke KB, apply the current plan's declared `knowledge_sync`, and record the result. KB is the sole owner of sync targets, long-lived knowledge criteria, and preference-write policy; Develop does not redefine them here.
 
 ## Step 4: Plan completion state
 

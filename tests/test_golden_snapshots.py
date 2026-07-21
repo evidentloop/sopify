@@ -142,16 +142,16 @@ _ZH_TEMPLATE_MARKERS: list[tuple[str, list[str]]] = [
     ("develop/assets/output-success.md", ["| 任务 |", "| 验证来源 |", "Changes:", "Next:"]),
     ("develop/assets/output-partial.md", ["| 任务 |", "| 阻塞原因 |", "| 验证来源 |", "Changes:", "Next:"]),
     ("develop/assets/output-quick-fix.md", ["| 验证来源 |", "Changes:", "Next:"]),
-    ("analyze/assets/success-output.md", ["假设与前提:", "已识别信息缺口:", "Changes:", "Next:"]),
-    ("design/assets/output-summary.md", ["方案质量:", "落地就绪:", "Changes:", "Next:"]),
+    ("analyze/assets/success-output.md", ["已确认依据:", "仍会影响结果的缺口", "Changes:", "Next:"]),
+    ("design/assets/output-summary.md", ["就绪状态:", "依据:", "Changes:", "Next:"]),
 ]
 
 _EN_TEMPLATE_MARKERS: list[tuple[str, list[str]]] = [
     ("develop/assets/output-success.md", ["| Task |", "| Source |", "Changes:", "Next:"]),
     ("develop/assets/output-partial.md", ["| Task |", "| Block reason |", "| Source |", "Changes:", "Next:"]),
     ("develop/assets/output-quick-fix.md", ["| Source |", "Changes:", "Next:"]),
-    ("analyze/assets/success-output.md", ["Assumptions:", "Identified gaps:", "Changes:", "Next:"]),
-    ("design/assets/output-summary.md", ["Solution quality:", "Implementation readiness:", "Changes:", "Next:"]),
+    ("analyze/assets/success-output.md", ["Confirmed evidence:", "Material gaps", "Changes:", "Next:"]),
+    ("design/assets/output-summary.md", ["Readiness:", "Evidence:", "Changes:", "Next:"]),
 ]
 
 
@@ -192,8 +192,8 @@ def _render_full(adapter: HostAdapter, lang_dir: str) -> str:
     return render_single_file(header_source, skills_source, adapter)
 
 
-_OUTPUT_CONTRACT_ZH_MARKERS = ["输出契约", "必需 section", "条件增强与格式选择"]
-_OUTPUT_CONTRACT_EN_MARKERS = ["Output Contract", "Required Sections", "Conditional Enhancement & Format Selection"]
+_OUTPUT_CONTRACT_ZH_MARKERS = ["输出契约", "必要内容", "结构和密度"]
+_OUTPUT_CONTRACT_EN_MARKERS = ["Output Contract", "Required content", "Structure and density"]
 
 
 @pytest.mark.parametrize(

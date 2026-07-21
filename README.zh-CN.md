@@ -6,7 +6,7 @@
 
 [![许可证](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)](./LICENSE)
 [![文档](https://img.shields.io/badge/docs-CC%20BY%204.0-green.svg?style=for-the-badge)](./LICENSE-docs)
-[![版本](https://img.shields.io/badge/version-2026--07--17.194640-orange.svg?style=for-the-badge)](#版本历史)
+[![版本](https://img.shields.io/badge/version-2026--07--21-orange.svg?style=for-the-badge)](#版本历史)
 [![欢迎PR](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](./CONTRIBUTING_CN.md)
 
 [![Codex](https://img.shields.io/badge/host-Codex-4A9EFF.svg?style=for-the-badge)](#快速开始)
@@ -91,17 +91,16 @@ Sopify 需要 Python 3.11 或更高版本；安装器会在下载前检查。这
 ## 产品形态
 
 <div align="center">
-<img src="./assets/sopify-product-form-release.svg" width="900" alt="Sopify 产品形态 — 宿主执行、技能引导、资产留存、任意宿主接续" />
+<img src="./assets/sopify-product-form-release.svg" width="900" alt="Sopify 产品形态 — 宿主、Skill、项目资产、本地交接与显式归档" />
 </div>
 
-宿主 LLM 负责执行。Sopify 把 AI 开发过程中可追溯的资产——方案、决策、交接、验证证据——持久保留在 `.sopify/` 中，跨 session、宿主和团队成员均可访问。
+宿主 LLM 负责执行。Sopify 提供共享工作流规则，并把方案、决策和验证证据作为项目文件保存在 `.sopify/` 中；本地恢复指针只留在当前机器。
 
-Sopify 靠四件事做到稳定可控、质量可靠：
+Sopify 主要做三件事：
 
-- **每个宿主同一套规则** — Claude、Codex、Qoder、Copilot 加载的是同一套 Sopify 指令，切换宿主不会把流程重置
-- **项目资产在 git 里** — 方案、决策、验证记录都落在 `.sopify/`；只有两个本地指针文件（`active_plan.json`、`current_handoff.json`）不纳入 git
-- **按你的指令继续** — 明确说“继续”或使用 `~go` 后，宿主会读取当前方案、上次交接记录和已有验证证据，再继续执行
-- **Runtime 已退场；工作流保留** — analyze → design → develop → finalize 流程不变；变的是规则活在文件里，不再依赖 runtime 进程
+- **共享工作流规则** — 支持的宿主加载同一套 Sopify 工作流规则，换宿主也不会改变已经确认的流程和边界
+- **项目记录随 Git 携带** — 方案、决策和验证证据跟着仓库走，本地指针不跟随
+- **明确接续与收口** — 说“继续”或输入 `~go` 后，宿主才会恢复；交付证据就绪后，`~go finalize` 才归档方案
 
 ## 架构细节
 

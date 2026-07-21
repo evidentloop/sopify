@@ -1,19 +1,22 @@
 [{BRAND_NAME}] Requirements Analysis ✓
 
-Requirement: {one-line description}
-Type: {requirement type}
+Objective: {one-line description}
+Deliverable: {current deliverable}
 Score: {X}/10
 Scope: {estimated file count}
 
-Assumptions:
-  - {assumption} (source: {code analysis / user input / AI supplement})
+Confirmed evidence:
+  - {evidence} (source: {user material / code / governing contract})
 
-Identified gaps:
+Assumptions used to continue (omit when none):
+  - {assumption} (safe to proceed because: {low-risk and reversible basis})
+
+Material gaps (omit when none):
   - {gap} (impact: {impact}, recommendation: {action})
 
-Next step rationale: {why proceed to design / need follow-up / can execute directly}
+Next step rationale: {why proceed to Design / ask a follow-up / handle as a quick fix or consult}
 
 ---
 Changes: 0 files
 
-Next: Continue to solution design? (Y/n)
+Next: {next action}

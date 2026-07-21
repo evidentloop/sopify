@@ -1,84 +1,48 @@
-# Design Detailed Rules
+# Design Rules
 
 ## Goal
 
-Design the technical solution, break work into executable tasks, and generate a replayable plan package.
+Turn the objective and boundaries confirmed by Analyze into the smallest executable, verifiable solution. Design owns technical tradeoffs and task breakdown. It does not manage protocol state or implement code.
 
-## Overall flow
+## 1. Check the current system
 
-1. Decide the plan level (`light/standard/architecture`).
-2. Generate the plan file scaffold.
-3. Break down tasks and mark verification criteria.
-4. Render the summary and wait for the next host action.
+Before proposing new implementation, inspect the existing code, callers, and tests; governing protocol, public contracts, and compatibility boundaries; applicable language or platform capabilities; and dependencies already installed and used by the project.
 
-## Step 1: Decide the plan level
+This is not a fixed technology ladder. The goal is to avoid duplicate capability and unnecessary dependencies without weakening correctness, safety, or user value.
 
-Auto-detection rules (`plan.level=auto`):
+## 2. Choose the smallest sufficient solution
 
-- `light`: 3-5 files, no architectural change, scope is explicit.
-- `standard`: more than 5 files, or a new feature, or a cross-module change.
-- `architecture`: architectural change, major refactor, or new system design.
+- State the recommended path, its material tradeoffs, and explicit non-goals.
+- Prefer the narrowest shared boundary; explain why a cross-module change is necessary when it is.
+- Do not build frameworks, state, or extension points for hypothetical future work.
+- Ask the user only about choices that can change scope, the solution path, or acceptance. Develop may decide reversible implementation details within the approved boundary.
 
-## Step 2: Generate plan files
+## 3. Select the plan level
 
-- `light`: generate `plan.md`.
-- `standard`: generate `plan.md + tasks.md`.
-- `architecture`: generate `plan.md + tasks.md + design.md`.
-- Every formal package puts its `level` frontmatter, semantic entry, and scoring block in `plan.md`.
-- Create ADRs, diagrams, assets, and receipts only when evidence requires them; no level requires empty supporting directories.
-- the plan summary must also surface:
-  - `Solution quality`
-  - `Implementation readiness`
-  - `Scoring rationale`
+- `light`: `plan.md` for clear local work.
+- `standard`: `plan.md + tasks.md` for a feature, cross-module work, or substantial delivery.
+- `architecture`: `plan.md + tasks.md + design.md` only for an actual architecture change, new system, or major refactor.
 
-Template sources live in `assets/`:
+Create ADRs, diagrams, assets, and receipts only when evidence requires them. Plan-body templates come only from this skill's `assets/` directory.
 
-1. `assets/plan-template.md`
-2. `assets/tasks-template.md`
-3. `assets/design-template.md`
-4. `assets/adr-template.md` (only for an actual architecture decision)
+## 4. Determine readiness
 
-## Step 3: Break down tasks
+- `Ready`: no unresolved user choice can still change scope, the solution path, or acceptance. State the supporting evidence.
+- `Needs decision`: list the concrete options, their impact, and a recommendation, then stop.
 
-Task constraints:
+A dynamic version, Git delivery, release, or another irreversible action is an execution checkpoint. It does not make a settled plan `Needs decision` by itself.
 
-1. Each task should fit within about 30 minutes.
-2. Each task must have a verifiable completion criterion.
-3. Dependencies must be explicit.
+Workflow transition:
 
-Suggested categories:
+- In `strict` mode, render the Design summary and wait for confirmation before Develop.
+- In `adaptive` mode, `~go` may continue through the host workflow; `~go plan` stops after the summary.
 
-1. Core feature work
-2. Supporting work
-3. Security checks
-4. Testing
-5. Documentation updates (`project.md / blueprint/*`)
+## 5. Break down tasks
 
-Task markers:
+Each task needs a clear deliverable, dependency, and acceptance method. Follow real boundaries instead of splitting work to fit an arbitrary duration. Include documentation and knowledge sync only when the plan's `knowledge_sync` requires them.
 
-- `[ ]` pending
-- `[x]` completed
-- `[-]` skipped
-- `[!]` blocked
+Task markers: `[ ]` pending, `[x]` completed, `[-]` skipped, `[!]` blocked.
 
-## Phase transitions
+## Protocol boundary
 
-- `workflow.mode=strict`: render the summary and wait for confirmation.
-- `workflow.mode=adaptive`:
-  - `~go`: continue into execution confirmation or the downstream host flow.
-  - `~go plan`: stop after rendering the plan summary.
-- If the user gives plan feedback, stay in this phase, update the files, and render again.
-
-## Protocol entry boundary
-
-Plan structure and task splitting are owned by this skill; protocol state writes (active_plan / current_handoff / receipts) go through `sopify_writer`, not this skill directly.
-
-## Naming rules
-
-Plan directory format: `YYYYMMDD_feature_name`
-
-Examples:
-
-- `20260115_user_auth`
-- `20260115_fix_login_bug`
-- `20260115_refactor_api`
+Design creates or updates plan semantic files only. The host writes `active_plan`, handoff, and receipts through `sopify_writer` under the governing protocol.

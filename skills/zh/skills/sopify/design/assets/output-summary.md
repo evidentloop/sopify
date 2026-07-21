@@ -1,14 +1,13 @@
-[{BRAND_NAME}] 方案设计 ✓
+[{BRAND_NAME}] 方案设计 {状态符}
 
 方案: .sopify/plan/{YYYYMMDD}_{feature}/
-概要: {一句话技术方案}
+路径: {一句话方案}
 任务: {N} 项
-方案质量: {X}/10
-落地就绪: {Y}/10
-评分理由: {1 行}
+就绪状态: {Ready / Needs decision}
+依据: {为什么已收敛，或哪项选择仍会改变范围、方案路径或验收标准}
 
 ---
 Changes: {N} files
   - .sopify/plan/...
 
-Next: 在宿主会话中继续评审或执行方案，或直接回复修改意见
+Next: {继续评审或执行；Needs decision 时写明待确认事项}

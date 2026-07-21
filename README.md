@@ -6,7 +6,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)](./LICENSE)
 [![Docs](https://img.shields.io/badge/docs-CC%20BY%204.0-green.svg?style=for-the-badge)](./LICENSE-docs)
-[![Version](https://img.shields.io/badge/version-2026--07--17.194640-orange.svg?style=for-the-badge)](#version-history)
+[![Version](https://img.shields.io/badge/version-2026--07--21-orange.svg?style=for-the-badge)](#version-history)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](./CONTRIBUTING.md)
 
 [![Codex](https://img.shields.io/badge/host-Codex-4A9EFF.svg?style=for-the-badge)](#quick-start)
@@ -92,17 +92,16 @@ A month later, someone asks why the cache key includes the user ID. The answer i
 ## Product Form
 
 <div align="center">
-<img src="./assets/sopify-product-form-release-en.svg" width="900" alt="Sopify Product Form — host executes, skill guides, assets preserved, any host resumes" />
+<img src="./assets/sopify-product-form-release-en.svg" width="900" alt="Sopify Product Form — host, skills, project assets, local handoff, and explicit archive" />
 </div>
 
-The host LLM executes. Sopify preserves traceable development assets — plans, decisions, handoffs, and verification evidence — in `.sopify/`, accessible across sessions, hosts, and teammates.
+The host LLM executes. Sopify supplies shared workflow rules and preserves plans, decisions, and verification evidence as project files in `.sopify/`. Local resume pointers remain on the machine.
 
-How Sopify achieves stability and quality:
+Sopify does three things:
 
-- **Same rules on every host** — Claude, Codex, Qoder, and Copilot load the same Sopify instructions, so switching hosts doesn't reset the workflow
-- **Project assets tracked in git** — plans, decisions, and verification records live in `.sopify/`; only the two local pointer files (`active_plan.json`, `current_handoff.json`) are gitignored
-- **Resumes when you ask** — explicitly ask to continue or use `~go`; the host then reads the current plan, last handoff, and existing verification evidence before proceeding
-- **Runtime retired; workflow retained** — the analyze → design → develop → finalize workflow is unchanged; what changed is that rules live in files, not a runtime process
+- **Shared workflow rules** — supported hosts load the same Sopify workflow rules, so switching hosts does not change the process and boundaries you already confirmed
+- **Git-tracked project record** — plans, decisions, and verification evidence travel with the repository; local pointers do not
+- **Explicit resume and closeout** — ask to continue or use `~go` before the host resumes; `~go finalize` archives the plan only after delivery evidence is ready
 
 ## Architecture Details
 

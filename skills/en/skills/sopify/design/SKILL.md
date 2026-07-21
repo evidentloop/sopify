@@ -5,7 +5,7 @@ description: Design phase entry. Aggregates plan-level selection, task breakdown
 
 # Design (Entry)
 
-> Core philosophy: A plan's value lies in the clarity of its trade-offs, not in its coverage.
+> Check the current system first, then choose the smallest sufficient path.
 
 ## When to activate
 
@@ -15,10 +15,11 @@ description: Design phase entry. Aggregates plan-level selection, task breakdown
 ## Execution skeleton
 
 1. Load `references/design-rules.md`.
-2. Decide `light/standard/architecture` from explicit change signals.
-3. Generate the plan files from the matching templates in `assets/`.
-4. Produce the task list and validate task granularity.
-5. Add the scoring block to the formal plan package and render the scored summary with `assets/output-summary.md`.
+2. Check existing implementation, governing contracts, applicable platform capabilities, and installed dependencies.
+3. Choose the smallest sufficient path and select `light/standard/architecture`.
+4. Generate the plan files from the matching `assets/` templates.
+5. Produce tasks with explicit dependencies and verification.
+6. Report `Ready` or `Needs decision` with evidence using `assets/output-summary.md`.
 
 ## Resource navigation
 

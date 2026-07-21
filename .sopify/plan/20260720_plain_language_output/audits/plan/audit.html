@@ -1,0 +1,1635 @@
+<!doctype html>
+<html lang="zh-CN" data-renderer-version="0.3">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Sopify 代码变更审计 · EvidentLoop</title>
+  <style>:root {
+  color-scheme: light;
+  --bg: #f3f5f8;
+  --panel: #ffffff;
+  --text: #172033;
+  --muted: #667085;
+  --line: #d7dee8;
+  --line-strong: #b7c2d1;
+  --green: #17753b;
+  --green-soft: #e7f6ec;
+  --red: #bd2f35;
+  --red-soft: #fff0f1;
+  --amber: #a66c12;
+  --amber-soft: #fff6df;
+  --blue: #245f91;
+  --blue-soft: #edf6ff;
+  --code-bg: #fbfcfe;
+  --code-add-bg: #e6ffed;
+  --code-del-bg: #ffebe9;
+  --code-add-text: #116329;
+  --code-del-text: #82071e;
+  --focus: #0e7490;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  background: linear-gradient(180deg, #e7ebf1 0, var(--bg) 230px);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.55;
+}
+
+a { color: var(--blue); }
+h1, h2, h3, p { margin-top: 0; }
+h1 { margin-bottom: 6px; font-size: clamp(1.65rem, 4vw, 2rem); line-height: 1.2; }
+h2 { margin-bottom: 0; font-size: 1.18rem; }
+h3 { margin-bottom: 8px; font-size: 1rem; }
+code { padding: 1px 5px; border-radius: 5px; background: #eef2f7; }
+
+.report-shell {
+  display: grid;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 28px 20px 52px;
+  gap: 16px;
+}
+
+.panel,
+.hero {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: 0 1px 2px rgba(23, 32, 51, .04);
+}
+
+.hero {
+  padding: 22px;
+  border-left: 6px solid var(--blue);
+  box-shadow: 0 10px 28px rgba(23, 32, 51, .08);
+}
+
+.hero.concerns { border-left-color: var(--red); }
+.hero.pass_candidate { border-left-color: var(--green); }
+.hero.needs_human_triage { border-left-color: var(--amber); }
+.hero.inconclusive { border-left-color: var(--blue); }
+
+.hero-top,
+.section-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hero-copy { min-width: 0; overflow-wrap: anywhere; }
+
+.kicker {
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.muted,
+.ref { color: var(--muted); }
+.ref { font-size: .8rem; overflow-wrap: anywhere; }
+
+.verdict-box {
+  flex: 0 0 240px;
+  padding: 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--blue-soft);
+  text-align: right;
+}
+
+.verdict-box strong { display: block; font-size: 1.08rem; overflow-wrap: anywhere; }
+.human-notice { margin-top: 6px; color: var(--amber); font-size: .78rem; font-weight: 800; }
+.hero.concerns .verdict-box { border-color: #f0b5b7; background: var(--red-soft); }
+.hero.pass_candidate .verdict-box { border-color: #acd8bb; background: var(--green-soft); }
+.hero.needs_human_triage .verdict-box { border-color: #ead09f; background: var(--amber-soft); }
+
+.judgment-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.judgment-card,
+.finding-judgments > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfe;
+  overflow-wrap: anywhere;
+}
+
+.judgment-card > span,
+.finding-judgments > div > span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: .74rem;
+  font-weight: 800;
+}
+
+.judgment-card strong,
+.finding-judgments strong { display: block; }
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.metric {
+  min-width: 0;
+  min-height: 88px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfe;
+}
+
+.metric > span:first-child { display: block; color: var(--muted); font-size: .75rem; font-weight: 750; }
+.metric strong { display: block; margin: 4px 0 6px; font-size: 1.45rem; line-height: 1.15; overflow-wrap: anywhere; }
+
+.panel { padding: 20px; }
+.section-title { align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.badge.ok { background: var(--green); }
+.badge.risk { background: var(--red); }
+.badge.warn { background: var(--amber); }
+.badge.info { background: var(--blue); }
+.badge.soft { color: var(--text); background: #eef2f7; }
+
+.status-callout,
+.claim,
+.finding-note,
+.fix-inline,
+.feedback-placeholder {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.status-callout { margin-top: 14px; }
+.status-callout.clean { border-color: #acd8bb; background: var(--green-soft); }
+.status-callout.warning { border-color: #ead09f; background: var(--amber-soft); }
+.status-callout.failure { border-color: #f0b5b7; background: var(--red-soft); }
+
+.overall-summary { margin-bottom: 16px; font-size: .96rem; }
+.summary-grid { display: grid; grid-template-columns: 1.2fr .8fr; align-items: start; gap: 16px; }
+.summary-grid p,
+.summary-grid strong { overflow-wrap: anywhere; }
+.change-files { margin-top: 12px; }
+.change-files > summary { cursor: pointer; color: var(--blue); font-size: .84rem; font-weight: 800; }
+.change-files[open] > summary { margin-bottom: 10px; }
+.change-list { display: grid; gap: 10px; margin-top: 12px; }
+.file-change { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfe; }
+.file-path { color: var(--blue); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .82rem; overflow-wrap: anywhere; }
+.diff-stat { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .8rem; white-space: nowrap; }
+.add { color: var(--green); }
+.del { color: var(--red); }
+.claim-list { display: grid; align-self: start; align-content: start; gap: 10px; }
+.claim-empty { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 11px; }
+.claim-empty .muted { font-size: .78rem; }
+.claim[data-status="challenged"] { border-left: 5px solid var(--red); background: var(--red-soft); }
+.claim[data-status="supported"] { border-left: 5px solid var(--green); background: var(--green-soft); }
+.claim[data-status="partial"] { border-left: 5px solid var(--amber); background: var(--amber-soft); }
+
+.finding-stack { display: grid; gap: 14px; }
+.finding-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+.finding-card.high { border-left: 6px solid var(--red); }
+.finding-card.medium { border-left: 6px solid var(--amber); }
+.finding-card.low,
+.finding-card.note { border-left: 6px solid var(--blue); }
+
+.finding-header { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: start; gap: 9px; padding: 14px 16px; border-bottom: 1px solid var(--line); background: #fbfcfe; }
+.finding-title { display: block; font-weight: 800; overflow-wrap: anywhere; }
+.location { display: block; margin-top: 3px; color: var(--blue); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; overflow-wrap: anywhere; }
+.finding-body { padding: 16px; }
+.finding-layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 14px; }
+.finding-note { margin-bottom: 12px; }
+.unanchored { border-color: #ead09f; background: var(--amber-soft); }
+
+.hunk { min-width: 0; overflow: hidden; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--code-bg); }
+.hunk-caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--line); background: #eef2f7; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; }
+.hunk-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
+.hunk-table { width: 100%; min-width: 0; border-collapse: collapse; table-layout: fixed; }
+.hunk-table th { padding: 5px 8px; background: #f6f8fb; color: var(--muted); font-size: .68rem; text-align: right; }
+.hunk-table th:first-child { width: 5px; padding: 0; }
+.hunk-table th:nth-child(2),
+.hunk-table th:nth-child(3) { width: 54px; }
+.hunk-table th:last-child { text-align: left; }
+.hunk-table td { border: 0; padding: 0; vertical-align: top; }
+.hunk-stripe { width: 5px; background: transparent; }
+.hunk-line-active .hunk-stripe { background: #f59e0b; }
+.hunk-line-active .hunk-num { color: #7a4b00; background: #fff3cd; font-weight: 800; }
+.hunk-line-active .hunk-code { box-shadow: inset 4px 0 0 #f59e0b; font-weight: 700; }
+.hunk-num { width: 54px; padding: 2px 8px !important; border-right: 1px solid var(--line) !important; color: #7a8699; background: #f7f9fc; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .75rem; text-align: right; user-select: none; }
+.hunk-code { padding: 2px 10px !important; color: #1f2937; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+.hunk-add .hunk-code { color: var(--code-add-text); background: var(--code-add-bg); }
+.hunk-delete .hunk-code { color: var(--code-del-text); background: var(--code-del-bg); }
+.hunk-meta .hunk-code { color: var(--muted); background: #f7f9fc; font-style: italic; }
+.hunk-omitted-cell { padding: 5px 10px !important; color: var(--muted); background: #eef2f7; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; text-align: center; }
+.hunk-hit-key { color: #7a4b00; font-weight: 800; }
+.hunk-hit-key::before { content: "● "; color: #f59e0b; }
+
+.chain { display: grid; align-content: start; gap: 8px; }
+.chain-row { padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: #f8fafc; overflow-wrap: anywhere; }
+.chain-label { display: block; margin-bottom: 3px; color: var(--muted); font-size: .7rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.fix-inline { margin-top: 12px; border-color: #b8d5ef; background: var(--blue-soft); }
+.finding-judgments { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.feedback-placeholder { display: block; margin-top: 12px; }
+.feedback-heading,
+.feedback-toolbar,
+.feedback-comment-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.feedback-toolbar { align-items: flex-start; }
+.feedback-toolbar p:last-child { margin-bottom: 0; }
+.feedback-export-actions { display: grid; justify-items: end; gap: 6px; flex: 0 0 auto; }
+.feedback-controls { display: grid; gap: 10px; margin-top: 10px; }
+.feedback-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.feedback-more,
+.evidence-details,
+.revision-details { margin-top: 10px; }
+.feedback-more > summary,
+.evidence-details > summary,
+.revision-details > summary { cursor: pointer; color: var(--blue); font-size: .82rem; font-weight: 800; }
+.feedback-controls label { display: grid; gap: 5px; color: var(--muted); font-size: .78rem; font-weight: 750; }
+.feedback-controls select,
+.feedback-controls textarea { width: 100%; border: 1px solid var(--line-strong); border-radius: 7px; background: #fff; color: var(--text); font: inherit; }
+.feedback-controls select { min-height: 36px; padding: 6px 9px; }
+.feedback-controls textarea { min-height: 78px; padding: 9px; resize: vertical; }
+.button { min-height: 34px; padding: 6px 11px; border: 1px solid var(--line-strong); border-radius: 7px; background: #fff; color: var(--text); font: inherit; font-size: .82rem; font-weight: 750; cursor: pointer; }
+.button:hover { border-color: var(--blue); background: var(--blue-soft); }
+.button:focus-visible,
+.feedback-controls select:focus-visible,
+.feedback-controls textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--focus) 35%, transparent); outline-offset: 2px; }
+.button[aria-pressed="true"] { border-color: var(--blue); background: var(--blue); color: #fff; }
+.button.primary { border-color: var(--blue); background: var(--blue); color: #fff; }
+.button.primary:hover { background: #194d77; }
+.button.secondary { min-height: 30px; padding: 4px 9px; color: var(--blue); font-size: .76rem; }
+
+.data-table-wrap { max-width: 100%; overflow-x: auto; }
+.data-table { width: 100%; min-width: 620px; border-collapse: collapse; }
+.data-table th,
+.data-table td { padding: 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.data-table th { color: var(--muted); font-size: .74rem; text-transform: uppercase; }
+
+@media (max-width: 780px) {
+  .report-shell { padding: 16px 12px 36px; }
+  .hero-top,
+  .section-title,
+  .feedback-toolbar,
+  .feedback-heading,
+  .feedback-comment-actions { flex-direction: column; align-items: flex-start; }
+  .section-title { align-items: flex-start; }
+  .feedback-export-actions { width: 100%; justify-items: start; }
+  .verdict-box { width: 100%; flex-basis: auto; text-align: left; }
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .judgment-grid,
+  .finding-judgments,
+  .summary-grid,
+  .finding-layout { grid-template-columns: minmax(0, 1fr); }
+  .finding-header { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .finding-header .category-badge { display: none; }
+  .file-change { grid-template-columns: minmax(0, 1fr); }
+  .diff-stat { white-space: normal; }
+}
+
+@media (max-width: 330px) {
+  .metric-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 420px) {
+  .panel,
+  .hero { padding: 15px; }
+  .finding-body { padding: 12px; }
+  .claim-empty { align-items: flex-start; flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+  <main class="report-shell" data-graph-id="audit:run-c08dcb466f7d41d79030659d64e2410d" data-audit-sha256="sha256:43348d575ff6944c105e5fe48021128f1be635e63059b197f4d973c4f14b068e" data-run-id="run-c08dcb466f7d41d79030659d64e2410d">
+    <header class="hero concerns" data-node-id="run-c08dcb466f7d41d79030659d64e2410d" data-node-type="run">
+      <div class="hero-top">
+        <div class="hero-copy">
+          <div class="kicker">EvidentLoop · 代码变更</div>
+          <h1>Sopify 代码变更审计</h1>
+          <div class="muted">
+运行：run-c08dcb466f7d41d79030659d64e2410d ·             来源：staged · schema：0.4 · 审查状态：输出完整
+          </div>
+        </div>
+        <div class="verdict-box">
+          <span class="muted">当前结论</span>
+          <strong>存在待处理问题</strong>
+          <div class="ref">来自模型审查</div>
+        </div>
+      </div>
+
+      <div class="judgment-grid" aria-label="模型判断、人工裁定与当前状态">
+        <div class="judgment-card">
+          <span>模型原判断</span>
+          <strong>存在待处理问题</strong>
+          <div class="ref">原风险分：28</div>
+        </div>
+        <div class="judgment-card">
+          <span>我的裁定</span>
+          <strong>尚未写入报告</strong>
+          <div class="ref">可在问题卡片中记录待更新裁定</div>
+        </div>
+        <div class="judgment-card">
+          <span>当前剩余问题</span>
+          <strong>2 项</strong>
+          <div class="ref">当前结论：存在待处理问题 · 风险分：28</div>
+        </div>
+      </div>
+
+      <div class="metric-grid">
+        <div class="metric">
+          <span>已计分风险分</span>
+          <strong>28</strong>
+          <span class="badge warn">中</span>
+        </div>
+        <div class="metric">
+          <span>待处理问题</span>
+          <strong>2</strong>
+          <span class="badge risk">待处理</span>
+        </div>
+        <div class="metric">
+          <span>未计分问题</span>
+          <strong>0</strong>
+          <span class="badge soft">无</span>
+        </div>
+        <div class="metric">
+          <span>影响文件</span>
+          <strong>50</strong>
+          <span class="badge soft">已采集</span>
+        </div>
+      </div>
+
+      <div class="status-callout warning">
+        <strong>审查输出已完整接收</strong>
+        <div>这只表示审查者输出满足结构契约，不代表上下文覆盖充分；请结合结论、问题与未计分项人工判断。</div>
+      </div>
+    </header>
+
+    <section class="panel" data-node-id="change-001" data-node-type="change">
+      <div class="section-title">
+        <h2>1. 变更摘要与审计结论</h2>
+        <span class="badge soft">变更目标：未审计</span>
+      </div>
+<p class="overall-summary">改动整体边界清楚，中英文 Skill 所有权、单文件渲染和静态页面均增加了针对性约束，但当前还不是无 finding 的交付候选：应先统一公开页面对 handoff 持久化边界的表述，并补上 Open Graph 图片真实尺寸验证。</p>      <div class="summary-grid summary-grid-empty-claim">
+        <div>
+            <article data-node-id="change-001" data-node-type="change" data-edge-id="edge-001">
+              <h3>Sopify 变更</h3>
+              <p>共 50 个文件发生变更（+2941/-1655，其中 2 个二进制文件）。</p>
+            </article>
+          <details class="change-files">
+            <summary>影响文件（50）· 查看全部</summary>
+          <div class="change-list">
+            <div class="file-change" data-node-id="file-001" data-node-type="file" data-edge-id="edge-002">
+              <span class="file-path">.nojekyll</span>
+              <span class="diff-stat">
+                <span class="add">+1</span>
+                <span class="del">-0</span>
+                · 新增              </span>
+            </div>
+            <div class="file-change" data-node-id="file-002" data-node-type="file" data-edge-id="edge-003">
+              <span class="file-path">.sopify/blueprint/README.md</span>
+              <span class="diff-stat">
+                <span class="add">+1</span>
+                <span class="del">-1</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-003" data-node-type="file" data-edge-id="edge-004">
+              <span class="file-path">.sopify/blueprint/design.md</span>
+              <span class="diff-stat">
+                <span class="add">+13</span>
+                <span class="del">-4</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-004" data-node-type="file" data-edge-id="edge-005">
+              <span class="file-path">.sopify/plan/20260720_plain_language_output/plan.md</span>
+              <span class="diff-stat">
+                <span class="add">+145</span>
+                <span class="del">-0</span>
+                · 新增              </span>
+            </div>
+            <div class="file-change" data-node-id="file-005" data-node-type="file" data-edge-id="edge-006">
+              <span class="file-path">.sopify/plan/20260720_plain_language_output/tasks.md</span>
+              <span class="diff-stat">
+                <span class="add">+108</span>
+                <span class="del">-0</span>
+                · 新增              </span>
+            </div>
+            <div class="file-change" data-node-id="file-006" data-node-type="file" data-edge-id="edge-007">
+              <span class="file-path">README.md</span>
+              <span class="diff-stat">
+                <span class="add">+6</span>
+                <span class="del">-7</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-007" data-node-type="file" data-edge-id="edge-008">
+              <span class="file-path">README.zh-CN.md</span>
+              <span class="diff-stat">
+                <span class="add">+6</span>
+                <span class="del">-7</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-008" data-node-type="file" data-edge-id="edge-009">
+              <span class="file-path">assets/sopify-architecture.svg</span>
+              <span class="diff-stat">
+                <span class="add">+10</span>
+                <span class="del">-10</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-009" data-node-type="file" data-edge-id="edge-010">
+              <span class="file-path">assets/sopify-og-en.jpg</span>
+              <span class="diff-stat">
+                <span class="add">+0</span>
+                <span class="del">-0</span>
+                · 二进制              </span>
+            </div>
+            <div class="file-change" data-node-id="file-010" data-node-type="file" data-edge-id="edge-011">
+              <span class="file-path">assets/sopify-og-zh-CN.jpg</span>
+              <span class="diff-stat">
+                <span class="add">+0</span>
+                <span class="del">-0</span>
+                · 二进制              </span>
+            </div>
+            <div class="file-change" data-node-id="file-011" data-node-type="file" data-edge-id="edge-012">
+              <span class="file-path">assets/sopify-product-form-release-en.svg</span>
+              <span class="diff-stat">
+                <span class="add">+17</span>
+                <span class="del">-17</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-012" data-node-type="file" data-edge-id="edge-013">
+              <span class="file-path">assets/sopify-product-form-release.svg</span>
+              <span class="diff-stat">
+                <span class="add">+24</span>
+                <span class="del">-24</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-013" data-node-type="file" data-edge-id="edge-014">
+              <span class="file-path">assets/sopify-site.css</span>
+              <span class="diff-stat">
+                <span class="add">+979</span>
+                <span class="del">-0</span>
+                · 新增              </span>
+            </div>
+            <div class="file-change" data-node-id="file-014" data-node-type="file" data-edge-id="edge-015">
+              <span class="file-path">assets/sopify-site.js</span>
+              <span class="diff-stat">
+                <span class="add">+52</span>
+                <span class="del">-0</span>
+                · 新增              </span>
+            </div>
+            <div class="file-change" data-node-id="file-015" data-node-type="file" data-edge-id="edge-016">
+              <span class="file-path">assets/sopify-workflow-cn.svg</span>
+              <span class="diff-stat">
+                <span class="add">+99</span>
+                <span class="del">-101</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-016" data-node-type="file" data-edge-id="edge-017">
+              <span class="file-path">assets/sopify-workflow.svg</span>
+              <span class="diff-stat">
+                <span class="add">+99</span>
+                <span class="del">-102</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-017" data-node-type="file" data-edge-id="edge-018">
+              <span class="file-path">index.html</span>
+              <span class="diff-stat">
+                <span class="add">+274</span>
+                <span class="del">-0</span>
+                · 新增              </span>
+            </div>
+            <div class="file-change" data-node-id="file-018" data-node-type="file" data-edge-id="edge-019">
+              <span class="file-path">installer/hosts/base.py</span>
+              <span class="diff-stat">
+                <span class="add">+30</span>
+                <span class="del">-3</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-019" data-node-type="file" data-edge-id="edge-020">
+              <span class="file-path">skills/en/header.md.template</span>
+              <span class="diff-stat">
+                <span class="add">+5</span>
+                <span class="del">-94</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-020" data-node-type="file" data-edge-id="edge-021">
+              <span class="file-path">skills/en/skills/sopify/analyze/SKILL.md</span>
+              <span class="diff-stat">
+                <span class="add">+3</span>
+                <span class="del">-3</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-021" data-node-type="file" data-edge-id="edge-022">
+              <span class="file-path">skills/en/skills/sopify/analyze/assets/success-output.md</span>
+              <span class="diff-stat">
+                <span class="add">+10</span>
+                <span class="del">-7</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-022" data-node-type="file" data-edge-id="edge-023">
+              <span class="file-path">skills/en/skills/sopify/analyze/references/analyze-rules.md</span>
+              <span class="diff-stat">
+                <span class="add">+34</span>
+                <span class="del">-83</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-023" data-node-type="file" data-edge-id="edge-024">
+              <span class="file-path">skills/en/skills/sopify/design/SKILL.md</span>
+              <span class="diff-stat">
+                <span class="add">+6</span>
+                <span class="del">-5</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-024" data-node-type="file" data-edge-id="edge-025">
+              <span class="file-path">skills/en/skills/sopify/design/assets/output-summary.md</span>
+              <span class="diff-stat">
+                <span class="add">+6</span>
+                <span class="del">-7</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-025" data-node-type="file" data-edge-id="edge-026">
+              <span class="file-path">skills/en/skills/sopify/design/assets/plan-template.md</span>
+              <span class="diff-stat">
+                <span class="add">+2</span>
+                <span class="del">-7</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-026" data-node-type="file" data-edge-id="edge-027">
+              <span class="file-path">skills/en/skills/sopify/design/references/design-rules.md</span>
+              <span class="diff-stat">
+                <span class="add">+27</span>
+                <span class="del">-63</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-027" data-node-type="file" data-edge-id="edge-028">
+              <span class="file-path">skills/en/skills/sopify/develop/references/develop-rules.md</span>
+              <span class="diff-stat">
+                <span class="add">+4</span>
+                <span class="del">-31</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-028" data-node-type="file" data-edge-id="edge-029">
+              <span class="file-path">skills/en/skills/sopify/kb/SKILL.md</span>
+              <span class="diff-stat">
+                <span class="add">+37</span>
+                <span class="del">-138</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-029" data-node-type="file" data-edge-id="edge-030">
+              <span class="file-path">skills/en/skills/sopify/references/output-contract.md</span>
+              <span class="diff-stat">
+                <span class="add">+27</span>
+                <span class="del">-63</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-030" data-node-type="file" data-edge-id="edge-031">
+              <span class="file-path">skills/en/skills/sopify/references/shared-writing-dna.md</span>
+              <span class="diff-stat">
+                <span class="add">+19</span>
+                <span class="del">-27</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-031" data-node-type="file" data-edge-id="edge-032">
+              <span class="file-path">skills/en/skills/sopify/templates/SKILL.md</span>
+              <span class="diff-stat">
+                <span class="add">+62</span>
+                <span class="del">-160</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-032" data-node-type="file" data-edge-id="edge-033">
+              <span class="file-path">skills/zh/header.md.template</span>
+              <span class="diff-stat">
+                <span class="add">+5</span>
+                <span class="del">-94</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-033" data-node-type="file" data-edge-id="edge-034">
+              <span class="file-path">skills/zh/skills/sopify/analyze/SKILL.md</span>
+              <span class="diff-stat">
+                <span class="add">+3</span>
+                <span class="del">-3</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-034" data-node-type="file" data-edge-id="edge-035">
+              <span class="file-path">skills/zh/skills/sopify/analyze/assets/success-output.md</span>
+              <span class="diff-stat">
+                <span class="add">+10</span>
+                <span class="del">-7</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-035" data-node-type="file" data-edge-id="edge-036">
+              <span class="file-path">skills/zh/skills/sopify/analyze/references/analyze-rules.md</span>
+              <span class="diff-stat">
+                <span class="add">+34</span>
+                <span class="del">-83</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-036" data-node-type="file" data-edge-id="edge-037">
+              <span class="file-path">skills/zh/skills/sopify/design/SKILL.md</span>
+              <span class="diff-stat">
+                <span class="add">+6</span>
+                <span class="del">-5</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-037" data-node-type="file" data-edge-id="edge-038">
+              <span class="file-path">skills/zh/skills/sopify/design/assets/output-summary.md</span>
+              <span class="diff-stat">
+                <span class="add">+5</span>
+                <span class="del">-6</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-038" data-node-type="file" data-edge-id="edge-039">
+              <span class="file-path">skills/zh/skills/sopify/design/assets/plan-template.md</span>
+              <span class="diff-stat">
+                <span class="add">+2</span>
+                <span class="del">-7</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-039" data-node-type="file" data-edge-id="edge-040">
+              <span class="file-path">skills/zh/skills/sopify/design/references/design-rules.md</span>
+              <span class="diff-stat">
+                <span class="add">+27</span>
+                <span class="del">-63</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-040" data-node-type="file" data-edge-id="edge-041">
+              <span class="file-path">skills/zh/skills/sopify/develop/references/develop-rules.md</span>
+              <span class="diff-stat">
+                <span class="add">+4</span>
+                <span class="del">-31</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-041" data-node-type="file" data-edge-id="edge-042">
+              <span class="file-path">skills/zh/skills/sopify/kb/SKILL.md</span>
+              <span class="diff-stat">
+                <span class="add">+37</span>
+                <span class="del">-138</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-042" data-node-type="file" data-edge-id="edge-043">
+              <span class="file-path">skills/zh/skills/sopify/references/output-contract.md</span>
+              <span class="diff-stat">
+                <span class="add">+31</span>
+                <span class="del">-67</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-043" data-node-type="file" data-edge-id="edge-044">
+              <span class="file-path">skills/zh/skills/sopify/references/shared-writing-dna.md</span>
+              <span class="diff-stat">
+                <span class="add">+19</span>
+                <span class="del">-27</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-044" data-node-type="file" data-edge-id="edge-045">
+              <span class="file-path">skills/zh/skills/sopify/templates/SKILL.md</span>
+              <span class="diff-stat">
+                <span class="add">+43</span>
+                <span class="del">-141</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-045" data-node-type="file" data-edge-id="edge-046">
+              <span class="file-path">tests/behavior-scenarios/plain-language-output-v1.json</span>
+              <span class="diff-stat">
+                <span class="add">+76</span>
+                <span class="del">-0</span>
+                · 新增              </span>
+            </div>
+            <div class="file-change" data-node-id="file-046" data-node-type="file" data-edge-id="edge-047">
+              <span class="file-path">tests/golden-snapshots.json</span>
+              <span class="diff-stat">
+                <span class="add">+8</span>
+                <span class="del">-8</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-047" data-node-type="file" data-edge-id="edge-048">
+              <span class="file-path">tests/test_golden_snapshots.py</span>
+              <span class="diff-stat">
+                <span class="add">+6</span>
+                <span class="del">-6</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-048" data-node-type="file" data-edge-id="edge-049">
+              <span class="file-path">tests/test_plain_language_contracts.py</span>
+              <span class="diff-stat">
+                <span class="add">+245</span>
+                <span class="del">-0</span>
+                · 新增              </span>
+            </div>
+            <div class="file-change" data-node-id="file-049" data-node-type="file" data-edge-id="edge-050">
+              <span class="file-path">tests/test_plan_contract_assets.py</span>
+              <span class="diff-stat">
+                <span class="add">+7</span>
+                <span class="del">-5</span>
+                · 修改              </span>
+            </div>
+            <div class="file-change" data-node-id="file-050" data-node-type="file" data-edge-id="edge-051">
+              <span class="file-path">zh-CN.html</span>
+              <span class="diff-stat">
+                <span class="add">+267</span>
+                <span class="del">-0</span>
+                · 新增              </span>
+            </div>
+          </div>
+</details>        </div>
+        <div class="claim-list claim-list-empty">
+          <div class="claim claim-empty" data-status="unknown">
+            <strong>暂无摘要声明审计</strong>
+            <span class="muted">未生成结构化 claim</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel findings-section" data-category="risk">
+      <div class="section-title">
+        <h2>2. 风险</h2>
+        <span class="badge soft">1 条</span>
+      </div>
+      <div class="finding-stack">
+        <article class="finding-card low" data-node-id="finding-002" data-node-type="finding" data-category="risk" data-severity="low" data-fingerprint="sha256:11cbbb629e14adaae49701e9fc2e81ff0b29207ff32863b6d3cb1aced92fdd73" data-edge-id="edge-054">
+          <div class="finding-header">
+            <span class="badge info">低</span>
+            <span class="badge soft category-badge">风险</span>
+            <div>
+              <span class="finding-title">Open Graph 图片测试只验证文件存在，没有验证图片实际为声明的 `1200×630`。</span>
+              <span class="location">
+tests/test_plain_language_contracts.py:173              </span>
+            </div>
+            <span class="badge warn">待处理</span>
+          </div>
+          <div class="finding-body">
+            <div class="finding-layout">
+              <div>
+                <div class="finding-note">
+<strong>为什么是问题：</strong>                  测试只检查 HTML 中的宽高 metadata 和 JPG 的 `.is_file()`；任意尺寸或损坏的 JPG 都能通过，同时页面仍会发布错误的分享图尺寸声明。
+                </div>
+
+                <div class="hunk" data-hunk-id="hunk:ece9fe95cc9ccd93:1:1">
+                  <div class="hunk-caption">
+                    <span>@@ -0,0 +1,245 @@</span>
+                    <span>可信节选 · 展示 17/245 行 · <span class="hunk-hit-key">橙色标记</span>：新文件第 173 行</span>
+                  </div>
+                  <div class="hunk-scroll">
+                    <table class="hunk-table" aria-label="可信 unified diff 证据">
+                      <thead><tr><th></th><th>旧行</th><th>新行</th><th>代码</th></tr></thead>
+                      <tbody>
+                        <tr class="hunk-omitted">
+                          <td class="hunk-omitted-cell" colspan="4">… 省略 164 行可信 diff 内容 …</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">165</td>
+                          <td class="hunk-code">+    page: str, image_name: str, canonical: str</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">166</td>
+                          <td class="hunk-code">+) -&gt; None:</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">167</td>
+                          <td class="hunk-code">+    html = (REPO_ROOT / page).read_text(encoding=&#34;utf-8&#34;)</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">168</td>
+                          <td class="hunk-code">+    assert f&#39;&lt;link rel=&#34;canonical&#34; href=&#34;{canonical}&#34;&#39; in html</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">169</td>
+                          <td class="hunk-code">+    assert &#39;hreflang=&#34;en&#34;&#39; in html and &#39;hreflang=&#34;zh-CN&#34;&#39; in html</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">170</td>
+                          <td class="hunk-code">+    assert f&#34;/assets/{image_name}&#34; in html</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">171</td>
+                          <td class="hunk-code">+    assert &#39;property=&#34;og:image:width&#34; content=&#34;1200&#34;&#39; in html</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">172</td>
+                          <td class="hunk-code">+    assert &#39;property=&#34;og:image:height&#34; content=&#34;630&#34;&#39; in html</td>
+                        </tr>
+                        <tr class="hunk-add hunk-line-active" data-highlighted="true">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">173</td>
+                          <td class="hunk-code">+    assert (REPO_ROOT / &#34;assets&#34; / image_name).is_file()</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">174</td>
+                          <td class="hunk-code">+    assert (REPO_ROOT / &#34;.nojekyll&#34;).is_file()</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">175</td>
+                          <td class="hunk-code">+</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">176</td>
+                          <td class="hunk-code">+</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">177</td>
+                          <td class="hunk-code">+@pytest.mark.parametrize(</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">178</td>
+                          <td class="hunk-code">+    &#34;page,readme,asset,label,required&#34;,</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">179</td>
+                          <td class="hunk-code">+    [</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">180</td>
+                          <td class="hunk-code">+        (</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">181</td>
+                          <td class="hunk-code">+            &#34;index.html&#34;,</td>
+                        </tr>
+                        <tr class="hunk-omitted">
+                          <td class="hunk-omitted-cell" colspan="4">… 省略 64 行可信 diff 内容 …</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <aside class="chain">
+                <div class="chain-row">
+                  <span class="chain-label">审查依据</span>
+                  <span data-node-id="evidence-002" data-node-type="evidence" data-edge-id="edge-055">宿主语义审查结论：Open Graph 图片测试只验证文件存在，没有验证图片实际为声明的 `1200×630`。</span>
+                </div>
+              </aside>
+            </div>
+
+
+            <div class="finding-judgments" aria-label="该问题的人机判断">
+              <div>
+                <span>模型原判断</span>
+                <strong>待处理 · 低</strong>
+              </div>
+              <div>
+                <span>我的裁定</span>
+                <strong>无</strong>
+              </div>
+              <div>
+                <span>当前状态</span>
+                <strong>待处理 · 低</strong>
+              </div>
+            </div>
+
+            <div class="feedback-placeholder" data-feedback-for="finding-002" data-fingerprint="sha256:11cbbb629e14adaae49701e9fc2e81ff0b29207ff32863b6d3cb1aced92fdd73" data-applied-disposition="" data-applied-comment="" data-applied-severity="">
+              <div class="feedback-heading">
+                <div><strong>更新我的裁定</strong><div class="ref">只记录相对当前报告的新变化，不触发代码修改或模型复审。</div></div>
+                <span class="badge soft" data-feedback-state>待决策</span>
+              </div>
+              <div class="feedback-actions" role="group" aria-label="问题决策">
+                <button type="button" class="button" data-feedback-action="accept" aria-pressed="false">确认有效</button>
+                <button type="button" class="button" data-feedback-action="false_positive" aria-pressed="false">标记误报</button>
+              </div>
+              <details class="feedback-more">
+                <summary>评论与严重度调整</summary>
+                <div class="feedback-controls">
+                <label>
+                  严重度调整
+                  <select data-feedback-severity>
+                    <option value="">恢复模型原严重度</option>
+                    <option value="high">高</option>
+                    <option value="medium">中</option>
+                    <option value="low">低</option>
+                    <option value="note">提示</option>
+                  </select>
+                </label>
+                <label>
+                  评论
+                  <textarea rows="3" maxlength="4000" placeholder="可选；清空后保存会移除已有评论" data-feedback-comment></textarea>
+                </label>
+                <div class="feedback-comment-actions">
+                  <button type="button" class="button" data-feedback-action="comment">保存评论</button>
+                  <span class="ref" role="status" aria-live="polite" data-feedback-message>尚未记录决策</span>
+                </div>
+                </div>
+              </details>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+    <section class="panel findings-section" data-category="scope">
+      <div class="section-title">
+        <h2>3. 范围</h2>
+        <span class="badge soft">1 条</span>
+      </div>
+      <div class="finding-stack">
+        <article class="finding-card medium" data-node-id="finding-001" data-node-type="finding" data-category="scope" data-severity="medium" data-fingerprint="sha256:6f3e40a0db63ea8f509392375ad126cab8816a00bdad6a761f6d917d5006c3b7" data-edge-id="edge-052">
+          <div class="finding-header">
+            <span class="badge warn">中</span>
+            <span class="badge soft category-badge">范围</span>
+            <div>
+              <span class="finding-title">公开页面声称 handoff 会随仓库携带，与本次变更明确规定的本地 handoff 边界冲突。</span>
+              <span class="location">
+index.html:9              </span>
+            </div>
+            <span class="badge warn">待处理</span>
+          </div>
+          <div class="finding-body">
+            <div class="finding-layout">
+              <div>
+                <div class="finding-note">
+<strong>为什么是问题：</strong>                  同一 diff 中的 README、架构图和 FAQ 都说明 handoff 指针只留在当前机器且不进入 Git，但英文页面的 description、Open Graph 文案和 Hero 仍写着 “Plans, handoffs, and evidence stay with your repo”，中文页面也重复了“方案、交接和证据跟着项目走”。用户可能因此误以为跨机器或跨队友时 handoff 本身会随仓库恢复。
+                </div>
+
+                <div class="hunk" data-hunk-id="hunk:0eb547304658805a:1:1">
+                  <div class="hunk-caption">
+                    <span>@@ -0,0 +1,274 @@</span>
+                    <span>可信节选 · 展示 17/274 行 · <span class="hunk-hit-key">橙色标记</span>：新文件第 9 行</span>
+                  </div>
+                  <div class="hunk-scroll">
+                    <table class="hunk-table" aria-label="可信 unified diff 证据">
+                      <thead><tr><th></th><th>旧行</th><th>新行</th><th>代码</th></tr></thead>
+                      <tbody>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">1</td>
+                          <td class="hunk-code">+&lt;!doctype html&gt;</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">2</td>
+                          <td class="hunk-code">+&lt;html lang=&#34;en&#34;&gt;</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">3</td>
+                          <td class="hunk-code">+  &lt;head&gt;</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">4</td>
+                          <td class="hunk-code">+    &lt;meta charset=&#34;utf-8&#34; /&gt;</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">5</td>
+                          <td class="hunk-code">+    &lt;meta name=&#34;viewport&#34; content=&#34;width=device-width, initial-scale=1&#34; /&gt;</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">6</td>
+                          <td class="hunk-code">+    &lt;meta name=&#34;theme-color&#34; content=&#34;#f7f3ea&#34; /&gt;</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">7</td>
+                          <td class="hunk-code">+    &lt;meta</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">8</td>
+                          <td class="hunk-code">+      name=&#34;description&#34;</td>
+                        </tr>
+                        <tr class="hunk-add hunk-line-active" data-highlighted="true">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">9</td>
+                          <td class="hunk-code">+      content=&#34;Sopify is a resumable, traceable workflow for AI coding. Plans, handoffs, and evidence stay with your repo across tools and sessions.&#34;</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">10</td>
+                          <td class="hunk-code">+    /&gt;</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">11</td>
+                          <td class="hunk-code">+    &lt;link rel=&#34;canonical&#34; href=&#34;https://evidentloop.github.io/sopify/&#34; /&gt;</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">12</td>
+                          <td class="hunk-code">+    &lt;link rel=&#34;alternate&#34; hreflang=&#34;en&#34; href=&#34;https://evidentloop.github.io/sopify/&#34; /&gt;</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">13</td>
+                          <td class="hunk-code">+    &lt;link rel=&#34;alternate&#34; hreflang=&#34;zh-CN&#34; href=&#34;https://evidentloop.github.io/sopify/zh-CN.html&#34; /&gt;</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">14</td>
+                          <td class="hunk-code">+    &lt;link rel=&#34;alternate&#34; hreflang=&#34;x-default&#34; href=&#34;https://evidentloop.github.io/sopify/&#34; /&gt;</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">15</td>
+                          <td class="hunk-code">+    &lt;meta property=&#34;og:type&#34; content=&#34;website&#34; /&gt;</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">16</td>
+                          <td class="hunk-code">+    &lt;meta property=&#34;og:site_name&#34; content=&#34;Sopify&#34; /&gt;</td>
+                        </tr>
+                        <tr class="hunk-add">
+                          <td class="hunk-stripe"></td>
+                          <td class="hunk-num"></td>
+                          <td class="hunk-num">17</td>
+                          <td class="hunk-code">+    &lt;meta property=&#34;og:locale&#34; content=&#34;en_US&#34; /&gt;</td>
+                        </tr>
+                        <tr class="hunk-omitted">
+                          <td class="hunk-omitted-cell" colspan="4">… 省略 257 行可信 diff 内容 …</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <aside class="chain">
+                <div class="chain-row">
+                  <span class="chain-label">审查依据</span>
+                  <span data-node-id="evidence-001" data-node-type="evidence" data-edge-id="edge-053">宿主语义审查结论：公开页面声称 handoff 会随仓库携带，与本次变更明确规定的本地 handoff 边界冲突。</span>
+                </div>
+              </aside>
+            </div>
+
+
+            <div class="finding-judgments" aria-label="该问题的人机判断">
+              <div>
+                <span>模型原判断</span>
+                <strong>待处理 · 中</strong>
+              </div>
+              <div>
+                <span>我的裁定</span>
+                <strong>无</strong>
+              </div>
+              <div>
+                <span>当前状态</span>
+                <strong>待处理 · 中</strong>
+              </div>
+            </div>
+
+            <div class="feedback-placeholder" data-feedback-for="finding-001" data-fingerprint="sha256:6f3e40a0db63ea8f509392375ad126cab8816a00bdad6a761f6d917d5006c3b7" data-applied-disposition="" data-applied-comment="" data-applied-severity="">
+              <div class="feedback-heading">
+                <div><strong>更新我的裁定</strong><div class="ref">只记录相对当前报告的新变化，不触发代码修改或模型复审。</div></div>
+                <span class="badge soft" data-feedback-state>待决策</span>
+              </div>
+              <div class="feedback-actions" role="group" aria-label="问题决策">
+                <button type="button" class="button" data-feedback-action="accept" aria-pressed="false">确认有效</button>
+                <button type="button" class="button" data-feedback-action="false_positive" aria-pressed="false">标记误报</button>
+              </div>
+              <details class="feedback-more">
+                <summary>评论与严重度调整</summary>
+                <div class="feedback-controls">
+                <label>
+                  严重度调整
+                  <select data-feedback-severity>
+                    <option value="">恢复模型原严重度</option>
+                    <option value="high">高</option>
+                    <option value="medium">中</option>
+                    <option value="low">低</option>
+                    <option value="note">提示</option>
+                  </select>
+                </label>
+                <label>
+                  评论
+                  <textarea rows="3" maxlength="4000" placeholder="可选；清空后保存会移除已有评论" data-feedback-comment></textarea>
+                </label>
+                <div class="feedback-comment-actions">
+                  <button type="button" class="button" data-feedback-action="comment">保存评论</button>
+                  <span class="ref" role="status" aria-live="polite" data-feedback-message>尚未记录决策</span>
+                </div>
+                </div>
+              </details>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel feedback-toolbar" aria-labelledby="feedback-export-title">
+      <div>
+        <h2 id="feedback-export-title">把裁定交给 AI 更新报告</h2>
+        <p class="muted">待更新内容仅保存在当前浏览器，并按 graph、run 与 finding fingerprint 隔离；点击复制前不会离开本页。</p>
+        <p class="ref" data-feedback-summary>0 项决策 · 0 条评论 · 不自动上传</p>
+        <p class="ref" data-feedback-storage-status>本地保存可用</p>
+      </div>
+      <div class="feedback-export-actions">
+        <button type="button" class="button primary" data-feedback-copy>复制给 AI 更新报告</button>
+        <button type="button" class="button secondary" data-feedback-export>下载 JSONL</button>
+        <span class="ref" role="status" aria-live="polite" data-feedback-export-status>尚未复制</span>
+      </div>
+    </section>
+
+
+
+    <section class="panel">
+      <div class="section-title">
+        <h2>4. 审查依据详情</h2>
+        <span class="badge soft">2 条</span>
+      </div>
+      <details class="evidence-details">
+        <summary>查看全部 2 条审查依据</summary>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>证据</th><th>来源</th><th>状态</th><th>关联</th></tr></thead>
+          <tbody>
+            <tr data-node-id="evidence-001" data-node-type="evidence" data-status="fail">
+              <td>宿主语义审查结论：公开页面声称 handoff 会随仓库携带，与本次变更明确规定的本地 handoff 边界冲突。<div class="ref">同一 diff 中的 README、架构图和 FAQ 都说明 handoff 指针只留在当前机器且不进入 Git，但英文页面的 description、Open Graph 文案和 Hero 仍写着 “Plans, handoffs, and evidence stay with your repo”，中文页面也重复了“方案、交接和证据跟着项目走”。用户可能因此误以为跨机器或跨队友时 handoff 本身会随仓库恢复。</div></td>
+              <td>宿主语义审查</td>
+              <td><span class="badge risk">发现问题</span></td>
+              <td class="ref">finding-001</td>
+            </tr>
+            <tr data-node-id="evidence-002" data-node-type="evidence" data-status="fail">
+              <td>宿主语义审查结论：Open Graph 图片测试只验证文件存在，没有验证图片实际为声明的 `1200×630`。<div class="ref">测试只检查 HTML 中的宽高 metadata 和 JPG 的 `.is_file()`；任意尺寸或损坏的 JPG 都能通过，同时页面仍会发布错误的分享图尺寸声明。</div></td>
+              <td>宿主语义审查</td>
+              <td><span class="badge risk">发现问题</span></td>
+              <td class="ref">finding-002</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      </details>
+    </section>
+  </main>
+  <script>(function attachEvidentLoopFeedback(root, factory) {
+  "use strict";
+  const api = factory();
+  if (typeof module !== "undefined" && module.exports) {
+    module.exports = api;
+  }
+  if (root) {
+    root.EvidentLoopFeedback = api;
+    if (root.document) {
+      api.init(root.document, root);
+    }
+  }
+})(typeof window !== "undefined" ? window : null, function createEvidentLoopFeedback() {
+  "use strict";
+
+  const PREFIX = "evidentloop.feedback.v2";
+  const SEVERITIES = new Set(["high", "medium", "low", "note"]);
+  const MACHINE_BLOCK_BEGIN = "<<<EVIDENTLOOP_FEEDBACK_JSONL>>>";
+  const MACHINE_BLOCK_END = "<<<END_EVIDENTLOOP_FEEDBACK_JSONL>>>";
+  const COPY_INSTRUCTION = "请使用 EvidentLoop 按以下裁定更新当前报告；不要修改业务代码，也不要重新审查代码。";
+
+  function storageKey(identity) {
+    return [PREFIX, identity.graph_id, identity.run_id, identity.fingerprint]
+      .map((value) => encodeURIComponent(String(value)))
+      .join(":");
+  }
+
+  function defaultState(identity) {
+    return {
+      graph_id: identity.graph_id,
+      run_id: identity.run_id,
+      target_type: "finding",
+      target_id: identity.target_id,
+      fingerprint: identity.fingerprint,
+      disposition: null,
+      comment: null,
+      comment_changed: false,
+      severity_override: null,
+      severity_changed: false,
+      timestamps: {},
+      updated_at: null,
+    };
+  }
+
+  function matchesIdentity(state, identity) {
+    return state
+      && state.graph_id === identity.graph_id
+      && state.run_id === identity.run_id
+      && state.target_id === identity.target_id
+      && state.fingerprint === identity.fingerprint;
+  }
+
+  function validState(state, identity) {
+    if (!matchesIdentity(state, identity) || state.target_type !== "finding") return false;
+    if (![null, "accept", "false_positive"].includes(state.disposition)) return false;
+    if (state.comment !== null && typeof state.comment !== "string") return false;
+    if (typeof state.comment_changed !== "boolean") return false;
+    if (state.severity_override !== null && !SEVERITIES.has(state.severity_override)) return false;
+    if (typeof state.severity_changed !== "boolean") return false;
+    if (!state.timestamps || typeof state.timestamps !== "object") return false;
+    if (state.disposition && typeof state.timestamps.disposition !== "string") return false;
+    if (state.comment_changed && typeof state.timestamps.comment !== "string") return false;
+    if (state.severity_changed && typeof state.timestamps.severity_override !== "string") return false;
+    return true;
+  }
+
+  function loadState(storage, identity) {
+    try {
+      const raw = storage.getItem(storageKey(identity));
+      if (!raw) return defaultState(identity);
+      const state = JSON.parse(raw);
+      return validState(state, identity) ? state : defaultState(identity);
+    } catch (_error) {
+      return defaultState(identity);
+    }
+  }
+
+  function saveState(storage, state) {
+    storage.setItem(storageKey(state), JSON.stringify(state));
+    return state;
+  }
+
+  function applyAction(state, action, value, now) {
+    const next = JSON.parse(JSON.stringify(state));
+    const timestamp = now || new Date().toISOString();
+    if (action === "accept" || action === "false_positive") {
+      next.disposition = action;
+      next.timestamps.disposition = timestamp;
+    } else if (action === "comment") {
+      next.comment = String(value || "").trim() || null;
+      next.comment_changed = true;
+      next.timestamps.comment = timestamp;
+    } else if (action === "severity_override") {
+      const severity = String(value || "");
+      if (severity && !SEVERITIES.has(severity)) {
+        throw new Error("invalid severity override");
+      }
+      next.severity_override = severity || null;
+      next.severity_changed = true;
+      next.timestamps.severity_override = timestamp;
+    } else {
+      throw new Error("unknown feedback action");
+    }
+    next.updated_at = timestamp;
+    return next;
+  }
+
+  function clearPending(state, field) {
+    const next = JSON.parse(JSON.stringify(state));
+    if (field === "disposition") {
+      next.disposition = null;
+      delete next.timestamps.disposition;
+    } else if (field === "comment") {
+      next.comment = null;
+      next.comment_changed = false;
+      delete next.timestamps.comment;
+    } else if (field === "severity_override") {
+      next.severity_override = null;
+      next.severity_changed = false;
+      delete next.timestamps.severity_override;
+    } else {
+      throw new Error("unknown pending field");
+    }
+    next.updated_at = new Date().toISOString();
+    return next;
+  }
+
+  function applyPendingChange(state, action, value, appliedValue, now) {
+    if ((action === "accept" || action === "false_positive") && action === appliedValue) {
+      return clearPending(state, "disposition");
+    }
+    if (action === "comment" && String(value || "").trim() === (appliedValue || "")) {
+      return clearPending(state, "comment");
+    }
+    if (action === "severity_override" && String(value || "") === (appliedValue || "")) {
+      return clearPending(state, "severity_override");
+    }
+    return applyAction(state, action, value, now);
+  }
+
+  function baseEvent(state, action, createdAt, sourceAuditSha256) {
+    return {
+      target_type: "finding",
+      target_id: state.target_id,
+      action,
+      fingerprint: state.fingerprint,
+      graph_id: state.graph_id,
+      run_id: state.run_id,
+      created_at: createdAt,
+      source_audit_sha256: sourceAuditSha256,
+    };
+  }
+
+  function stateToEvents(state, sourceAuditSha256) {
+    const events = [];
+    if (state.disposition) {
+      events.push(baseEvent(state, state.disposition, state.timestamps.disposition, sourceAuditSha256));
+    }
+    if (state.comment_changed) {
+      events.push({
+        ...baseEvent(state, "comment", state.timestamps.comment, sourceAuditSha256),
+        comment: state.comment,
+      });
+    }
+    if (state.severity_changed) {
+      events.push({
+        ...baseEvent(state, "severity_override", state.timestamps.severity_override, sourceAuditSha256),
+        severity: state.severity_override,
+      });
+    }
+    return events;
+  }
+
+  function exportJsonl(states, sourceAuditSha256) {
+    const lines = states
+      .flatMap((state) => stateToEvents(state, sourceAuditSha256))
+      .map((event) => JSON.stringify(event));
+    return lines.length ? `${lines.join("\n")}\n` : "";
+  }
+
+  function buildCopyText(states, sourceAuditSha256) {
+    const jsonl = exportJsonl(states, sourceAuditSha256);
+    if (!jsonl) return "";
+    return `${COPY_INSTRUCTION}\n\n${MACHINE_BLOCK_BEGIN}\n${jsonl}${MACHINE_BLOCK_END}`;
+  }
+
+  function feedbackCounts(states, sourceAuditSha256) {
+    const events = states.flatMap((state) => stateToEvents(state, sourceAuditSha256));
+    return {
+      decisions: events.filter((event) => event.action !== "comment").length,
+      comments: events.filter((event) => event.action === "comment").length,
+      total: events.length,
+    };
+  }
+
+  function memoryStorage() {
+    const values = new Map();
+    return {
+      getItem(key) { return values.has(key) ? values.get(key) : null; },
+      setItem(key, value) { values.set(key, String(value)); },
+      removeItem(key) { values.delete(key); },
+    };
+  }
+
+  function appliedState(panel) {
+    return {
+      disposition: panel.dataset.appliedDisposition || null,
+      comment: panel.dataset.appliedComment || null,
+      severity_override: panel.dataset.appliedSeverity || null,
+    };
+  }
+
+  function renderState(panel, state, applied, syncInputs) {
+    const disposition = state.disposition || applied.disposition;
+    panel.querySelectorAll("[data-feedback-action='accept'], [data-feedback-action='false_positive']")
+      .forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.feedbackAction === disposition));
+      });
+    const badge = panel.querySelector("[data-feedback-state]");
+    const hasPending = state.disposition || state.comment_changed || state.severity_changed;
+    const hasApplied = applied.disposition || applied.comment || applied.severity_override;
+    badge.textContent = hasPending ? "有待更新裁定" : hasApplied ? "已应用" : "待决策";
+    if (syncInputs) {
+      panel.querySelector("[data-feedback-comment]").value = state.comment_changed
+        ? state.comment || ""
+        : applied.comment || "";
+      panel.querySelector("[data-feedback-severity]").value = state.severity_changed
+        ? state.severity_override || ""
+        : applied.severity_override || "";
+    }
+  }
+
+  async function copyText(documentObject, rootObject, value) {
+    if (
+      rootObject.navigator
+      && rootObject.navigator.clipboard
+      && typeof rootObject.navigator.clipboard.writeText === "function"
+    ) {
+      await rootObject.navigator.clipboard.writeText(value);
+      return;
+    }
+    const textarea = documentObject.createElement("textarea");
+    textarea.value = value;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    documentObject.body.appendChild(textarea);
+    textarea.select();
+    const copied = documentObject.execCommand && documentObject.execCommand("copy");
+    textarea.remove();
+    if (!copied) throw new Error("clipboard unavailable");
+  }
+
+  function init(documentObject, rootObject) {
+    const shell = documentObject.querySelector("[data-graph-id][data-run-id]");
+    if (!shell) return;
+    let storage;
+    let persistentStorage = true;
+    try {
+      storage = rootObject.localStorage;
+      const probe = `${PREFIX}:probe`;
+      storage.setItem(probe, "1");
+      storage.removeItem(probe);
+    } catch (_error) {
+      storage = memoryStorage();
+      persistentStorage = false;
+    }
+
+    const sourceAuditSha256 = shell.dataset.auditSha256;
+    const storageStatus = documentObject.querySelector("[data-feedback-storage-status]");
+    if (storageStatus && !persistentStorage) {
+      storageStatus.textContent = "仅临时保存，刷新会丢失";
+    }
+
+    const panels = Array.from(documentObject.querySelectorAll("[data-feedback-for][data-fingerprint]"));
+    const entries = panels.map((panel) => {
+      const identity = {
+        graph_id: shell.dataset.graphId,
+        run_id: shell.dataset.runId,
+        target_id: panel.dataset.feedbackFor,
+        fingerprint: panel.dataset.fingerprint,
+      };
+      let state = loadState(storage, identity);
+      const applied = appliedState(panel);
+      renderState(panel, state, applied, true);
+      const message = panel.querySelector("[data-feedback-message]");
+
+      panel.querySelectorAll("[data-feedback-action]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const action = button.dataset.feedbackAction;
+          const value = action === "comment"
+            ? panel.querySelector("[data-feedback-comment]").value
+            : null;
+          const appliedValue = action === "comment"
+            ? applied.comment
+            : applied.disposition;
+          state = applyPendingChange(state, action, value, appliedValue);
+          try { saveState(storage, state); } catch (_error) { /* in-memory state remains usable */ }
+          renderState(panel, state, applied, false);
+          message.textContent = action === "comment" && state.comment_changed && !state.comment
+            ? "待移除当前评论"
+            : "待更新裁定已保存在当前浏览器";
+          updateToolbar();
+        });
+      });
+      panel.querySelector("[data-feedback-severity]").addEventListener("change", (event) => {
+        state = applyPendingChange(
+          state,
+          "severity_override",
+          event.target.value,
+          applied.severity_override,
+        );
+        try { saveState(storage, state); } catch (_error) { /* in-memory state remains usable */ }
+        renderState(panel, state, applied, false);
+        message.textContent = state.severity_changed ? "严重度变化待更新" : "已恢复当前报告值";
+        updateToolbar();
+      });
+      return { getState: () => state };
+    });
+
+    const exportButton = documentObject.querySelector("[data-feedback-export]");
+    const copyButton = documentObject.querySelector("[data-feedback-copy]");
+    const exportStatus = documentObject.querySelector("[data-feedback-export-status]");
+    const summary = documentObject.querySelector("[data-feedback-summary]");
+    function currentStates() {
+      return entries.map((entry) => entry.getState());
+    }
+    function updateToolbar() {
+      if (!summary) return;
+      const counts = feedbackCounts(currentStates(), sourceAuditSha256);
+      summary.textContent = `${counts.decisions} 项决策 · ${counts.comments} 条评论 · 不自动上传`;
+    }
+    if (copyButton && exportStatus) {
+      copyButton.addEventListener("click", async () => {
+        const text = buildCopyText(currentStates(), sourceAuditSha256);
+        if (!text) {
+          exportStatus.textContent = "暂无待更新裁定";
+          return;
+        }
+        try {
+          await copyText(documentObject, rootObject, text);
+          exportStatus.textContent = "已复制，请粘贴给 AI 更新报告";
+        } catch (_error) {
+          exportStatus.textContent = "复制失败，请改用下载 JSONL";
+        }
+      });
+    }
+    if (exportButton && exportStatus) {
+      exportButton.addEventListener("click", () => {
+        const jsonl = exportJsonl(currentStates(), sourceAuditSha256);
+        if (!jsonl) {
+          exportStatus.textContent = "暂无可导出的决策";
+          return;
+        }
+        const blob = new rootObject.Blob([jsonl], { type: "application/x-ndjson;charset=utf-8" });
+        const url = rootObject.URL.createObjectURL(blob);
+        const link = documentObject.createElement("a");
+        link.href = url;
+        link.download = "audit-feedback.jsonl";
+        documentObject.body.appendChild(link);
+        link.click();
+        link.remove();
+        rootObject.URL.revokeObjectURL(url);
+        exportStatus.textContent = `已下载 ${jsonl.trimEnd().split("\n").length} 条反馈`;
+      });
+    }
+    updateToolbar();
+    documentObject.documentElement.dataset.evidentloopReady = "true";
+  }
+
+  return {
+    PREFIX,
+    MACHINE_BLOCK_BEGIN,
+    MACHINE_BLOCK_END,
+    applyAction,
+    applyPendingChange,
+    buildCopyText,
+    clearPending,
+    defaultState,
+    exportJsonl,
+    feedbackCounts,
+    init,
+    loadState,
+    memoryStorage,
+    saveState,
+    stateToEvents,
+    storageKey,
+    validState,
+  };
+});
+</script>
+</body>
+</html>

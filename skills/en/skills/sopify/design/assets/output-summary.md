@@ -1,14 +1,13 @@
-[{BRAND_NAME}] Solution Design ✓
+[{BRAND_NAME}] Solution Design {status symbol}
 
 Plan: .sopify/plan/{YYYYMMDD}_{feature}/
-Summary: {one-line technical solution}
-Tasks: {N} items
-Solution quality: {X}/10
-Implementation readiness: {Y}/10
-Scoring rationale: {1 line}
+Approach: {one-sentence solution}
+Tasks: {N}
+Readiness: {Ready / Needs decision}
+Evidence: {why the path is settled, or which choice can still change scope, the solution path, or acceptance}
 
 ---
 Changes: {N} files
   - .sopify/plan/...
 
-Next: Continue the review or execution flow in the host session, or reply with feedback
+Next: {continue review or implementation; name the required choice for Needs decision}

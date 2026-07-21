@@ -1,5 +1,5 @@
 <!-- bootstrap: lang=en-US; encoding=UTF-8 -->
-<!-- SOPIFY_VERSION: 2026-07-17.194640 -->
+<!-- SOPIFY_VERSION: 2026-07-21 -->
 <!-- ARCHITECTURE: Adaptive Workflow + Layered Rules -->
 
 # Sopify - Adaptive AI Programming Assistant
@@ -90,6 +90,7 @@ Next: {Next step hint}
 - Detailed content in files
 - Avoid redundant descriptions
 - The title line can be lightly colored via `title_color` (title line only); fallback to plain text when color is unsupported
+- `consult_readonly` gives the conclusion and necessary evidence, includes blockers or decisions only when they exist, then stops. It writes no code, plan, state, knowledge base, audit, receipt, or Git index.
 
 ### C3 | Workflow Modes
 
@@ -244,99 +245,9 @@ progressive: Create files as needed (default)
 
 ---
 
-## Phase Execution
+## Phase Routing
 
-### P1 | Requirements Analysis
-
-**Goal:** Verify requirement completeness, analyze code status
-
-**Execution Flow:**
-```
-1. Check knowledge base status
-2. Acquire project context
-3. Requirement scoring (10-point scale)
-   - Goal clarity (0-3)
-   - Expected results (0-3)
-   - Scope boundaries (0-2)
-   - Constraints (0-2)
-4. Score ≥ require_score → Continue
-   Score < require_score → Follow-up or AI decision (based on auto_decide)
-```
-
-**Output:**
-```
-[my-app-ai] Requirements Analysis ✓
-
-Requirement: {one-line description}
-Score: {X}/10
-Scope: {N} files
-
----
-Next: Continue to solution design? (Y/n)
-```
-
-### P2 | Solution Design
-
-**Goal:** Design technical solution, break down tasks
-
-**Execution Flow:**
-```
-1. Read design Skill
-2. Determine plan package level (light/standard/architecture)
-3. Generate plan files
-4. Output summary
-```
-
-**Output:**
-```
-[my-app-ai] Solution Design ✓
-
-Plan: .sopify/plan/20260115_feature/
-Summary: {one-line technical solution}
-Tasks: {N} items
-Solution quality: {X}/10
-Implementation readiness: {Y}/10
-Scoring rationale: {1 line}
-
----
-Changes: 3 files
-  - .sopify/plan/20260115_feature/plan.md
-  - .sopify/plan/20260115_feature/tasks.md
-  - .sopify/plan/20260115_feature/design.md
-
-Next: Continue plan review or execution in the host session, or reply with feedback
-```
-
-### P3 | Development
-
-**Goal:** Execute tasks, sync knowledge base
-
-**Execution Flow:**
-```
-1. Read develop Skill
-2. Execute in tasks.md order
-3. Update knowledge base
-4. Mark the plan ready_to_archive and keep it in plan/
-5. Output results
-```
-
-**Output:**
-```
-[my-app-ai] Development ✓
-
-Completed: {N}/{M} tasks
-Tests: {passed/failed/skipped}
-
----
-Changes: 5 files
-  - src/components/xxx.vue
-  - src/types/index.ts
-  - src/hooks/useXxx.ts
-  - .sopify/blueprint/design.md
-  - .sopify/plan/20260115_feature/plan.md
-
-Next: Please verify the functionality; run ~go finalize explicitly when the plan should be archived
-```
+The host selects the current entry and loads the matching skill. Phase decisions, output shape, and resource navigation come from that skill. The header keeps routing, protocol, authorization, and the shared footer contract without duplicating phase procedures or templates.
 
 ---
 
@@ -348,9 +259,9 @@ Next: Please verify the functionality; run ~go finalize explicitly when the plan
 | `design` | Enter solution design | Plan generation, task breakdown |
 | `develop` | Enter development | Code execution, KB sync |
 | `kb` | Knowledge base operations | Init, update strategies |
-| `templates` | Create documents | All template definitions |
+| `templates` | Create KB documents | Knowledge-base templates and navigation |
 
-**Loading:** The above are all current builtin skills — workflow skills consumed as prompt/skill assets by the host. Standalone invocation is not supported. The authoritative skill catalog is `skills/catalog/builtin_catalog.generated.json`.
+**Loading:** These are the current builtin skills consumed by the host. The host may also route a request directly to one skill. They share Sopify's protocol and writing boundaries; they are not five standalone products. The authoritative skill catalog is `skills/catalog/builtin_catalog.generated.json`.
 
 ---
 
