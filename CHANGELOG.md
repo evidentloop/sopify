@@ -6,6 +6,8 @@ Format: Summary → Changed → Plan Packages. File-level details live in `git l
 
 ## [Unreleased]
 
+- Removed the local `sync-skills.sh` cache helper; preview a header with `python3 scripts/render-host-skills.py --host codex --lang zh --output /tmp/sopify-preview/AGENTS.md`.
+
 ## [2026-08-30.001152] - 2026-08-30
 
 ### Summary

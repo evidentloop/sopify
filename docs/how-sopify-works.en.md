@@ -29,7 +29,7 @@ The host (Codex, Claude, Qoder, Copilot, or Cursor) executes. Sopify ensures eve
 Workflow notes:
 
 - The host reads protocol entry instructions from its prompt asset (installed via `install.sh --target <host>`)
-- Before entering managed plan / continuation / finalize, the host follows a 4-step read chain: `state/active_plan.json` → `plan/<id>/plan.md` → `state/current_handoff.json` → `plan/<id>/receipts/`
+- Managed plan / continuation / finalize uses the [protocol entry below](#protocol-entry-4-step-read-chain).
 - Consult and quick-fix requests do **not** auto-continue the active plan
 - Stale or invalid state does not interrupt ordinary questions; it is handled only when the user enters a managed-plan action
 - State writes go through `sopify_writer` (the only write path for protocol assets)
@@ -60,7 +60,7 @@ When the host detects `.sopify/` and the user request targets managed plan / con
 
 ### Optional Verifiers
 
-Sopify does not install or run a verifier by default. Sopify alone, another verifier, and an independently installed EvidentLoop are all valid paths. `--with-evidentloop` is an explicit install convenience, not a runtime switch: new components use EvidentLoop's current official sources, while healthy existing components are reused without automatic upgrades. EvidentLoop owns compatibility; Sopify does not maintain a version matrix, remove components, or track installation state. The Copilot Skill is project-owned content in `.github/skills/evidentloop/`; users review and commit it when needed, and Sopify does not commit or update it. Installation proves local placement and health only; Skill discovery and audit E2E still require host evidence, and cloud agents do not inherit the locally installed CLI.
+Sopify does not run a verifier by default. For optional installation and component ownership, see [Getting Started](./getting-started.md). Installation proves placement and health; host discovery and audit behavior require separate evidence.
 
 Independent audits do not need a plan binding. A formal plan-wide audit may live in `audits/plan/`, while focused audits may use `audits/<scope>/`; the host writes a receipt only when the user adopts the result as formal evidence. `audits/` is not part of the default 4-step read chain.
 
@@ -103,13 +103,7 @@ Layer notes:
 
 ## Host Support
 
-| Host | Tier | Install Command | Notes |
-|------|------|-----------------|-------|
-| Codex | PROTOCOL_VERIFIED | `install.sh --target codex:en-US` | Full capability continuation |
-| Claude | PROTOCOL_VERIFIED | `install.sh --target claude:en-US` | Full capability continuation |
-| Qoder | PROTOCOL_VERIFIED | `install.sh --target qoder` | Validated on Qoder CLI |
-| Copilot | BASELINE_SUPPORTED | `install.sh --target copilot` | Prompt-only; payload uplift planned |
-| Cursor | BASELINE_SUPPORTED | `install.sh --target cursor:en-US` | One install for IDE and local CLI; plan/development/resume/closeout entry is model-selected |
+See the current [host support and installation table](../README.md#installation); this page does not maintain another copy.
 
 ## Appendix: Plan Lifecycle
 

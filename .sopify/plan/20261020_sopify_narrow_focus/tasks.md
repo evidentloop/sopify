@@ -90,6 +90,15 @@
   - 依赖：无，可前置。执行：执行。验收：验收。
   - 完成定义：recipe 经评审，可供 T7、T8 直接使用。T7、T8 遵循 recipe 的证据在各自任务中回填。#55 的留言由大脑在收口时按授权处理，不作为本任务的完成门槛。
 
+- [ ] T6b recipe 两处补充（来源：T7 探针中验收官的 dogfood 反馈；T9 冷启动样本就用这个任务）
+  - 写集：只改 `docs/host-onboarding.md`。
+  - 要改：
+    1. 在探针步骤里补一句：CLI 宿主先查 `--help`，用非交互模式（如 `-p` / `--print`）起全新会话来复述标记；
+    2. 在能力矩阵或探针步骤里补一条：同一目录下同时放多个候选规则文件（如 `AGENTS.md` 和宿主专有文件），确认哪些会加载、按什么顺序。
+    不新增章节，各写一两句；篇幅不超过 180 行。
+  - 验收命令：`python3 -m pytest tests/test_check_readme_links.py -q`、`git diff --check`；`wc -l docs/host-onboarding.md` 不超过 180。
+  - 执行：T9 的执行者 B（Qoder 新会话）只凭 `.sopify/` 接手。验收：验收。
+
 ## W3 新宿主（独立文件并行；公共注册、catalog、Doctor 和共有测试由执行串行合入）
 
 - [ ] T7 Antigravity CLI baseline
@@ -106,7 +115,7 @@
     - Doctor 区分安装事实和行为证据；
     - 标 BASELINE_SUPPORTED。
   - 未通过时（D3）：不注册为安装目标，不进支持表；同步注册、catalog、Doctor 和文档。
-- [ ] T8 Trae CLI 2.x baseline
+- [ ] T8 Trae CLI 2.x baseline（用户 2026-10-20 决定照常做，有问题后续 PR 修；Antigravity 作为主要 dogfood。Trae 额度用尽期间按 trae-r6 自检实现，Doctor 行为项照实报 BLACK_BOX_NOT_VERIFIED，宿主文档与支持表注明「待真实会话验证」）
   - 步骤：探针 → 投影 → 实现 `installer/hosts/trae.py`、`docs/trae-host.md`、测试。候选布局：`~/.trae/skills/` 下放一组扁平的 `sopify-*` 阶段 Skill 加一个顶层入口 Skill；不写全局 AGENTS.md，不碰 hooks 和 `traecli.toml`。
   - 必须验证：
     - 扁平化后阶段之间的相对路径和共享 references 能否读取；
@@ -125,7 +134,7 @@
     2. 执行者 B 开一个全新会话，只凭 `.sopify/` 文件接手、实现并跑验收；
     3. 验收官审查；
     4. 大脑通过 writer 写回 receipt。
-  - 执行者 B 的路线：一个全新的 Codex 会话，与写方案的 Claude Code 不是同一宿主，并且没有本轮上下文。
+  - 执行者 B：用户指定 Qoder CLI（Terminal 5）新会话。它与写方案的 Claude Code 不是同一宿主，也没有本轮上下文；只给它一句 `~go`。
     - 这样 T9 不依赖新宿主适配是否通过，也不受 Trae 额度影响。
     - 审查由验收官完成。
     - T9 失败时按 D3 处理：失败结果写进 release notes，README 不写跨宿主续做。
@@ -144,7 +153,7 @@
     - 架构图和 EvidentLoop 细节移到 docs；真实 dogfood 案例挪到「真实案例」小节；
     - `index.html`、`zh-CN.html` 同步 Hero 标语、事实和链接，保留布局。
   - 新手测试：
-    - 一个全新会话，在全新临时目录中进行，此前从未接触本项目或本轮任何材料；
+    - 由用户指定的 Qoder CLI 另开一个全新会话，在全新临时目录中进行，此前从未接触本项目或本轮任何材料；
     - 只读新 README，回答 5 问（它是什么、什么价值、何时不用、怎么开始、产物是什么样），得分 ≥ 9/10；
     - 用 `install.sh --ref <候选分支>` 在临时仓库完成安装和第一个 `~go plan`；
     - 记录全过程。

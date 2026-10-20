@@ -55,9 +55,8 @@ knowledge_sync:
 | 大脑（Claude Code） | 方案 owner；唯一通过 `sopify_writer` 写 active plan、handoff、receipts；拆单、审 diff、裁决、对外 Git 动作 |
 | 执行（Codex） | 代码与文档实现；负责公共注册、renderer / flatten、共有测试和生成物的统一合入 |
 | 验收（Antigravity） | 按完成定义验收；Antigravity 适配的 dogfood 宿主 |
-| Trae（TRAE CLI） | Trae 适配（T8）的 dogfood 宿主；已写 T6。额度用尽时，T8 等额度恢复或换模型；都不行就按 D3 推迟 |
-| 冷启动执行者 B（T9） | 一个全新的 Codex 会话，没有本轮上下文 |
-| 新手测试员 | 一个全新的会话、全新的临时目录，此前从未接触本项目，只读 README（任意可用的宿主） |
+| Trae（TRAE CLI） | 写了 T6 recipe 和加载面自检。T8 照常实现（用户决定）；额度用尽期间没有真实会话证据，照实标注，后续 PR 补 |
+| Qoder（Qoder CLI，Terminal 5） | 用户指定：T9 冷启动执行者 B，以及 README 新手测试员。两次都用全新会话 |
 
 交叉复核：
 - Codex 的实现：由验收官验收，大脑审 diff。
@@ -108,7 +107,7 @@ knowledge_sync:
 - worker_done 不等于 verify pass；验收官只出审查结论，回执由大脑写。
 - Orca 适配以文档加模板交付，不新增 builtin Skill 或 dispatcher。
 - Trae 入口不写全局 AGENTS.md（trae-r6：CLI 2.0 未加载全局规则文件）。候选方案是在 `~/.trae/skills/` 下放一组扁平的 `sopify-*` Skill，外加一个顶层入口 Skill；description 控制在 1024 字符以内；v1 不碰 hooks。最终布局以 T8 探针结果为准。
-- Antigravity 的 skills 路径以真实会话为准（R2 观察到加载的是 `~/.gemini/config/skills`）。共享规则文件只用 managed block；hooks 和 MCP 留到第二期。
+- Antigravity 是本版主要的 dogfood 宿主。探针结果：全局规则 4 个候选都会加载（`~/.gemini/AGENTS.md` → `~/.gemini/GEMINI.md` → `~/.gemini/config/AGENTS.md` → `~/.gemini/config/GEMINI.md`），都排在项目规则前；Skill 只扫描一层；有 `ask_question`；新会话才生效。安装目标定为 `~/.gemini/config/AGENTS.md`（managed block）和 `~/.gemini/config/skills/` 下一组扁平的 `sopify-*` Skill。共享规则文件只用 managed block；hooks 和 MCP 留到第二期。
 - 不复制 pstack 的 56 个 Skill、编排 runtime 和个人化命令；不加 Constitution 层和角色斜杠命令。
 - README 最后一次性重写，只写已验证的事实；真实 dogfood 案例保留，挪到「真实案例」小节。
 - 旧方案 `20260819_cursor_support` 已于 2026-10-20 按用户授权显式归档。

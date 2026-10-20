@@ -149,7 +149,7 @@ def _init_release_hook_fixture(root: Path, *, inject_sync_failure: bool = False)
         "scripts/release-sync.sh",
         "scripts/release-draft-changelog.py",
         "scripts/release-preflight.sh",
-        "scripts/sync-skills.sh",
+        "scripts/_yaml_subset.py",
         "scripts/check-version-consistency.sh",
         "scripts/render-host-skills.py",
         "scripts/regenerate-golden-snapshots.py",
