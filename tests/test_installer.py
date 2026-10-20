@@ -1172,7 +1172,12 @@ class HostPromptContractTests(unittest.TestCase):
                 prompt,
                 next_line=next_template_line,
             )
-            self.assertIn(footer_contract_line, prompt)
+            # The compact header retains the footer boundary; the installed
+            # output contract owns formatting detail instead of duplicating it.
+            self.assertIn("Changes", prompt)
+            contract = (prompt_root / "skills/sopify/references/output-contract.md").read_text(encoding="utf-8")
+            self.assertIn(footer_contract_line, contract)
+            self.assertIn("ISO 8601", contract)
 
             asset_paths = (
                 Path("skills/sopify/analyze/assets/question-output.md"),
@@ -1220,8 +1225,8 @@ class HostPromptContractTests(unittest.TestCase):
         self._assert_installed_footer_contract(
             adapter=CODEX_ADAPTER,
             language_directory="CN",
-            next_template_line="Next: {下一步提示}",
-            footer_contract_line="- footer 不展示生成时间；若需要机器可审计时间戳，内部摘要文件可继续使用 ISO 8601（可带时区）。",
+            next_template_line="`Next:`",
+            footer_contract_line="不在 footer 展示生成时间",
         )
 
     def test_claude_en_prompt_install_keeps_workspace_preflight_contract(self) -> None:
@@ -1255,8 +1260,8 @@ class HostPromptContractTests(unittest.TestCase):
         self._assert_installed_footer_contract(
             adapter=CLAUDE_ADAPTER,
             language_directory="EN",
-            next_template_line="Next: {Next step hint}",
-            footer_contract_line="- the footer does not display generated time; if a machine-auditable timestamp is needed, internal summary files may keep ISO 8601 timestamps with timezone data.",
+            next_template_line="`Next:`",
+            footer_contract_line="Omit generated time from the footer",
         )
 
 

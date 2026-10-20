@@ -6,8 +6,12 @@
     "en-US": {"characters": 60734, "bytes": 61071, "lines": 1918}
   },
   "copilot_after": {
-    "zh-CN": {"characters": 24154, "bytes": 41941, "lines": 1227},
-    "en-US": {"characters": 45879, "bytes": 46086, "lines": 1226}
+    "zh-CN": {"characters": 14802, "bytes": 27690, "lines": 627},
+    "en-US": {"characters": 30912, "bytes": 31000, "lines": 626}
+  },
+  "header_after": {
+    "zh-CN": {"characters": 3040, "bytes": 5357, "lines": 60},
+    "en-US": {"characters": 6246, "bytes": 6257, "lines": 60}
   },
   "scenarios": [
     {

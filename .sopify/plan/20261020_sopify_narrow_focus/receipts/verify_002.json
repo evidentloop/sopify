@@ -1,0 +1,39 @@
+{
+  "evidence": {
+    "T6": "conditional pass with 4 minimal changes; revision applied and checked by owner; acceptor re-check folded into the W2 closeout",
+    "W2-A": "pass, no required changes; develop-rules rewrite (204->62 lines) checked rule by rule with no semantic loss; no dangling paths in Copilot flatten; 386 passed and preflight green; 8 snapshot changes reviewed explicitly",
+    "orca": {
+      "dispatches": [
+        "ctx_8bca4e9399e8",
+        "ctx_3f57e0f68d97"
+      ],
+      "run": "run_580b1febb4c4",
+      "tasks": [
+        "task_f09745e9baf4",
+        "task_49ffd04877df"
+      ]
+    },
+    "reports": [
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w2/w2a-accept-gemini.md",
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w2/t6-accept-gemini.md"
+    ],
+    "reviewer": "antigravity acceptor",
+    "tasks": [
+      "T5",
+      "T3",
+      "T6"
+    ],
+    "unified_criteria": "all pass for W2-A; T6 redundancy condition resolved by trimming 222->172 lines"
+  },
+  "provenance": {
+    "host": "claude-code",
+    "plan_id": "20261020_sopify_narrow_focus",
+    "plan_version": "sha256:e3419fc90fefc22c087cf8b15eb1ff3798c93b555e41f42cb3ea8de6ddd1fb27",
+    "receipt_id": "verify_002",
+    "reviewer": "antigravity",
+    "timestamp": "2026-10-20T08:47:47+00:00",
+    "written_by": "plan owner"
+  },
+  "timestamp": "2026-10-20T08:47:47+00:00",
+  "verdict": "pass"
+}

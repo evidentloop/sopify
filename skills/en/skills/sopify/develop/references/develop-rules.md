@@ -1,204 +1,62 @@
-# Develop Detailed Rules
+# Develop Rules
 
-## Goal
+Implement, verify and review approved tasks before updating progress and `knowledge_sync`. Work is not complete without verification evidence.
 
-Implement the task list, maintain task state, sync V2 long-lived knowledge through `knowledge_sync`, and enforce a task-level quality loop so work is not treated as complete without verification evidence.
+## 1. Select and execute
 
-## Overall flow
+Read pending `[ ]` items from the current plan's `tasks.md` (`plan.md` for light plans), then follow dependencies and task order. Locate files, understand the implementation, make the change, discover and run verification, handle failure and review. Update markers only after the quality contract below is satisfied.
 
-1. Read the task list.
-2. Execute each task through the fixed quality loop: implement change -> discover verification -> run verification -> retry once when needed -> perform two-stage review. Update task markers only after the minimum quality contract is satisfied.
-3. Sync KB and preference data through `knowledge_sync`.
-4. Mark the completed plan `ready_to_archive` and keep it in `plan/`.
-5. Render the execution summary.
-
-## Step 1: Read the task list
-
-Sources:
-
-- `.sopify/plan/{current_plan}/tasks.md`
-- `.sopify/plan/{current_plan}/plan.md` (light)
-
-Handling rules:
-
-1. Extract `[ ]` pending tasks.
-2. Execute by task number order.
-3. Check explicit dependencies before execution.
-
-## Step 2: Execute tasks
-
-### 2.1 Task-level quality loop
-
-Process each task in this order:
-
-1. Locate the target file.
-2. Understand the current implementation.
-3. Implement the change.
-4. Discover the verification command.
-5. Run verification.
-6. If the first verification run fails, allow one automatic retry with failure context.
-7. Classify the failure close-out with a structured root cause.
-8. Run the two-stage review: `spec_compliance` -> `code_quality`.
-9. Update the task marker only after the minimum quality contract is satisfied.
-
-Hard requirements:
-
-- No verification evidence means the task is not complete.
-- Subjective claims such as `overbuild`, `underbuild`, or "it should be fine" never replace verification or review evidence.
-- Do not silently skip verification and do not retry indefinitely.
 - For a bug or shared-boundary change, inspect affected callers, fix the narrowest common root cause, and verify equivalent paths.
-- Develop decides reversible implementation details inside the approved boundary. Replan only when new facts change scope, the solution path, or acceptance.
-- When a Quick Fix has no Design artifact, make only the local choices required for the request. Do not create a plan or copy the full Design rules.
+- Decide reversible implementation details inside approved boundaries; replan only when new facts change scope, the solution path or acceptance.
+- A Quick Fix without a Design artifact needs only local choices for the current request; do not create a plan or copy the Design process.
+- Claims such as `overbuild`, `underbuild` or "it should be fine" are not evidence. Never silently skip verification or retry indefinitely. Preserve compatibility, security and repository conventions.
 
-### 2.2 Minimum verify contract
+### Bug investigation branch
 
-Use the following field names consistently in develop flows. Do not introduce aliases such as `discovery_source`, `status`, `configured`, or `discovered`:
+For a bug, first capture a minimal reproduction and failure evidence on the same surface (UI, CLI or API). Inspect callers and observations to locate the common root cause, fix it, then rerun the same reproduction and affected equivalent paths. If it cannot be reproduced, record the environment, missing inputs or reason; do not claim a fix. A cheap, clear local regression may start with a failing test, but TDD is not required for every task, and unit tests do not replace verification on the original surface.
 
-1. `verification_source`
-   - Only expresses where the verification came from. Allowed values are:
-   - `project_contract`
-   - `project_native`
-   - `not_configured`
-2. `command`
-   - Records the verification command attempted for this task.
-   - It may be empty when no stable command exists, but `reason_code` is then required and the task must not be presented as verified.
-3. `scope`
-   - Records the task, file, or module scope covered by verification.
-4. `result`
-   - Must use:
-   - `passed`
-   - `retried`
-   - `failed`
-   - `skipped`
-   - `replan_required`
-5. `reason_code`
-   - Required whenever verification cannot run, degrades visibly, is skipped, or routes back to plan review.
-6. `retry_count`
-   - v1 only allows `0` or `1`.
-7. `root_cause`
-   - Required for failed close-out paths and retry close-out paths.
-8. `review_result`
-   - Must contain at least the stage conclusions for `spec_compliance` and `code_quality`.
+## 2. Verification record
 
-Additional rules:
+Discover verification in this order: declared project contract (such as `verify` in `.sopify/project.md`) → native project commands → not configured. Use the project contract when present; do not create a configuration system for this task.
 
-- `.sopify/project.md` is the future long-term home for a project-level `verify` contract. When present, it has the highest priority, but it is not a prerequisite for v1.
-- `verification_source` is a source field only. Degrade/skip outcomes must be expressed through `result + reason_code`.
-- `reason_code` is an internal verification field and must not appear in user-facing output. Use a human-readable "Note" column when explanation is needed.
+| Field | Constraint |
+|---|---|
+| `verification_source` | `project_contract` / `project_native` / `not_configured`; source only |
+| `command` | Actual command; may be empty only when no stable command exists and the reason is recorded |
+| `scope` | Tasks, files or modules covered |
+| `result` | `passed` / `retried` / `failed` / `skipped` / `replan_required` |
+| `reason_code` | Required for unavailable verification, downgrade, skip or return to plan review |
+| `retry_count` | Only `0` or `1` |
+| `root_cause` | Required for failure close-out or retry; values below |
+| `review_result` | Separate `spec_compliance` and `code_quality` conclusions |
 
-### 2.3 Verification discovery order
+Keep these names, without aliases. Source is not result; missing verification cannot become a pass. `reason_code` stays internal; explain it in plain language to the user.
 
-Use this fixed priority:
+## 3. Failure handling
 
-1. `project_contract`
-   - A `verify` contract already defined in `.sopify/project.md`.
-2. `project_native`
-   - Stable native project entry points such as `package.json`, `pyproject.toml`, `Makefile`, or `justfile`.
-3. `not_configured`
-   - If no stable command exists, degrade visibly and record `reason_code`; do not treat "no command found" as an implicit pass.
+After the first failure, one automatic retry with failure context is allowed; stop automatic retries after a second failure. Record a root cause after that failure or when abandoning retry. Follow these boundaries without blind fixes or weakened acceptance.
 
-### 2.4 Failure handling and root cause classification
+| `root_cause` | Action |
+|---|---|
+| `logic_regression` | Fix with the failure evidence, then verify |
+| `environment_or_dependency` | State that the environment cannot establish a pass |
+| `missing_test_infra` | Keep the task unverified and name the missing checks |
+| `scope_or_design_mismatch` | Return to plan review, a decision checkpoint or host confirmation |
+| `human_action_required` | Mark `[!]`; describe the credential, migration or approval step a person must perform |
 
-Failure handling rules:
+## 4. Review and task state
 
-1. Allow one automatic retry after the first failed verification run.
-2. Stop automatic retries after the second failure.
-3. Record `root_cause` whenever the second failure happens or retry is explicitly abandoned.
+- `spec_compliance`: check the objective, scope and acceptance; identify excess work, omissions or a choice needing the user.
+- `code_quality`: check existing style, compatibility, security, stability, maintainability, required tests and knowledge sync.
 
-Allowed `root_cause` values:
+Mark `[x]` only when verification and both reviews satisfy the contract; use `[-]` for skipped, `[!]` for blocked, and keep pending work `[ ]`. Use `✓` only when every verification row has `result=passed` and `reason_code=—`; otherwise use `!`.
 
-- `logic_regression`
-- `environment_or_dependency`
-- `missing_test_infra`
-- `scope_or_design_mismatch`
-- `human_action_required`
+Follow the shared output contract and this Skill's output templates: success includes both review conclusions and verification; partial results also name incomplete work and reasons. Small fixes need only relevant verification, not forced tables. Check that status, evidence, Changes and Next agree.
 
-Routing constraints:
+## 5. Knowledge sync and completion
 
-- `logic_regression`: stay in develop, but continue with concrete failure context.
-- `environment_or_dependency`: make the environment limitation visible and do not present the task as verified.
-- `missing_test_infra`: keep the task unverified and record the missing-test follow-up explicitly.
-- `scope_or_design_mismatch`: do not keep patching blindly; return to plan review, a decision checkpoint, or another host confirmation path.
-- `human_action_required`: requires a human physical action (writing credentials, running migrations manually, external approval) that AI cannot perform; mark `[!]` and specify the required manual steps.
+Call KB at close-out according to the plan's `knowledge_sync`; KB alone defines reading, retention and preference policy.
+When tasks, verification and required sync are complete, set `plan.md` metadata to `lifecycle_state: ready_to_archive` and `archive_ready: true`, keeping the package in `.sopify/plan/`.
+`ready_to_archive` is not automatic archiving. Only explicit `~go finalize` uses `sopify_writer` to validate the latest `plan_version`, move the package to history and update the index. Develop does not move it or simulate finalize.
 
-### 2.5 Two-stage review
-
-Stage A `spec_compliance` must at least check:
-
-1. Whether the task goal and boundaries were met.
-2. Whether there is obvious `overbuild` or `underbuild`.
-3. Whether the change introduced a new scope shift or a user-facing decision branch.
-
-Stage B `code_quality` must at least check:
-
-1. Consistency with the existing code style.
-2. No obvious security, stability, or maintainability regression.
-3. Whether the change size, comments, tests, and KB sync meet the minimum standard for the task.
-
-State transitions:
-
-- Success: `[ ] -> [x]` is allowed only when `verification_source / result / review_result` satisfy the minimum contract
-- Skipped: `[ ] -> [-]`
-- Blocked: `[ ] -> [!]`
-
-Security baseline:
-
-- Do not introduce common vulnerabilities (XSS / SQL injection / etc.).
-- Do not break existing behavior.
-- Keep the project style consistent.
-
-Output status symbol constraint:
-
-- `✓` is allowed only when every verification row has `result=passed` and `reason_code=—`
-- Otherwise `!` must be used
-
-### 2.6 Pre-output self-check
-
-After completing the two-stage review, before outputting the final summary:
-
-1. Status symbol correct: `✓` only when all `result=passed` and `reason_code=—`; otherwise `!`.
-2. Required tables present: success/partial must include a verification summary table; partial must include an incomplete items table.
-3. Review conclusion line present: success must include `spec_compliance` + `code_quality` each with one sentence of evidence.
-4. Footer complete: `Changes:` + `Next:` must be present.
-
-## Step 3: Sync the knowledge base
-
-During implementation close-out, invoke KB, apply the current plan's declared `knowledge_sync`, and record the result. KB is the sole owner of sync targets, long-lived knowledge criteria, and preference-write policy; Develop does not redefine them here.
-
-## Step 4: Plan completion state
-
-After tasks, verification, and `knowledge_sync` are complete:
-
-1. Set `lifecycle_state: ready_to_archive` and `archive_ready: true` in `plan.md`.
-2. Keep the package at `.sopify/plan/YYYYMMDD_feature/`.
-3. Develop does not move the directory, update the history index, or simulate finalize directly.
-
-`ready_to_archive` is plan semantic metadata, not a new state file or lifecycle engine. Only explicit `~go finalize` lets the host use `sopify_writer` to validate the final `plan_version`, move the package, and update the history index.
-
-## Output templates
-
-Choose the result format from `assets/`:
-
-1. `assets/output-success.md`
-2. `assets/output-partial.md`
-3. `assets/output-quick-fix.md`
-
-## Special cases
-
-Execution interruption:
-
-1. Mark completed tasks as `[x]`.
-2. Keep the current task as `[ ]`.
-3. Render the interruption summary and wait for host recovery.
-
-Task failure:
-
-1. Mark the task as `[!]` with the reason.
-2. For any closed-out failure path, record `reason_code`, and add `root_cause` plus `review_result` when required.
-3. Continue only with independent tasks that are not blocked by the failure.
-
-Rollback request:
-
-1. Use git rollback only when the user explicitly requests it.
-2. Keep the plan package in `plan/` instead of migrating it.
-3. Render rollback confirmation.
+On interruption, preserve completed markers, leave the current item `[ ]`, and hand off actual completed work, remaining work and evidence. On failure, mark `[!]`, retain root cause and review results, and continue only independent tasks. Use Git rollback only when explicitly requested; preserve traceability and keep the plan in `plan/`.

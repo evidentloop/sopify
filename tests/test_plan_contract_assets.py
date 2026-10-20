@@ -169,6 +169,10 @@ class PlanContractAssetTests(unittest.TestCase):
                 self.assertIn("~/.codex", rendered)
                 self.assertIn("state/active_plan.json", rendered)
                 self.assertIn("sopify_writer", rendered)
+                self.assertIn("~go plan", rendered)
+                self.assertIn("~go finalize", rendered)
+                self.assertIn("ready_to_archive", rendered)
+                self.assertIn("~/.cursor/skills/sopify/references/output-contract.md", rendered)
                 self.assertNotIn("{{skills_root}}", rendered)
 
     def test_develop_completion_requires_explicit_finalize(self) -> None:

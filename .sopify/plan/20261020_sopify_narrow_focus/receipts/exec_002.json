@@ -1,0 +1,61 @@
+{
+  "evidence": {
+    "code_base": "a26a335",
+    "orca": {
+      "codex": {
+        "dispatch": "ctx_a335762f6f9f",
+        "task": "task_921f4aa4d305"
+      },
+      "run": "run_580b1febb4c4",
+      "trae": {
+        "dispatches": [
+          "ctx_2647c7acbcaf",
+          "ctx_05beaeaace1d"
+        ],
+        "note": "Trae finished the T6 revision but hit its model quota before sending worker_done; owner verified the file directly",
+        "tasks": [
+          "task_36489c66afe8",
+          "task_329ac0b0c1d7"
+        ]
+      }
+    },
+    "planning_reports_archived": ".sopify/plan/20261020_sopify_narrow_focus/audits/planning/",
+    "reports": [
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w2/w2a-codex.md",
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w2/t6-trae.md"
+    ],
+    "results": {
+      "T3": "header zh 10564->5357 B, en 11613->6257 B; Copilot flatten zh ~41.9KB->27690 B, en ~46.1KB->31000 B; first/last anchors kept for W1 migration; Cursor thin entry aligned; golden and size baselines updated after review",
+      "T5": "docs/orca.md (one owner, bounded workers, stale-handoff check, packet from the real task briefs, compact finding format); Develop bug-investigation branch; optional EARS and Added/Changed/Removed examples",
+      "T6": "docs/host-onboarding.md by Trae, revised to 172 lines after acceptor conditions (build order, surfaces explained, question tool is probe-only, catalog command, PROTOCOL_VERIFIED trimmed)"
+    },
+    "tasks": [
+      "T5",
+      "T3",
+      "T6"
+    ],
+    "tests": {
+      "full": "386 passed, 97 subtests passed",
+      "release_preflight": "All checks passed"
+    },
+    "w1_reports_archived": [
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w1/w1-codex.md",
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w1/w1-fix-codex.md",
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w1/w1-accept-gemini.md"
+    ]
+  },
+  "provenance": {
+    "executors": [
+      "codex",
+      "trae"
+    ],
+    "host": "claude-code",
+    "plan_id": "20261020_sopify_narrow_focus",
+    "plan_version": "sha256:e3419fc90fefc22c087cf8b15eb1ff3798c93b555e41f42cb3ea8de6ddd1fb27",
+    "receipt_id": "exec_002",
+    "timestamp": "2026-10-20T08:47:47+00:00",
+    "written_by": "plan owner"
+  },
+  "timestamp": "2026-10-20T08:47:47+00:00",
+  "verdict": "implemented"
+}

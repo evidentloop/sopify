@@ -289,30 +289,6 @@ def _install_single_file_assets(
 
 _TEXT_SUFFIXES = {".md", ".py", ".yaml", ".yml", ".txt", ".json", ".toml"}
 _SKILL_DIRS_ORDER = ("analyze", "design", "develop", "kb", "templates")
-_SINGLE_FILE_SCRIPT_HEADINGS = {
-    "## 确定性逻辑（脚本优先）",
-    "## Deterministic logic first",
-}
-
-
-def _render_single_file_skill_entry(content: str) -> str:
-    """Remove tree-only script navigation from a flattened skill entry."""
-    rendered: list[str] = []
-    skipping_script_section = False
-    for line in content.splitlines():
-        if line in _SINGLE_FILE_SCRIPT_HEADINGS:
-            skipping_script_section = True
-            continue
-        if skipping_script_section:
-            if line.startswith("## "):
-                skipping_script_section = False
-            else:
-                continue
-        if "`scripts/" in line:
-            continue
-        line = line.replace("references/assets/scripts", "references/assets")
-        rendered.append(line)
-    return "\n".join(rendered).rstrip("\n")
 
 
 def render_single_file(
@@ -329,9 +305,19 @@ def render_single_file(
     if adapter.config_dir is not None:
         header = header.replace("{{config_dir}}", adapter.config_dir)
     else:
+        # Copilot has no global configuration directory.
+        header = header.replace(" > 全局 `{{config_dir}}/sopify.config.yaml`", "")
+        header = header.replace(" > global `{{config_dir}}/sopify.config.yaml`", "")
         header = header.replace("{{config_dir}}", "")
 
     parts = [header.rstrip("\n")]
+    parts.append(
+        "本文件已内联所需规则和模板；Skill 名仅表示职责。直接使用下文对应章节，不查找外部 Skill、来源路径或未安装脚本；确定性判断按下文规则完成。"
+        if "lang=zh-CN" in header else
+        "Required rules and templates are inlined below; Skill names identify responsibilities. "
+        "Use these sections directly, without looking up external Skills, source paths or uninstalled scripts; "
+        "apply the stated rules for deterministic decisions."
+    )
 
     # Inline shared top-level references (e.g. shared-writing-dna.md)
     shared_refs = skills_source / "references"
@@ -350,18 +336,23 @@ def render_single_file(
         skill_md = skill_dir / "SKILL.md"
         if not skill_md.is_file():
             continue
-        skill_content = _render_single_file_skill_entry(
-            skill_md.read_text(encoding="utf-8")
-        )
-        parts.append(skill_content)
-        # Scripts are tree-only executable helpers. The flattened product keeps
-        # the equivalent rules from references/ and the user-facing assets.
+        # Phase entries only route to the rules below. KB/Templates carry their
+        # rules in SKILL.md, so retain those bodies without discovery metadata.
+        if not (skill_dir / "references" / f"{skill_name}-rules.md").is_file():
+            content = skill_md.read_text(encoding="utf-8")
+            parts.append(re.sub(r"\A---\n.*?\n---\n", "", content, count=1, flags=re.DOTALL).strip())
+        # The output contract already owns reply fields. Keep document templates,
+        # but omit repeated reply examples and tree-only executable scripts.
         for subdir_name in ("references", "assets"):
             subdir = skill_dir / subdir_name
             if not subdir.is_dir():
                 continue
             for child in sorted(subdir.iterdir()):
                 if child.is_file() and child.suffix in _TEXT_SUFFIXES:
+                    if subdir_name == "assets" and (
+                        child.name.startswith("output-") or child.name.endswith("-output.md")
+                    ):
+                        continue
                     file_content = child.read_text(encoding="utf-8").rstrip("\n")
                     rel_path = child.relative_to(skills_source)
                     parts.append(f"<!-- inlined: {rel_path} -->\n{file_content}")

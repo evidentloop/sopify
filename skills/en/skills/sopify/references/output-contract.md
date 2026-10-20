@@ -2,6 +2,12 @@
 
 The final response should make the result, evidence, and next step easy to find. Phase templates define required information, not empty sections that must always be rendered.
 
+## Shared format
+
+Use `[{BRAND_NAME}] {Phase} {Status}` as the title; keep the core result within about three lines and expand only as needed. `✓` means success, `?` awaiting input, `!` confirmation or partial completion, and `×` cancellation or error.
+Use Requirements Analysis, Solution Design, Development, Quick Fix or Light Iteration; reserve Command Complete for command-prefixed flows and Q&A for ordinary questions. Apply `title_color` only to the title, with plain-text fallback.
+Omit generated time from the footer; internal evidence may use an ISO 8601 timestamp with timezone when needed.
+
 ## Output path
 
 - A gate summary reports routing, current state, and the next action only.
@@ -11,9 +17,9 @@ The final response should make the result, evidence, and next step easy to find.
 
 | Output | Required content | Status rule |
 |--------|------------------|-------------|
-| `analyze/success` | Objective, deliverable, completeness score, confirmed evidence, explicit assumptions when used, material gaps, next step | Do not mark incomplete input as complete |
-| `analyze/question` | A few decision-relevant questions, their impact, `Next` | `?` |
-| `design/summary` | Approach, task count, `Ready` or `Needs decision` with evidence, `Changes`, `Next` | Do not use `Ready` while a material choice remains |
+| `analyze/success` | Objective, deliverable, scope, completeness score, confirmed evidence, explicit assumptions when used, material gaps, next step and its reason | Do not mark incomplete input as complete |
+| `analyze/question` | Current score, decision-relevant questions and impact, `Changes`, `Next` | `?` |
+| `design/summary` | Plan path, approach, task count, `Ready` or `Needs decision` with evidence, `Changes`, `Next` | Do not use `Ready` while a material choice remains |
 | `develop/success` | Result, review conclusion, verification summary, `Changes`, `Next` | Use `✓` only when all checks pass |
 | `develop/partial` | Incomplete work, reason, completed verification, `Changes`, `Next` | `!` |
 | `develop/quick-fix` | Result, relevant verification, `Changes`, `Next` | Use `✓` only when all checks pass |

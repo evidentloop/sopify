@@ -23,7 +23,7 @@ This is not a fixed technology ladder. The goal is to avoid duplicate capability
 - `standard`: `plan.md + tasks.md` for a feature, cross-module work, or substantial delivery.
 - `architecture`: `plan.md + tasks.md + design.md` only for an actual architecture change, new system, or major refactor.
 
-Create ADRs, diagrams, assets, and receipts only when evidence requires them. Plan-body templates come only from this skill's `assets/` directory.
+Create ADRs, diagrams, assets, and receipts only when evidence requires them. Design alone owns plan-body templates; use the corresponding templates supplied by the current host.
 
 ## 4. Determine readiness
 
@@ -44,5 +44,7 @@ Each task needs a clear deliverable, dependency, and acceptance method. Follow r
 Task markers: `[ ]` pending, `[x]` completed, `[-]` skipped, `[!]` blocked.
 
 ## Protocol boundary
+
+Optional delta example: `Added`: damaged-file regression; `Changed`: compare content on reinstall; `Removed`: version-only skip. Use Added / Changed / Removed when it clarifies changes to existing behavior, omit empty items, and add no required section or workflow step.
 
 Design creates or updates plan semantic files only. The host writes `active_plan`, handoff, and receipts through `sopify_writer` under the governing protocol.

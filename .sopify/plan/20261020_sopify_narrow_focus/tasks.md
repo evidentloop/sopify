@@ -41,7 +41,7 @@
 
 公共文件、生成物和共有测试由执行统一合入；T3、T4、T5 都合入后，统一复核一次 golden 和体积。
 
-- [ ] T3 入口压缩
+- [x] T3 入口压缩（exec_002 / verify_002：header 中文 10,564→5,357 字节，英文 11,613→6,257 字节；Copilot 平铺中文约 41.9KB→27.7KB，英文约 46.1KB→31.0KB；首尾锚点保留。真实会话验证随 T7/T8）
   - 产物：
     - `skills/{zh,en}/header.md.template` 按 codex-r5 第 1 节逐节压缩，中文约 4–5.5KB，英文约 5–6.5KB；
     - Copilot 平铺去重：中文约 22–28KB，英文约 24–31KB，可能触及 `installer/hosts/base.py` 的 flatten 和共享资源；
@@ -65,7 +65,7 @@
     - 当前执行入口、安装、测试和现行文档中没有失效引用（history、ADR 和负向断言除外）；
     - 全量测试与 `check-readme-links` 通过；
     - 维护者命令变化写进 CHANGELOG。
-- [ ] T5 Sopify × Orca 可选执行适配
+- [x] T5 Sopify × Orca 可选执行适配（文档与模板完成，见 exec_002 / verify_002；真实闭环证据随 T9 回填）
   - 产物：
     - `docs/orca.md`，外加同目录的 task packet 和 findings 小模板，内容包括：
       - task packet：plan_id、plan_version、task、代码基线、写集、验收命令、继承证据、待重验项；
@@ -79,7 +79,7 @@
     - 文档和模板经评审可用；
     - 最终的真实闭环证据与 T9 共用：大脑派单 → 执行实现 → 验收审查 → 大脑写 receipt，evidence 中包含 Orca run、task、dispatch ID 和代码 SHA；
     - writer schema 无变化。
-- [ ] T6 宿主接入 recipe（issue #55）
+- [x] T6 宿主接入 recipe（issue #55）（Trae 撰写；验收官有条件通过；Trae 按 4 项意见修订到 172 行，大脑已核对。Trae 在回传前额度用尽，修订后的复核并入 W2 收口验收）
   - 产物：`docs/host-onboarding.md`，包括：
     - 能力矩阵：入口、Skill 发现、提问、持久化、缺席降级；
     - 负向边界；
@@ -125,11 +125,11 @@
     2. 执行者 B 开一个全新会话，只凭 `.sopify/` 文件接手、实现并跑验收；
     3. 验收官审查；
     4. 大脑通过 writer 写回 receipt。
-  - 执行者 B 的路线：
-    - 首选 Trae，需要 T8 已取得真实加载证据；
-    - T8 未通过时改用 Antigravity，需要 T7 已通过；
-    - 两者都未通过：按 D3，把失败结果写进 release notes，README 不写跨宿主续做。
-  - 依赖：T5 文档与模板可用，以及上述路线对应的宿主任务。验收：验收。
+  - 执行者 B 的路线：一个全新的 Codex 会话，与写方案的 Claude Code 不是同一宿主，并且没有本轮上下文。
+    - 这样 T9 不依赖新宿主适配是否通过，也不受 Trae 额度影响。
+    - 审查由验收官完成。
+    - T9 失败时按 D3 处理：失败结果写进 release notes，README 不写跨宿主续做。
+  - 依赖：T5 文档与模板可用。验收：验收。
   - 完成定义：记录两个执行身份、起止代码 SHA、plan_version、实际读取的文件和结果，成功或失败都如实记录。
 
 ## W5 交付

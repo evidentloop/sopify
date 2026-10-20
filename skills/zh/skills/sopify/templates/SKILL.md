@@ -8,7 +8,7 @@ description: 知识库文档模板；创建或补齐长期知识文件时按需�
 Templates 只定义稳定的知识库文档结构，不决定写入时机、同步政策或方案生命周期。
 
 - 知识库规则与 `knowledge_sync`：读取 `kb` Skill。
-- 方案级别 `light / standard / architecture` 及方案正文模板：读取 Design `assets/`。
+- 方案级别 `light / standard / architecture` 及方案正文模板：使用 Design 提供的模板。
 - 活动方案、handoff 和 receipts 的读取与写入：遵循正式 Protocol。
 
 使用模板时替换占位符，删掉无内容的可选区块。不要把一次性实现细节写进长期知识。
@@ -26,11 +26,6 @@ Templates 只定义稳定的知识库文档结构，不决定写入时机、同�
 ## 使用约定
 - {跨任务可复用的技术约定}
 
-## 文档边界
-- `project.md`: 技术约定
-- `blueprint/background.md`: 长期目标、范围与非目标
-- `blueprint/design.md`: 模块、宿主、目录与消费契约
-- `blueprint/tasks.md`: 未完成长期项与明确延后项
 ```
 
 ## `blueprint/README.md`

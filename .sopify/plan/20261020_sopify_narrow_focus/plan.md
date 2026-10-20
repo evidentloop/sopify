@@ -55,8 +55,9 @@ knowledge_sync:
 | 大脑（Claude Code） | 方案 owner；唯一通过 `sopify_writer` 写 active plan、handoff、receipts；拆单、审 diff、裁决、对外 Git 动作 |
 | 执行（Codex） | 代码与文档实现；负责公共注册、renderer / flatten、共有测试和生成物的统一合入 |
 | 验收（Antigravity） | 按完成定义验收；Antigravity 适配的 dogfood 宿主 |
-| Trae（TRAE CLI） | Trae 适配的 dogfood 宿主；T9 冷启动执行者 B |
-| 新手测试员 | 一个全新的会话、全新的临时目录，此前从未接触本项目（优先新开 Trae 会话），只读 README |
+| Trae（TRAE CLI） | Trae 适配（T8）的 dogfood 宿主；已写 T6。额度用尽时，T8 等额度恢复或换模型；都不行就按 D3 推迟 |
+| 冷启动执行者 B（T9） | 一个全新的 Codex 会话，没有本轮上下文 |
+| 新手测试员 | 一个全新的会话、全新的临时目录，此前从未接触本项目，只读 README（任意可用的宿主） |
 
 交叉复核：
 - Codex 的实现：由验收官验收，大脑审 diff。
@@ -128,6 +129,21 @@ knowledge_sync:
 - [x] 用户已对 D1–D5 拍板
 - [x] W1 可靠性：本地完成，验收通过（T1 的 PR CI 待 push）
 - [ ] W2 瘦身与契约
+
+## Dogfood 观察（待内部审计）
+
+本方案由四个 agent 用 Sopify 自己执行。用户要求：大家都是使用者，不为开发而开发，发现可优化的地方先做内部审计，再决定是否进入范围。
+
+- 写回执只能手写 Python 调用 `sopify_writer`。大脑在 W1 因 heredoc 引号失误把一个路径写坏，已删掉并经 writer 重写。暂不加 CLI；先审计现有 MCP 写入工具或文档示例能否覆盖。
+- 本轮的任务单是手写的。T5 的 task packet 模板以这些真实任务单为样本，不凭空设计。
+- Orca 的 `worker-start` 不认 Trae 标签，只能手动 dispatch，并在任务单里抄写回传命令。这是 Orca 侧的限制，最多在 `docs/orca.md` 里写一句注意事项。
+- 旧方案的 handoff 59 天没更新，由 T5 的陈旧 handoff 核对覆盖。
+- 验收官在 T6 验收中提出 5 条摩擦，经大脑审计全部采纳，均不新增机制：
+  1. 任务上下文散在 4–5 个文件里 → T5 的任务单在顶部列出唯一输入清单。
+  2. 统一验收标准与完成定义重复对账 → 统一标准作为全局规则，验收报告只写不通过或有风险的项。
+  3. 返工后新旧报告并存 → 返工更新原报告，追加「本轮变化」一节。
+  4. 共享工作区怕污染 → 任务单统一给出 `PYTHONDONTWRITEBYTECODE=1` 和 `PYTEST_ADDOPTS="-p no:cacheprovider"`。
+  5. 审计报告放在临时目录，与「证据存进仓库」相矛盾 → 每个波次收口时，把执行报告和验收报告归档到本方案的 `audits/`（沿用已有惯例），回执引用仓库内路径。W1 的报告在 W2 收口时一并补归档。
 
 ## Next
 
