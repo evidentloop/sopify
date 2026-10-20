@@ -39,9 +39,13 @@ pick the smallest layout that matches it.
 2. Record the host version and the candidate Sopify SHA before probing.
 3. Seed one global rule, one project rule, and one Skill, each with a unique
    marker. Common rule filenames to try: `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`,
-   `<HOST>.md`, and the host's own rules directory.
+   `<HOST>.md`, and the host's own rules directory. Seed every same-directory
+   candidate at once and ask the host to quote them in load order: that is what
+   reveals which siblings are read at all, and which one wins.
 4. In a fresh session, ask the host to quote the marker and the loaded path:
-   this proves the host can see the file.
+   this proves the host can see the file. For a CLI host, read `<host> --help`
+   first and probe through its non-interactive mode (`-p`, `--print`), so every
+   marker check is genuinely a new session and the transcript is reproducible.
 5. Ask for one deterministic action from that file (read a named file first,
    run an existing script, emit a fixed token) and record the tool call: this
    proves the host follows the rule rather than repeating text.
