@@ -1,0 +1,54 @@
+{
+  "evidence": {
+    "before_after": "failing tests recorded before each fix and passing after (executor evidence files)",
+    "code_base": "43ee5f5",
+    "defects_fixed": [
+      "AUDIT-1 complete owned-tree integrity (Cursor + common installer)",
+      "AUDIT-2 empty smoke shown as not run",
+      "AUDIT-3 Cursor display name",
+      "AUDIT-4 non-object JSON rejected at read boundary",
+      "home headers overwrote user content -> shared managed block with anchor-based legacy migration"
+    ],
+    "orca": {
+      "dispatches": [
+        "ctx_5610fc3e5eec",
+        "ctx_40089a5f74ac"
+      ],
+      "run": "run_8382b70e95a3",
+      "tasks": [
+        "task_3df42edd7acc",
+        "task_844020e52f5a"
+      ]
+    },
+    "pending": "T1 PR CI link after user-approved push",
+    "reports": {
+      "files": [
+        "/private/tmp/claude-503/-Users-weixin-li-code-github-sopify/33857f52-51ff-4f1b-965d-13e7840e4c9f/scratchpad/audit/w1-codex.md",
+        "/private/tmp/claude-503/-Users-weixin-li-code-github-sopify/33857f52-51ff-4f1b-965d-13e7840e4c9f/scratchpad/audit/w1-fix-codex.md"
+      ],
+      "location": "coordinator scratchpad, not in repo"
+    },
+    "result": "worktree diff accepted, then committed by the plan owner",
+    "rework": "owner review: first/last anchors instead of frozen legacy hashes (covers every release since 2026-06-10), one managed-block helper for Copilot/home/bootstrap, no private cross-module import, uninstall docs cut to 7 lines; production code -97 lines, integrity cases 81 -> 44",
+    "tasks": [
+      "T1",
+      "T2"
+    ],
+    "tests": {
+      "diff_check": "clean",
+      "full": "386 passed, 97 subtests passed",
+      "release_preflight": "All checks passed"
+    }
+  },
+  "provenance": {
+    "executor": "codex",
+    "host": "claude-code",
+    "plan_id": "20261020_sopify_narrow_focus",
+    "plan_version": "sha256:6e07b61c93698750276c71a2e3dcc51daa687fa8f6b08a4c27df2b5fb6ef6436",
+    "receipt_id": "exec_001",
+    "timestamp": "2026-10-20T07:52:10+00:00",
+    "written_by": "plan owner"
+  },
+  "timestamp": "2026-10-20T07:52:10+00:00",
+  "verdict": "implemented"
+}

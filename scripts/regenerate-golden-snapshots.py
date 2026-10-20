@@ -2,9 +2,8 @@
 """Regenerate tests/golden-snapshots.json from current source files.
 
 Golden snapshots detect unintended changes to installer output.
-This script is the single source of truth for regeneration, called by:
-  - release-sync.sh (after version bump)
-  - release-preflight.sh (auto-fix during pre-commit)
+Run this script after reviewing intentional changes; release-sync.sh also calls
+it after a version bump. release-preflight.sh only verifies snapshots.
 """
 
 from __future__ import annotations

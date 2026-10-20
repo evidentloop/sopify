@@ -849,6 +849,8 @@ def _first_smoke_line(smoke_output: str) -> str:
 
 
 def _friendly_smoke_summary(smoke_output: str, language: str) -> str:
+    if not smoke_output.strip():
+        return "未执行运行时自检。" if language == "zh-CN" else "Runtime smoke check was not run."
     first_line = _first_smoke_line(smoke_output)
     if first_line.startswith("Runtime smoke check passed"):
         return "运行时自检已通过。" if language == "zh-CN" else "Runtime smoke check passed."
@@ -903,6 +905,7 @@ def _host_display_name(host_id: str) -> str:
         "claude": "Claude",
         "copilot": "Copilot",
         "qoder": "Qoder",
+        "cursor": "Cursor",
     }.get(host_id, host_id)
 
 

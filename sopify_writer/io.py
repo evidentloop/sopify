@@ -10,12 +10,17 @@ from typing import Any, Optional
 
 from sopify_contracts import RuntimeHandoff
 
+from .invariants import InvariantViolationError
+
 
 def read_json(path: Path) -> Optional[dict[str, Any]]:
     """Read a JSON state file if it exists."""
     if not path.exists():
         return None
-    return json.loads(path.read_text(encoding="utf-8"))
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise InvariantViolationError(f"Expected a JSON object in {path}, got {type(payload).__name__}")
+    return payload
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:

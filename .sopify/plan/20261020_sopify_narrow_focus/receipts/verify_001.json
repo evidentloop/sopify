@@ -1,0 +1,52 @@
+{
+  "evidence": {
+    "checks": {
+      "defect_spot_checks": [
+        "AUDIT-4",
+        "AUDIT-2/3"
+      ],
+      "full_suite_rerun": "386 passed, 97 subtests passed",
+      "manual_migration_in_temp_home": [
+        "user-only CLAUDE.md",
+        "2026-08-22 whole legacy header",
+        "legacy header wrapped by user content"
+      ],
+      "preflight_rerun": "All checks passed, index unchanged"
+    },
+    "conditional": "T1 cloud CI pending push",
+    "orca": {
+      "dispatch": "ctx_9f5be388b991",
+      "run": "run_8382b70e95a3",
+      "task": "task_15794c229cb8"
+    },
+    "reports": {
+      "files": [
+        "/private/tmp/claude-503/-Users-weixin-li-code-github-sopify/33857f52-51ff-4f1b-965d-13e7840e4c9f/scratchpad/audit/w1-accept-gemini.md"
+      ],
+      "location": "coordinator scratchpad, not in repo"
+    },
+    "reviewer": "antigravity acceptor (independent of executor)",
+    "tasks": [
+      "T1",
+      "T2"
+    ],
+    "unified_criteria": {
+      "cross_host_consistency": "pass",
+      "design_conventions": "pass",
+      "no_added_user_burden": "pass",
+      "no_over_design": "pass",
+      "no_redundancy": "pass"
+    }
+  },
+  "provenance": {
+    "host": "claude-code",
+    "plan_id": "20261020_sopify_narrow_focus",
+    "plan_version": "sha256:6e07b61c93698750276c71a2e3dcc51daa687fa8f6b08a4c27df2b5fb6ef6436",
+    "receipt_id": "verify_001",
+    "reviewer": "antigravity",
+    "timestamp": "2026-10-20T07:52:10+00:00",
+    "written_by": "plan owner"
+  },
+  "timestamp": "2026-10-20T07:52:10+00:00",
+  "verdict": "pass"
+}

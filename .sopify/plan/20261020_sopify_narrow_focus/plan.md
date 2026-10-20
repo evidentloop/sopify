@@ -66,6 +66,13 @@ knowledge_sync:
 
 **并行规则**：独立的新文件可以并行；公共注册（`installer/hosts/__init__.py`、`skills/hosts.yaml`、catalog、`distribution.py` 显示名、Doctor）、renderer / flatten、共有测试和 golden / 体积基线由执行统一串行合入，T3、T4、T5 都合入后统一复核一次快照。不引入锁或编排系统。
 
+**统一验收标准**（用户 2026-10-20 提出，适用于每个任务，由验收官核对，大脑审 diff 时同样执行）：
+- 不过度设计：没有为未发生的场景预建机制、表或配置。
+- 符合设计规范：沿用仓库已有的模块边界与命名，不跨模块引用私有实现。
+- 不冗余：同一能力只有一份实现；文档同一事实只写一处。
+- 与其他宿主整体一致：同类行为（managed block、安装、Doctor、文案）在各宿主之间语义一致。
+- 不增加用户心智负担：不新增用户需要理解的概念、步骤或手工操作；升级不要求用户手动处理。
+
 **停车点**：只在三种情况停：会改变范围的选择、D4 授权之外的对外动作、失败。不按波次机械停车。
 
 **证据规则**：
@@ -75,7 +82,7 @@ knowledge_sync:
 
 ## Waves / Steps
 
-- [ ] W1 可靠性：T1 → T2
+- [x] W1 可靠性：T1 → T2（T1 的 PR CI 待 push）
 - [ ] W2 瘦身与契约：T6 可前置；T3 依赖 T2；T4 依赖 T1；T5 文档与模板可并行，阶段源合入后再生成 T3 的最终快照
 - [ ] W3 新宿主：T7、T8 先做探针再定布局，独立文件并行，公共接入串行
 - [ ] W4 价值证明：T9（与 T5 共用一条真实闭环）
@@ -88,7 +95,10 @@ knowledge_sync:
   - D2 所有宿主的共享 home 文件都改为 managed block，并迁移旧安装。
   - D3 新宿主或 T9 未通过时不阻塞 release：未通过的宿主不注册、不进支持表，T9 失败则 README 不写跨宿主续做。
   - D4 大脑可以直接 commit；push、开 PR、推候选分支、merge、release、关闭 PR #75、在 issue #55 留言，都要先经用户确认。
-  - D5 README 标语方向取 A，措辞由验收官和 Trae 各自给出优化稿后再定。
+  - D5 README 标语方向取 A，措辞由验收官和 Trae 各自给出优化稿后再定。大脑的合成稿（T10 开始时请用户最终确认）：
+    - 主标语：中文「AI 编程的方案和验收证据存进仓库，换工具、换人、换 agent 都能接着做。」，英文 "AI coding plans and proof in your repo — keep building across tools, teammates, and agents."
+    - 副标语：中文「装进你已经在用的 AI 编程工具；问答和小修照常，不强制走流程。」，英文 "Installs into the AI coding tools you already use. Questions and small fixes stay direct."
+    - T9 失败时的备用主标语：中文「AI 编程的方案和验收证据存进仓库，不再散落在聊天记录里。」，英文 "AI coding plans and proof live in your repo, not scattered across chats."
   - 允许按需做局部重构，限于本方案已列入范围的文件。
 - 定位收窄为「跨宿主可携带的方案与证据契约」；问答和小修继续直接处理，不进方案流。
 - writer 和 contracts 的 schema 不改，新增信息一律走 `evidence`；不改公开的 Python 导出；保留 legacy bundle 安装兼容和独立部署 helper / Hook 的 fallback。
@@ -116,7 +126,8 @@ knowledge_sync:
 - [x] 旧方案 `20260819_cursor_support` 已归档
 - [x] 方案审计 R7：Codex 5 组必改、验收官 3 项必改，均已纳入本版
 - [x] 用户已对 D1–D5 拍板
-- [ ] W1 可靠性
+- [x] W1 可靠性：本地完成，验收通过（T1 的 PR CI 待 push）
+- [ ] W2 瘦身与契约
 
 ## Next
 

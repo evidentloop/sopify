@@ -9,7 +9,8 @@ Usage: scripts/release-preflight.sh
 
 Run release preflight checks before bumping Sopify version:
   1) Verify version consistency and golden snapshots
-  2) Run protocol + payload smoke checks
+  2) Check builtin catalog drift and run the full test suite
+  3) Run protocol + payload smoke checks
 EOF
 }
 
@@ -58,25 +59,11 @@ PY
 
 run_step "Check version consistency" bash "$ROOT_DIR/scripts/check-version-consistency.sh"
 
-# Golden snapshots: auto-regenerate if stale, then verify
-if ! python3 -m pytest "$ROOT_DIR/tests/test_golden_snapshots.py" -q 2>/dev/null; then
-  echo "[release-preflight] Golden snapshots stale — regenerating..."
-  python3 "$ROOT_DIR/scripts/regenerate-golden-snapshots.py"
-  git add "$ROOT_DIR/tests/golden-snapshots.json"
-  run_step "Re-check golden snapshots" python3 -m pytest "$ROOT_DIR/tests/test_golden_snapshots.py" -q
-else
-  echo "[release-preflight] Check golden snapshots"
-fi
+# A check must not accept changed snapshots or modify the caller's index.
+# Intentional version updates still regenerate snapshots in release-sync.sh.
+run_step "Check golden snapshots" python3 -m pytest "$ROOT_DIR/tests/test_golden_snapshots.py" -q
 run_step "Check builtin catalog drift" check_builtin_catalog_drift
-run_step "Run hard gate tests (protocol + smoke + distribution)" python3 -m pytest \
-  "$ROOT_DIR/tests/protocol/test_convention_compliance.py" \
-  "$ROOT_DIR/tests/test_check_readme_links.py" \
-  "$ROOT_DIR/tests/test_distribution.py" \
-  "$ROOT_DIR/tests/test_evidentloop_installer.py" \
-  "$ROOT_DIR/tests/test_golden_snapshots.py" \
-  "$ROOT_DIR/tests/test_release_hooks.py" \
-  "$ROOT_DIR/tests/test_sopify_init_smoke.py" \
-  -v
+run_step "Run full test suite" python3 -m pytest "$ROOT_DIR/tests/" -q
 run_step "Run protocol smoke — new-plan" python3 "$ROOT_DIR/scripts/sopify_protocol_check.py" check --scenario new-plan --fixture "$ROOT_DIR/tests/fixtures/minimal_plan"
 run_step "Run protocol smoke — continuation" python3 "$ROOT_DIR/scripts/sopify_protocol_check.py" check --scenario continuation --fixture "$ROOT_DIR/tests/fixtures/minimal_plan"
 run_step "Run protocol smoke — continuation (clarification pending)" python3 "$ROOT_DIR/scripts/sopify_protocol_check.py" check --scenario continuation --fixture "$ROOT_DIR/tests/fixtures/clarification_pending"

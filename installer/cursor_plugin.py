@@ -6,7 +6,9 @@ import json
 from pathlib import Path
 import shutil
 
-from installer.hosts.base import HostAdapter, render_user_plugin_rule, read_sopify_version
+from installer.hosts.base import (
+    HostAdapter, skill_tree_matches, render_user_plugin_rule, read_sopify_version,
+)
 from installer.models import InstallError, InstallPhaseResult
 
 _IGNORE_PATTERNS = shutil.ignore_patterns(".DS_Store", "Thumbs.db", "__pycache__")
@@ -55,9 +57,10 @@ def install_cursor_user_plugin_assets(
         and rule_path.read_text(encoding="utf-8") == rule
         and readme_path.is_file()
         and readme_path.read_text(encoding="utf-8") == readme
-        and root_skill_destination.is_file()
-        and root_skill_destination.read_text(encoding="utf-8") == root_skill
-        and all(path.exists() for path in adapter.global_skill_paths(home_root))
+        and skill_tree_matches(
+            skills_source, skills_destination,
+            overrides={"SKILL.md": root_skill.encode("utf-8")},
+        )
     ):
         return InstallPhaseResult(
             action="skipped",

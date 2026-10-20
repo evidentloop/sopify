@@ -6,14 +6,14 @@
 
 ## W1 可靠性
 
-- [ ] T1 全量测试门
+- [ ] T1 全量测试门（本地已完成并通过验收，见 exec_001 / verify_001；PR CI 链接待用户批准 push 后补）
   - 产物：`.github/workflows/ci.yml` 和 `scripts/release-preflight.sh` 都改为收集 `tests/` 全部测试，保留 catalog drift、protocol smoke、payload smoke；preflight 遇 golden 不一致直接失败，不再自动 regenerate 并 `git add`；保留 `release-sync.sh` 在显式版本更新时同步模板和 golden 的职责；调整 `tests/test_release_hooks.py`。
   - 依赖：无。执行：执行。验收：验收。
   - 完成定义：
     - 本地 `python3 -m pytest tests -q` 退出 0；
     - PR 上的 CI 实跑全量并为绿（记录 CI 链接）；
     - 在隔离夹具或临时仓库中验证：preflight 遇 golden 漂移时退出非 0，且 index 不变。
-- [ ] T2 安装与 writer 修复
+- [x] T2 安装与 writer 修复（exec_001 / verify_001。返工后：首尾锚点迁移所有 2026-06 以来的旧 header；Copilot、home、bootstrap 共用一个 managed block 实现）
   - 产物：
     - AUDIT-1 与共同安装器（`installer/cursor_plugin.py`、`installer/hosts/base.py`）按 Sopify 受管树的内容判断完整性；
     - AUDIT-2/3（`installer/distribution.py`）：空 smoke 显示为「未执行运行时自检」，补 Cursor 显示名；
@@ -51,7 +51,7 @@
   - 完成定义：
     - 四步读链、意图优先、writer 边界、三个命令仍在第一跳可见；
     - `test_golden_snapshots`、`test_plan_contract_assets`、`test_plain_language_contracts` 通过；
-    - 在一个已支持宿主的真实会话中，问答不进方案流、方案流按规则读取（Trae 或验收复核）。
+    - 真实会话验证并入 T7、T8 的 dogfood（新宿主消费的就是压缩后的同一份入口）。这样发版前不用改动用户自己的 Claude、Codex 安装。
 - [ ] T4 冗余清理（中等档）
   - 删除：`sopify_writer/_resume.py`、`scripts/w33_qoder_proof.py`、`scripts/check-enhancement-declaration.py`、`scripts/sync-skills.sh`（以 `render-host-skills.py --output` 替代，同步 CONTRIBUTING、hook 白名单和测试夹具）。
   - 精简与合并：
