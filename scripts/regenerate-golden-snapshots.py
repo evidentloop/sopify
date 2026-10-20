@@ -12,12 +12,14 @@ import hashlib
 import json
 import sys
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 try:
-    from installer.hosts.base import HEADER_TEMPLATE_NAME, render_single_file  # noqa: E402
+    from installer.hosts import get_host_adapter  # noqa: E402
+    from installer.hosts.base import HEADER_TEMPLATE_NAME, install_host_assets, render_single_file  # noqa: E402
     from installer.hosts.claude import CLAUDE_ADAPTER  # noqa: E402
     from installer.hosts.codex import CODEX_ADAPTER  # noqa: E402
     from installer.hosts.copilot import COPILOT_ADAPTER  # noqa: E402
@@ -67,6 +69,20 @@ def _payload_hash(direction: str) -> str:
     return hashlib.sha256(rendered.encode()).hexdigest()
 
 
+def _flat_prompt_hash(host: str, locale: str) -> str:
+    """Hash prompt products only, rendered in a disposable home."""
+    adapter = get_host_adapter(host)
+    with TemporaryDirectory(prefix="sopify-golden-") as temporary:
+        home = Path(temporary)
+        install_host_assets(adapter, repo_root=ROOT, home_root=home, language_directory=locale)
+        root = adapter.destination_root(home)
+        parts = [
+            path.relative_to(root).as_posix().encode() + b"\0" + path.read_bytes()
+            for path in sorted(root.rglob("*")) if path.is_file()
+        ]
+        return hashlib.sha256(b"\n".join(parts)).hexdigest()
+
+
 def main() -> int:
     if not GOLDEN.exists():
         return 0
@@ -78,6 +94,10 @@ def main() -> int:
     for direction, locale in DIRECTIONS:
         snapshots[f"copilot:{locale}:managed_block_payload"] = _payload_hash(direction)
         snapshots[f"skills:{locale}:tree"] = _tree_hash(direction)
+
+    for host in ("antigravity", "trae"):
+        for _, locale in DIRECTIONS:
+            snapshots[f"{host}:{locale}:flat_prompt_tree"] = _flat_prompt_hash(host, locale)
 
     golden = json.loads(GOLDEN.read_text())
     golden["snapshots"] = snapshots

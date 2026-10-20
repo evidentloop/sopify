@@ -12,7 +12,7 @@ from scripts._yaml_subset import load_yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BUILTIN_SKILL_IDS = ("analyze", "design", "develop", "kb", "templates")
-SUPPORTED_HOSTS = ["codex", "claude", "qoder", "copilot", "cursor"]
+SUPPORTED_HOSTS = ["codex", "claude", "qoder", "copilot", "cursor", "antigravity", "trae"]
 
 
 class PlanContractAssetTests(unittest.TestCase):

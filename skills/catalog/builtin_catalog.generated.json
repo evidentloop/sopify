@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-19T08:14:29.246893+00:00",
+  "generated_at": "2026-10-20T09:52:46.581614+00:00",
   "schema_version": "1",
   "skills": [
     {
@@ -18,7 +18,9 @@
         "claude",
         "qoder",
         "copilot",
-        "cursor"
+        "cursor",
+        "antigravity",
+        "trae"
       ],
       "id": "analyze",
       "metadata": {},
@@ -50,7 +52,9 @@
         "claude",
         "qoder",
         "copilot",
-        "cursor"
+        "cursor",
+        "antigravity",
+        "trae"
       ],
       "id": "design",
       "metadata": {},
@@ -82,7 +86,9 @@
         "claude",
         "qoder",
         "copilot",
-        "cursor"
+        "cursor",
+        "antigravity",
+        "trae"
       ],
       "id": "develop",
       "metadata": {},
@@ -115,7 +121,9 @@
         "claude",
         "qoder",
         "copilot",
-        "cursor"
+        "cursor",
+        "antigravity",
+        "trae"
       ],
       "id": "kb",
       "metadata": {},
@@ -148,7 +156,9 @@
         "claude",
         "qoder",
         "copilot",
-        "cursor"
+        "cursor",
+        "antigravity",
+        "trae"
       ],
       "id": "templates",
       "metadata": {},

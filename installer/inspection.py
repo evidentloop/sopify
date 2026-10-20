@@ -176,7 +176,7 @@ class HostInspection:
                 },
             }
         configured = self.payload.status == CHECK_PASS
-        if self.adapter.is_user_plugin_scope:
+        if self.adapter.is_user_plugin_scope or self.adapter.flat_skills:
             skill_ok = self.global_skill_tree is not None and self.global_skill_tree.status == CHECK_PASS
             installed = skill_ok and self.host_prompt.status == CHECK_PASS
             return {
@@ -184,7 +184,10 @@ class HostInspection:
                 "state": {
                     "installed": STATUS_YES if installed else STATUS_NO,
                     "configured": STATUS_YES if configured else STATUS_NO,
-                    "workspace_bundle_healthy": STATUS_NOT_REQUESTED,
+                    "workspace_bundle_healthy": (
+                        STATUS_NOT_REQUESTED if self.adapter.is_user_plugin_scope
+                        else _check_state_value(self.workspace_bundle)
+                    ),
                 },
                 "payload_bundle": self.payload_bundle.to_status_dict(),
                 "workspace_bundle": self.workspace_bundle.to_dict(),
@@ -318,24 +321,24 @@ def inspect_host(
                 status=CHECK_SKIP,
                 reason_code=REASON_OK,
             ),
-            global_skill_tree=_cursor_not_verified_check(
+            global_skill_tree=_not_verified_check(
                 capability=capability,
                 check_id="global_skill_tree_present",
                 reason_code="HOST_NOT_INSTALLED",
-            ) if adapter.is_user_plugin_scope else None,
-            user_hooks=_cursor_not_verified_check(
+            ) if adapter.is_user_plugin_scope or adapter.flat_skills else None,
+            user_hooks=_not_verified_check(
                 capability=capability,
                 check_id="cursor_hooks_present",
                 reason_code="HOST_NOT_INSTALLED",
             ) if adapter.host_name == "cursor" else None,
-            ide_behavior=_cursor_behavior_check(capability=capability, check_id="cursor_ide_behavior") if adapter.host_name == "cursor" else None,
-            cli_behavior=_cursor_behavior_check(capability=capability, check_id="cursor_cli_behavior") if adapter.host_name == "cursor" else None,
+            ide_behavior=_host_behavior_check(capability=capability, check_id="cursor_ide_behavior") if adapter.host_name == "cursor" else None,
+            cli_behavior=_host_behavior_check(capability=capability, check_id=f"{adapter.host_name}_cli_behavior") if adapter.host_name == "cursor" or adapter.flat_skills else None,
         )
     host_prompt = _inspect_host_prompt(adapter=adapter, capability=capability, home_root=home_root, workspace_root=workspace_root)
     payload = _inspect_payload(adapter=adapter, capability=capability, home_root=home_root)
     global_skill_tree = (
         _inspect_global_skill_tree(adapter=adapter, capability=capability, home_root=home_root)
-        if adapter.is_user_plugin_scope
+        if adapter.is_user_plugin_scope or adapter.flat_skills
         else None
     )
     user_hooks = (
@@ -380,8 +383,8 @@ def inspect_host(
             smoke=smoke,
             global_skill_tree=global_skill_tree,
             user_hooks=user_hooks,
-            ide_behavior=_cursor_behavior_check(capability=capability, check_id="cursor_ide_behavior") if adapter.host_name == "cursor" else None,
-            cli_behavior=_cursor_behavior_check(capability=capability, check_id="cursor_cli_behavior") if adapter.host_name == "cursor" else None,
+            ide_behavior=_host_behavior_check(capability=capability, check_id="cursor_ide_behavior") if adapter.host_name == "cursor" else None,
+            cli_behavior=_host_behavior_check(capability=capability, check_id=f"{adapter.host_name}_cli_behavior") if adapter.host_name == "cursor" or adapter.flat_skills else None,
         )
     workspace_bundle = _inspect_workspace_bundle(
         adapter=adapter,
@@ -419,8 +422,8 @@ def inspect_host(
         smoke=smoke,
         global_skill_tree=global_skill_tree,
         user_hooks=user_hooks,
-        ide_behavior=_cursor_behavior_check(capability=capability, check_id="cursor_ide_behavior") if adapter.host_name == "cursor" else None,
-        cli_behavior=_cursor_behavior_check(capability=capability, check_id="cursor_cli_behavior") if adapter.host_name == "cursor" else None,
+        ide_behavior=_host_behavior_check(capability=capability, check_id="cursor_ide_behavior") if adapter.host_name == "cursor" else None,
+        cli_behavior=_host_behavior_check(capability=capability, check_id=f"{adapter.host_name}_cli_behavior") if adapter.host_name == "cursor" or adapter.flat_skills else None,
     )
 
 
@@ -744,6 +747,10 @@ def _inspect_host_prompt(*, adapter: HostAdapter, capability: HostCapability, ho
             missing = [p for p in paths if not p.exists()]
             if missing:
                 raise InstallError(f"Host install verification failed: {missing[0]}")
+        elif adapter.flat_skills:
+            paths = (adapter.destination_root(home_root) / adapter.header_filename,)
+            if not paths[0].is_file():
+                raise InstallError(f"Host install verification failed: {paths[0]}")
         else:
             paths = validate_host_install(adapter, home_root=home_root)
         return InspectionCheck(
@@ -804,17 +811,17 @@ def _inspect_global_skill_tree(*, adapter: HostAdapter, capability: HostCapabili
             evidence=tuple(str(path) for path in paths),
         )
     except InstallError as exc:
-        return _cursor_not_verified_check(
+        return _not_verified_check(
             capability=capability,
             check_id="global_skill_tree_present",
             reason_code=_reason_code_from_install_error(exc),
             evidence=_paths_from_error(exc),
-            recommendation=f"Run python3 scripts/install_sopify.py --target {_recommend_target(capability.host_id)} to install the global Cursor Skill tree.",
+            recommendation=f"Run python3 scripts/install_sopify.py --target {_recommend_target(capability.host_id)} to install the global Skill tree.",
             status=CHECK_FAIL,
         )
 
 
-def _cursor_not_verified_check(
+def _not_verified_check(
     *,
     capability: HostCapability,
     check_id: str,
@@ -833,17 +840,22 @@ def _cursor_not_verified_check(
     )
 
 
-def _cursor_behavior_check(*, capability: HostCapability, check_id: str) -> InspectionCheck:
+def _host_behavior_check(*, capability: HostCapability, check_id: str) -> InspectionCheck:
     if check_id == "cursor_ide_behavior":
         recommendation = (
             "Run the Cursor IDE black-box acceptance flow; file presence alone is not behavior evidence."
         )
-    else:
+    elif check_id == "cursor_cli_behavior":
         recommendation = (
             "Run the Cursor Agent CLI managed-entry and Hook black-box flow. "
             "Top-level Skill selection is best-effort and remains separate from file installation evidence."
         )
-    return _cursor_not_verified_check(
+    else:
+        recommendation = (
+            f"Run the {capability.host_id} CLI black-box acceptance flow in a fresh session; "
+            "file installation alone does not verify entry selection or protocol behavior."
+        )
+    return _not_verified_check(
         capability=capability,
         check_id=check_id,
         reason_code="BLACK_BOX_NOT_VERIFIED",
@@ -1316,7 +1328,7 @@ def _host_is_absent(*, adapter: HostAdapter, home_root: Path, workspace_root: Pa
         if workspace_root is None:
             return True
         return not any(p.exists() for p in adapter.workspace_expected_paths(workspace_root))
-    if adapter.is_user_plugin_scope:
+    if adapter.is_user_plugin_scope or adapter.flat_skills:
         owned = [
             *adapter.expected_paths(home_root),
             adapter.payload_root(home_root),

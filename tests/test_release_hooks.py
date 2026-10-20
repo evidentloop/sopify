@@ -372,6 +372,15 @@ class ReleaseHookTests(unittest.TestCase):
                 REPO_ROOT / "installer", root / "installer", dirs_exist_ok=True,
                 ignore=shutil.ignore_patterns("__pycache__", ".DS_Store"),
             )
+            # Flat outputs need the real phase/resource trees, while the header
+            # fixtures above continue exercising the synthetic version bump.
+            for language in ("zh", "en"):
+                shutil.copytree(
+                    REPO_ROOT / f"skills/{language}/skills",
+                    root / f"skills/{language}/skills",
+                    dirs_exist_ok=True, ignore=shutil.ignore_patterns("__pycache__", ".DS_Store"),
+                )
+            _copy_script("skills/trae-entry-skill.md.template", root)
             _copy_script("tests/golden-snapshots.json", root)
             previous_golden = (root / "tests/golden-snapshots.json").read_bytes()
 
@@ -410,6 +419,11 @@ class ReleaseHookTests(unittest.TestCase):
                 encoding="utf-8",
             ).replace("{{config_dir}}", "~/.codex")
             golden = json.loads((root / "tests/golden-snapshots.json").read_text(encoding="utf-8"))
+            for host in ("antigravity", "trae"):
+                for locale in ("zh-CN", "en-US"):
+                    key = f"{host}:{locale}:flat_prompt_tree"
+                    self.assertIn(key, golden["snapshots"])
+                    self.assertNotEqual(golden["snapshots"][key], json.loads(previous_golden)["snapshots"][key])
             self.assertEqual(
                 golden["snapshots"]["codex:zh-CN:header"],
                 hashlib.sha256(f"AGENTS.md\x00{rendered}".encode("utf-8")).hexdigest(),

@@ -8,11 +8,13 @@ from typing import Iterator
 from installer.models import HostCapability
 
 from .base import HostAdapter, HostRegistration
+from .antigravity import ANTIGRAVITY_ADAPTER, ANTIGRAVITY_HOST
 from .claude import CLAUDE_ADAPTER, CLAUDE_HOST
 from .codex import CODEX_ADAPTER, CODEX_HOST
 from .copilot import COPILOT_ADAPTER, COPILOT_HOST
 from .cursor import CURSOR_ADAPTER, CURSOR_HOST
 from .qoder import QODER_ADAPTER, QODER_HOST
+from .trae import TRAE_ADAPTER, TRAE_HOST
 
 _REGISTRATIONS = {
     CODEX_HOST.capability.host_id: CODEX_HOST,
@@ -20,6 +22,8 @@ _REGISTRATIONS = {
     COPILOT_HOST.capability.host_id: COPILOT_HOST,
     CURSOR_HOST.capability.host_id: CURSOR_HOST,
     QODER_HOST.capability.host_id: QODER_HOST,
+    ANTIGRAVITY_HOST.capability.host_id: ANTIGRAVITY_HOST,
+    TRAE_HOST.capability.host_id: TRAE_HOST,
 }
 
 

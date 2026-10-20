@@ -26,7 +26,9 @@ from installer.hosts.base import (
     HEADER_TEMPLATE_NAME,
     HostAdapter,
     render_single_file,
+    install_host_assets,
 )
+from installer.hosts import get_host_adapter
 from installer.hosts.claude import CLAUDE_ADAPTER
 from installer.hosts.codex import CODEX_ADAPTER
 from installer.hosts.copilot import COPILOT_ADAPTER
@@ -134,6 +136,30 @@ def test_skill_tree_snapshot(lang_dir: str, locale: str) -> None:
     key = f"skills:{locale}:tree"
     actual = _tree_hash(lang_dir)
     _assert_hash(key, actual, golden)
+
+
+def _flat_install_hash(host: str, locale: str, home: Path) -> str:
+    """Hash actual flat prompt outputs, independent of temporary home location."""
+    adapter = get_host_adapter(host)
+    install_host_assets(
+        adapter, repo_root=_REPO_ROOT, home_root=home, language_directory=locale,
+    )
+    root = adapter.destination_root(home)
+    parts = [
+        p.relative_to(root).as_posix().encode() + b"\0" + p.read_bytes()
+        for p in sorted(root.rglob("*")) if p.is_file()
+    ]
+    return hashlib.sha256(b"\n".join(parts)).hexdigest()
+
+
+@pytest.mark.parametrize("host", ("antigravity", "trae"))
+@pytest.mark.parametrize("locale", ("zh-CN", "en-US"))
+def test_flat_install_snapshot(tmp_path: Path, host: str, locale: str) -> None:
+    _assert_hash(
+        f"{host}:{locale}:flat_prompt_tree",
+        _flat_install_hash(host, locale, tmp_path),
+        _load_golden(),
+    )
 
 
 # -- Template structure assertions --

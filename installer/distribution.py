@@ -535,6 +535,11 @@ def _build_next_step(target: InstallTarget, workspace_root: Path | None) -> str:
             "verify the Sopify user Plugin is enabled. "
             "The installer does not modify project files."
         )
+    if adapter.flat_skills:
+        return (
+            f"Start a new {_host_display_name(target.host)} session in your project and trigger Sopify. "
+            "Verify entry and Skill visibility; file installation does not prove host behavior."
+        )
     if workspace_root is None:
         return (
             f"Open {target.host} in any project workspace and trigger Sopify. "
@@ -906,6 +911,8 @@ def _host_display_name(host_id: str) -> str:
         "copilot": "Copilot",
         "qoder": "Qoder",
         "cursor": "Cursor",
+        "antigravity": "Antigravity",
+        "trae": "Trae",
     }.get(host_id, host_id)
 
 

@@ -34,6 +34,8 @@ class HostAdapter:
     default_language: str | None = field(default=None)
     skills_cli_agent: str | None = field(default=None)
     skill_install_dirname: str | None = field(default=None)
+    flat_skills: bool = False
+    entry_skill_template: str | None = None
 
     @property
     def is_workspace_scope(self) -> bool:
@@ -74,6 +76,8 @@ class HostAdapter:
             return tuple(paths)
         if self.is_user_plugin_scope:
             return (*self.user_plugin_paths(home_root), *self.global_skill_paths(home_root))
+        if self.flat_skills:
+            return (root / self.header_filename, *self.global_skill_paths(home_root))
         return (
             root / self.header_filename,
             root / "skills" / "sopify" / "analyze" / "SKILL.md",
@@ -88,6 +92,14 @@ class HostAdapter:
         return tuple(paths)
 
     def global_skill_paths(self, home_root: Path) -> tuple[Path, ...]:
+        if self.flat_skills:
+            root = self.destination_root(home_root) / "skills"
+            return (
+                *(root / f"sopify-{stage}" / "SKILL.md" for stage in _SKILL_DIRS_ORDER),
+                root / "sopify" / "references" / "shared-writing-dna.md",
+                root / "sopify" / "references" / "output-contract.md",
+                root / "sopify-analyze" / "scripts" / "score_requirement.py",
+            )
         skills_root = self.destination_root(home_root) / "skills" / "sopify"
         return (
             skills_root / "SKILL.md",
@@ -188,6 +200,13 @@ def install_host_assets(
             adapter,
             repo_root=repo_root,
             home_root=home_root,
+            language_directory=language_directory,
+        )
+    if adapter.flat_skills:
+        from installer.hosts.flat import install_flat_host_assets
+
+        return install_flat_host_assets(
+            adapter, repo_root=repo_root, home_root=home_root,
             language_directory=language_directory,
         )
     return _install_home_host_assets(

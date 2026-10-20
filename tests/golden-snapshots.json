@@ -15,6 +15,10 @@
     "copilot:zh-CN:managed_block_payload": "a68fe2c20bb4e3b29d9cfe9ab0b180bab3e5df7bb67ce4ab4282f9405aefe73c",
     "skills:zh-CN:tree": "e253a0cb07032064cbb10105badaefc33aeaff845c698bb2cbf3a142147d404d",
     "copilot:en-US:managed_block_payload": "0e82dc1b3c35ab66461b204693327eb5620f149f7ad5fa8d4737904f4c9c59d8",
-    "skills:en-US:tree": "05ad605e2c0dee93bc992c4494cb6eb8c582f17bc7e478870a7f87626f3c4864"
+    "skills:en-US:tree": "05ad605e2c0dee93bc992c4494cb6eb8c582f17bc7e478870a7f87626f3c4864",
+    "antigravity:zh-CN:flat_prompt_tree": "5f4e4c94a1c42c83be0f2d8ba6c8cb2e122527c3cbed34b101066bfb22945e90",
+    "antigravity:en-US:flat_prompt_tree": "acbb5a3670799de5a5f5a10c6b09c8aa3dda102812494555c84e572d4539e714",
+    "trae:zh-CN:flat_prompt_tree": "20cb5c41d2e5a6bfec471d2010997ad577e9e3706b525b1f74fb4412466e8102",
+    "trae:en-US:flat_prompt_tree": "787a3e13d45509af13a6666b9fd2559e81abb9fe4962977925e684d49a69edd9"
   }
 }
