@@ -52,7 +52,7 @@
     - 四步读链、意图优先、writer 边界、三个命令仍在第一跳可见；
     - `test_golden_snapshots`、`test_plan_contract_assets`、`test_plain_language_contracts` 通过；
     - 真实会话验证并入 T7、T8 的 dogfood（新宿主消费的就是压缩后的同一份入口）。这样发版前不用改动用户自己的 Claude、Codex 安装。
-- [ ] T4 冗余清理（中等档）
+- [x] T4 冗余清理（中等档）（提交 8285888，净减 2292 行；exec_003 / verify_003。验收在隔离 worktree 中进行，没有丢失现行决策）
   - 删除：`sopify_writer/_resume.py`、`scripts/w33_qoder_proof.py`、`scripts/check-enhancement-declaration.py`、`scripts/sync-skills.sh`（以 `render-host-skills.py --output` 替代，同步 CONTRIBUTING、hook 白名单和测试夹具）。
   - 精简与合并：
     - `render-host-skills.py` 改为复用 `_yaml_subset`；若快照出现解析漂移，就保持现状；

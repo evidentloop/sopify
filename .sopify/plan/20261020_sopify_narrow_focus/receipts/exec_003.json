@@ -1,0 +1,33 @@
+{
+  "evidence": {
+    "commit": "8285888",
+    "orca": {
+      "dispatch": "ctx_eda44bbf3e0f",
+      "run": "run_580b1febb4c4",
+      "task": "task_a8af3ac42270"
+    },
+    "reports": [
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w2/t4-codex.md"
+    ],
+    "result": "7 files deleted, 15 modified, net -2292 lines; sync-skills replacement noted in CHANGELOG",
+    "tasks": [
+      "T4"
+    ],
+    "tests": {
+      "full": "386 passed, 97 subtests passed",
+      "links": "pass",
+      "release_preflight": "All checks passed"
+    }
+  },
+  "provenance": {
+    "executor": "codex",
+    "host": "claude-code",
+    "plan_id": "20261020_sopify_narrow_focus",
+    "plan_version": "sha256:06d91876340537e8dc650034635d584fef9f5ef985339380fc03b206364ca5d2",
+    "receipt_id": "exec_003",
+    "timestamp": "2026-10-20T09:50:09+00:00",
+    "written_by": "plan owner"
+  },
+  "timestamp": "2026-10-20T09:50:09+00:00",
+  "verdict": "implemented"
+}
