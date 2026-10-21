@@ -147,7 +147,7 @@
 
 ## W5 交付
 
-- [ ] T10 README 与 Pages（候选版验证）
+- [ ] T10 README 与 Pages（候选版验证）（Qoder 写文字，Codex 画图；Qoder 验收图 5/5；验收官两轮验收通过；全新 Qoder 会话新手测试 5 问全对，暴露的操作层问题已修；exec_007 / verify_007。**待用户本人验收**）
   - 产物：`README.md`、`README.zh-CN.md` 按需重写：
     - 首屏讲清它是什么、价值、怎么开始，使用 D5 选定的标语；
     - 一个可复制的安装命令和第一个 `~go plan` 示例；
