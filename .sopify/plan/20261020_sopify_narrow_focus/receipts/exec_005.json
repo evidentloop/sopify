@@ -1,0 +1,34 @@
+{
+  "evidence": {
+    "commit": "a9a0f95",
+    "orca": {
+      "dispatch": "ctx_dcd477a97c89",
+      "run": "run_b06e31059bb0",
+      "task": "task_448abfd9a8e2"
+    },
+    "reports": [
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w3/t7t8-codex.md"
+    ],
+    "result": "shared flat Skill layout in installer/hosts/flat.py; Antigravity managed block in ~/.gemini/config/AGENTS.md; Trae top-level entry Skill; Doctor behavior checks BLACK_BOX_NOT_VERIFIED",
+    "tasks": [
+      "T7",
+      "T8",
+      "T1-ci"
+    ],
+    "tests": {
+      "ci": "PR #76 run 39529328706: 406 passed, 97 subtests passed",
+      "local": "406 passed, 97 subtests passed"
+    }
+  },
+  "provenance": {
+    "executor": "codex",
+    "host": "claude-code",
+    "plan_id": "20261020_sopify_narrow_focus",
+    "plan_version": "sha256:04af4fd7a39b30c665f2a05990c44ddf22bc66adc7d7424cf05165a354557cb8",
+    "receipt_id": "exec_005",
+    "timestamp": "2026-10-21T01:51:11+00:00",
+    "written_by": "plan owner"
+  },
+  "timestamp": "2026-10-21T01:51:11+00:00",
+  "verdict": "implemented"
+}

@@ -6,7 +6,7 @@
 
 ## W1 可靠性
 
-- [ ] T1 全量测试门（本地已完成并通过验收，见 exec_001 / verify_001；PR CI 链接待用户批准 push 后补）
+- [x] T1 全量测试门（exec_001 / verify_001；PR #76 的 CI 实跑 406 passed、97 subtests：https://github.com/evidentloop/sopify/actions/runs/39529328706）
   - 产物：`.github/workflows/ci.yml` 和 `scripts/release-preflight.sh` 都改为收集 `tests/` 全部测试，保留 catalog drift、protocol smoke、payload smoke；preflight 遇 golden 不一致直接失败，不再自动 regenerate 并 `git add`；保留 `release-sync.sh` 在显式版本更新时同步模板和 golden 的职责；调整 `tests/test_release_hooks.py`。
   - 依赖：无。执行：执行。验收：验收。
   - 完成定义：
@@ -90,7 +90,7 @@
   - 依赖：无，可前置。执行：执行。验收：验收。
   - 完成定义：recipe 经评审，可供 T7、T8 直接使用。T7、T8 遵循 recipe 的证据在各自任务中回填。#55 的留言由大脑在收口时按授权处理，不作为本任务的完成门槛。
 
-- [ ] T6b recipe 两处补充（来源：T7 探针中验收官的 dogfood 反馈；T9 冷启动样本就用这个任务）
+- [x] T6b recipe 两处补充（Qoder 新会话完成，提交 4b27f17；exec_004 / verify_004）（来源：T7 探针中验收官的 dogfood 反馈；T9 冷启动样本就用这个任务）
   - 写集：只改 `docs/host-onboarding.md`。
   - 要改：
     1. 在探针步骤里补一句：CLI 宿主先查 `--help`，用非交互模式（如 `-p` / `--print`）起全新会话来复述标记；
@@ -101,7 +101,7 @@
 
 ## W3 新宿主（独立文件并行；公共注册、catalog、Doctor 和共有测试由执行串行合入）
 
-- [ ] T7 Antigravity CLI baseline
+- [x] T7 Antigravity CLI baseline（提交 a9a0f95；exec_005 / verify_005；验收官在本机 agy 真实安装，4 个场景 dogfood 通过）
   - 步骤：
     1. 临时安装探针：确认规则、Skill 发现和资源引用路径，以及重启或新会话的要求；
     2. 定投影；
@@ -115,7 +115,7 @@
     - Doctor 区分安装事实和行为证据；
     - 标 BASELINE_SUPPORTED。
   - 未通过时（D3）：不注册为安装目标，不进支持表；同步注册、catalog、Doctor 和文档。
-- [ ] T8 Trae CLI 2.x baseline（用户 2026-10-20 决定照常做，有问题后续 PR 修；Antigravity 作为主要 dogfood。Trae 额度用尽期间按 trae-r6 自检实现，Doctor 行为项照实报 BLACK_BOX_NOT_VERIFIED，宿主文档与支持表注明「待真实会话验证」）
+- [x] T8 Trae CLI 2.x baseline（提交 a9a0f95；exec_005 / verify_005；没有真实会话证据，Doctor 报 BLACK_BOX_NOT_VERIFIED，文档注明待验证）（用户 2026-10-20 决定照常做，有问题后续 PR 修；Antigravity 作为主要 dogfood。Trae 额度用尽期间按 trae-r6 自检实现，Doctor 行为项照实报 BLACK_BOX_NOT_VERIFIED，宿主文档与支持表注明「待真实会话验证」）
   - 步骤：探针 → 投影 → 实现 `installer/hosts/trae.py`、`docs/trae-host.md`、测试。候选布局：`~/.trae/skills/` 下放一组扁平的 `sopify-*` 阶段 Skill 加一个顶层入口 Skill；不写全局 AGENTS.md，不碰 hooks 和 `traecli.toml`。
   - 必须验证：
     - 扁平化后阶段之间的相对路径和共享 references 能否读取；
@@ -128,7 +128,7 @@
 
 ## W4 价值证明
 
-- [ ] T9 冷启动跨宿主续做（与 T5 共用一条闭环）
+- [x] T9 冷启动跨宿主续做（exec_004 / verify_004：Claude Code 写的方案，由只收到 `~go` 的全新 Qoder 会话接手完成 T6b；a9a0f95 → 4b27f17，plan_version 不变）
   - 做法：
     1. 大脑开出本方案剩余任务中的一个真实小任务，并写明写集；
     2. 执行者 B 开一个全新会话，只凭 `.sopify/` 文件接手、实现并跑验收；
