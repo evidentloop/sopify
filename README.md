@@ -38,6 +38,8 @@ curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/instal
 | Qoder | `qoder` |
 | Copilot | `copilot:en-US` / `copilot:zh-CN` |
 | Cursor | `cursor:en-US` / `cursor:zh-CN` |
+| Antigravity | `antigravity:en-US` / `antigravity:zh-CN` |
+| Trae (Preview) | `trae:en-US` / `trae:zh-CN` |
 
 Python 3.11 or newer; the installer checks before downloading. It writes host instructions and Skills only — no daemon, no runtime, no new editor.
 
@@ -109,10 +111,10 @@ These are handled directly and never enter the plan workflow. A plan starts only
 | Qoder | Verified | `--target qoder` |
 | Copilot | Baseline | `--target copilot:en-US` / `copilot:zh-CN` |
 | [Cursor](./docs/cursor-host.md) | Baseline | `--target cursor:en-US` / `cursor:zh-CN` |
-| [Antigravity](./docs/antigravity-host.md) | Baseline; dogfooded in a real session | from a clone: `--target antigravity:en-US` / `antigravity:zh-CN` |
-| [Trae](./docs/trae-host.md) | Preview — not yet verified in a real session | from a clone: `--target trae:en-US` / `trae:zh-CN` |
+| [Antigravity](./docs/antigravity-host.md) | Baseline; dogfooded in a real session | `--target antigravity:en-US` / `antigravity:zh-CN` |
+| [Trae](./docs/trae-host.md) | Preview — not yet verified in a real session | `--target trae:en-US` / `trae:zh-CN` |
 
-Verified means the managed workflow has been run in a real session on that host, not only installed. Baseline means installation, rule visibility and Skill selection are recorded, while not every scenario has been proven in a real session. Preview means the adapter is in place but no real session has confirmed it yet. Antigravity and Trae install from a clone of this repo with `python3 scripts/install_sopify.py --target <target>`.
+Verified means the managed workflow has been run in a real session on that host, not only installed. Baseline means installation, rule visibility and Skill selection are recorded, while not every scenario has been proven in a real session. Preview means the adapter is in place but no real session has confirmed it yet.
 
 ## A Real Case
 

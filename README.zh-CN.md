@@ -38,6 +38,8 @@ curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/instal
 | Qoder | `qoder` |
 | Copilot | `copilot:zh-CN` / `copilot:en-US` |
 | Cursor | `cursor:zh-CN` / `cursor:en-US` |
+| Antigravity | `antigravity:zh-CN` / `antigravity:en-US` |
+| Trae（预览） | `trae:zh-CN` / `trae:en-US` |
 
 需要 Python 3.11 或更高版本，安装器会在下载前检查。它只写入宿主指令和 Skill——没有守护进程、没有运行时、不是新编辑器。
 
@@ -109,10 +111,10 @@ iwr https://github.com/evidentloop/sopify/releases/latest/download/install.ps1 -
 | Qoder | 已验证 | `--target qoder` |
 | Copilot | 基线 | `--target copilot:zh-CN` / `copilot:en-US` |
 | [Cursor](./docs/cursor-host.md) | 基线 | `--target cursor:zh-CN` / `cursor:en-US` |
-| [Antigravity](./docs/antigravity-host.md) | 基线；已在真实会话中 dogfood | 从源码克隆安装：`--target antigravity:zh-CN` / `antigravity:en-US` |
-| [Trae](./docs/trae-host.md) | 预览——尚未在真实会话中验证 | 从源码克隆安装：`--target trae:zh-CN` / `trae:en-US` |
+| [Antigravity](./docs/antigravity-host.md) | 基线；已在真实会话中 dogfood | `--target antigravity:zh-CN` / `antigravity:en-US` |
+| [Trae](./docs/trae-host.md) | 预览——尚未在真实会话中验证 | `--target trae:zh-CN` / `trae:en-US` |
 
-已验证指托管工作流在真实会话中执行过，不只是完成安装。基线指安装、规则可见性和 Skill 选择都有记录，但并非每个场景都在真实会话中证实过。预览指适配已就位，尚未有真实会话确认。Antigravity 和 Trae 需要克隆本仓库后用 `python3 scripts/install_sopify.py --target <target>` 安装。
+已验证指托管工作流在真实会话中执行过，不只是完成安装。基线指安装、规则可见性和 Skill 选择都有记录，但并非每个场景都在真实会话中证实过。预览指适配已就位，尚未有真实会话确认。
 
 ## 真实案例
 

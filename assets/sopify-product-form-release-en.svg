@@ -58,7 +58,7 @@
     <g transform="translate(94,246)" filter="url(#shadowSoft)">
       <rect width="96" height="32" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.3"/>
       <circle cx="12" cy="16" r="3" fill="#10b981"/>
-      <text x="22" y="14" class="nm" style="font-size:11.5px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">Claude</text>
+      <text x="22" y="14" class="nm" style="font-size:11.5px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">Claude Code</text>
       <text x="22" y="27" class="sm" style="font-size:9px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">verified</text>
     </g>
     <g transform="translate(196,246)" filter="url(#shadowSoft)">
