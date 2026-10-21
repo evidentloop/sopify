@@ -57,6 +57,19 @@ The workflow includes two canonical checkpoint types:
 
 Both are expressed through `current_handoff.required_host_action`, not separate state files.
 
+### Task Loop and Modes
+
+- **Task loop**: Develop picks the next ready task from `tasks.md` (or `plan.md` for a light plan) by dependency and number, then runs implement → verify → review. A task is checked `[x]` only after verification and every review pass. After a first verification failure, it may retry once with the failure context; after a second failure, or without a retry, it records the root cause and then fixes and re-verifies, leaves the result unverified, marks the task blocked `[!]`, or sends the plan back for review. While a task is blocked, only tasks that do not depend on it continue.
+- **Completion and archive**: Once tasks, verification and any required knowledge updates are done, the plan is marked `ready_to_archive` and stays in `plan/`. Only `~go finalize` moves it to `history/`.
+- **Receipts**: An execution event in a managed plan writes `exec_NNN`; a verification or audit result adopted as formal evidence writes `verify_NNN`; archiving writes `final`. Planning without execution or verification events writes none, and plain questions and unmanaged small fixes stay outside the receipt flow.
+
+| Dimension | Values | Notes |
+|---|---|---|
+| Request intent | question, small fix, new plan, continue, finalize | Decided by the host on every turn; questions and small fixes do not enter the plan workflow |
+| `workflow.mode` | `adaptive` (default), `strict`, `minimal` | Optional: `strict` confirms after analysis and design; `minimal` skips planning but keeps authorization and protocol boundaries |
+| Plan level | `light`, `standard`, `architecture` | Chosen by Design: `plan.md` only; plus `tasks.md`; plus `design.md` |
+| Interaction | chat, non-interactive | A non-interactive session ends its turn when it asks a question; send the answer with the next request. The host's first automatic project setup needs an interactive session |
+
 ## Protocol Entry (4-Step Read Chain)
 
 When the host detects `.sopify/` and the user request targets managed plan / continuation / finalize:

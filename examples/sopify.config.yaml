@@ -49,9 +49,9 @@ workflow:
 plan:
   # Plan level:
   # - auto: Select based on task complexity
-  # - light: Single file (plan.md)
-  # - standard: Three files (background.md, design.md, tasks.md)
-  # - full: Complete structure with ADR and diagrams
+  # - light: plan.md
+  # - standard: plan.md + tasks.md
+  # - architecture: plan.md + tasks.md + design.md
   level: auto
 
 # Note: model compare configuration was removed with the retired compare runtime.
