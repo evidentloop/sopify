@@ -1,12 +1,12 @@
 ---
 title: 新版 Sopify：收窄定位、可靠性、多 agent 协作与新宿主
 plan_id: 20261020_sopify_narrow_focus
-status: planned
-lifecycle_state: planned
+status: done
+lifecycle_state: ready_to_archive
 level: standard
 created: 2026-10-20
-updated: 2026-10-20
-archive_ready: false
+updated: 2026-10-21
+archive_ready: true
 knowledge_sync:
   project: review
   background: required
@@ -86,7 +86,7 @@ knowledge_sync:
 - [x] W2 瘦身与契约：T3、T4、T5、T6 完成并验收（T6b 留作 T9 样本）
 - [x] W3 新宿主：T7 通过（agy 真实 dogfood），T8 通过（无真实会话证据，照实标注）
 - [x] W4 价值证明：T9 通过（Qoder 冷启动）；T1 的 PR CI 已补
-- [ ] W5 交付：T10 README 与 Pages，T11 release：T6 可前置；T3 依赖 T2；T4 依赖 T1；T5 文档与模板可并行，阶段源合入后再生成 T3 的最终快照
+- [x] W5 交付：T10 已经用户验收；T11 PR #76 已合并（3ae8bd7），release 提交、GitHub Release 与远端 smoke 按发布流程执行：T6 可前置；T3 依赖 T2；T4 依赖 T1；T5 文档与模板可并行，阶段源合入后再生成 T3 的最终快照
 - [ ] W3 新宿主：T7、T8 先做探针再定布局，独立文件并行，公共接入串行
 - [ ] W4 价值证明：T9（与 T5 共用一条真实闭环）
 - [ ] W5 交付：T10 候选版验证（README、Pages、新手测试）→ T11 release、正式 smoke、收口

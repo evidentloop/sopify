@@ -13,9 +13,9 @@
 ## 当前焦点
 
 <!-- sopify:auto:focus:start -->
-- 当前产品工作：[收窄定位、可靠性与宿主接入方案](../plan/20261020_sopify_narrow_focus/plan.md)。
-- 长期未完成项见 [蓝图任务](./tasks.md)，现行协议见 [Protocol](./protocol.md)。
-- 已完成方案与审计证据见 [历史索引](../history/index.md)。
+- 当前活动 plan：无。`20261020_sopify_narrow_focus` 已完成新版收窄（方案与验收证据纳入 Git、跨工具接续），PR #76 已合并并显式归档；stable release 版本为 `2026-10-21.151943`。
+- 后续优先项见 [蓝图任务](./tasks.md)：真实宿主行为与冷启动接续证据（含 Trae）、宿主写回执的摩擦。
+- history 归档：已可用；最近归档：`../history/2026-10/20261020_sopify_narrow_focus`。
 <!-- sopify:auto:focus:end -->
 
 ## 深入阅读入口
@@ -27,6 +27,6 @@
 - [蓝图任务](./tasks.md)
 - [Sopify 宿主接入规范 (Protocol v0)](./protocol.md)
 - [宿主接入步骤与验证](../../docs/host-onboarding.md)
-- [Cursor Agent CLI 一次安装归档](../history/2026-08/20260828_cursor_agent_cli_entry/plan.md)
+- [新版收窄方案归档](../history/2026-10/20261020_sopify_narrow_focus/plan.md)
 - [变更历史](../history/index.md)
 <!-- sopify:auto:read-next:end -->

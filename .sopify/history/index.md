@@ -4,6 +4,7 @@
 
 ## 索引
 
+- `2026-10-21` [`20261020_sopify_narrow_focus`](2026-10/20261020_sopify_narrow_focus/) - standard - 新版定位收窄为「方案与验收证据纳入 Git、跨工具接续」：全量测试门、安装器保留用户指令文件并自动迁移旧版、首次 `~go` 绑定项目、Antigravity 与 Trae 基线、Orca 协作指南、README 与 Pages 重写；Qoder 冷启动接续实测通过；PR #76 合并，随 `2026-10-21.151943` 发布
 - `2026-10-20` [`20260819_cursor_support`](2026-10/20260819_cursor_support/) - standard - Cursor IDE 用户级 Plugin 薄 Rule、全局 Skills/payload 与用户 Hooks 一次安装，BASELINE_SUPPORTED；PR #71 已合并并随 `2026-08-22.134737` 发布，合并后显式归档，8 月陈旧 handoff 以已核实 Git 事实取代
 - `2026-08-30` [`20260828_cursor_agent_cli_entry`](2026-08/20260828_cursor_agent_cli_entry/) - standard - Cursor IDE 与本地 Agent CLI 一次安装：CLI 方案/开发/接续/收口入口、旧入口替换、跨宿主隔离和双语用户文案收口；PR #73、Cursor 独立审计、全量测试与 release preflight 均通过
 - `2026-07-21` [`20260720_plain_language_output`](2026-07/20260720_plain_language_output/) - standard - 中英文工作流表达、高频 Skill 职责、只读咨询和静态产品页收口；PR #68 / #69、Sopify `2026-07-21` Release 与 `main / root` GitHub Pages 证据完整关联

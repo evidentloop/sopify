@@ -6,7 +6,7 @@
 
 Installs into the AI coding tools you already use. Questions and small fixes are handled directly; plans start only when needed.
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)](./LICENSE) [![Version](https://img.shields.io/badge/version-2026--08--30.001152-orange.svg?style=for-the-badge)](#version-history)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)](./LICENSE) [![Version](https://img.shields.io/badge/version-2026--10--21.151943-orange.svg?style=for-the-badge)](#version-history)
 
 [![Codex](https://img.shields.io/badge/Codex-4A9EFF.svg?style=for-the-badge)](#supported-hosts) [![Claude Code](https://img.shields.io/badge/Claude%20Code-CC785C.svg?style=for-the-badge)](#supported-hosts) [![Qoder](https://img.shields.io/badge/Qoder-7C3AED.svg?style=for-the-badge)](#supported-hosts) [![Copilot](https://img.shields.io/badge/Copilot-000000.svg?style=for-the-badge)](#supported-hosts) [![Cursor](https://img.shields.io/badge/Cursor-111827.svg?style=for-the-badge)](#supported-hosts) [![Antigravity](https://img.shields.io/badge/Antigravity-1A73E8.svg?style=for-the-badge)](#supported-hosts) [![Trae](https://img.shields.io/badge/Trae-00B96B.svg?style=for-the-badge)](#supported-hosts)
 

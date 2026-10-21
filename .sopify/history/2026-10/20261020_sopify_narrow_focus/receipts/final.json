@@ -1,0 +1,30 @@
+{
+  "evidence": {
+    "ci": {
+      "result": "422 passed, 101 subtests passed",
+      "run": "39560832635"
+    },
+    "cold_start": "exec_004 / verify_004 (Claude Code plan continued by a fresh Qoder session given only ~go)",
+    "feature_head": "b0e24d6",
+    "merge_commit": "3ae8bd7377d70850f9023ec98cd519f16b2016ec",
+    "open": [
+      "Trae has no real-session evidence",
+      "close PR #75 and comment on issue #55 need user confirmation"
+    ],
+    "pull_request": 76,
+    "release": {
+      "status": "authorized by the user; GitHub Release and remote smoke follow this commit",
+      "version": "2026-10-21.151943"
+    },
+    "user_signoff": "README and pages approved on 2026-10-21 (verify_008)"
+  },
+  "provenance": {
+    "host": "claude-code",
+    "plan_id": "20261020_sopify_narrow_focus",
+    "plan_version": "sha256:8f23aae56c4e49426f7b84d3c228d29f120e90dd12dee1ed816dde5b682c0980",
+    "receipt_id": "final",
+    "scope": "post-merge explicit finalize before stable release"
+  },
+  "timestamp": "2026-10-21T07:19:59+00:00",
+  "verdict": "finalized"
+}

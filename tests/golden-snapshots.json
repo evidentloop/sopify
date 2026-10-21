@@ -8,17 +8,17 @@
   },
   "protocol_version": "1.0",
   "snapshots": {
-    "codex:zh-CN:header": "87980bd1c3a0d3d2a11c01c47d033f4e572b87b5dee927b1e2c7f135080da306",
-    "codex:en-US:header": "09351c0aa4f99a0bce67d0bac51aff8cc22441f1bb611c5de72984fc881e2858",
-    "claude:zh-CN:header": "e11b08ffd096c5139c5fce8fa92f70940a2fb160315f88aca7b069d0dcbce0e1",
-    "claude:en-US:header": "2425acb9947006210a7557e48d8e4ad85dee1ab0b9e821495701caabdecb45fc",
-    "copilot:zh-CN:managed_block_payload": "a68fe2c20bb4e3b29d9cfe9ab0b180bab3e5df7bb67ce4ab4282f9405aefe73c",
+    "codex:zh-CN:header": "5da3bd0e69d7450999deb25733c8f168da3f1e19aae347cbf0c0031b752d0607",
+    "codex:en-US:header": "07c7ec563153661b383cc6c339dac828c890a0b0f53174291ae850bea095f95e",
+    "claude:zh-CN:header": "683f65803f7aa5ba961083077c934781c8b100efbdf825b6d4ae86cb0f997d6e",
+    "claude:en-US:header": "526d086e85f483f7f97addc1b04e656121cdf50f550f05286c979180c4568099",
+    "copilot:zh-CN:managed_block_payload": "658254d18a3ecc37fbd7c218e565004a925977254e6e13223c79e892783f92ca",
     "skills:zh-CN:tree": "e253a0cb07032064cbb10105badaefc33aeaff845c698bb2cbf3a142147d404d",
-    "copilot:en-US:managed_block_payload": "0e82dc1b3c35ab66461b204693327eb5620f149f7ad5fa8d4737904f4c9c59d8",
+    "copilot:en-US:managed_block_payload": "5d5905eb5543132b9013d3936ff06dc1586a31355c6420867d49c59cddc10293",
     "skills:en-US:tree": "05ad605e2c0dee93bc992c4494cb6eb8c582f17bc7e478870a7f87626f3c4864",
-    "antigravity:zh-CN:flat_prompt_tree": "45b84935023eb358205bbd7b9ac4b80d337f8d355b1f202670a1704030443b0c",
-    "antigravity:en-US:flat_prompt_tree": "1f7bbbd8b0e6a0ffd49cec4cd02ec31ed920fa5d8616927881f4ae5b3f0cfbc2",
-    "trae:zh-CN:flat_prompt_tree": "de7a0b3b5e2a3caa1ae6adaad4be6b4437538fe440a1aca948a237096cce899a",
-    "trae:en-US:flat_prompt_tree": "5625e43bb77f9f46da098c842ba09a45cdd04b824b31e102184af70d29db2c15"
+    "antigravity:zh-CN:flat_prompt_tree": "d4f6d00500937ecb46ee35a9f050f7940186039833dd9987cfc98a74529ea4d9",
+    "antigravity:en-US:flat_prompt_tree": "e3567f8268fafea260223be790afc0dce2ba863ad4d1614141523e95cb9e723b",
+    "trae:zh-CN:flat_prompt_tree": "24d081181182551110fda0f7029b7f7c55c5cd0f8d1ef6efafceda5c0aa3b2d4",
+    "trae:en-US:flat_prompt_tree": "4f4ee2d58680851f1daf3be5e5ea3d33e3e9f9132595b355474feda484e4179c"
   }
 }

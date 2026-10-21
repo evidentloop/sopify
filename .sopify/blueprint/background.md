@@ -4,6 +4,8 @@
 
 ## Sopify 是什么
 
+2026-10 起，对外定位收窄为：AI 编程的方案与验收证据纳入 Git 版本管理，跨工具、跨成员、跨 Agent 均可接续。主流宿主已原生提供 plan mode，「先问再写」作为基础能力保留，不再作为差异化卖点；依据见 [收窄方案归档](../history/2026-10/20261020_sopify_narrow_focus/plan.md)。
+
 Sopify 的 durable core 是跨宿主 AI 工作流的 **证据与授权层**。它不负责生成代码或编排 agent，而是把外部生产、验证、知识工具的结果收敛成可恢复、可审计、可授权的机器事实。这里的"授权"指判定行动是否可执行、方案是否可归档、交接是否可信——不是安全/权限授权。
 
 Sopify 官方在 core 之上提供一个轻量、可插拔、收敛式的 blueprint-driven workflow 作为默认产品体验。
@@ -45,14 +47,14 @@ Host LLM 是 proposal source 和 executor。sopify_writer 是唯一的 machine t
 
 ## 当前现实
 
-截至 2026-05-06：
+截至 2026-10-21：
 
-- **Runtime 规模**：~29K 行 Python / 66 个模块，`engine.py` 单文件 3086 行
-- **已完成**：ActionProposal P0 thin slice（ADR-017）、archive lifecycle cutover、legacy feature cleanup、P1 subject identity binding、P1.5 execution authorization spine（全 4 切片 + 先行切片 + 桥接切片）
-- **核心矛盾**：方向是"轻量可插拔"，但 checkpoint 5 种、host action 13 种、route 18 种、state 文件 8 个——协议层膨胀与轻量化目标直接冲突。**Blueprint truth 已收敛**（canonical target 2/5/6/6 已在蓝图重分类完成），**implementation truth 仍在迁移**（P3a 已清 runtime 旧 contract 面；P3b 收口外围 release gate / tests 分类 / CHANGELOG；P4a 冻结外部消费面 keep-list 后，P4b 执行 runtime 结构性减重）
-- **Protocol 外部入口**：Convention 模式 README quickstart 已落地；Protocol Compliance Suite Phase 1 已建立（16 项断言）；外部宿主自助接入仍需 Phase 2 端到端行为验证
+- **形态**：runtime 已在 P8 退场，Sopify 不运行进程；产品由宿主规则与 Skill、`sopify_writer` 和 `.sopify/` 文件协议组成。
+- **宿主**：Codex、Claude Code、Qoder 已验证；Copilot、Cursor、Antigravity、Trae 为基线。Antigravity 有真实本机会话证据，Trae 尚无真实会话证据。
+- **已有证据**：CI 跑全部测试；一个 Claude Code 写的方案被只收到 `~go` 的全新 Qoder 会话接续完成；首次 `~go` 会绑定项目并写本机忽略规则。
+- **已知摩擦**：宿主写回执要自行导入已安装的 writer 库；更多宿主的冷启动接续和 checkpoint、finalize 行为仍需真实会话覆盖。
 
-### 生态横向定位（2026-05 分析）
+### 生态横向定位（2026-05 分析；2026-10 复核见收窄方案 audits）
 
 2026-05 对 6 个同领域项目做横向分析后，Sopify 的生态位更加清晰：
 
@@ -74,7 +76,7 @@ Host LLM 是 proposal source 和 executor。sopify_writer 是唯一的 machine t
 | L1 stable | `project.md` + `blueprint/{background,design,tasks}` | 长期知识 |
 | L2 active | `plan/YYYYMMDD_feature/` | 活动方案 |
 | L3 archive | `history/YYYY-MM/` | 收口归档 |
-| runtime | `state/*.json` | 运行态（replay/ 已在 P3b 列为下线，不再计入） |
+| state | `state/*.json` | 本机恢复指针，不进 Git |
 
 ## 本蓝图的定位
 

@@ -6,6 +6,8 @@ Format: Summary → Changed → Plan Packages. File-level details live in `git l
 
 ## [Unreleased]
 
+## [2026-10-21.151943] - 2026-10-21
+
 ### Summary
 
 Sopify now does one job: AI coding plans and verification evidence are versioned in Git, so work can resume across tools, teammates and agents. This release adds a full test gate, installers that preserve your instruction files, project setup on the first `~go`, two new hosts and a rewritten README.

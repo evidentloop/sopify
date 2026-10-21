@@ -6,7 +6,7 @@
 
 安装到你现有的 AI 编程工具；日常问答和小修直接处理，需要时才生成方案。
 
-[![许可证](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)](./LICENSE) [![版本](https://img.shields.io/badge/version-2026--08--30.001152-orange.svg?style=for-the-badge)](#版本历史)
+[![许可证](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)](./LICENSE) [![版本](https://img.shields.io/badge/version-2026--10--21.151943-orange.svg?style=for-the-badge)](#版本历史)
 
 [![Codex](https://img.shields.io/badge/Codex-4A9EFF.svg?style=for-the-badge)](#支持的宿主) [![Claude Code](https://img.shields.io/badge/Claude%20Code-CC785C.svg?style=for-the-badge)](#支持的宿主) [![Qoder](https://img.shields.io/badge/Qoder-7C3AED.svg?style=for-the-badge)](#支持的宿主) [![Copilot](https://img.shields.io/badge/Copilot-000000.svg?style=for-the-badge)](#支持的宿主) [![Cursor](https://img.shields.io/badge/Cursor-111827.svg?style=for-the-badge)](#支持的宿主) [![Antigravity](https://img.shields.io/badge/Antigravity-1A73E8.svg?style=for-the-badge)](#支持的宿主) [![Trae](https://img.shields.io/badge/Trae-00B96B.svg?style=for-the-badge)](#支持的宿主)
 

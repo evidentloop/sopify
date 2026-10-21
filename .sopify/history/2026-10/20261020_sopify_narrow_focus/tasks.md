@@ -168,7 +168,7 @@
     - `check-readme-links` 通过，Pages 链接人工核对；
     - 中英文结构一致；
     - 这一步只算「候选版验证」，不算 release 完成。
-- [ ] T11 Release 与收口
+- [x] T11 Release 与收口（PR #76 经用户授权合并为 3ae8bd7；方案在 release 提交中归档；GitHub Release、远端安装 smoke、#75 与 #55 的处理在发布后记录）
   - 产物：
     - CHANGELOG 和 release notes：成果、维护者命令变化、迁移边界、未通过项；
     - 版本同步、preflight；

@@ -116,6 +116,9 @@ Analyze 确认目标、交付物与证据；Design 负责取舍、readiness、�
 - 宿主安装产物从 `skills/{zh,en}` 渲染，不维护另一棵手工源树。
 - Copilot 内联阶段规则、共享契约及必要文档模板，不重复入口导航或回复示例；tree-only scripts 不内联、不产生假路径。
 - Cursor 的薄 Plugin Rule 与 CLI 顶层 Skill 复用同一套阶段资源；模型自动选择和文件放置分别取证。
+- 共享的宿主指令文件（如 `CLAUDE.md`、`AGENTS.md`）与 Copilot 一样只写 managed block，块外用户内容原样保留；旧版整份安装按稳定的首尾行迁移，标记异常时不写入。
+- 只发现一层 Skill 目录的宿主（Antigravity、Trae）共用一套扁平 `sopify-*` 布局；没有全局规则文件的宿主以顶层入口 Skill 承担路由。
+- 入口规则写明已安装 payload 中 bootstrap helper 与 writer 的位置：首次受管写入前，或本机 state 未被忽略时，先调用 helper；machine truth 通过 writer 库 API 写入，不提供 writer CLI。
 - `tools / disallowed_tools / allowed_paths / requires_network` 等 Skill 字段目前是声明，不是独立权限执行引擎。
 
 ### 可选 Verifier 与 MCP
