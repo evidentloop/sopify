@@ -53,11 +53,11 @@ Sopify asks about anything still unresolved and writes `.sopify/plan/YYYYMMDD_si
 **3. Run the plan, then archive it.**
 
 ```text
-~go            # implement the plan task by task, recording verification evidence
-~go finalize   # move the finished plan to .sopify/history/
+~go            # run or resume the current plan
+~go finalize   # once all tasks are complete, archive the plan to .sopify/history/
 ```
 
-The plan and its evidence stay in Git, so another supported tool can resume the work.
+`~go` works through the plan one task at a time: implement, then verify and review, mark the task done once checks pass, and move to the next. It pauses when a fact is missing or a decision requires your input, and continues after you answer. After an interruption, a tool switch, or a handover, type `~go` again: it reads the plan and its evidence, then continues with the next unfinished task that can proceed. In a fresh clone, if the target plan is unclear, it asks which one to continue. A finished plan stays in `plan/` until you run `~go finalize`. See [How Sopify Works](./docs/how-sopify-works.en.md#task-loop-and-modes) for the read order and pause rules.
 
 ### What lands in your repo
 
@@ -106,7 +106,7 @@ These are handled directly and never enter the plan workflow. A plan starts only
 | Command | When to type it |
 |---|---|
 | `~go plan <request>` | New work that needs a plan — asks first when anything is unclear, writes `.sopify/plan/<id>/plan.md` only after you answer, and changes no code |
-| `~go` | Start or continue. Routes the current request, and resumes the active plan when there is one |
+| `~go` | Run or resume the current plan; routine questions and small fixes are answered directly without resuming a plan |
 | `~go finalize` | Close out the active plan and move it to `.sopify/history/` |
 
 ## Supported Hosts
