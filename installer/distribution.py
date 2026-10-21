@@ -588,7 +588,7 @@ def _render_distribution_user_result_en(report: DistributionInstallReport) -> st
         lines.extend(
             [
                 "  No project directory was changed.",
-                "  Sopify will initialize project files the first time you run `~go` in a workspace.",
+                "  Sopify sets up project files the first time you run ~go in a project.",
                 "",
                 "Next:",
                 f"  1. Open {host_name} in your project directory.",
@@ -657,7 +657,7 @@ def _render_distribution_user_result_zh(report: DistributionInstallReport) -> st
         lines.extend(
             [
                 "  这次没有修改任何项目目录。",
-                "  进入项目后第一次输入 `~go` 时，会自动初始化 Sopify 项目文件。",
+                "  在项目里第一次输入 ~go 时，Sopify 会自动设置项目文件。",
                 "",
                 "下一步：",
                 f"  1. 在项目目录打开 {host_name}。",

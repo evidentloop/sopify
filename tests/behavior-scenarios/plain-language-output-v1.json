@@ -10,8 +10,8 @@
     "en-US": {"characters": 30912, "bytes": 31000, "lines": 626}
   },
   "header_after": {
-    "zh-CN": {"characters": 3040, "bytes": 5357, "lines": 60},
-    "en-US": {"characters": 6246, "bytes": 6257, "lines": 60}
+    "zh-CN": {"characters": 3497, "bytes": 6008, "lines": 62},
+    "en-US": {"characters": 6959, "bytes": 6970, "lines": 62}
   },
   "scenarios": [
     {

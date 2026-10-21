@@ -123,7 +123,7 @@ curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/instal
 curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | bash -s -- --target copilot
 ```
 
-After install, use `~go` in your AI host to start a managed workflow.
+After install, use `~go` in your AI host to start a managed workflow. Before the first managed write, the entry instructions call the installed workspace-binding helper; non-interactive mode stops without creating a marker. State writes use the `sopify_writer` library from that payload's current bundle.
 
 ### Copilot
 

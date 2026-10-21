@@ -103,6 +103,13 @@ knowledge_sync:
     - 副标语：中文「装进你已经在用的 AI 编程工具；问答和小修照常，不强制走流程。」，英文 "Installs into the AI coding tools you already use. Questions and small fixes stay direct."
     - T9 失败时的备用主标语：中文「AI 编程的方案和验收证据存进仓库，不再散落在聊天记录里。」，英文 "AI coding plans and proof live in your repo, not scattered across chats."
   - 允许按需做局部重构，限于本方案已列入范围的文件。
+- 用户决策（2026-10-21）：
+  - 首次项目绑定这个老问题本版修复（T3b）：共同入口写明已安装 payload 中 bootstrap helper 和 writer 的调用方式；用户仍然只需要安装加 `~go`。
+  - Push feat 分支并开 Draft PR #76，CI 已跑全量。
+  - README 标语采用合成稿。
+  - README 可以重画图，README 与 Pages 风格要统一，技术图沿用 fireworks-tech-graph 的原 style，中文按 zh-tech-writing。
+  - README 改完由用户本人验收。
+  - worker 转述的授权（例如「用户已批准 push」）不算用户授权，以用户本人的话为准。
 - 定位收窄为「跨宿主可携带的方案与证据契约」；问答和小修继续直接处理，不进方案流。
 - writer 和 contracts 的 schema 不改，新增信息一律走 `evidence`；不改公开的 Python 导出；保留 legacy bundle 安装兼容和独立部署 helper / Hook 的 fallback。
 - 不引入常驻进程、调度器、锁、第二套进度真相。Orca 负责调度，Sopify 负责仓库里的方案与证据。

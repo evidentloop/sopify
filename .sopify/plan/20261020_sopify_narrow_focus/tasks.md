@@ -141,6 +141,10 @@
   - 依赖：T5 文档与模板可用。验收：验收。
   - 完成定义：记录两个执行身份、起止代码 SHA、plan_version、实际读取的文件和结果，成功或失败都如实记录。
 
+- [ ] T3b 首次项目绑定与 writer 调用入口说明（用户 2026-10-21 决定本版修；Codex 实现，验收官复测）
+  - 写集：共同 header、Cursor 薄入口、`render_single_file` 对 Copilot 平铺的过滤、安装输出文案（用户语言）、getting-started、路径一致性测试、golden。
+  - 完成定义：每个有 payload 的宿主安装后，header 指向的 helper 和 writer 路径都真实存在；新项目照 header 调用后生成 `sopify.json` 和 `.gitignore` 受管块，Doctor 的 workspace bundle 检查通过；验收官在 agy 真实会话中复测首次 `~go plan`。
+
 ## W5 交付
 
 - [ ] T10 README 与 Pages（候选版验证）
@@ -159,6 +163,7 @@
     - 记录全过程。
   - 依赖：T7、T8、T9 的已裁定结果。执行：执行（大纲由大脑定）。验收：验收。
   - 完成定义：
+    - 用户本人验收 README 与 Pages；
     - 新手测试通过且有记录；
     - `check-readme-links` 通过，Pages 链接人工核对；
     - 中英文结构一致；

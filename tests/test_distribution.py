@@ -1,6 +1,7 @@
 # Test classification: distribution
 from __future__ import annotations
 
+from dataclasses import replace
 from io import StringIO
 import json
 import os
@@ -125,6 +126,18 @@ class DistributionFacadeTests(unittest.TestCase):
             self.assertNotIn("reason_code", user_rendered)
             self.assertNotIn("workspace_bundle_healthy", user_rendered)
             self.assertNotIn("overall status", user_rendered)
+            for language, message in (
+                ("zh-CN", "在项目里第一次输入 ~go 时，Sopify 会自动设置项目文件。"),
+                ("en-US", "Sopify sets up project files the first time you run ~go in a project."),
+            ):
+                localized = replace(report, install_result=replace(
+                    report.install_result,
+                    target=replace(report.install_result.target, language=language),
+                ))
+                rendered = render_distribution_user_result(localized)
+                self.assertIn(message, rendered)
+                for term in ("binding helper", "non-interactive", "受管写入", "绑定 helper", "非交互"):
+                    self.assertNotIn(term, rendered)
 
     def test_distribution_render_surfaces_legacy_payload_fallback_for_on_demand_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as home_dir:

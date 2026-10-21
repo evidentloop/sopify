@@ -325,6 +325,10 @@ def render_single_file(
         header = header.replace("{{config_dir}}", adapter.config_dir)
     else:
         # Copilot has no global configuration directory.
+        header = "".join(
+            line for line in header.splitlines(keepends=True)
+            if "{{config_dir}}/sopify/" not in line
+        )
         header = header.replace(" > 全局 `{{config_dir}}/sopify.config.yaml`", "")
         header = header.replace(" > global `{{config_dir}}/sopify.config.yaml`", "")
         header = header.replace("{{config_dir}}", "")
