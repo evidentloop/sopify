@@ -16,9 +16,23 @@ Sopify 借鉴 harness engineering 的设计思路，但不把它作为仓库首�
 
 Sopify 把 AI 开发过程中的**方案、决策、交接、执行/验证证据和归档记录**沉淀为可追溯资产。跨 session、跨宿主的接续是这些资产可携带、可验证后的自然结果。
 
-宿主（Codex、Claude、Qoder、Copilot、Cursor）负责执行。Sopify 确保每个决策都留下痕迹，且这些痕迹能跨越 session 边界、宿主切换和团队交接。
+AI 编程宿主负责执行。Sopify 确保每个决策都留下痕迹，且这些痕迹能跨越 session 边界、宿主切换和团队交接。
 
 **Runtime 已退场；工作流保留。** analyze → design → develop → finalize 的默认工作流不变。变化的是：工作流规则现在活在协议文件和宿主 prompt 资产里，而不是 runtime 进程里。
+
+### 产品形态
+
+<div align="center">
+<img src="../assets/sopify-product-form-release.svg" width="900" alt="Sopify 产品形态 — 宿主、Skill、项目资产、本地交接与显式归档" />
+</div>
+
+Sopify 提供共享工作流规则，并把方案、决策和验证证据作为项目文件保存在 `.sopify/` 中；本地恢复指针只留在当前机器。
+
+Sopify 主要做三件事：
+
+- **共享工作流协议** — 各适配器通过宿主已支持的入口交付同一协议；入口形态与验证档位保持显式
+- **项目记录随 Git 携带** — 方案、决策和验证证据跟着仓库走，本地指针不跟随
+- **明确接续与收口** — 说“继续”或输入 `~go` 后，宿主才会恢复；交付证据就绪后，`~go finalize` 才归档方案
 
 ## 主工作流
 
@@ -66,6 +80,12 @@ Sopify 不默认执行验证器。可选安装与组件归属统一见 [Getting 
 
 ## 目录结构与层级
 
+产品形态背后的内部层次：
+
+<div align="center">
+<img src="../assets/sopify-architecture.svg" width="760" alt="Sopify 架构 — 协议内核 + 默认工作流 + 知识层" />
+</div>
+
 ```text
 .sopify/
 ├── blueprint/                   # L1 长期蓝图（git tracked）
@@ -103,7 +123,7 @@ Sopify 不默认执行验证器。可选安装与组件归属统一见 [Getting 
 
 ## 宿主支持
 
-当前支持范围与安装 target 见 [README 宿主表](../README.zh-CN.md#安装说明)，此处不再维护一份副本。
+当前支持范围与安装 target 见 [README 宿主表](../README.zh-CN.md#支持的宿主)，此处不再维护一份副本。
 
 ## 附录：Plan 生命周期
 

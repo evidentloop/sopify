@@ -16,9 +16,23 @@ Official reference: [`Harness engineering: leveraging Codex in an agent-first wo
 
 Sopify preserves the **process** of AI development — plans, decisions, handoffs, execution evidence, and archival records — as traceable assets. Cross-session and cross-host continuation is the natural result of these assets being portable and verifiable.
 
-The host (Codex, Claude, Qoder, Copilot, or Cursor) executes. Sopify ensures every decision leaves a trace that survives session boundaries, host switches, and team handoffs.
+The AI coding host executes. Sopify ensures every decision leaves a trace that survives session boundaries, host switches, and team handoffs.
 
 **Runtime retired; workflow retained.** The analyze → design → develop → finalize workflow is unchanged. What changed is that workflow rules now live in protocol files and host prompt assets, not in a runtime process.
+
+### Product Form
+
+<div align="center">
+<img src="../assets/sopify-product-form-release-en.svg" width="900" alt="Sopify Product Form — host, skills, project assets, local handoff, and explicit archive" />
+</div>
+
+Sopify supplies shared workflow rules and preserves plans, decisions, and verification evidence as project files in `.sopify/`. Local resume pointers remain on the machine.
+
+Sopify does three things:
+
+- **Shared workflow protocol** — each adapter delivers the same protocol through the host surfaces it supports; entry mode and verification level remain explicit
+- **Git-tracked project record** — plans, decisions, and verification evidence travel with the repository; local pointers do not
+- **Explicit resume and closeout** — ask to continue or use `~go` before the host resumes; `~go finalize` archives the plan only after delivery evidence is ready
 
 ## Main Workflow
 
@@ -66,6 +80,12 @@ Independent audits do not need a plan binding. A formal plan-wide audit may live
 
 ## Directory Structure and Layers
 
+For the internal layering behind the product form:
+
+<div align="center">
+<img src="../assets/sopify-architecture.svg" width="760" alt="Sopify Architecture — protocol kernel + default workflow + knowledge layer" />
+</div>
+
 ```text
 .sopify/
 ├── blueprint/                   # L1 long-lived blueprint (git tracked)
@@ -103,7 +123,7 @@ Layer notes:
 
 ## Host Support
 
-See the current [host support and installation table](../README.md#installation); this page does not maintain another copy.
+See the current [host support and installation table](../README.md#supported-hosts); this page does not maintain another copy.
 
 ## Appendix: Plan Lifecycle
 

@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f7f3ea" />
     <meta
       name="description"
-      content="Sopify is a resumable, traceable workflow for AI coding. Plans, decisions, and verification evidence stay with your repo across tools and sessions."
+      content="AI coding plans and proof in your repo — keep building across tools, teammates, and agents. Installs into the AI coding tools you already use; questions and small fixes stay direct."
     />
     <link rel="canonical" href="https://evidentloop.github.io/sopify/" />
     <link rel="alternate" hreflang="en" href="https://evidentloop.github.io/sopify/" />
@@ -16,14 +16,14 @@
     <meta property="og:site_name" content="Sopify" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:locale:alternate" content="zh_CN" />
-    <meta property="og:title" content="Sopify — Resumable, traceable AI coding" />
-    <meta property="og:description" content="Ask before writing. Resume after approval. Plans, decisions, and verification evidence stay with your repo across AI coding hosts." />
+    <meta property="og:title" content="Sopify — AI coding plans and proof in your repo" />
+    <meta property="og:description" content="Keep building across tools, teammates, and agents. Installs into the AI coding tools you already use; questions and small fixes stay direct." />
     <meta property="og:url" content="https://evidentloop.github.io/sopify/" />
     <meta property="og:image" content="https://evidentloop.github.io/sopify/assets/sopify-og-en.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
-    <title>Sopify — Resumable, traceable AI coding</title>
+    <title>Sopify — AI coding plans and proof in your repo</title>
     <link rel="icon" href="./assets/logo.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./assets/sopify-site.css" />
     <script src="./assets/sopify-site.js" defer></script>
@@ -54,17 +54,18 @@
     <main id="main">
       <section class="section hero" id="top">
         <div class="hero-copy">
-          <p class="eyebrow">Sopify / workflow protocol</p>
-          <h1>Resumable, traceable AI coding</h1>
+          <p class="eyebrow">Sopify · AI coding</p>
+          <h1>AI coding plans and proof in your repo</h1>
           <p class="hero-lede">
-            <strong>Ask before writing. Resume after approval.</strong> Plans, decisions, and verification evidence stay
-            with your repo—even when you switch AI coding tools.
+            <strong>Keep building across tools, teammates, and agents.</strong> Plans, decisions and verification
+            evidence are saved as ordinary files in your repo, so the next session continues from the record instead of
+            from memory.
           </p>
           <div class="hero-actions">
             <a class="button button-primary" href="#install">Install Sopify <span aria-hidden="true">↓</span></a>
             <a class="button button-secondary" href="https://github.com/evidentloop/sopify">View on GitHub</a>
           </div>
-          <p class="hero-note">No new editor. No new CLI. Install into the host you already use and follow its documented entry.</p>
+          <p class="hero-note">Installs into the AI coding tools you already use — no new editor, no new CLI. Plans live under <code>.sopify/</code>. Questions and small fixes stay direct.</p>
         </div>
 
         <figure class="hero-visual">
@@ -151,20 +152,22 @@
             <p class="eyebrow">Product form</p>
             <h2>The host executes. Sopify keeps the work resumable</h2>
             <p>
-              Sopify is a workflow protocol layer for the AI coding host you already use. It supplies shared rules and
-              preserves plans, decisions, and verification evidence as project files in <code>.sopify/</code>.
+              Sopify is a set of rules and Skills that installs into the AI coding tool you already use. It preserves
+              plans, decisions, and verification evidence as project files in <code>.sopify/</code>.
             </p>
             <p>
-              Ask to continue or use the managed entry supported by the current host to resume an unfinished plan. A
+              Ask to continue, or use <code>~go</code>, and the host resumes an unfinished plan from those files. A
               local handoff pointer provides a same-workspace resume hint.
             </p>
             <span class="repo-path">.sopify/plan/…</span>
             <ul class="host-list" aria-label="Supported AI coding hosts">
               <li>Codex · verified</li>
-              <li>Claude · verified</li>
+              <li>Claude Code · verified</li>
               <li>Qoder · verified</li>
               <li class="baseline">Copilot · baseline</li>
               <li class="baseline">Cursor · baseline</li>
+              <li class="baseline">Antigravity · baseline</li>
+              <li class="baseline">Trae · preview</li>
             </ul>
           </div>
           <a
@@ -252,7 +255,7 @@
           </details>
           <details>
             <summary>Does switching hosts give every host identical capabilities?</summary>
-            <p>Codex, Claude, and Qoder have protocol-verified paths. Copilot and Cursor are baseline-supported. One Cursor install covers the IDE and local CLI; the CLI selects the plan, development, resume, and closeout entry when the request calls for it. Cloud Agent remains out of scope.</p>
+            <p>No. Codex, Claude Code and Qoder are verified: the managed workflow has been run in a real session, not only installed. Copilot, Cursor and Antigravity are baseline — installation, rule visibility and Skill selection are recorded, and Antigravity has also been dogfooded in a real session, but not every scenario is proven. Trae is a preview: the adapter is in place, and no real session has confirmed it yet. One Cursor install covers the IDE and local CLI; the CLI selects the plan, development, resume, and closeout entry when the request calls for it. Cloud Agent remains out of scope.</p>
           </details>
           <details>
             <summary>Is EvidentLoop required?</summary>
