@@ -40,39 +40,50 @@
     <text x="94" y="144" class="stage-num" font-family="-apple-system,'Helvetica Neue',sans-serif">I</text>
     <text x="112" y="144" class="lbl" font-family="-apple-system,'Helvetica Neue',sans-serif">HOST</text>
     <text x="94" y="170" class="stage-title" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">User asks in a supported host</text>
-    <text x="94" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">One protocol, five host adapters</text>
+    <text x="94" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">One protocol, seven hosts</text>
 
-    <!-- 5 host cards, ALL 96px wide. L-col right=190, R-col right=296. Stage right=310. -->
+    <!-- Seven host adapters; the existing HOST stage and all other stages remain unchanged. -->
     <g transform="translate(94,206)" filter="url(#shadowSoft)">
-      <rect width="96" height="44" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.3"/>
-      <circle cx="14" cy="22" r="3.5" fill="#10b981"/>
-      <text x="24" y="20" class="nm" font-family="-apple-system,'Helvetica Neue',sans-serif">Codex</text>
-      <text x="24" y="34" class="sm" font-family="-apple-system,'Helvetica Neue',sans-serif">verified</text>
+      <rect width="96" height="32" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.3"/>
+      <circle cx="12" cy="16" r="3" fill="#10b981"/>
+      <text x="22" y="14" class="nm" style="font-size:11.5px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">Codex</text>
+      <text x="22" y="27" class="sm" style="font-size:9px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">verified</text>
     </g>
     <g transform="translate(196,206)" filter="url(#shadowSoft)">
-      <rect width="96" height="44" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1.3" stroke-dasharray="3,2"/>
-      <circle cx="14" cy="22" r="3.5" fill="#fbbf24"/>
-      <text x="24" y="20" class="nm" font-family="-apple-system,'Helvetica Neue',sans-serif">Copilot</text>
-      <text x="24" y="34" class="sm" font-family="-apple-system,'Helvetica Neue',sans-serif">baseline</text>
+      <rect width="96" height="32" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1.3" stroke-dasharray="3,2"/>
+      <circle cx="12" cy="16" r="3" fill="#fbbf24"/>
+      <text x="22" y="14" class="nm" style="font-size:11.5px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">Copilot</text>
+      <text x="22" y="27" class="sm" style="font-size:9px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">baseline</text>
     </g>
-    <g transform="translate(94,260)" filter="url(#shadowSoft)">
-      <rect width="96" height="44" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.3"/>
-      <circle cx="14" cy="22" r="3.5" fill="#10b981"/>
-      <text x="24" y="20" class="nm" font-family="-apple-system,'Helvetica Neue',sans-serif">Claude</text>
-      <text x="24" y="34" class="sm" font-family="-apple-system,'Helvetica Neue',sans-serif">verified</text>
+    <g transform="translate(94,246)" filter="url(#shadowSoft)">
+      <rect width="96" height="32" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.3"/>
+      <circle cx="12" cy="16" r="3" fill="#10b981"/>
+      <text x="22" y="14" class="nm" style="font-size:11.5px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">Claude Code</text>
+      <text x="22" y="27" class="sm" style="font-size:9px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">verified</text>
     </g>
-    <g transform="translate(196,260)" filter="url(#shadowSoft)">
-      <rect width="96" height="44" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.3"/>
-      <circle cx="14" cy="22" r="3.5" fill="#10b981"/>
-      <text x="24" y="20" class="nm" font-family="-apple-system,'Helvetica Neue',sans-serif">Qoder</text>
-      <text x="24" y="34" class="sm" font-family="-apple-system,'Helvetica Neue',sans-serif">verified</text>
+    <g transform="translate(196,246)" filter="url(#shadowSoft)">
+      <rect width="96" height="32" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.3"/>
+      <circle cx="12" cy="16" r="3" fill="#10b981"/>
+      <text x="22" y="14" class="nm" style="font-size:11.5px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">Qoder</text>
+      <text x="22" y="27" class="sm" style="font-size:9px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">verified</text>
     </g>
-
-    <g transform="translate(147,314)" filter="url(#shadowSoft)">
-      <rect width="96" height="44" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1.3" stroke-dasharray="3,2"/>
-      <circle cx="14" cy="22" r="3.5" fill="#fbbf24"/>
-      <text x="24" y="20" class="nm" font-family="-apple-system,'Helvetica Neue',sans-serif">Cursor</text>
-      <text x="24" y="34" class="sm" font-family="-apple-system,'Helvetica Neue',sans-serif">baseline</text>
+    <g transform="translate(94,286)" filter="url(#shadowSoft)">
+      <rect width="96" height="32" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1.3" stroke-dasharray="3,2"/>
+      <circle cx="12" cy="16" r="3" fill="#fbbf24"/>
+      <text x="22" y="14" class="nm" style="font-size:11.5px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">Cursor</text>
+      <text x="22" y="27" class="sm" style="font-size:9px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">baseline</text>
+    </g>
+    <g transform="translate(196,286)" filter="url(#shadowSoft)">
+      <rect width="96" height="32" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1.3" stroke-dasharray="3,2"/>
+      <circle cx="12" cy="16" r="3" fill="#fbbf24"/>
+      <text x="22" y="14" class="nm" style="font-size:11.5px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">Trae</text>
+      <text x="22" y="27" class="sm" style="font-size:9px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">baseline</text>
+    </g>
+    <g transform="translate(94,326)" filter="url(#shadowSoft)">
+      <rect width="198" height="32" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1.3" stroke-dasharray="3,2"/>
+      <circle cx="12" cy="16" r="3" fill="#fbbf24"/>
+      <text x="22" y="14" class="nm" style="font-size:11.5px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">Antigravity</text>
+      <text x="22" y="27" class="sm" style="font-size:9px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">baseline</text>
     </g>
 
     <text x="94" y="374" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Same .sopify/ project</text>
@@ -227,8 +238,8 @@
 
   <!-- Tagline (centered) -->
   <line x1="80" y1="490" x2="1470" y2="490" stroke="#d1d5db" stroke-width="1"/>
-  <text x="750" y="524" text-anchor="middle" class="tag" font-family="Georgia,'Times New Roman','Songti SC',serif">"Host executes. Skills guide. .sopify/ preserves project records."</text>
-  <text x="750" y="548" text-anchor="middle" class="sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Host executes · skills guide · project records travel with Git · explicit resume · explicit finalize</text>
+  <text x="750" y="524" text-anchor="middle" class="tag" font-family="Georgia,'Times New Roman','Songti SC',serif">“Version AI coding plans and evidence in Git — resume work across tools, teammates, and agents.”</text>
+  <text x="750" y="548" text-anchor="middle" class="sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">Host executes · skills guide · plans and evidence versioned in Git · explicit resume · explicit finalize</text>
 
   <!-- Legend -->
   <g transform="translate(80,590)">

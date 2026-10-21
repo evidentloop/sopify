@@ -1,170 +1,74 @@
 # Contributing
 
-Thanks for your interest in contributing to Sopify.
+Agree on scope and ownership before non-trivial work. Keep a pull request focused on one verifiable change; update both READMEs for user-facing changes and add a short CHANGELOG note for user-visible behavior or maintainer-command changes.
 
 ## How to contribute
 
-- Open an issue first for non-trivial changes so scope and ownership are clear.
-- Keep pull requests focused; one feature or fix per PR is preferred.
-- Update both `README.md` and `README.zh-CN.md` when user-facing behavior changes.
-- Update `CHANGELOG.md` manually when user-visible behavior or maintainer rules change.
+- `main` is the only long-lived branch. Use short-lived `<type>/<topic>` branches and normally merge through PRs; stable versions are tags and GitHub Releases from merged `main` commits. Reconsider a release branch only when concurrent supported versions require backports.
+- Fix the current failure chain without adding unrelated routes, state or features. Put deferred work in the relevant plan or backlog.
+- Preserve existing work. Explicitly include new source files when preparing a commit; `git commit -am` does not include them.
+- Changes to protocol, checkpoint, bridge, installer or status/doctor behavior need corresponding regression evidence. Documentation-only work needs relevant link/content checks, not unrelated code tests.
 
 ## Prompt-layer and Skill Authoring
 
-- `skills/{zh,en}` is the prompt-layer source of truth. Each language directory contains `header.md.template` (host-agnostic template) and `skills/sopify/` (skill packages).
-- `Codex/Skills/{CN,EN}` and `Claude/Skills/{CN,EN}` are gitignored. They can be generated locally via `bash scripts/sync-skills.sh` for debugging or inspecting the traditional host layout, but are not part of release, CI, or pre-commit.
-- `skills/catalog/builtin_catalog.generated.json` is the generated builtin catalog, maintained via `scripts/generate-builtin-catalog.py`.
-- For skill package changes, follow the `SKILL.md` files under [skills/zh/skills/sopify/](./skills/zh/skills/sopify/) / [skills/en/skills/sopify/](./skills/en/skills/sopify/).
+`skills/{zh,en}` is the single prompt source: `header.md.template` plus `skills/sopify/`. Keep both languages aligned and follow their Skill entry files. Installation products come from adapters; do not hand-maintain a second source tree.
 
-Key constraints:
+Preview one header from the repository root:
 
-- Prefer `supports_routes` for route binding.
-- Validate `skill.yaml` through `sopify_contracts/skill_schema.py`.
-- `tools / disallowed_tools / allowed_paths / requires_network` are currently declarative fields.
-- Regenerate the builtin catalog instead of editing generated metadata manually.
+```bash
+python3 scripts/render-host-skills.py --host codex --lang zh --output /tmp/sopify-preview/AGENTS.md
+```
+
+Omit `--output` for stdout, or use `--verify-all` to compare all header variants. This previews headers only; inspect Skill bodies in `skills/{zh,en}/skills/sopify/`. Old `Codex/` and `Claude/` cache directories remain gitignored and are not release inputs.
+
+- Bind routes through `supports_routes` and validate `skill.yaml` with `sopify_contracts/skill_schema.py`.
+- `tools / disallowed_tools / allowed_paths / requires_network` are declarative fields.
+- When catalog metadata changes, regenerate `skills/catalog/builtin_catalog.generated.json` with `python3 scripts/generate-builtin-catalog.py` rather than editing the generated catalog.
+- Review intentional output changes before running `python3 scripts/regenerate-golden-snapshots.py`; preflight checks snapshots and does not accept drift automatically.
 
 ## Payload Bundle and Host Integration
 
-Use these commands when you need maintainer-level control over the payload bundle:
+Use the [host onboarding recipe](./docs/host-onboarding.md) for capability probes and adapter changes. The [Protocol](./.sopify/blueprint/protocol.md) defines entry and write ownership; `sopify_writer` owns protocol state writes. The workspace marker locates a bundle, while plan files own task progress.
+
+- Keep root `install.sh` / `install.ps1` thin: fetch the same-ref archive and call `scripts/install_sopify.py`.
+- Distribution remains host-registry driven. Preserve legacy bundle reads and standalone helper/Hook fallbacks.
+- Installation, update, optional components and removal are documented in [Getting Started](./docs/getting-started.md). Developer `raw/main` installs are not the public README entry.
+
+### MCP pilot
+
+The repo-local `scripts/sopify_mcp_server.py` pilot uses an existing Python 3.11+ environment with `mcp[cli]>=1.27,<2`; it does not install dependencies or change the payload.
 
 ```bash
-# Validate install + payload bundle + workspace stub in isolation
-python3 scripts/check-install-payload-bundle-smoke.py --target codex:zh-CN
-
-# Run protocol compliance check
-python3 scripts/sopify_protocol_check.py check --scenario new-plan --fixture tests/fixtures/minimal_plan
-```
-
-Bundle rules:
-
-- The global payload lives under `~/.codex/sopify/` or `~/.claude/sopify/`.
-- Hosts must read `.sopify/sopify.json` to detect workspace activation and resolve the selected global bundle.
-- The host follows the 4-step protocol entry contract (active_plan → plan.md → current_handoff → receipts) defined in `.sopify/blueprint/protocol.md §8`.
-- Protocol state writes go through `sopify_writer`; hosts do not write state files directly.
-
-### MCP Tool Plane Pilot
-
-The repository includes a Codex-first registration pilot for maintainer verification of `scripts/sopify_mcp_server.py`. It requires an existing Python 3.11+ environment with `mcp[cli]>=1.27,<2`; it does not install dependencies or modify the payload:
-
-```bash
-# Dry-run by default
+# Inspect registration; dry-run is the default.
 python3 scripts/sopify_mcp_register.py --python /path/to/python3
-
-# Explicitly update the user-level Codex MCP configuration
+# Explicitly apply through the host's official CLI.
 python3 scripts/sopify_mcp_register.py --python /path/to/python3 --apply
 ```
 
-The helper delegates to official `codex mcp get/add` commands instead of editing TOML directly. Matching configuration is a no-op; conflicting configuration is not overwritten. Codex is the first validation target, not the only MCP-capable host. Automated registration for Qoder, Claude, and Copilot, dependency packaging, and doctor integration remain evidence-gated follow-up work.
-
-### Installer Entry Points and Release Assets
-
-Current installer entry points are intentionally split by audience:
-
-- Repo-local / source install:
-
-```bash
-bash scripts/install-sopify.sh --target codex:zh-CN
-python3 scripts/install_sopify.py --target claude:en-US --workspace /path/to/project
-```
-
-- Dev / maintainer remote entry (`raw/main`, not for README first screen):
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/evidentloop/sopify/main/install.sh | \
-  bash -s -- --target codex:zh-CN
-```
-
-- Public stable entry (only after a public GitHub Release exists):
-
-```bash
-curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | \
-  bash -s -- --target codex:zh-CN
-```
-
-Contract:
-
-- Root `install.sh` / `install.ps1` stay thin. They only fetch the same-ref GitHub source archive and call `scripts/install_sopify.py`.
-- `main` branch root scripts keep dev defaults (`SOURCE_CHANNEL=dev`, `SOURCE_REF=main`).
-- Stable release assets are rendered from the root scripts for the selected release tag; do not hand-edit or upload the raw `main` files.
-- Distribution logic stays host-registry driven. README should expose the host availability matrix, including experimental install targets once the repo-side path is ready, and the installer entrypoint must not hardcode `codex` / `claude` branching.
-
-Release asset checklist:
-
-```bash
-TAG="2026-03-25.142231"
-OUT_DIR="$(mktemp -d)"
-python3 scripts/render-release-installers.py --release-tag "$TAG" --output-dir "$OUT_DIR"
-```
-
-Then:
-
-- Upload `$OUT_DIR/install.sh` and `$OUT_DIR/install.ps1` to the GitHub Release with the same tag.
-- Keep `README` first-screen install commands unchanged until that public stable release is visible at `releases/latest/download/install.sh`.
-- Post-release manual smoke is maintainer-only: confirm the latest release assets exist, the stable installer resolves the same tag, and the install output prints `source channel`, `resolved source ref`, and `asset name`.
+Registration delegates to `codex mcp get/add`, not direct TOML edits. Matching settings are a no-op and conflicting settings are not overwritten. Codex is the first validation target; other hosts, dependency packaging and doctor integration need their own evidence.
 
 ## Validation Commands
 
-Run the minimum checks that match your change scope.
-
-Prompt-layer and metadata sync:
+Use Python 3.11+ and checks appropriate to the change. Shared-workspace runs can set `PYTHONDONTWRITEBYTECODE=1` and `PYTEST_ADDOPTS="-p no:cacheprovider"` to avoid cache noise.
 
 ```bash
-bash scripts/check-version-consistency.sh
-python3 scripts/generate-builtin-catalog.py
-python3 -m pytest tests -v
+python3 -m pytest tests -q
+python3 scripts/check-readme-links.py
 ```
 
-Protocol and payload validation:
+For protocol/payload work, also run the relevant smoke:
 
 ```bash
 python3 scripts/sopify_protocol_check.py check --scenario new-plan --fixture tests/fixtures/minimal_plan
 python3 scripts/check-install-payload-bundle-smoke.py --target codex:zh-CN
-python3 -m pytest tests -v
-```
-
-Documentation and release validation:
-
-```bash
-python3 scripts/check-readme-links.py
-python3 -m unittest tests/test_release_hooks.py -v
-python3 -m unittest tests/test_distribution.py tests/test_installer_status_doctor.py -v
-bash scripts/check-version-consistency.sh
 ```
 
 ## Release Hook and CHANGELOG
 
-This repository ships coordinated `.githooks/pre-commit` and `commit-msg` automation.
-
-Enable it once per clone:
-
-```bash
-git config core.hooksPath .githooks
-```
-
-Behavior summary:
-
-- `pre-commit` runs `scripts/release-preflight.sh` and then `scripts/release-sync.sh`.
-- Release-managed files are re-staged into the same commit when checks pass.
-- When `CHANGELOG.md -> [Unreleased]` is empty, `release-sync` auto-drafts summary-level notes (category bullets, no per-file lists) from the current staged files.
-- `commit-msg` only appends `Release-Sync`, `Release-Version`, and `Release-Date` when the pre-commit handoff exists.
-
-AI attribution:
-
-- AI collaboration is acknowledged at the repository level in [CONTRIBUTORS.md](./CONTRIBUTORS.md).
-- The repository no longer appends standard `Co-authored-by` trailers for AI assistants by default, so GitHub contributor attribution remains tied to human commit authors unless you add co-author trailers manually.
-- `SOPIFY_DISABLE_RELEASE_HOOK=1` disables the entire release hook chain; use it only for maintainer/debug flows.
-
-Common environment toggles:
-
-- `SOPIFY_DISABLE_RELEASE_HOOK=1`
-- `SOPIFY_SKIP_RELEASE_PREFLIGHT=1`
-- `SOPIFY_AUTO_DRAFT_CHANGELOG=0`
-- `SOPIFY_RELEASE_HOOK_DRY_RUN=1`
-- `SOPIFY_FORCE_RELEASE_SYNC=1`
+[Release Process](./docs/dev/release-process.md) is the single source for hook setup, version/CHANGELOG synchronization, preflight, stable assets, publication and post-release smoke. Follow the authorization for the current task before any external Git action.
 
 ## License Note
 
-By contributing, you agree that your changes may be distributed under the license that applies to the files you modify:
+AI collaboration is acknowledged in [CONTRIBUTORS.md](./CONTRIBUTORS.md). Standard AI `Co-authored-by` trailers are not added automatically; manual coauthor attribution remains available.
 
-- Code and config: Apache 2.0
-- Documentation: CC BY 4.0
+Contributions follow the target file's license: code/configuration use Apache 2.0; documentation uses CC BY 4.0.

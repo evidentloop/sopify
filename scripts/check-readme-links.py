@@ -30,29 +30,25 @@ MARKDOWN_SUFFIXES = {".md", ".markdown"}
 # Lock public-doc structure so CN/EN drift is caught by CI instead of by readers.
 EXPECTED_LEVEL2_SECTIONS = {
     README_FILES[0]: (
-        "Sopify in a Real Codex Workflow",
         "Quick Start",
-        "Why Sopify?",
-        "Product Form",
-        "Architecture Details",
-        "Installation",
-        "Command Reference",
-        "Configuration",
-        "Directory Structure",
+        "Where It Pays Off",
+        "When Not to Use It",
+        "Command Cheat Sheet",
+        "Supported Hosts",
+        "A Real Case",
+        "Further Reading",
         "Version History",
         "License",
         "Contributing",
     ),
     README_FILES[1]: (
-        "Sopify 在真实 Codex 任务中如何运行",
         "快速开始",
-        "为什么选择 Sopify？",
-        "产品形态",
-        "架构细节",
-        "安装说明",
-        "命令参考",
-        "配置说明",
-        "目录结构",
+        "价值场景",
+        "什么时候不用",
+        "命令速查",
+        "支持的宿主",
+        "真实案例",
+        "深入阅读",
         "版本历史",
         "许可证",
         "贡献",
@@ -217,6 +213,16 @@ def check_expected_level2_sections() -> list[str]:
     return errors
 
 
+def relative_to_root(path: Path) -> str:
+    # Resolved paths collapse symlinks, so a symlinked ROOT (macOS temp dirs) needs both bases.
+    for base in (ROOT, ROOT.resolve()):
+        try:
+            return str(path.relative_to(base))
+        except ValueError:
+            continue
+    return str(path)
+
+
 def split_link_target(target: str) -> tuple[str, str | None]:
     if "#" not in target:
         return target, None
@@ -241,7 +247,7 @@ def check_relative_file_links(path: Path) -> list[str]:
             if anchor not in target_anchors:
                 errors.append(
                     f"{path.relative_to(ROOT)}: missing anchor #{anchor} in "
-                    f"{resolved.relative_to(ROOT)}"
+                    f"{relative_to_root(resolved)}"
                 )
     return errors
 

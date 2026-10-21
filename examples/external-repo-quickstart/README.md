@@ -1,132 +1,30 @@
 # External Repo Quickstart
 
-Add Sopify to any existing repository so your AI host can resume work, track
-decisions, and persist project knowledge.
+Use Sopify in an existing repository to keep a plan, decisions and verification evidence with the work.
 
-## Prerequisites
+## Install and check
 
-- Git repository (local or remote)
-- Python 3.11+
-- An AI host: **Copilot**, **Codex**, or **Claude**
+Follow [Getting Started](../../docs/getting-started.md) for prerequisites, the current host target, installation and diagnostics. Use its real installer output; this example does not carry a frozen bundle version or a workspace-marker JSON to copy.
 
-## Step 1 — Install
+## Start a bounded task
 
-Run from your project root:
+Open the target repository in the installed host and ask, for example:
 
-```bash
-curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | bash -s -- --target copilot
+```text
+~go plan Add an empty-state message to the results page.
+Keep the current filtering behavior; include the acceptance check.
 ```
 
-Replace `copilot` with `codex:en-US` or `claude:en-US` for other hosts.
+Review the proposed scope and acceptance before implementation. Ordinary questions and small fixes do not automatically resume a managed plan.
 
-Expected output (Copilot):
+## Continue from repository evidence
 
-```
-Sopify installed successfully.
+For a new session or supported host, keep the tracked `.sopify/plan/`, `history/` and relevant blueprint files. Ask explicitly to continue the named plan. The host reads the plan as semantic truth and uses local state only as a resume hint, following the [protocol entry](../../docs/how-sopify-works.en.md#protocol-entry-4-step-read-chain).
 
-Installed:
-  Host: Copilot (copilot:en-US)
-  Language: English
-  Host prompt: installed
-  Version: 2026-05-30.193318
-  File: /path/to/your-project/.github/copilot-instructions.md
+If the local pointer is absent, select the intended plan rather than inventing state. Confirm what the recorded evidence actually verified, rerun checks for changed code, and record unresolved decisions. A fresh session consuming files is distinct from a successful end-to-end continuation; retain the commands or session evidence for the latter.
 
-Next:
-  1. Open Copilot in your project directory.
-  2. Sopify instructions are loaded automatically — start your task.
-```
+## Keep the evidence
 
-Expected output (Codex / Claude):
+When authorized work and verification finish, use explicit `~go finalize` to archive. Do not delete `.sopify/` to uninstall the prompt entry; follow [Removing Sopify](../../docs/getting-started.md#removing-sopify), which preserves plans, history and user instructions outside managed blocks.
 
-```
-Sopify installed successfully.
-
-Installed:
-  Host: Codex (codex:en-US)
-  Language: English
-  Host prompt: updated
-  Runtime: ~/.codex/sopify
-  Version: 2026-05-30.193318
-  Runtime action: updated
-
-Project:
-  Prewarmed: /path/to/your-project
-  Bundle: /path/to/your-project/.sopify-runtime
-
-Next:
-  1. Reopen Codex in that project.
-  2. Type: ~go
-
-Diagnostics:
-  Runtime smoke check passed.
-  Run again with `--verbose` for full install details.
-```
-
-## Step 2 — Verify
-
-**Copilot** creates a single instruction file:
-
-| File | Purpose |
-|------|---------|
-| `.github/copilot-instructions.md` | Sopify instructions — loaded automatically by Copilot |
-
-**Codex / Claude** also create a workspace marker:
-
-```bash
-cat .sopify/sopify.json
-```
-
-```json
-{
-  "bundle_version": "2026-05-30.193318",
-  "capabilities": [
-    "runtime_gate"
-  ],
-  "locator_mode": "global_first",
-  "schema_version": "1",
-  "workspace_kind": "external"
-}
-```
-
-## Step 3 — Start Using
-
-Open the project in your AI host and begin working.
-
-- **Copilot**: instructions are loaded automatically — start your task directly.
-- **Codex / Claude**: type `~go` to start a managed workflow.
-
-## What Happens Next
-
-Once Sopify is active in your project:
-
-1. **Start** — ask your AI host to begin or continue a task
-2. **Pause** — Sopify stops when facts are missing or a decision needs you
-3. **Resume** — work picks up from project state, even on a different host
-
-Project knowledge accumulates in `.sopify/`:
-
-```
-.sopify/
-├── sopify.json       # workspace marker (Codex/Claude only)
-├── project.md        # technical conventions (created on first use)
-├── blueprint/        # design baseline (created when needed)
-├── plan/             # active plans
-├── history/          # archived plans
-└── state/            # transient runtime state (git-ignored)
-```
-
-## Cleanup
-
-To remove Sopify from your project:
-
-```bash
-rm -rf .sopify/ .sopify-runtime/
-rm -f .github/copilot-instructions.md
-# Then remove the sopify-managed block from .gitignore
-```
-
-## Further Reading
-
-- [How Sopify Works](../../docs/how-sopify-works.en.md)
-- [Main README](../../README.md)
-- [Contributing](../../CONTRIBUTING.md)
+For supervised multi-agent work, see the optional [Orca handoff guide](../../docs/orca.md). No additional runtime directory or marker example is required.

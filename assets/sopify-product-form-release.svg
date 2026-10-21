@@ -40,39 +40,50 @@
     <text x="84" y="144" class="stage-num" font-family="-apple-system,'Helvetica Neue',sans-serif">I</text>
     <text x="102" y="144" class="lbl" font-family="-apple-system,'Helvetica Neue',sans-serif">HOST</text>
     <text x="84" y="170" class="stage-title" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">用户在受支持宿主提需求</text>
-    <text x="84" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">同一协议，五个宿主适配</text>
+    <text x="84" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">同一协议，七个宿主</text>
 
-    <!-- 5 host cards, ALL 86px wide. L-col right=170, R-col right=262. Stage right=274. -->
+    <!-- Seven host adapters; the existing HOST stage and all other stages remain unchanged. -->
     <g transform="translate(84,206)" filter="url(#shadowSoft)">
-      <rect width="86" height="44" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.3"/>
-      <circle cx="14" cy="22" r="3.5" fill="#10b981"/>
-      <text x="24" y="20" class="nm" font-family="-apple-system,'Helvetica Neue',sans-serif">Codex</text>
-      <text x="24" y="34" class="sm" font-family="-apple-system,'Helvetica Neue',sans-serif">verified</text>
+      <rect width="86" height="32" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.3"/>
+      <circle cx="12" cy="16" r="3" fill="#10b981"/>
+      <text x="22" y="14" class="nm" style="font-size:11.5px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">Codex</text>
+      <text x="22" y="27" class="sm" style="font-size:9px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">已验证</text>
     </g>
     <g transform="translate(176,206)" filter="url(#shadowSoft)">
-      <rect width="86" height="44" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1.3" stroke-dasharray="3,2"/>
-      <circle cx="14" cy="22" r="3.5" fill="#fbbf24"/>
-      <text x="24" y="20" class="nm" font-family="-apple-system,'Helvetica Neue',sans-serif">Copilot</text>
-      <text x="24" y="34" class="sm" font-family="-apple-system,'Helvetica Neue',sans-serif">baseline</text>
+      <rect width="86" height="32" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1.3" stroke-dasharray="3,2"/>
+      <circle cx="12" cy="16" r="3" fill="#fbbf24"/>
+      <text x="22" y="14" class="nm" style="font-size:11.5px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">Copilot</text>
+      <text x="22" y="27" class="sm" style="font-size:9px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">基线</text>
     </g>
-    <g transform="translate(84,260)" filter="url(#shadowSoft)">
-      <rect width="86" height="44" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.3"/>
-      <circle cx="14" cy="22" r="3.5" fill="#10b981"/>
-      <text x="24" y="20" class="nm" font-family="-apple-system,'Helvetica Neue',sans-serif">Claude</text>
-      <text x="24" y="34" class="sm" font-family="-apple-system,'Helvetica Neue',sans-serif">verified</text>
+    <g transform="translate(84,246)" filter="url(#shadowSoft)">
+      <rect width="86" height="32" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.3"/>
+      <circle cx="12" cy="16" r="3" fill="#10b981"/>
+      <text transform="matrix(0.85 0 0 1 3.3 0)" x="22" y="14" class="nm" style="font-size:11.5px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">Claude Code</text>
+      <text x="22" y="27" class="sm" style="font-size:9px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">已验证</text>
     </g>
-    <g transform="translate(176,260)" filter="url(#shadowSoft)">
-      <rect width="86" height="44" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.3"/>
-      <circle cx="14" cy="22" r="3.5" fill="#10b981"/>
-      <text x="24" y="20" class="nm" font-family="-apple-system,'Helvetica Neue',sans-serif">Qoder</text>
-      <text x="24" y="34" class="sm" font-family="-apple-system,'Helvetica Neue',sans-serif">verified</text>
+    <g transform="translate(176,246)" filter="url(#shadowSoft)">
+      <rect width="86" height="32" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.3"/>
+      <circle cx="12" cy="16" r="3" fill="#10b981"/>
+      <text x="22" y="14" class="nm" style="font-size:11.5px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">Qoder</text>
+      <text x="22" y="27" class="sm" style="font-size:9px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">已验证</text>
     </g>
-
-    <g transform="translate(129,314)" filter="url(#shadowSoft)">
-      <rect width="86" height="44" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1.3" stroke-dasharray="3,2"/>
-      <circle cx="14" cy="22" r="3.5" fill="#fbbf24"/>
-      <text x="24" y="20" class="nm" font-family="-apple-system,'Helvetica Neue',sans-serif">Cursor</text>
-      <text x="24" y="34" class="sm" font-family="-apple-system,'Helvetica Neue',sans-serif">baseline</text>
+    <g transform="translate(84,286)" filter="url(#shadowSoft)">
+      <rect width="86" height="32" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1.3" stroke-dasharray="3,2"/>
+      <circle cx="12" cy="16" r="3" fill="#fbbf24"/>
+      <text x="22" y="14" class="nm" style="font-size:11.5px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">Cursor</text>
+      <text x="22" y="27" class="sm" style="font-size:9px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">基线</text>
+    </g>
+    <g transform="translate(176,286)" filter="url(#shadowSoft)">
+      <rect width="86" height="32" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1.3" stroke-dasharray="3,2"/>
+      <circle cx="12" cy="16" r="3" fill="#fbbf24"/>
+      <text x="22" y="14" class="nm" style="font-size:11.5px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">Trae</text>
+      <text x="22" y="27" class="sm" style="font-size:9px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">基线</text>
+    </g>
+    <g transform="translate(84,326)" filter="url(#shadowSoft)">
+      <rect width="178" height="32" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1.3" stroke-dasharray="3,2"/>
+      <circle cx="12" cy="16" r="3" fill="#fbbf24"/>
+      <text x="22" y="14" class="nm" style="font-size:11.5px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">Antigravity</text>
+      <text x="22" y="27" class="sm" style="font-size:9px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">基线</text>
     </g>
 
     <text x="84" y="374" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">同一 .sopify/ 项目</text>
@@ -227,8 +238,8 @@
 
   <!-- Tagline (centered) -->
   <line x1="70" y1="490" x2="1330" y2="490" stroke="#d1d5db" stroke-width="1"/>
-  <text x="700" y="524" text-anchor="middle" class="tag" font-family="Georgia,'Times New Roman','Songti SC',serif">"宿主负责执行，Skill 提供工作流规则，.sopify/ 保留项目记录。"</text>
-  <text x="700" y="548" text-anchor="middle" class="sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">宿主做事 · Skill 约束流程 · 项目记录随 Git 携带 · 明确要求后接续 · 显式收口</text>
+  <text x="700" y="524" text-anchor="middle" class="tag" font-family="Georgia,'Times New Roman','Songti SC',serif">“AI 编程的方案与验收证据纳入 Git 版本管理，跨工具、跨成员、跨 Agent 均可接续。”</text>
+  <text x="700" y="548" text-anchor="middle" class="sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">宿主做事 · Skill 约束流程 · 方案与证据纳入 Git 版本管理 · 明确要求后接续 · 显式收口</text>
 
   <!-- Legend -->
   <g transform="translate(70,590)">
@@ -242,10 +253,10 @@
     <text x="396" y="2" class="sm" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">builtin skill（方法论）</text>
 
     <circle cx="560" cy="-3" r="3.5" fill="#10b981"/>
-    <text x="570" y="2" class="sm" font-family="-apple-system,'Helvetica Neue',sans-serif">protocol verified</text>
+    <text x="570" y="2" class="sm" font-family="-apple-system,'Helvetica Neue',sans-serif">协议已验证</text>
 
     <circle cx="690" cy="-3" r="3.5" fill="#fbbf24"/>
-    <text x="700" y="2" class="sm" font-family="-apple-system,'Helvetica Neue',sans-serif">baseline supported</text>
+    <text x="700" y="2" class="sm" font-family="-apple-system,'Helvetica Neue',sans-serif">基线支持</text>
   </g>
 
   <text x="1330" y="622" text-anchor="end" class="foot" font-family="-apple-system,'Helvetica Neue',sans-serif">Sopify · 2026-08</text>

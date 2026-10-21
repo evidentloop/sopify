@@ -1,0 +1,28 @@
+{
+  "evidence": {
+    "orca": {
+      "dispatch": "ctx_7feb0541b8c2",
+      "run": "run_1614b5c068d1",
+      "task": "task_e686e4a62a20"
+    },
+    "reports": [
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w5/t3b-accept-gemini.md"
+    ],
+    "result": "isolated worktree at 1ae94c2: 420 passed and preflight green; real agy session in a new repo called the helper per the rule, created the project marker, wrote state through the writer; Doctor workspace_bundle_manifest changed from MISSING_BUNDLE to pass",
+    "reviewer": "antigravity acceptor",
+    "tasks": [
+      "T3b"
+    ]
+  },
+  "provenance": {
+    "host": "claude-code",
+    "plan_id": "20261020_sopify_narrow_focus",
+    "plan_version": "sha256:ce988933988521e04e9a9d3f762f03f6b4654bbfa78729b265530484d052cccf",
+    "receipt_id": "verify_006",
+    "reviewer": "antigravity",
+    "timestamp": "2026-10-21T02:53:40+00:00",
+    "written_by": "plan owner"
+  },
+  "timestamp": "2026-10-21T02:53:40+00:00",
+  "verdict": "pass"
+}

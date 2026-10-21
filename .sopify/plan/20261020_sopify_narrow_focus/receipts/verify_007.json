@@ -1,0 +1,32 @@
+{
+  "evidence": {
+    "cold_read": "first screen 2/10 (old) -> 8/10 (new), full 10/10",
+    "newbie": "answered all five questions correctly from the README alone; operational gaps (Python traceback, bare ~go hint, ask-then-write wording, repo file table, teammate ignore rule) fixed and re-verified",
+    "pending": "user sign-off on README and pages",
+    "reports": [
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w5/images-accept-qoder.md",
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w5/t10-accept-gemini.md",
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w5/newbie-answers.md",
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w5/final-accept-gemini.md"
+    ],
+    "reviewers": [
+      "qoder (images, 5/5)",
+      "antigravity acceptor (README and pages, then final)",
+      "fresh qoder session (newbie test)"
+    ],
+    "tasks": [
+      "T10"
+    ]
+  },
+  "provenance": {
+    "host": "claude-code",
+    "plan_id": "20261020_sopify_narrow_focus",
+    "plan_version": "sha256:5ef0b1fd6d95b0eb094338efdfef8f311d8b10c8b8fd2ac856cab1caa8e774ac",
+    "receipt_id": "verify_007",
+    "reviewer": "qoder+antigravity+fresh-qoder",
+    "timestamp": "2026-10-21T04:26:53+00:00",
+    "written_by": "plan owner"
+  },
+  "timestamp": "2026-10-21T04:26:53+00:00",
+  "verdict": "pass_pending_user"
+}

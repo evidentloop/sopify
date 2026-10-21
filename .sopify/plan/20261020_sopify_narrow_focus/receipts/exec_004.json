@@ -1,0 +1,41 @@
+{
+  "evidence": {
+    "checks": {
+      "git_diff_check": "clean",
+      "lines": "176 <= 180",
+      "test_check_readme_links": "4 passed"
+    },
+    "deliberately_not_done_by_b": "no receipt, no task tick: plan assigns writer use to the owner and the session had no writer tool",
+    "end": {
+      "plan_version_changed": false,
+      "sha": "4b27f17"
+    },
+    "executor_a": "claude-code (plan author, owner)",
+    "executor_b": "qoder-cli 1.1.74 fresh session, prompt was only '~go'",
+    "read_chain": "active_plan -> plan.md -> current_handoff -> tasks.md (T6b) -> audits/w2/t7-probe-gemini.md; receipts listed but not opened",
+    "reports": [
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w4/t9-qoder-transcript-summary.md"
+    ],
+    "rules_installed": "candidate a9a0f95 in ~/.qoder (07-21 whole-file header migrated to one managed block, other 8 user skills kept)",
+    "start": {
+      "handoff_written_at": "2026-10-20T10:18:32+00:00",
+      "plan_version": "sha256:06d91876340537e8dc650034635d584fef9f5ef985339380fc03b206364ca5d2",
+      "sha": "a9a0f95"
+    },
+    "tasks": [
+      "T6b",
+      "T9"
+    ]
+  },
+  "provenance": {
+    "executor": "qoder",
+    "host": "claude-code",
+    "plan_id": "20261020_sopify_narrow_focus",
+    "plan_version": "sha256:04af4fd7a39b30c665f2a05990c44ddf22bc66adc7d7424cf05165a354557cb8",
+    "receipt_id": "exec_004",
+    "timestamp": "2026-10-21T01:51:11+00:00",
+    "written_by": "plan owner"
+  },
+  "timestamp": "2026-10-21T01:51:11+00:00",
+  "verdict": "implemented"
+}

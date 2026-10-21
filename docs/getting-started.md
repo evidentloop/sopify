@@ -123,7 +123,7 @@ curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/instal
 curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | bash -s -- --target copilot
 ```
 
-After install, use `~go` in your AI host to start a managed workflow.
+After install, use `~go` in your AI host to start a managed workflow. Before the first managed write, the entry instructions call the installed workspace-binding helper; non-interactive mode stops without creating a marker. State writes use the `sopify_writer` library from that payload's current bundle.
 
 ### Copilot
 
@@ -258,13 +258,13 @@ what changed.
 
 ## Removing Sopify
 
-```bash
-rm -rf .sopify/
-rm -f .github/copilot-instructions.md
-```
-
-Then remove the `# BEGIN sopify-managed` / `# END sopify-managed` block from
-your `.gitignore`.
+Keep `.sopify/`: it contains your plans, decisions and history.
+Remove only the `<!-- BEGIN SOPIFY MANAGED BLOCK -->` … `<!-- END SOPIFY MANAGED BLOCK -->`
+section, including its markers, from the relevant instruction file:
+Copilot `.github/copilot-instructions.md`, Claude `~/.claude/CLAUDE.md`,
+Codex `~/.codex/AGENTS.md`, or Qoder `~/.qoder/AGENTS.md`; keep all outside content.
+For an older installation without markers, reinstall once to migrate it first.
+You may also remove `skills/sopify/` and `sopify/` under the relevant host's home directory.
 
 ## Further Reading
 

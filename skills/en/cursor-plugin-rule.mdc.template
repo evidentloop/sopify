@@ -10,7 +10,7 @@ This is the user-level Cursor Plugin rule for the IDE. When the IDE loads it, it
 
 ## Entry for every Agent request
 
-1. Read `{{skills_root}}/references/shared-writing-dna.md` before producing any Sopify response. Do not merely claim that it was referenced.
+1. Read `{{skills_root}}/references/shared-writing-dna.md` and `{{skills_root}}/references/output-contract.md` before producing any Sopify response. Do not merely claim that they were referenced.
 2. Classify intent first: `consult_readonly`, `quick_fix`, `new_plan`, `continue_plan`, or `finalize`. Never resume merely because an active plan exists.
 3. Treat `AGENTS.md`, `CLAUDE.md`, project Rules, and `.sopify/` in the current target repository as project facts. A multi-repository parent directory is not automatically the target repository.
 4. Answer `consult_readonly` directly and read-only without loading a phase Skill. `quick_fix` may modify user-authorized product code, but neither mode resumes an old plan or directly writes state, handoff, receipts, or the knowledge base.
@@ -24,15 +24,18 @@ This is the user-level Cursor Plugin rule for the IDE. When the IDE loads it, it
 
 ## Analysis gate and managed entry
 
+- `~go` executes for the current intent or resumes a valid active plan; `~go plan` plans only; `~go finalize` explicitly closes out and archives. Development's `ready_to_archive` state does not authorize automatic archiving.
 - `analyze` must read `analyze/SKILL.md` and call its existing `scripts/score_requirement.py` for the deterministic scoring gate. If completeness is below `workflow.require_score` (7 by default), ask questions before materializing a plan. Treat `auto_decide` as `false` when neither project nor global configuration sets it explicitly.
 - When clarification is needed and the question fits a finite set of options, prefer Cursor's built-in AskQuestion (`ask_question`) when the current conversation exposes it. It is not an MCP tool; do not use `GetMcpTools` to decide that it is unavailable. Use the questionnaire's free-form input instead of adding a synthetic “Other” option; if the current conversation does not expose the tool or the call fails, fall back to a short text question. Ask open-ended factual questions in text. Until the questionnaire is answered, do not enter Design/Develop or write plan, state, handoff, or receipts.
 - Only `new_plan`, `continue_plan`, `finalize`, or an explicitly managed develop request enters the four-step read chain:
   `state/active_plan.json` → `plan/<id>/plan.md` → `state/current_handoff.json` → `plan/<id>/receipts/`.
+- Before the first managed write, if `.sopify/sopify.json` is absent or, in a Git repository, `git check-ignore -q .sopify/state/active_plan.json` reports that state is not ignored, call `python3 {{config_dir}}/sopify/helpers/bootstrap_workspace.py --workspace-root <project_root> --request <current_request> --interaction-mode <interactive|non_interactive>` with the full current request and actual interaction mode. Continue only after binding succeeds; non-interactive mode creates no marker, and other outcomes require stopping as directed.
+- Writer import: read `bundle_template_dir` from `{{config_dir}}/sopify/payload-manifest.json`, resolve it relative to that manifest directory and expand `~`, prepend the result to Python `sys.path`, then `from sopify_writer import ProtocolStore`. Use the library API, not a CLI.
 - Machine truth may be written only through the installed payload's `sopify_writer` library API. Do not invent `python3 -m sopify_writer`; do not edit state, handoff, or receipts directly.
 
 ## Support boundary and output
 
 - Cursor remains `BASELINE_SUPPORTED`: file presence or a single model claim is not protocol-level verification; support conclusions require observable host evidence.
 - Agent CLI installs a managed-first top-level Skill by default. Model selection is best-effort, and Sopify is entered only after the top-level Skill and this Rule were actually read. User Hooks remain available where Cursor loads them.
-- Follow the already-read `{{skills_root}}/references/shared-writing-dna.md`. After entering a phase Skill, read `{{skills_root}}/references/output-contract.md`. For consult, give only the conclusion and necessary evidence; do not add a banner, `Changes`, or `Next` to fill a template.
+- Follow the shared writing rules and output contract already read. For consult, give the conclusion and necessary evidence, retain `Changes` / `Next` as required, and omit empty template sections.
 - Do not modify Cursor settings, proxy, model, account, API key, keychain, or MCP. Cloud Agents are out of scope.

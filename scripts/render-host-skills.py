@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Render host-specific headers from header.md.template + hosts.yaml.
 
-Local maintainer helper — NOT part of release / CI / pre-commit pipeline.
-Used by sync-skills.sh to generate gitignored Codex/Skills/ and Claude/Skills/
-local cache directories.
+Local maintainer preview helper. Use stdout or --output for a rendered header;
+it does not install Skills or write host configuration.
 
 Usage:
     python3 scripts/render-host-skills.py --hosts-file skills/hosts.yaml --lang en --host claude
@@ -28,74 +27,16 @@ import re
 import sys
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
-def _parse_hosts_yaml(text: str) -> dict:
-    """Minimal parser for skills/hosts.yaml.
-
-    Supports the two-level structure used in this repo:
-        hosts:
-          host_id:
-            key: value
-
-    Values: bare strings, "quoted strings", null, true/false.
-    Does NOT support arrays, anchors, flow mappings, or multi-line values.
-    """
-    result: dict[str, dict[str, object]] = {}
-    current_host: str | None = None
-    in_hosts = False
-
-    for raw_line in text.splitlines():
-        stripped = raw_line.strip()
-        if not stripped or stripped.startswith("#"):
-            continue
-
-        indent = len(raw_line) - len(raw_line.lstrip())
-
-        if stripped == "hosts:":
-            in_hosts = True
-            continue
-
-        if not in_hosts:
-            continue
-
-        # Top-level key resets hosts section
-        if indent == 0:
-            in_hosts = False
-            continue
-
-        # Host id line (2-space indent): "  host_id:"
-        if indent == 2 and stripped.endswith(":"):
-            current_host = stripped[:-1].strip()
-            result[current_host] = {}
-            continue
-
-        # Property line (4+ space indent): "    key: value"
-        if indent >= 4 and current_host is not None and ":" in stripped:
-            key, _, raw_value = stripped.partition(":")
-            key = key.strip()
-            raw_value = raw_value.strip()
-
-            # Parse value
-            if raw_value == "null":
-                value: object = None
-            elif raw_value == "true":
-                value = True
-            elif raw_value == "false":
-                value = False
-            elif raw_value.startswith('"') and raw_value.endswith('"'):
-                value = raw_value[1:-1]
-            else:
-                value = raw_value
-
-            result[current_host][key] = value
-
-    return result
+from scripts._yaml_subset import load_yaml  # noqa: E402
 
 
 def _load_hosts(hosts_file: Path) -> dict:
     """Load hosts.yaml and return {"hosts": {...}} structure."""
-    text = hosts_file.read_text(encoding="utf-8")
-    return {"hosts": _parse_hosts_yaml(text)}
+    return load_yaml(hosts_file.read_text(encoding="utf-8"))
 
 
 def render_header(template_path: Path, host_vars: dict) -> str:

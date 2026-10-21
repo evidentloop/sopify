@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 import tempfile
 
 import pytest
@@ -95,7 +96,13 @@ def test_behavior_scenarios_are_versioned_and_bounded() -> None:
         observed_after = payload["copilot_after"][locale]
         assert current.keys() == baseline.keys() == observed_after.keys()
         assert all(current[metric] < baseline[metric] for metric in current)
-        assert all(observed_after[metric] < baseline[metric] for metric in observed_after)
+        assert current == observed_after
+        header = (source_root / HEADER_TEMPLATE_NAME).read_text(encoding="utf-8")
+        assert payload["header_after"][locale] == {
+            "characters": len(header),
+            "bytes": len(header.encode("utf-8")),
+            "lines": len(header.splitlines()),
+        }
 
 
 @pytest.mark.parametrize("language", ["zh", "en"])
@@ -134,6 +141,10 @@ def test_phase_owners_keep_their_boundaries(language: str) -> None:
     assert "common root cause" in develop or "共同根因" in develop
     assert "knowledge_sync" in kb
     assert "sopify_writer" in kb
+    assert "EARS" in analyze
+    assert "可选" in analyze or "Optional" in analyze
+    assert "同一复现" in develop or "same reproduction" in develop
+    assert "不能复现" in develop or "cannot be reproduced" in develop
 
 
 @pytest.mark.parametrize("language", ["zh", "en"])
@@ -152,6 +163,20 @@ def test_copilot_single_file_has_no_script_source_or_dangling_path(language: str
     assert "references/assets/scripts" not in rendered
     assert "import argparse" not in rendered
     assert "Ready" in rendered and "Needs decision" in rendered
+    assert not re.search(r"`(?:\.\./)?(?:assets|references|scripts)/[^`]*`", rendered)
+    assert "name: analyze" not in rendered and "name: templates" not in rendered
+    assert "/sopify.config.yaml`" not in rendered.replace("./sopify.config.yaml`", "")
+    # Preserve the substantive rules and document structures; only duplicate
+    # entry/navigation and reply examples are omitted from this surface.
+    for stage in ("analyze", "design", "develop"):
+        assert f"<!-- inlined: {stage}/references/{stage}-rules.md -->" in rendered
+    for template in ("plan", "tasks", "design", "adr"):
+        assert f"<!-- inlined: design/assets/{template}-template.md -->" in rendered
+    assert "knowledge_sync" in rendered and "sopify_writer" in rendered
+    assert "## Context / Why" in rendered and "## Constraints / Not-in-scope" in rendered
+    assert "Added" in rendered and "Changed" in rendered and "Removed" in rendered
+    assert "EARS" in rendered and "TDD" in rendered
+    assert "<!-- inlined: develop/assets/output-success.md -->" not in rendered
 
 
 def test_qoder_real_install_consumes_header_and_skill_tree() -> None:
@@ -205,12 +230,12 @@ def test_static_pages_keep_release_metadata(
         (
             "index.html",
             "Cursor · baseline",
-            "Codex, Claude, Qoder, Copilot, and Cursor targets",
+            "Codex, Claude Code, Qoder, Copilot, Cursor, Antigravity, and Trae targets",
         ),
         (
             "zh-CN.html",
             "Cursor · 基线支持",
-            "支持 Codex、Claude、Qoder、Copilot 与 Cursor",
+            "支持 Codex、Claude Code、Qoder、Copilot、Cursor、Antigravity 与 Trae",
         ),
     ],
 )

@@ -1,200 +1,89 @@
 # Sopify 发布流程
 
-面向维护者。每次发布 stable release 按此流程操作。
+面向维护者，作为 hook、版本同步、stable assets、发布与正式 smoke 的唯一步骤来源。stable 必须来自已合入 `main` 的提交；commit、push、merge、发布等动作按当前授权执行。
 
----
+## 1. 设置 hook 与准备说明
 
-## 前置（每个 clone 只需一次）
+每个 clone 启用一次：
 
 ```bash
 git config core.hooksPath .githooks
 ```
 
----
+在 `CHANGELOG.md` 的 `[Unreleased]` 写简短的用户变化或维护命令说明，保留该标题。正常提交流程中，pre-commit 先执行 preflight，再由 release-sync 以 `YYYY-MM-DD.HHMMSS` build version 同步 README badge、CHANGELOG、四个 header/Rule 版本源及 golden，并将受管文件加入同一提交。commit-msg 只在存在这次同步记录时附加 Release-Sync / Release-Version / Release-Date。
 
-## 发布步骤
+`[Unreleased]` 为空时，release-sync 可按 staged files 生成分类摘要；它不代替维护者审核。共享 prompt 的有意变更应先按 [贡献指南](../../CONTRIBUTING_CN.md) 审查快照。
 
-### 1. preflight 检查
+## 2. 执行 preflight，确认待发布版本
+
+使用 Python 3.11+：
 
 ```bash
 bash scripts/release-preflight.sh
-```
-
-依次跑：版本一致性、golden snapshot、builtin catalog 漂移检测、单元测试、skill eval 质量门禁。全部通过再继续。
-
-### 2. 确认版本号
-
-版本号复用现有 build version，不新发明。跑：
-
-```bash
 bash scripts/check-version-consistency.sh
 ```
 
-通过后输出的版本号即为本次 release tag，例如 `2026-03-25.165725`。如果有新提交要发布，先按下方步骤更新版本。
+preflight 只检查：版本、golden、builtin catalog、全部 `tests/`、五个协议 smoke 和 payload smoke；不会自动刷新或暂存漂移的 golden。失败先处理原因。
 
-#### 需要发新版本时：更新版本号
-
-**CHANGELOG.md** — 在 `[Unreleased]` 下方插入新版本段：
-
-```markdown
-## [Unreleased]
-
-## [2026-03-26.103000] - 2026-03-26
-
-### Changed
-- ...
-
-## [2026-03-25.165725] - 2026-03-25
-```
-
-`[Unreleased]` 行必须保留。版本行格式固定为 `## [TAG] - YYYY-MM-DD`。
-
-**README.md / README.zh-CN.md** — 替换 version badge 中的版本号（shields.io 格式：`-` 写成 `--`）：
-
-```
-version-2026--03--26.103000-orange.svg
-```
-
-**四个发布版本源文件顶部注释**：
-
-```
-skills/zh/header.md.template  →  <!-- SOPIFY_VERSION: 2026-03-26.103000 -->
-skills/en/header.md.template
-skills/zh/cursor-plugin-rule.mdc.template
-skills/en/cursor-plugin-rule.mdc.template
-```
-
-更新后验证：
+正常 hook 已处理版本更新，不要再手工改四份版本源。确需显式同步时使用现有命令，再重新验证并提交：
 
 ```bash
-bash scripts/check-version-consistency.sh
-# 预期：Version consistency check passed: Version: 2026-03-26.103000
+bash scripts/release-sync.sh 2026-08-30.001152 2026-08-30  # 示例；替换为实际新版本和日期
 ```
 
-提交：
+版本段格式为 `## [TAG] - YYYY-MM-DD`。待合入后，确认发布提交、版本和 CI 结果，以下 `RELEASE_TAG` 取版本一致性检查的实际输出。
+
+## 3. 渲染 stable assets
+
+根目录 `install.sh` / `install.ps1` 保持 dev 默认值，不直接作为 stable asset 上传：
 
 ```bash
-TAG="2026-03-26.103000"
-git add CHANGELOG.md README.md README.zh-CN.md \
-  skills/zh/header.md.template skills/en/header.md.template \
-  skills/zh/cursor-plugin-rule.mdc.template skills/en/cursor-plugin-rule.mdc.template
-git commit -m "release: $TAG"
-git push
+RELEASE_TAG="2026-08-30.001152"  # 替换为已确认的发布版本
+RELEASE_ASSETS_DIR="$(mktemp -d)"
+python3 scripts/render-release-installers.py --release-tag "$RELEASE_TAG" --output-dir "$RELEASE_ASSETS_DIR"
+rg 'SOURCE_CHANNEL|SOURCE_REF' "$RELEASE_ASSETS_DIR/install.sh"
+rg 'SourceChannel|SourceRef' "$RELEASE_ASSETS_DIR/install.ps1"
 ```
 
-### 3. 渲染 stable release asset
+两份产物的 channel 必须为 `stable`，source ref 必须等于 `RELEASE_TAG`。
 
-**不要直接上传仓库根目录的 `install.sh` / `install.ps1`**，它们是 dev 版（`SOURCE_CHANNEL=dev`）。必须渲染：
+## 4. 发布 GitHub Release
+
+创建以该 tag 指向已合入 `main` 提交的 GitHub Release，说明取自对应 CHANGELOG 段。上传刚渲染的 `install.sh`、`install.ps1`，公开发布并设置为 latest；记录 tag、代码 SHA 和 asset URL。不要上传工作区的 dev wrapper。
+
+## 5. 正式远端 smoke
+
+从公开 latest 下载，在临时 home 验证；示例使用 Codex，涉及其他宿主时再覆盖相应 target：
 
 ```bash
-TAG="2026-03-25.165725"   # 替换为实际版本号
-OUT_DIR="$(mktemp -d)"
-python3 scripts/render-release-installers.py --release-tag "$TAG" --output-dir "$OUT_DIR"
+SMOKE_ROOT="$(mktemp -d)"
+curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh -o "$SMOKE_ROOT/install.sh"
+env HOME="$SMOKE_ROOT/home" bash "$SMOKE_ROOT/install.sh" --target codex:zh-CN --verbose
 ```
 
-验证渲染结果：
+保留输出，核对 `source channel: stable`、`resolved source ref` 等于发布 tag，以及 `asset name: install.sh`。确认受管文件放置正确；安装 smoke 不代替真实宿主加载或行为验证。
 
-```bash
-grep "SOURCE_CHANNEL\|SOURCE_REF" "$OUT_DIR/install.sh"
-# SOURCE_CHANNEL="stable"
-# SOURCE_REF="2026-03-25.165725"
+本地 `scripts/check-install-payload-bundle-smoke.py` 是 preflight 的源码验证，不能代替这个正式远端 smoke。远端失败时检查公开状态、latest、asset 名称和 source ref，不能把本地通过写成 release 已完成。
 
-grep "SourceChannel\|SourceRef" "$OUT_DIR/install.ps1"
-# $SourceChannel = "stable"
-# $SourceRef = "2026-03-25.165725"
-```
+## 6. 核对公开文档
 
-### 4. 创建 GitHub Release
-
-前往 `https://github.com/evidentloop/sopify/releases/new`：
-
-1. Tag：填入 `$TAG`，目标分支选 `main`
-2. Title：`$TAG`（或加可读描述）
-3. Description：粘贴 CHANGELOG 本版本内容
-4. 上传 `$OUT_DIR/install.sh` 和 `$OUT_DIR/install.ps1`（上传渲染结果，不是仓库原文件）
-5. 勾选 **Set as the latest release**
-6. Publish release
-
-### 5. post-release smoke 验证
-
-等约 30 秒 CDN 生效后：
-
-```bash
-# 快速验证（推荐）
-HOME="$(mktemp -d)" bash -c \
-  'curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | bash -s -- --target codex:zh-CN --verbose'
-
-# 本次 release 包含 Cursor 变更时，再验证 Cursor
-HOME="$(mktemp -d)" bash -c \
-  'curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | bash -s -- --target cursor:zh-CN --verbose'
-```
-
-或用 smoke 脚本：
-
-```bash
-python3 scripts/check-install-payload-bundle-smoke.py --target codex:zh-CN
-```
-
-默认安装输出保持精简；发布 smoke 使用 `--verbose`，输出里必须出现：
-
-```
-source channel: stable
-resolved source ref: 2026-03-25.165725   ← 与 TAG 一致
-asset name: install.sh
-```
-
-**验证未通过前不要改 README。**
-
-### 6. 切换 README 首屏（smoke 通过后）
-
-确认 `README.md` / `README.zh-CN.md` 安装区块已指向 stable one-liner，主命令不带 `--workspace`，inspect-first 变体保留。`raw/main` 入口只出现在 `CONTRIBUTING*`，不进 README 首屏。
-
-改完后验证：
+公开 README 仍指向 latest stable，主命令不带 `--workspace`；开发用 `raw/main` 路径留在开发资料中。只有实际发布和远端 smoke 通过，才宣布发布完成。
 
 ```bash
 python3 scripts/check-readme-links.py
 bash scripts/check-version-consistency.sh
 ```
 
-提交：
+## 维护调试开关
 
-```bash
-git add README.md README.zh-CN.md
-git commit -m "docs: switch README install to stable one-liner $TAG"
-git push
-```
+仅在维护／调试中显式使用；跳过检查不等于通过发布验收。
 
----
+| 变量 | 作用 |
+|---|---|
+| `SOPIFY_DISABLE_RELEASE_HOOK=1` | 关闭整个 release hook 链 |
+| `SOPIFY_SKIP_RELEASE_PREFLIGHT=1` | 跳过 hook 内的 preflight |
+| `SOPIFY_AUTO_DRAFT_CHANGELOG=0` | 关闭空 Unreleased 的自动草稿 |
+| `SOPIFY_RELEASE_HOOK_DRY_RUN=1` | 只报告是否会触发发布同步 |
+| `SOPIFY_FORCE_RELEASE_SYNC=1` | 忽略路径筛选，触发同步 |
 
-## 故障排查
-
-**上传了未渲染的 `install.sh`**：立即在 Release 页删除该 asset，重新渲染后上传。`--verbose` 输出为 `source channel: dev` 时，需修复 asset 并重新安装。
-
-**smoke 失败**：确认 Release 不是 draft、asset 文件名大小写正确（`install.sh`）、已勾选 "Set as the latest release"。
-
-**临时跳过 git hook**：`SOPIFY_DISABLE_RELEASE_HOOK=1 git commit ...`，仅限调试。
-
----
-
-## 快速参考
-
-```bash
-# 1. preflight
-bash scripts/release-preflight.sh
-
-# 2. 确认版本
-bash scripts/check-version-consistency.sh
-TAG="2026-03-25.165725"   # 替换为实际版本
-
-# 3. 渲染 asset
-OUT_DIR="$(mktemp -d)"
-python3 scripts/render-release-installers.py --release-tag "$TAG" --output-dir "$OUT_DIR"
-# 验证：grep "SOURCE_CHANNEL\|SOURCE_REF" "$OUT_DIR/install.sh"
-
-# 4. 上传到 GitHub Release（手动）
-
-# 5. smoke
-HOME="$(mktemp -d)" bash -c \
-  'curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | bash -s -- --target codex:zh-CN --verbose'
-# 确认：source channel: stable，resolved source ref: $TAG
-```
+误上传 dev asset 时，重新按第 3 步渲染并替换，随后重跑正式 smoke。署名政策只在 [贡献指南](../../CONTRIBUTING_CN.md) 维护。

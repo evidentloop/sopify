@@ -1,0 +1,25 @@
+{
+  "evidence": {
+    "feature_head": "8ae04d1edd127b266d06e36f36a8145c1e71b6b3",
+    "follow_up_plan_archived": "20260828_cursor_agent_cli_entry (PR #73)",
+    "latest_plan_receipt": "verify_007",
+    "merge_commit": "1a386ffeeff530d75527137eb75e26b08809e7ad",
+    "merged_at": "2026-08-22T06:03:32Z",
+    "pull_request": 71,
+    "release": "2026-08-22.134737",
+    "superseded_handoff": {
+      "latest_receipt": "verify_005",
+      "mr_state": "blocked_by_gh_auth",
+      "written_at": "2026-08-22T03:51:00+00:00"
+    }
+  },
+  "provenance": {
+    "host": "claude-code",
+    "plan_id": "20260819_cursor_support",
+    "plan_version": "sha256:2df4073325e3cf657226230f58b37479028d74375becc9a4d625ec5d34c4fb53",
+    "receipt_id": "final",
+    "scope": "post-merge explicit finalize authorized by user on 2026-10-20"
+  },
+  "timestamp": "2026-10-20T06:14:08+00:00",
+  "verdict": "finalized"
+}

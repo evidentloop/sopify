@@ -1,9 +1,9 @@
 # 项目技术约定
 
-## Runtime 快照
+## 项目概况
 - 项目名：sopify
 - 工作目录：项目根目录
-- 运行时目录：`.sopify`
+- 项目资产目录：`.sopify`
 - 根配置：`sopify.config.yaml`
 - 已识别清单：暂未识别
 - 已识别顶层目录：tests、docs、scripts
@@ -16,7 +16,7 @@
 ## Plan 归档约定
 - 方案级别固定为 `light / standard / architecture`；分别包含 `plan.md`、`plan.md + tasks.md`、`plan.md + tasks.md + design.md`。
 - 所有方案都以 `plan.md` 为语义入口；`plan_version` 绑定该级别全部语义文件，audits、receipts、assets 与 state 不参与版本。
-- finalize 前由宿主完成最终语义状态更新，再由 `sopify_writer.finalize_plan` 校验版本、写 final/history receipt、迁移完整目录；归档成功后才清 runtime state。
+- finalize 前由宿主完成最终语义状态更新，再由 `sopify_writer.finalize_plan` 校验版本、写 final/history receipt、迁移完整目录；归档成功后才清协议 state。
 - Plan 归档到 `history/` 后，`plan/` 下不得保留同名原件，避免双驻留。
 
 ## 文档边界
@@ -43,9 +43,4 @@
 
 ## Develop 质量约定
 
-- `continue_host_develop` 仍是宿主负责真实代码修改的正式模式；sopify_writer 负责 handoff 落盘与 receipts 写回。
-- develop 质量循环的正式发现顺序固定为：`.sopify/project.md verify` > 项目原生脚本/配置 > `not_configured` 可见降级。
-- develop 质量结果的正式字段固定为：`verification_source / command / scope / result / reason_code / retry_count / root_cause / review_result`。
-- `result` 的稳定值域固定为：`passed / retried / failed / skipped / replan_required`；`root_cause` 的稳定值域固定为：`logic_regression / environment_or_dependency / missing_test_infra / scope_or_design_mismatch`。
-- 当 `result == replan_required` 或 `root_cause == scope_or_design_mismatch` 时，宿主不得继续盲修；必须停下来向用户报告根因并等待方向指示。
-- 当前仓库不因 Python 3.11+ 基线而假定单一默认 verify 命令；未识别到稳定命令时应走 `not_configured` 可见降级。
+任务质量循环、验证字段、重试与复审规则以 [Develop 规则](../skills/zh/skills/sopify/develop/references/develop-rules.md) 为唯一详细来源；当前仓库的验证命令与协作边界见 [贡献指南](../CONTRIBUTING_CN.md)。`continue_host_develop` 表示宿主负责真实修改，writer 负责协议状态与回执。

@@ -1,43 +1,18 @@
 # Sopify 宿主接入规范 (Protocol v0)
 
-本文定位: 宿主接入 Sopify 的规范入口。Convention 最小合规（§1–§5）+ Host Protocol Entry Contract（§8）均在本文覆盖。
+本文定义 Convention 最小合规（§1–§5）、外部证据与主体契约（§6–§7）及 Host Protocol Entry Contract（§8）。架构与取舍见 [design.md](./design.md)，接入步骤见 [host-onboarding](../../docs/host-onboarding.md)。
 
-> **P8 术语映射**：P8 后 runtime 退场，以下术语已更新——"Validator" → protocol admission（sopify_writer 结构级校验 + host prompt 语义引导）；"ExecutionAuthorizationReceipt / EAR" → receipts 证据链（`plan/<id>/receipts/*.json` + `history/<id>/receipt.md`）；"runtime gate" → Host Protocol Entry Contract（§8）；"deep_verified" → `protocol_verified`。文中旧术语保留处均为 legacy reference 或审计历史上下文。
+runtime gate、deep runtime 集成及执行前 EAR 已在 P8 退场；历史背景见 [P8 归档](../history/2026-06/20260605_p8_protocol_kernel_runtime_retirement/plan.md) 和 [ADR-017](./architecture-decision-records/ADR-017.md)。现行文中的 Validator 指协议准入逻辑，由 writer 的结构/版本校验与宿主语义判断承担，不代表独立进程。
 
-**阅读地图：**
-
-| 宿主能力 | 需要阅读的章节 |
+| 读者 | 入口 |
 |---|---|
-| **convention_only** — 只按目录约定读写 blueprint/plan/receipt | §1–§5 |
-| **payload_capable** — 已安装 payload bundle，可消费 prompt asset | §1–§5 + §8 + prompt asset |
-| **deep_verified** — ~~完整 runtime gate / handoff / checkpoint~~ | [RETIRED in P8] 原 deep runtime 集成路径退场；§8 替换为 Host Protocol Entry Contract |
+| 普通用户 | [How Sopify Works](../../docs/how-sopify-works.md) |
+| Host / LLM 日常使用 | 已安装 prompt 中的 §8 摘要，按意图读取方案 |
+| Convention 接入者 | §1–§5 |
+| 安装 payload 的宿主 | §1–§5 + §8 + prompt assets |
+| adapter / tooling 作者 | 按需查 §6–§8 和 schema；只在协议变更时全文复核 |
 
-> **术语解耦**：本文承载文档披露梯度的入口定义，以 protocol 章节为主轴，后续层级衔接 prompt asset 与架构参考。KB SKILL 中的 L0/L1/L2/L3 是知识持久化分层（index → stable → active → archive），描述 AI 运行时的上下文消费顺序，两者不是同一套模型。
-
-**文档披露梯度：**
-
-| Layer | 名称 | 覆盖 | 定位 |
-|-------|------|------|------|
-| **0** | Protocol | §1–§3 | 协议基础：目录约定、必备文件、宿主义务 |
-| **1** | Lifecycle | §4–§5 | 理解验证：生命周期样例、合规自检 |
-| **2** | Integration | §6–§8 + prompt asset | 集成能力：外部契约、主体身份、Host Protocol Entry Contract |
-| **3** | Reference | design.md · ADR-016 · ADR-017 | 架构参考：不进 prompt，不面向接入者 |
-
-与宿主能力梯度的对应：convention_only 读完 Layer 0–1（§1–§5）；payload_capable 在 Layer 0–1 基础上加 prompt asset + §8；deep_verified ~~完整读至 Layer 0–2~~ [RETIRED in P8]，原 deep runtime 集成路径退场，新宿主走 §8 Host Protocol Entry Contract。Prompt asset 是 payload 的能力附加面，不单独改变章节阅读层级。
-
-**权限边界：**
-
-- 最小合规看本文；架构分层与核心契约细节以 `design.md` / ADR 为准
-- `design.md` 负责架构分层、削减目标、protocol kernel、核心契约细节（含 state 文件、checkpoint、knowledge_sync）
-- `ADR-016` 负责 Protocol-first 决策理据与演进路线
-- `ADR-017` 负责 ActionProposal / Receipt 字段定义（ExecutionAuthorizationReceipt 已在 P8 退场，字段规范保留为历史参考）
-- 本文不重复上述内容，只定义"宿主能不能只看这一页就接入"
-
-**Reader Contract（读者定位）：**
-
-- 普通用户：读 README / docs/how-sopify-works，不需要本文
-- Host / LLM 日常运行：消费 prompt asset 中的 §8 摘要（4 步入口 + read budget + write boundary），不全量读本文
-- Host adapter / tooling author：按需读相关章节 + schemas；全文 review 仅在协议变更或 compliance 实现时
+本文拥有可携带契约；design.md 拥有架构、预算与默认工作流策略；ADR 保存设计理据。
 
 ## 1. 最小必备目录结构
 
@@ -112,18 +87,18 @@ Plan Snapshot 缺失不阻断审计和接续；host 回退读取完整 plan.md�
 
 宿主（Host）接入 Sopify 协议需满足以下最小义务：
 
-| 义务 | Convention 模式 | Runtime 模式 [RETIRED in P8] |
-|------|----------------|-------------|
-| **读取 blueprint** | 必须。每轮开始前消费 `project.md` + `blueprint/` | ~~同左~~ |
-| **结构化提案** | 推荐。将用户意图映射为 ActionProposal | ~~必须。走 Validator 写前授权~~ [RETIRED] |
-| **方案包管理** | 必须。创建/更新 `plan/` 下的方案包 | ~~必须。runtime 辅助~~ |
-| **归档** | 必须。完成后归档到 `history/` 并写 receipt | ~~必须。runtime 辅助~~ |
-| **knowledge_sync** | 推荐。归档时将稳定结论回写 blueprint | ~~必须~~ |
-| **checkpoint 响应** | 推荐。遇到 clarification/decision 时暂停等用户 | ~~必须。runtime 强制（详见 §8.2）~~ [RETIRED] |
-| **handoff 消费** | 推荐。读取上轮 handoff 恢复上下文 | ~~必须（详见 §8.2）~~ [RETIRED — P8 后走 §8 Host Protocol Entry] |
-| **Validator 校验** | 事后校验。最小交互流可不依赖 Validator 实时阻断；P8 后合规校验走 协议校验 + sopify_writer，不再依赖 Validator 进程 | ~~写前授权。Validator 是 pre-write authorizer~~ [RETIRED — P8 后 Validator-as-process 退场；validation 分布到 sopify_writer + compliance + host prompt] |
+| 义务 | Convention 模式 |
+|---|---|
+| **读取 blueprint** | 必须。每轮开始前消费 `project.md` + `blueprint/`；managed 入口与读取预算见 §8 |
+| **结构化提案** | 推荐。将用户意图映射为 ActionProposal |
+| **方案包管理** | 必须。创建/更新 `plan/` 下的方案包 |
+| **归档** | 必须。通过显式 finalize 归档到 `history/` 并写 receipt |
+| **knowledge_sync** | 推荐。归档时将稳定结论回写 blueprint |
+| **checkpoint 响应** | 推荐。遇到 clarification/decision 时暂停等用户 |
+| **handoff 消费** | 推荐。读取匹配方案的 handoff 恢复上下文 |
+| **协议校验** | 最小交互流不要求实时阻断；合规检查与 writer 负责确定性校验 |
 
-**Convention 模式最小合规**：读 blueprint → 写方案包 → 归档。最小交互流不要求 Validator 实时阻断或 runtime state 文件；~~但要获得正式 receipt authority 和合规校验，仍需调用 Validator（可事后批量）~~ P8 后合规校验走 协议校验 + sopify_writer schema 校验，不再依赖 Validator 进程。
+**Convention 模式最小合规**：读 blueprint → 写方案包 → 显式归档；当前接续与写回边界以 §8 为准。
 
 ## 4. 典型生命周期样例
 
@@ -136,7 +111,7 @@ Plan Snapshot 缺失不阻断审计和接续；host 回退读取完整 plan.md�
 4. 宿主逐项完成 tasks，更新 plan.md 中 status → done
    - 可插拔点：用户可在此阶段引入外部工具（如 graphify 生成架构图、
      EvidentLoop 或其他 Verifier 做独立审查）强化方案质量，不改变核心方案流
-5. 宿主归档到 history/2026-05/20260501_dark_mode/receipt.md
+5. 用户显式要求 ~go finalize 后，宿主经 writer 归档并生成 history/2026-05/20260501_dark_mode/receipt.md
 6. 宿主将稳定设计决策回写 blueprint/design.md（knowledge_sync）
 ```
 
@@ -162,7 +137,7 @@ Plan Snapshot 缺失不阻断审计和接续；host 回退读取完整 plan.md�
 1. 宿主在实现过程中发现两种可行方案（CSS variables vs. class toggle）
 2. 宿主暂停执行，向用户展示选项
    - Convention 模式：宿主直接在对话中展示选项
-   - ~~Runtime 模式：写入 state/current_decision.json，handoff 暴露 checkpoint_request~~ [RETIRED in P8 — P8 后 decision 折叠到 current_handoff.required_host_action = confirm_decision]
+   - 通过 `current_handoff.required_host_action = confirm_decision` 表达等待决策
 3. 用户选择方案 A
 4. 宿主记录决策到 plan.md（内联在方案正文或 tasks 备注中），继续执行
    - receipt.md 仅在最终归档时生成，不在进行中承载决策状态
@@ -189,26 +164,15 @@ Plan Snapshot 缺失不阻断审计和接续；host 回退读取完整 plan.md�
 - [ ] 能将完成的方案归档到 `history/YYYY-MM/` 并生成 `receipt.md`
 - [ ] 归档后能将稳定结论回写 blueprint
 
-以上全部通过即为 **Convention 模式最小合规**。~~如需 Runtime 模式，另需满足 Validator 接入（见 design.md 核心管线）。~~ [Runtime 模式在 P8 中退场；新宿主走 §8 Host Protocol Entry Contract。]
+以上全部通过即为 **Convention 模式最小合规**；managed 方案操作还需满足 §8。
 
-## 6. Integration Contract（外部能力接入契约）— *informative；Verifier 为 normative 例外；EAR [RETIRED by P8]*
+## 6. Integration Contract（外部能力接入契约）
 
-> 本节整体 informative。其中 **Verifier**（§6.Verifier）已升格为 normative（P1.5-D）；~~ExecutionAuthorizationReceipt~~ 在 P8 中标记为 [RETIRED]（pre-execution authorization model 退场）；其余子段仍为 draft。
-
-Sopify 不做生产/验证/知识处理节点本身，但拥有证据规范、授权判定、收据生成这几个控制节点。外部能力通过以下契约接入 Sopify 的收敛链。
+> Verifier 子段为 normative；Producer、Knowledge Provider 与其他扩展仍为 informative/draft，不是新实现的能力声明。
 
 ### Producer（外部生产器）
 
-外部生产器（LLM、宿主、代码执行器）交给 Sopify 的是 **ActionProposal**：
-
-| 字段 | 说明 |
-|------|------|
-| `action_type` | 要做什么（plan / develop / archive / consult …） |
-| `side_effect` | 会产生什么副作用 |
-| `confidence` | 生产器自评置信度 |
-| `evidence` | 支撑提案的事实引用 |
-
-Sopify 接收后由 protocol admission 做结构校验准入，不由生产器自行决定执行。（P8 后 Validator 进程已退场，准入逻辑由 sopify_writer schema 校验 + host prompt 语义引导承担。）
+Producer 的 ActionProposal 草案描述 `action_type / side_effect / confidence / evidence`；输入不构成自授权，协议准入由 writer 与宿主按各自边界承担。设计理据见 [ADR-017](./architecture-decision-records/ADR-017.md)。
 
 ### Verifier（外部验证器）
 
@@ -251,16 +215,7 @@ P8 新增 Verifier 写入边界约束：
 
 ### Knowledge Provider（外部知识工具）
 
-外部知识工具（graphify、摘要生成器等）沉淀给 Sopify 的是 **artifact + reference**：
-
-| 字段 | 说明 |
-|------|------|
-| `artifact_type` | 产出类型（graph / summary / diagram / analysis） |
-| `artifact_ref` | 产出定位（repo-relative 路径或 URI + digest） |
-| `reference_target` | 该产出关联的 plan / blueprint 节点 |
-| `stability` | draft / stable（只有 stable 才可进入长期知识层） |
-
-只有满足沉淀准入门槛（跨任务可复用 + 影响后续授权/验证 + 已稳定 + 可 machine-readably 引用）的产出才由 knowledge_sync 回写 blueprint。
+知识输入草案为 artifact + reference：`artifact_type / artifact_ref / reference_target / stability`。只有跨任务可复用、影响后续验证、已稳定且可引用的产出，才按 `knowledge_sync` 进入长期知识。
 
 ### Sopify 的统一出口
 
@@ -268,44 +223,14 @@ Sopify 把上述三类输入统一收敛为：
 
 | 出口 | 承载内容 |
 |------|---------|
-| `receipt` | 过程审计回执（`plan/<id>/receipts/*.json`；~~原 ExecutionAuthorizationReceipt [RETIRED by P8]~~） |
+| `receipt` | 过程审计回执（`plan/<id>/receipts/*.json`） |
 | `handoff` | 交接事实：当前状态 + 验证结果 + 下一步建议 + checkpoint（如有） |
 | `history` | 归档事实：outcome + key_decisions + verification_evidence |
 | `blueprint` | 长期知识：只有稳定结论（via knowledge_sync） |
 
-#### ExecutionAuthorizationReceipt — *[RETIRED by P8]*
+#### ExecutionAuthorizationReceipt（历史）
 
-> **P8 退场声明**：ExecutionAuthorizationReceipt 在 P8 中显式退场。pre-execution authorization model（runtime gate 在执行前生成的机器授权回执）不再适用；P8 删除 runtime gate 后，不存在稳定的"执行前授权时刻"。post-P8 审计主链改由 `plan/<id>/receipts/*.json`（过程审计资产）+ `history/<id>/receipt.md`（最终审计收据）承担。这不是 EAR 的同义替代，而是产品承诺切换：从 pre-execution authorization proof 切到 post-execution evidence chain。详见 P8 plan.md 决策 #15 / #18 和 design.md §4.7。
-
-<details>
-<summary>Legacy 字段规范（保留为历史参考）</summary>
-
-ExecutionAuthorizationReceipt 是 execute_existing_plan 授权通过后生成的机器事实，回答"这次执行被谁、基于哪个 revision、通过什么授权"。
-
-**Receipt MUST 包含以下字段：**
-
-| 字段 | 类型 | 语义 |
-|------|------|------|
-| `plan_id` | string | 目标 plan 的唯一标识（plan 目录名） |
-| `plan_path` | string | 目标 plan 的 workspace-relative 目录路径 |
-| `plan_revision_digest` | string | plan.md 内容的 SHA-256 hex digest |
-| `gate_status` | string | 生成时 ExecutionGate.gate_status 的值 |
-| `action_proposal_id` | string | 触发授权的 ActionProposal 唯一标识（engine 确定性生成，MUST NOT 由 host 指定） |
-| `authorization_source` | object | `{ kind: "request_hash", request_sha1: string }` |
-| `fingerprint` | string | `sha256(canonical_json({plan_id, plan_path, plan_revision_digest, gate_status, action_proposal_id}))` |
-| `authorized_at` | string | ISO 8601 UTC 时间戳 |
-
-**Fail-closed 不变量：**
-
-- Validator 在处理 execute_existing_plan 请求时 MUST 从持久化的 authoritative runtime state 读取已有 receipt
-- 如 `plan_revision_digest` 与当前 plan.md 实际 SHA-256 不匹配，Validator MUST 返回 DECISION_REJECT
-- 如 `plan_path` 指向的 plan 目录不存在，Validator MUST 返回 DECISION_REJECT
-- 如 `gate_status` 与当前 ExecutionGate.gate_status 不匹配，Validator MUST 返回 DECISION_REJECT
-- Stale receipt MUST NOT 降级为 consult，MUST NOT 自动 re-authorize
-
-**历史说明**：`plan_revision_digest` 只属于已退场 EAR，不能用于当前 plan receipt；当前统一使用 `plan_version`。
-
-</details>
+执行前 EAR 已退场，现行主链使用过程 receipts 与 history receipt；旧字段及决策见 [ADR-017](./architecture-decision-records/ADR-017.md) 和 [P8 归档设计](../history/2026-06/20260605_p8_protocol_kernel_runtime_retirement/design.md)。
 
 ## 7. Subject Identity & Review Wire Contract
 
@@ -368,17 +293,7 @@ ExecutionAuthorizationReceipt 是 execute_existing_plan 授权通过后生成的
 - 对 bound-subject actions：缺少 `plan_subject`、`subject_ref` 指向不存在的 plan、方案结构无效或 `plan_version` 与当前版本不匹配时，Validator MUST 返回 DECISION_REJECT（不降级 consult）
 - 对 `cancel_flow`：上述检查在 `plan_subject` 存在时适用；缺失 `plan_subject` 时不触发 REJECT
 
-> **Legacy mapping 注释**（informative）：
->
-> 现役 machine truth 中，plan 主体的表达形式与上述 canonical subject binding 存在映射关系：
->
-> | 现役路径 | canonical 映射 |
-> |---------|--------------|
-> | `current_plan.path`（state.py） | → `plan_subject.subject_ref`（workspace-relative 目录路径） |
-> | bare `~go` 隐含的 plan 指向 | → 应显式携带 `plan_subject`，当前未携带 |
-> | `review_or_execute_plan`（action_projection） | ✅ P3a 已收口：plan review 语义迁移至 `continue_host_develop` + `plan_generated` stage |
->
-> 以上映射为 informative 注释，不构成规范性要求。现役路径的 canonical 化属于 P3a contract-aligned cleanup 范围。
+**实现映射（informative）**：`state/active_plan.json` 仅定位 `plan_id`，完整主体与 `plan_version` 来自方案包；结构化写回由 `sopify_writer` 承担。旧实现映射见 [P8 归档设计](../history/2026-06/20260605_p8_protocol_kernel_runtime_retirement/design.md)。
 
 ### Action Applicability Matrix — *normative*
 
@@ -556,7 +471,7 @@ P8 删除的 state 文件：`current_run.json`、`current_plan.json`、`current_
 
 ### 8.10 Retirement Note
 
-本节（§8）在 P8 中整体替换。pre-P8 §8 "Deep Host 运行时集成协议"定义了 gate-first 义务、runtime gate entry、deep host adapter、runtime helper 索引等内容，适用于 deep_verified 宿主。P8 删除 runtime gate 和 deep host adapter 后，原 §8.1–§8.5 全部退场。原 deep runtime 集成的历史背景见 git history。
+pre-P8 的 gate-first / deep host 集成已退场，历史背景见 [P8 归档](../history/2026-06/20260605_p8_protocol_kernel_runtime_retirement/plan.md)。
 
 ### 8.11 ActionProposal 角色声明
 
@@ -565,7 +480,6 @@ ActionProposal 是 runtime-independent workflow/admission 层概念，用于 hos
 ## 非目标
 
 - 不定义 Validator 实现细节（P8 后 Validator 进程已退场；准入逻辑由 sopify_writer + host prompt 承担，见 ADR-017）
-- ~~不定义 Runtime 内部架构~~（*[RETIRED by P8 — runtime 已物理删除]*）
 - 不定义 state 文件 schema（由 sopify_writer 管理，schema 见 sopify_contracts）
 - 不定义 SKILL.md 编排规范（待 ADR-016 Step 3 稳定后补充）
 - 不替代 design.md 的契约定义，只提取最小可携带子集

@@ -23,35 +23,40 @@
 
   <!-- Title -->
   <text x="480" y="28" text-anchor="middle" class="title">Sopify Architecture</text>
-  <text x="480" y="46" text-anchor="middle" class="subtitle">File-based development protocol — no runtime; project assets live in .sopify/</text>
+  <text x="480" y="46" text-anchor="middle" class="subtitle">Version AI coding plans and evidence in Git — resume work across tools, teammates, and agents.</text>
 
   <!-- ═══ TIER 1 : HOST LAYER (y=58, h=62) ═══ -->
   <rect x="60" y="58" width="840" height="62" rx="8" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
   <text x="76" y="76" class="tier-label" fill="#6b7280">HOST LAYER</text>
   <text x="200" y="76" class="node-desc">Host LLM executes code; Sopify preserves the process as files</text>
 
-  <rect x="190" y="84" width="92" height="26" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1"/>
-  <circle cx="203" cy="97" r="3" fill="#10b981"/>
-  <text x="236" y="101" text-anchor="middle" class="node-name" style="font-size:11px">Codex</text>
+  <rect x="85" y="84" width="106" height="26" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1"/>
+  <circle cx="97" cy="97" r="3" fill="#10b981"/>
+  <text x="144" y="101" text-anchor="middle" class="node-name" style="font-size:11px">Codex</text>
 
-  <rect x="292" y="84" width="92" height="26" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1"/>
-  <circle cx="305" cy="97" r="3" fill="#10b981"/>
-  <text x="338" y="101" text-anchor="middle" class="node-name" style="font-size:11px">Claude</text>
+  <rect x="199" y="84" width="106" height="26" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1"/>
+  <circle cx="211" cy="97" r="3" fill="#10b981"/>
+  <text x="258" y="101" text-anchor="middle" class="node-name" style="font-size:11px">Claude Code</text>
 
-  <rect x="394" y="84" width="92" height="26" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1"/>
-  <circle cx="407" cy="97" r="3" fill="#10b981"/>
-  <text x="440" y="101" text-anchor="middle" class="node-name" style="font-size:11px">Qoder</text>
+  <rect x="313" y="84" width="106" height="26" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1"/>
+  <circle cx="325" cy="97" r="3" fill="#10b981"/>
+  <text x="372" y="101" text-anchor="middle" class="node-name" style="font-size:11px">Qoder</text>
 
-  <rect x="496" y="84" width="92" height="26" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1" stroke-dasharray="3,2"/>
-  <circle cx="509" cy="97" r="3" fill="#fbbf24"/>
-  <text x="542" y="101" text-anchor="middle" class="node-name" style="font-size:11px">Copilot</text>
+  <rect x="427" y="84" width="106" height="26" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1" stroke-dasharray="3,2"/>
+  <circle cx="439" cy="97" r="3" fill="#fbbf24"/>
+  <text x="486" y="101" text-anchor="middle" class="node-name" style="font-size:11px">Copilot</text>
 
-  <rect x="598" y="84" width="92" height="26" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1" stroke-dasharray="3,2"/>
-  <circle cx="611" cy="97" r="3" fill="#fbbf24"/>
-  <text x="644" y="101" text-anchor="middle" class="node-name" style="font-size:11px">Cursor</text>
+  <rect x="541" y="84" width="106" height="26" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1" stroke-dasharray="3,2"/>
+  <circle cx="553" cy="97" r="3" fill="#fbbf24"/>
+  <text x="600" y="101" text-anchor="middle" class="node-name" style="font-size:11px">Cursor</text>
 
-  <rect x="700" y="84" width="110" height="26" rx="6" fill="#f9fafb" stroke="#d1d5db" stroke-width="1" stroke-dasharray="4,2"/>
-  <text x="755" y="101" text-anchor="middle" class="node-desc">Other adapters</text>
+  <rect x="655" y="84" width="106" height="26" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1" stroke-dasharray="3,2"/>
+  <circle cx="667" cy="97" r="3" fill="#fbbf24"/>
+  <text x="714" y="101" text-anchor="middle" class="node-name" style="font-size:11px">Antigravity</text>
+
+  <rect x="769" y="84" width="106" height="26" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1" stroke-dasharray="3,2"/>
+  <circle cx="781" cy="97" r="3" fill="#fbbf24"/>
+  <text x="828" y="101" text-anchor="middle" class="node-name" style="font-size:10px">Trae</text>
 
   <!-- Arrow Tier 1 → 2 -->
   <line x1="480" y1="120" x2="480" y2="136" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a-gray)"/>
@@ -89,7 +94,7 @@
   <line x1="480" y1="250" x2="480" y2="266" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a-gray)"/>
 
   <!-- ═══ TIER 3 : DEFAULT WORKFLOW (y=268, h=72, replaceable) ═══ -->
-  <rect x="60" y="268" width="840" height="72" rx="6" fill="#fefce8" stroke="#fde68a" stroke-width="1"/>
+  <rect data-graph-role="container" x="60" y="268" width="840" height="72" rx="6" fill="#fefce8" stroke="#fde68a" stroke-width="1"/>
   <text x="76" y="287" class="tier-label" fill="#a16207">DEFAULT WORKFLOW</text>
   <text x="260" y="287" class="node-desc">Managed plan path — three phase skills + explicit finalize action</text>
 
@@ -136,7 +141,7 @@
   <text x="793" y="425" text-anchor="middle" class="node-desc">Conventions · project.md</text>
 
   <!-- Bottom slogans -->
-  <text x="480" y="475" text-anchor="middle" class="slogan">Plans, decisions, and receipts persist as project assets — not chat history</text>
+  <text x="480" y="475" text-anchor="middle" class="slogan">Plans, decisions, and receipts are versioned in Git</text>
   <text x="480" y="491" text-anchor="middle" class="slogan">Supported hosts resume from project records when asked; handoff pointers stay local</text>
 
   <!-- Legend -->

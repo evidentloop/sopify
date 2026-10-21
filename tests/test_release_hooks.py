@@ -1,8 +1,10 @@
 # Test classification: distribution
 from __future__ import annotations
 
-from pathlib import Path
+import json
+import hashlib
 import os
+from pathlib import Path
 import shutil
 import subprocess
 import sys
@@ -147,7 +149,7 @@ def _init_release_hook_fixture(root: Path, *, inject_sync_failure: bool = False)
         "scripts/release-sync.sh",
         "scripts/release-draft-changelog.py",
         "scripts/release-preflight.sh",
-        "scripts/sync-skills.sh",
+        "scripts/_yaml_subset.py",
         "scripts/check-version-consistency.sh",
         "scripts/render-host-skills.py",
         "scripts/regenerate-golden-snapshots.py",
@@ -194,6 +196,83 @@ def _init_release_hook_fixture(root: Path, *, inject_sync_failure: bool = False)
 
 
 class ReleaseHookTests(unittest.TestCase):
+    def _preflight_fixture(self, root: Path) -> dict[str, str]:
+        """Run the real golden check in a disposable repository, without hooks."""
+        for directory in ("installer", "skills"):
+            shutil.copytree(
+                REPO_ROOT / directory, root / directory,
+                ignore=shutil.ignore_patterns("__pycache__", ".DS_Store"),
+            )
+        for relative in (
+            "scripts/release-preflight.sh",
+            "scripts/regenerate-golden-snapshots.py",
+            "tests/test_golden_snapshots.py",
+            "tests/golden-snapshots.json",
+        ):
+            _copy_script(relative, root)
+        _write(root / "scripts/check-version-consistency.sh", "#!/bin/sh\nexit 0\n")
+        _write(
+            root / "scripts/generate-builtin-catalog.py",
+            "import shutil, sys\n"
+            "shutil.copyfile('skills/catalog/builtin_catalog.generated.json', sys.argv[2])\n",
+        )
+        for script in ("sopify_protocol_check.py", "check-install-payload-bundle-smoke.py"):
+            _write(root / "scripts" / script, "print('fixture smoke passed')\n")
+        # Keep the former whitelist runnable so the discovery regression proves
+        # that an additional test is collected, not just a missing-file error.
+        for name in (
+            "protocol/test_convention_compliance.py", "test_check_readme_links.py",
+            "test_distribution.py", "test_evidentloop_installer.py",
+            "test_release_hooks.py", "test_sopify_init_smoke.py",
+        ):
+            _write(root / "tests" / name, "def test_fixture():\n    pass\n")
+        _run_git(root, "init")
+        _write(root / "keep-staged.txt", "user staged content\n")
+        _run_git(root, "add", "tests/golden-snapshots.json", "keep-staged.txt")
+        # Both nested pytest and shell's python3 must use this test interpreter.
+        bin_dir = root / "bin"
+        bin_dir.mkdir()
+        (bin_dir / "python3").symlink_to(sys.executable)
+        return {
+            **_git_subprocess_env(),
+            "PATH": str(bin_dir) + os.pathsep + os.environ.get("PATH", ""),
+            "PYTHONDONTWRITEBYTECODE": "1",
+        }
+
+    def test_preflight_rejects_golden_drift_without_changing_index(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            env = self._preflight_fixture(root)
+            golden = root / "tests/golden-snapshots.json"
+            payload = json.loads(golden.read_text(encoding="utf-8"))
+            payload["snapshots"]["codex:zh-CN:header"] = "intentional-drift"
+            golden.write_text(json.dumps(payload), encoding="utf-8")
+            before_golden = golden.read_bytes()
+            before_index = (root / ".git/index").read_bytes()
+            completed = subprocess.run(
+                ["bash", "scripts/release-preflight.sh"], cwd=root, env=env,
+                capture_output=True, text=True, check=False,
+            )
+            self.assertEqual((root / ".git/index").read_bytes(), before_index)
+            self.assertEqual(golden.read_bytes(), before_golden)
+            self.assertNotEqual(completed.returncode, 0)
+            self.assertIn("Golden snapshot mismatch", completed.stdout)
+
+    def test_preflight_collects_tests_outside_former_whitelist(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            env = self._preflight_fixture(root)
+            _write(
+                root / "tests/future/test_new_regression.py",
+                "def test_new_regression():\n    assert False, 'full-suite sentinel'\n",
+            )
+            completed = subprocess.run(
+                ["bash", "scripts/release-preflight.sh"], cwd=root, env=env,
+                capture_output=True, text=True, check=False,
+            )
+            self.assertNotEqual(completed.returncode, 0)
+            self.assertIn("full-suite sentinel", completed.stdout)
+
     def test_commit_msg_leaves_message_unchanged_without_release_state(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -287,6 +366,23 @@ class ReleaseHookTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             _init_release_hook_fixture(root)
+            # Exercise real regeneration as well as version templates; a
+            # stripped-down fixture without installer/ silently skips it.
+            shutil.copytree(
+                REPO_ROOT / "installer", root / "installer", dirs_exist_ok=True,
+                ignore=shutil.ignore_patterns("__pycache__", ".DS_Store"),
+            )
+            # Flat outputs need the real phase/resource trees, while the header
+            # fixtures above continue exercising the synthetic version bump.
+            for language in ("zh", "en"):
+                shutil.copytree(
+                    REPO_ROOT / f"skills/{language}/skills",
+                    root / f"skills/{language}/skills",
+                    dirs_exist_ok=True, ignore=shutil.ignore_patterns("__pycache__", ".DS_Store"),
+                )
+            _copy_script("skills/trae-entry-skill.md.template", root)
+            _copy_script("tests/golden-snapshots.json", root)
+            previous_golden = (root / "tests/golden-snapshots.json").read_bytes()
 
             completed = subprocess.run(
                 ["bash", str(root / "scripts" / "release-sync.sh"), "2026-03-21.010203", "2026-03-21"],
@@ -316,6 +412,21 @@ class ReleaseHookTests(unittest.TestCase):
             self.assertIn(
                 "<!-- SOPIFY_VERSION: 2026-03-21.010203 -->",
                 (root / "skills/en/cursor-plugin-rule.mdc.template").read_text(encoding="utf-8"),
+            )
+            self.assertIn("Golden snapshots regenerated", completed.stdout)
+            self.assertNotEqual((root / "tests/golden-snapshots.json").read_bytes(), previous_golden)
+            rendered = (root / "skills/zh/header.md.template").read_text(
+                encoding="utf-8",
+            ).replace("{{config_dir}}", "~/.codex")
+            golden = json.loads((root / "tests/golden-snapshots.json").read_text(encoding="utf-8"))
+            for host in ("antigravity", "trae"):
+                for locale in ("zh-CN", "en-US"):
+                    key = f"{host}:{locale}:flat_prompt_tree"
+                    self.assertIn(key, golden["snapshots"])
+                    self.assertNotEqual(golden["snapshots"][key], json.loads(previous_golden)["snapshots"][key])
+            self.assertEqual(
+                golden["snapshots"]["codex:zh-CN:header"],
+                hashlib.sha256(f"AGENTS.md\x00{rendered}".encode("utf-8")).hexdigest(),
             )
 
     def test_version_consistency_rejects_stale_cursor_rule(self) -> None:

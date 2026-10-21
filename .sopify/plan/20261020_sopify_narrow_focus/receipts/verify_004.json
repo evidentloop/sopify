@@ -1,0 +1,31 @@
+{
+  "evidence": {
+    "boundary": "a host without an owner may not record receipts unless it can call the installed writer; recorded as an open question, not a release blocker",
+    "orca": {
+      "dispatch": "ctx_e1b5ec4b1e92",
+      "run": "run_b06e31059bb0",
+      "task": "task_ea10d05bb10f"
+    },
+    "readme_claim": "allowed: main tagline A (continue across tools, people and agents)",
+    "reports": [
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w4/t9-accept-gemini.md"
+    ],
+    "result": "T6b implements both probe additions within the write set; T9 cold start closed with only '~go' and .sopify files, no other agent context, no wrong task picked, plan_version unchanged; skipping receipt bodies judged not a material deviation because the handoff matched HEAD",
+    "reviewer": "antigravity acceptor",
+    "tasks": [
+      "T6b",
+      "T9"
+    ]
+  },
+  "provenance": {
+    "host": "claude-code",
+    "plan_id": "20261020_sopify_narrow_focus",
+    "plan_version": "sha256:04af4fd7a39b30c665f2a05990c44ddf22bc66adc7d7424cf05165a354557cb8",
+    "receipt_id": "verify_004",
+    "reviewer": "antigravity",
+    "timestamp": "2026-10-21T01:51:11+00:00",
+    "written_by": "plan owner"
+  },
+  "timestamp": "2026-10-21T01:51:11+00:00",
+  "verdict": "pass"
+}

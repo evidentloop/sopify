@@ -214,7 +214,8 @@ class SopifyMcpServerCoreTests(unittest.TestCase):
                 result = _safe_tool("status", workspace_status_lite, workspace)
 
                 self.assertIsNone(result["status"])
-                self.assertEqual(result["error"]["code"], "ValueError")
+                expected = "ValueError" if isinstance(payload, dict) else "InvariantViolationError"
+                self.assertEqual(result["error"]["code"], expected)
                 self.assertEqual(_state_snapshot(sopify), before)
 
     def test_workspace_status_lite_rejects_polluted_plan_id(self) -> None:

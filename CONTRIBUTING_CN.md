@@ -1,171 +1,74 @@
 # 贡献指南
 
-感谢你关注 Sopify 的贡献方式。
+非 trivial 工作先对齐范围与责任。一个 PR 聚焦一个可验证改动；用户可见变化同步中英文 README，维护者命令或用户行为变化写简短 CHANGELOG。
 
 ## 如何贡献
 
-- 非 trivial 改动请先开 issue，对齐范围和责任边界。
-- PR 保持聚焦，尽量做到“一次一个功能或修复”。
-- 用户可见行为变更时，同步更新 `README.md` 和 `README.zh-CN.md`。
-- 用户可见行为或维护规则变化时，手动更新 `CHANGELOG.md`。
+- `main` 是唯一长期分支。使用短生命周期 `<type>/<topic>` 主题分支，通常经 PR 合入；stable 使用已合入 `main` 的提交、tag 和 GitHub Release。只有并行维护多个版本、确需 backport 时才重评 release branch。
+- 修复当前错误链路，不顺手扩路由、状态或功能；延后问题留在对应方案或 backlog。
+- 保留已有改动，准备提交时显式纳入新增源码；`git commit -am` 不会包含新文件。
+- 协议、checkpoint、bridge、installer 或 status/doctor 行为变化需对应回归证据。纯文档修改做相关链接和内容检查，不要求无关代码测试。
 
 ## Prompt 层与 Skill Authoring
 
-- `skills/{zh,en}` 是 prompt-layer 真源。每个语言目录包含 `header.md.template`（宿主无关模板）和 `skills/sopify/`（skill 包）。
-- `Codex/Skills/{CN,EN}` 和 `Claude/Skills/{CN,EN}` 已被 git 忽略。可通过 `bash scripts/sync-skills.sh` 本地生成，用于调试或查看传统宿主目录结构，但不参与发版、CI 或 pre-commit。
-- `skills/catalog/builtin_catalog.generated.json` 是生成的 builtin catalog；源 skill 定义通过 `scripts/generate-builtin-catalog.py` 维护。
-- Skill package 变更时，参考 [skills/zh/skills/sopify/](./skills/zh/skills/sopify/) / [skills/en/skills/sopify/](./skills/en/skills/sopify/) 下各自的 `SKILL.md`。
+`skills/{zh,en}` 是单一来源：`header.md.template` 加 `skills/sopify/`。双语保持一致，遵循对应 Skill 入口；安装产物由 adapter 生成，不手工维护第二棵源树。
 
-关键约束：
+在仓库根目录预览一份 header：
 
-- route 绑定优先使用 `supports_routes`
-- `skill.yaml` 统一经 `sopify_contracts/skill_schema.py` 校验
-- `tools / disallowed_tools / allowed_paths / requires_network` 当前为声明字段
-- builtin catalog 通过脚本再生成，不手改生成产物
+```bash
+python3 scripts/render-host-skills.py --host codex --lang zh --output /tmp/sopify-preview/AGENTS.md
+```
+
+不带 `--output` 时输出到 stdout；`--verify-all` 可比较全部 header 变体。该命令只预览 header，Skill 正文直接查看 `skills/{zh,en}/skills/sopify/`。旧 `Codex/`、`Claude/` 缓存目录仍被 gitignore，不参与发布。
+
+- route 绑定使用 `supports_routes`，`skill.yaml` 经 `sopify_contracts/skill_schema.py` 校验。
+- `tools / disallowed_tools / allowed_paths / requires_network` 目前是声明字段。
+- catalog 元数据变化时，用 `python3 scripts/generate-builtin-catalog.py` 再生成 `skills/catalog/builtin_catalog.generated.json`，不手改产物。
+- 有意改变输出后先审查，再显式运行 `python3 scripts/regenerate-golden-snapshots.py`；preflight 只检查，不自动接受漂移。
 
 ## Payload Bundle 与宿主接入
 
-需要以维护者视角验证 payload bundle + thin-stub 接入时，优先使用以下命令：
+能力探针和 adapter 变更遵循 [宿主接入 recipe](./docs/host-onboarding.md)。[Protocol](./.sopify/blueprint/protocol.md) 定义入口与写入归属，协议状态只能经 `sopify_writer` 写入；workspace marker 定位 bundle，任务进度属于方案文件。
+
+- root `install.sh` / `install.ps1` 保持 thin wrapper，只下载同 ref 源码并调用 `scripts/install_sopify.py`。
+- 分发逻辑走 host registry；保留 legacy bundle 读取和独立 helper/Hook fallback。
+- 安装、更新、可选组件和卸载统一查 [Getting Started](./docs/getting-started.md)。开发用 `raw/main` 入口不作为 README 的公开主入口。
+
+### MCP 试点
+
+repo-local `scripts/sopify_mcp_server.py` 使用已有 Python 3.11+ 与 `mcp[cli]>=1.27,<2` 环境，不自动安装依赖或改变 payload。
 
 ```bash
-# 验证安装 + payload bundle + workspace stub
-python3 scripts/check-install-payload-bundle-smoke.py --target codex:zh-CN
-
-# 协议合规检查
-python3 scripts/sopify_protocol_check.py check --scenario new-plan --fixture tests/fixtures/minimal_plan
-```
-
-Bundle 规则：
-
-- 全局 payload 位于 `~/.codex/sopify/` 或 `~/.claude/sopify/`
-- 工作区内的 `.sopify/sopify.json` 是唯一 workspace activation marker，声明 `bundle_version / locator_mode / capabilities`
-- 宿主按 4 步协议入口（active_plan → plan.md → current_handoff → receipts）接续，定义在 `.sopify/blueprint/protocol.md §8`
-- 协议状态写入走 `sopify_writer`；宿主不直接写 state 文件
-
-### MCP Tool Plane 试点
-
-仓库内提供 Codex-first 注册试点，用于维护者验证 `scripts/sopify_mcp_server.py`。它要求一个已有的 Python 3.11+ 环境和 `mcp[cli]>=1.27,<2`，不会自动安装依赖或修改 payload：
-
-```bash
-# 默认 dry-run
+# 默认 dry-run，检查注册。
 python3 scripts/sopify_mcp_register.py --python /path/to/python3
-
-# 明确写入 Codex 用户级 MCP 配置
+# 明确授权后，通过宿主官方 CLI 应用。
 python3 scripts/sopify_mcp_register.py --python /path/to/python3 --apply
 ```
 
-注册脚本委托官方 `codex mcp get/add`，不直接编辑 TOML；同配置为 no-op，不同配置会拒绝覆盖。Codex 是首个验证对象，不是唯一具备 MCP 接入能力的宿主。Qoder、Claude、Copilot 的自动注册、依赖打包和 doctor 集成要等实测证据后再决定。
-
-### Installer 入口与 Release Asset
-
-当前 installer 入口按受众分层：
-
-- repo-local / 源码安装：
-
-```bash
-bash scripts/install-sopify.sh --target codex:zh-CN
-python3 scripts/install_sopify.py --target claude:en-US
-```
-
-- dev / maintainer 远程入口（`raw/main`，不进 README 首屏）：
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/evidentloop/sopify/main/install.sh | \
-  bash -s -- --target codex:zh-CN
-```
-
-- public stable 入口（只有在公开 GitHub Release 存在后才启用）：
-
-```bash
-curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | \
-  bash -s -- --target codex:zh-CN
-```
-
-约定：
-
-- root `install.sh` / `install.ps1` 必须保持 thin wrapper，只负责下载同 ref 的 GitHub source archive 并调用 `scripts/install_sopify.py`
-- `main` 分支里的 root 脚本保留 dev 默认值（`SOURCE_CHANNEL=dev`、`SOURCE_REF=main`）
-- stable release asset 必须由 root 脚本按 release tag 渲染后上传，不能直接上传 `main` 上的原文件
-- 分发层必须继续走 host registry，不允许在 installer 入口里硬编码 `codex` / `claude` 分支；README 应展示宿主可用性矩阵，并在 repo 侧路径就绪后纳入实验性 install target
-- `--workspace <path>` 当前只保留给 maintainer / internal prewarm 调试，不属于 B1 默认用户路径；正式路径是先完成全局安装，再在项目里第一次触发 Sopify，由 payload bundle 完成 bootstrap
-
-release asset 渲染 checklist：
-
-```bash
-TAG="2026-03-25.142231"
-OUT_DIR="$(mktemp -d)"
-python3 scripts/render-release-installers.py --release-tag "$TAG" --output-dir "$OUT_DIR"
-```
-
-然后：
-
-- 将 `$OUT_DIR/install.sh` 和 `$OUT_DIR/install.ps1` 上传到同 tag 的 GitHub Release
-- 在 `releases/latest/download/install.sh` 真正可访问之前，不要切 README 首屏安装命令
-- post-release manual smoke 只做维护者校验：确认 latest release asset 存在、stable installer 解析到同 tag，且输出里能看到 `source channel` / `resolved source ref` / `asset name`
+注册委托 `codex mcp get/add`，不直接改 TOML；同配置为 no-op，冲突配置不覆盖。Codex 是首个验证对象；其他宿主、依赖打包和 doctor 集成需各自的证据。
 
 ## 校验命令
 
-按变更范围选择最小校验集。
-
-Prompt 层与 metadata 同步：
+使用 Python 3.11+，按变更选相关检查。共享工作区可设置 `PYTHONDONTWRITEBYTECODE=1` 和 `PYTEST_ADDOPTS="-p no:cacheprovider"`，避免缓存噪声。
 
 ```bash
-bash scripts/check-version-consistency.sh
-python3 scripts/generate-builtin-catalog.py
-python3 -m pytest tests -v
+python3 -m pytest tests -q
+python3 scripts/check-readme-links.py
 ```
 
-协议与 payload 验证：
+协议或 payload 修改另跑对应 smoke：
 
 ```bash
 python3 scripts/sopify_protocol_check.py check --scenario new-plan --fixture tests/fixtures/minimal_plan
 python3 scripts/check-install-payload-bundle-smoke.py --target codex:zh-CN
-python3 -m pytest tests -v
-```
-
-文档与发布校验：
-
-```bash
-python3 scripts/check-readme-links.py
-python3 -m unittest tests/test_release_hooks.py -v
-python3 -m unittest tests/test_distribution.py tests/test_installer_status_doctor.py -v
-bash scripts/check-version-consistency.sh
 ```
 
 ## Release Hook 与 CHANGELOG
 
-仓库内置了 `.githooks/pre-commit` 与 `commit-msg` 的联动自动化。
-
-每个 clone 只需启用一次：
-
-```bash
-git config core.hooksPath .githooks
-```
-
-行为摘要：
-
-- `pre-commit` 会先运行 `scripts/release-preflight.sh`，再运行 `scripts/release-sync.sh`
-- release-managed 文件会在检查通过后自动回到同一个 commit
-- 当 `CHANGELOG.md -> [Unreleased]` 为空时，`release-sync` 会根据当前 staged files 自动生成摘要级草稿（分类 bullet，不含逐文件列表）
-- `commit-msg` 只有在存在 pre-commit handoff 时，才会追加 `Release-Sync`、`Release-Version`、`Release-Date`
-
-AI attribution 说明：
-
-- 仓库级 AI 协作声明见 [CONTRIBUTORS.md](./CONTRIBUTORS.md)
-- 仓库默认不再为 AI 助手追加标准 `Co-authored-by` trailer；除非你手动填写，否则 GitHub contributor attribution 会只归属于人类 commit author
-- `SOPIFY_DISABLE_RELEASE_HOOK=1` 会关闭整条 release hook 链；只建议在维护/调试场景使用
-
-常用环境变量：
-
-- `SOPIFY_DISABLE_RELEASE_HOOK=1`
-- `SOPIFY_SKIP_RELEASE_PREFLIGHT=1`
-- `SOPIFY_AUTO_DRAFT_CHANGELOG=0`
-- `SOPIFY_RELEASE_HOOK_DRY_RUN=1`
-- `SOPIFY_FORCE_RELEASE_SYNC=1`
+[发布流程](./docs/dev/release-process.md) 是 hook 设置、版本/CHANGELOG 同步、preflight、stable assets、发布和正式 smoke 的唯一步骤来源；对外 Git 动作仍按当前任务授权执行。
 
 ## 许可说明
 
-提交贡献即表示你同意按目标文件对应的许可分发你的改动：
+AI 协作声明见 [CONTRIBUTORS.md](./CONTRIBUTORS.md)。仓库不自动添加标准 AI `Co-authored-by` trailer，可按需手动署名。
 
-- 代码与配置：Apache 2.0
-- 文档：CC BY 4.0
+贡献遵循目标文件许可：代码与配置为 Apache 2.0，文档为 CC BY 4.0。

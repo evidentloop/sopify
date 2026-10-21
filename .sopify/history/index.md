@@ -4,6 +4,7 @@
 
 ## 索引
 
+- `2026-10-20` [`20260819_cursor_support`](2026-10/20260819_cursor_support/) - standard - Cursor IDE 用户级 Plugin 薄 Rule、全局 Skills/payload 与用户 Hooks 一次安装，BASELINE_SUPPORTED；PR #71 已合并并随 `2026-08-22.134737` 发布，合并后显式归档，8 月陈旧 handoff 以已核实 Git 事实取代
 - `2026-08-30` [`20260828_cursor_agent_cli_entry`](2026-08/20260828_cursor_agent_cli_entry/) - standard - Cursor IDE 与本地 Agent CLI 一次安装：CLI 方案/开发/接续/收口入口、旧入口替换、跨宿主隔离和双语用户文案收口；PR #73、Cursor 独立审计、全量测试与 release preflight 均通过
 - `2026-07-21` [`20260720_plain_language_output`](2026-07/20260720_plain_language_output/) - standard - 中英文工作流表达、高频 Skill 职责、只读咨询和静态产品页收口；PR #68 / #69、Sopify `2026-07-21` Release 与 `main / root` GitHub Pages 证据完整关联
 - `2026-07-20` [`20260718_evidentloop_optional_audit_integration`](2026-07/20260718_evidentloop_optional_audit_integration/) - architecture - 产品无关 Verifier 契约、EvidentLoop 可选配套安装与公开版本 Codex dogfood 收口；正式报告经用户裁定并由 receipt 绑定方案、diff 与报告版本

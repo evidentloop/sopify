@@ -39,3 +39,20 @@ hosts:
     destination_dir: ".qoder"
     instruction_surface: header_embedded
     install_enabled: true
+  antigravity:
+    host_id: antigravity
+    config_dir: "~/.gemini/config"
+    header_filename: AGENTS.md
+    destination_dir: ".gemini/config"
+    instruction_surface: header_embedded
+    flat_skills: true
+    install_enabled: true
+  trae:
+    host_id: trae
+    config_dir: "~/.trae"
+    header_filename: skills/sopify/SKILL.md
+    destination_dir: ".trae"
+    instruction_surface: header_embedded
+    flat_skills: true
+    entry_skill_template: skills/trae-entry-skill.md.template
+    install_enabled: true

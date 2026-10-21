@@ -1,0 +1,33 @@
+{
+  "evidence": {
+    "also_archived": [
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w2/t7-probe-gemini.md"
+    ],
+    "isolation": "separate git worktree at 8285888, removed afterwards",
+    "orca": {
+      "dispatch": "ctx_d93e2aade583",
+      "run": "run_b06e31059bb0",
+      "task": "task_99750b6315c3"
+    },
+    "reports": [
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w2/t4-accept-gemini.md"
+    ],
+    "result": "design.md cut checked section by section with no active decision lost; protocol normative sections intact; no broken references; 386 passed; T6 revision implements all 4 requested changes",
+    "reviewer": "antigravity acceptor",
+    "tasks": [
+      "T4",
+      "T6 revision"
+    ]
+  },
+  "provenance": {
+    "host": "claude-code",
+    "plan_id": "20261020_sopify_narrow_focus",
+    "plan_version": "sha256:06d91876340537e8dc650034635d584fef9f5ef985339380fc03b206364ca5d2",
+    "receipt_id": "verify_003",
+    "reviewer": "antigravity",
+    "timestamp": "2026-10-20T09:50:09+00:00",
+    "written_by": "plan owner"
+  },
+  "timestamp": "2026-10-20T09:50:09+00:00",
+  "verdict": "pass"
+}

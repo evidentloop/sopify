@@ -1,0 +1,31 @@
+{
+  "evidence": {
+    "accepted": "install matches candidate; rules and five stage Skills visible in fresh agy sessions; plain questions created no Sopify state; plan-only sample ran the scoring script and wrote state through sopify_writer",
+    "downgraded": "not an end-to-end protocol certification; scenario 1 proved visibility, not following; user-skill directories were not covered by the snapshot; dogfood used an explicit permission bypass for headless runs",
+    "finding": "Doctor reported MISSING_BUNDLE: diagnosed as a pre-existing gap (rules never called the bootstrap helper), fixed in T3b and re-tested in verify_006",
+    "reports": [
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w3/t7t8-accept-gemini.md",
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w3/dogfood-xcheck-codex.md"
+    ],
+    "reviewers": [
+      "antigravity acceptor (code + real agy dogfood)",
+      "codex (cross-check of the dogfood evidence)"
+    ],
+    "tasks": [
+      "T7",
+      "T8"
+    ],
+    "trae": "no real-session evidence; Doctor behavior check stays BLACK_BOX_NOT_VERIFIED"
+  },
+  "provenance": {
+    "host": "claude-code",
+    "plan_id": "20261020_sopify_narrow_focus",
+    "plan_version": "sha256:ce988933988521e04e9a9d3f762f03f6b4654bbfa78729b265530484d052cccf",
+    "receipt_id": "verify_005",
+    "reviewer": "antigravity+codex",
+    "timestamp": "2026-10-21T02:53:40+00:00",
+    "written_by": "plan owner"
+  },
+  "timestamp": "2026-10-21T02:53:40+00:00",
+  "verdict": "pass_with_conditions"
+}

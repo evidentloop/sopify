@@ -1125,44 +1125,74 @@ def _read_instruction_resource(payload_root: Path, host_name: str, filename: str
     return resource_path.read_text(encoding="utf-8")
 
 
-def _write_managed_instruction_block(path: Path, content: str) -> bool:
-    """Upsert a managed instruction block into a Markdown file."""
+def _managed_instruction_block_span(existing: str) -> tuple[int, int] | None:
+    """Locate one well-formed block; reject partial, nested or duplicate markers."""
+    begin, end = _SOPIFY_INSTRUCTION_BLOCK_BEGIN, _SOPIFY_INSTRUCTION_BLOCK_END
+    begins, ends = existing.count(begin), existing.count(end)
+    if not begins and not ends:
+        return None
+    start, stop = existing.find(begin), existing.find(end)
+    if begins != 1 or ends != 1 or start >= stop:
+        raise ValueError("Invalid Sopify managed block markers")
+    return start, stop + len(end)
+
+
+def _legacy_instruction_span(existing: str) -> tuple[int, int] | None:
+    """Recognize the stable first/last lines of pre-managed-block home headers."""
+    starts = list(re.finditer(
+        r"^<!-- bootstrap: lang=(?:zh-CN|en-US); encoding=UTF-8 -->(?=\r?$)", existing, re.MULTILINE,
+    ))
+    ends = list(re.finditer(
+        r"^\*\*(?:方案包路径：|Plan Package Path:)\*\*[ \t]+[^\r\n]+", existing, re.MULTILINE,
+    ))
+    if len(starts) == len(ends) == 1 and starts[0].start() < ends[0].start():
+        start, stop = starts[0].start(), ends[0].end()
+        versions = re.findall(r"<!--\s*SOPIFY_VERSION:[^\r\n]+?-->", existing[start:stop])
+        if len(versions) == 1:
+            return start, stop
+    if starts or ends or "SOPIFY_VERSION:" in existing or "<!-- ARCHITECTURE:" in existing:
+        raise ValueError("Sopify header migration incomplete: expected one anchored header with one version comment")
+    return None
+
+
+def upsert_managed_instruction_block(path: Path, content: str, *, migrate_legacy: bool = False) -> bool:
+    """Shared home/Copilot/bootstrap upsert, preserving every byte outside the block."""
+    existing = path.read_bytes().decode("utf-8") if path.is_file() else ""
+    span = _managed_instruction_block_span(existing)
+    if span is not None:
+        start, stop = span
+        current = existing[start + len(_SOPIFY_INSTRUCTION_BLOCK_BEGIN):stop - len(_SOPIFY_INSTRUCTION_BLOCK_END)]
+        if current.replace("\r\n", "\n").strip() == content.strip():
+            return False
+    elif migrate_legacy:
+        span = _legacy_instruction_span(existing)
     block = "\n".join((_SOPIFY_INSTRUCTION_BLOCK_BEGIN, content.strip(), _SOPIFY_INSTRUCTION_BLOCK_END))
-    existing = path.read_text(encoding="utf-8") if path.exists() else ""
-    if _SOPIFY_INSTRUCTION_BLOCK_BEGIN in existing and _SOPIFY_INSTRUCTION_BLOCK_END in existing:
-        new_content = re.sub(
-            rf"{re.escape(_SOPIFY_INSTRUCTION_BLOCK_BEGIN)}.*?{re.escape(_SOPIFY_INSTRUCTION_BLOCK_END)}",
-            lambda _: block,
-            existing,
-            count=1,
-            flags=re.DOTALL,
-        )
+    if span is not None:
+        start, stop = span
+        updated = existing[:start] + block + existing[stop:]
     else:
-        base = existing.rstrip("\n")
-        separator = "\n\n" if base else ""
-        new_content = f"{base}{separator}{block}"
-    return _write_text_if_changed(path, _ensure_trailing_newline(new_content))
+        separator = "" if not existing or existing.endswith("\n\n") else ("\n" if existing.endswith("\n") else "\n\n")
+        updated = existing + separator + block + "\n"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(updated.encode("utf-8"))
+    return True
 
 
 def _remove_managed_instruction_block(path: Path) -> bool:
     """Remove the managed instruction block from a Markdown file."""
     if not path.exists():
         return False
-    existing = path.read_text(encoding="utf-8")
-    if _SOPIFY_INSTRUCTION_BLOCK_BEGIN not in existing or _SOPIFY_INSTRUCTION_BLOCK_END not in existing:
+    existing = path.read_bytes().decode("utf-8")
+    span = _managed_instruction_block_span(existing)
+    if span is None:
         return False
-    new_content = re.sub(
-        rf"(?:\n)?{re.escape(_SOPIFY_INSTRUCTION_BLOCK_BEGIN)}.*?{re.escape(_SOPIFY_INSTRUCTION_BLOCK_END)}(?:\n)?",
-        "\n",
-        existing,
-        count=1,
-        flags=re.DOTALL,
-    )
-    normalized = _normalize_ignore_file_content(new_content)
-    if not normalized:
+    start, stop = span
+    remaining = existing[:start] + existing[stop:]
+    if not remaining:
         path.unlink()
-        return True
-    return _write_text_if_changed(path, _ensure_trailing_newline(normalized))
+    else:
+        path.write_bytes(remaining.encode("utf-8"))
+    return True
 
 
 def _sync_workspace_instruction_assets(*, host_id: str | None, workspace_root: Path, payload_root: Path) -> bool:
@@ -1197,7 +1227,7 @@ def _sync_workspace_instruction_assets(*, host_id: str | None, workspace_root: P
     full = _read_instruction_resource(payload_root, host_id, "full.md")
     if full is None:
         return False
-    return _write_managed_instruction_block(target_path, full)
+    return upsert_managed_instruction_block(target_path, full)
 
 
 def _confirm_bootstrap_message(

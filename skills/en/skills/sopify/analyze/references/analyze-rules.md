@@ -50,6 +50,8 @@ Workflow transition:
 
 ## Boundaries
 
+Optional EARS example: "When a reinstall detects a missing managed Skill, the installer shall restore it and preserve the user's other Skills." Use this only when it clarifies the trigger and observable outcome; it adds no scoring dimension or workflow step.
+
 - Do not generate a plan package or modify code.
 - Do not add host intent types, keyword rules, or regex routing.
 - The host handles `consult_readonly` through the existing protocol; Analyze does not turn a read-only request into a write path.

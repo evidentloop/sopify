@@ -8,7 +8,7 @@ description: Knowledge-base document templates, loaded when long-lived knowledge
 The Templates skill defines stable knowledge-base document structures. It does not decide when to write, how to apply `knowledge_sync`, or how a plan moves through its lifecycle.
 
 - For knowledge-base policy and `knowledge_sync`, read the `kb` skill.
-- For `light / standard / architecture` levels and plan-body templates, read Design `assets/`.
+- For `light / standard / architecture` levels and plan-body templates, use the templates supplied by Design.
 - For active-plan, handoff, and receipt reads and writes, follow the governing Protocol.
 
 Replace placeholders and remove empty optional sections. Do not store one-off implementation detail as long-lived knowledge.
@@ -26,11 +26,6 @@ Replace placeholders and remove empty optional sections. Do not store one-off im
 ## Conventions
 - {reusable technical convention}
 
-## Document boundaries
-- `project.md`: technical conventions
-- `blueprint/background.md`: long-term goals, scope, and non-goals
-- `blueprint/design.md`: module, host, directory, and consumption contracts
-- `blueprint/tasks.md`: unfinished long-term work and explicit deferrals
 ```
 
 ## `blueprint/README.md`

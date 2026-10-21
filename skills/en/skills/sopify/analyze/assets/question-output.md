@@ -1,10 +1,10 @@
 [{BRAND_NAME}] Requirements Analysis ?
 
-Current score: {X}/10. Please clarify the following:
+Current score: {X}/10. Please clarify:
 
-1. {question1}
-2. {question2}
-3. {question3}
+- {decision-relevant question} (impact: {change to the objective, scope or acceptance})
 
 ---
-Next: Reply with the answers, or type "continue" to skip clarification
+Changes: 0 files
+
+Next: {information or choice needed from the user}

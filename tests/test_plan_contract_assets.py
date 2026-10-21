@@ -12,7 +12,7 @@ from scripts._yaml_subset import load_yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BUILTIN_SKILL_IDS = ("analyze", "design", "develop", "kb", "templates")
-SUPPORTED_HOSTS = ["codex", "claude", "qoder", "copilot", "cursor"]
+SUPPORTED_HOSTS = ["codex", "claude", "qoder", "copilot", "cursor", "antigravity", "trae"]
 
 
 class PlanContractAssetTests(unittest.TestCase):
@@ -169,6 +169,10 @@ class PlanContractAssetTests(unittest.TestCase):
                 self.assertIn("~/.codex", rendered)
                 self.assertIn("state/active_plan.json", rendered)
                 self.assertIn("sopify_writer", rendered)
+                self.assertIn("~go plan", rendered)
+                self.assertIn("~go finalize", rendered)
+                self.assertIn("ready_to_archive", rendered)
+                self.assertIn("~/.cursor/skills/sopify/references/output-contract.md", rendered)
                 self.assertNotIn("{{skills_root}}", rendered)
 
     def test_develop_completion_requires_explicit_finalize(self) -> None:

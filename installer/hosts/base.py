@@ -8,13 +8,12 @@ import re
 import shutil
 
 from installer.models import HostCapability, InstallError, InstallPhaseResult, language_to_source_dir
+from installer.bootstrap_workspace import upsert_managed_instruction_block
 
-_IGNORE_PATTERNS = shutil.ignore_patterns(".DS_Store", "Thumbs.db", "__pycache__")
+_IGNORED_NAMES = frozenset((".DS_Store", "Thumbs.db", "__pycache__"))
+_IGNORE_PATTERNS = shutil.ignore_patterns(*_IGNORED_NAMES)
 _SOPIFY_VERSION_RE = re.compile(r"^<!--\s*SOPIFY_VERSION:\s*(?P<version>.+?)\s*-->$", re.MULTILINE)
 HEADER_TEMPLATE_NAME = "header.md.template"
-
-_MANAGED_BLOCK_BEGIN = "<!-- BEGIN SOPIFY MANAGED BLOCK -->"
-_MANAGED_BLOCK_END = "<!-- END SOPIFY MANAGED BLOCK -->"
 
 INSTRUCTION_SURFACE_HEADER_EMBEDDED = "header_embedded"
 INSTRUCTION_SURFACE_SINGLE_FILE = "single_file"
@@ -35,6 +34,8 @@ class HostAdapter:
     default_language: str | None = field(default=None)
     skills_cli_agent: str | None = field(default=None)
     skill_install_dirname: str | None = field(default=None)
+    flat_skills: bool = False
+    entry_skill_template: str | None = None
 
     @property
     def is_workspace_scope(self) -> bool:
@@ -75,6 +76,8 @@ class HostAdapter:
             return tuple(paths)
         if self.is_user_plugin_scope:
             return (*self.user_plugin_paths(home_root), *self.global_skill_paths(home_root))
+        if self.flat_skills:
+            return (root / self.header_filename, *self.global_skill_paths(home_root))
         return (
             root / self.header_filename,
             root / "skills" / "sopify" / "analyze" / "SKILL.md",
@@ -89,6 +92,14 @@ class HostAdapter:
         return tuple(paths)
 
     def global_skill_paths(self, home_root: Path) -> tuple[Path, ...]:
+        if self.flat_skills:
+            root = self.destination_root(home_root) / "skills"
+            return (
+                *(root / f"sopify-{stage}" / "SKILL.md" for stage in _SKILL_DIRS_ORDER),
+                root / "sopify" / "references" / "shared-writing-dna.md",
+                root / "sopify" / "references" / "output-contract.md",
+                root / "sopify-analyze" / "scripts" / "score_requirement.py",
+            )
         skills_root = self.destination_root(home_root) / "skills" / "sopify"
         return (
             skills_root / "SKILL.md",
@@ -191,6 +202,13 @@ def install_host_assets(
             home_root=home_root,
             language_directory=language_directory,
         )
+    if adapter.flat_skills:
+        from installer.hosts.flat import install_flat_host_assets
+
+        return install_flat_host_assets(
+            adapter, repo_root=repo_root, home_root=home_root,
+            language_directory=language_directory,
+        )
     return _install_home_host_assets(
         adapter,
         repo_root=repo_root,
@@ -206,7 +224,7 @@ def _install_home_host_assets(
     home_root: Path,
     language_directory: str,
 ) -> InstallPhaseResult:
-    """Install header + skills tree to home directory (Claude/Codex path)."""
+    """Install a managed header block and the owned Claude/Codex/Qoder tree."""
     source_root = adapter.source_root(repo_root, language_directory)
     header_source = adapter.instruction_source(repo_root, language_directory)
     skills_source = source_root / "skills" / "sopify"
@@ -219,8 +237,12 @@ def _install_home_host_assets(
     expected_paths = adapter.expected_paths(home_root)
     source_version = read_sopify_version(header_source)
     destination_header = destination_root / adapter.header_filename
-    destination_version = read_sopify_version(destination_header)
-    if source_version is not None and source_version == destination_version and all(path.exists() for path in expected_paths):
+    action = "updated" if destination_root.exists() else "installed"
+    header_changed = _write_managed_block(
+        destination_header, _render_header_content(header_source, adapter), migrate_legacy=True,
+    )
+    skills_destination = destination_root / "skills" / "sopify"
+    if not header_changed and skill_tree_matches(skills_source, skills_destination):
         return InstallPhaseResult(
             action="skipped",
             root=destination_root,
@@ -228,14 +250,6 @@ def _install_home_host_assets(
             paths=expected_paths,
         )
 
-    action = "updated" if destination_root.exists() else "installed"
-    destination_root.mkdir(parents=True, exist_ok=True)
-
-    header_destination = destination_root / adapter.header_filename
-    header_destination.parent.mkdir(parents=True, exist_ok=True)
-    _render_header(header_source, header_destination, adapter)
-
-    skills_destination = destination_root / "skills" / "sopify"
     if skills_destination.exists():
         shutil.rmtree(skills_destination)
     skills_destination.parent.mkdir(parents=True, exist_ok=True)
@@ -280,26 +294,9 @@ def _install_single_file_assets(
 
     full_content = render_single_file(header_source, skills_source, adapter)
 
-    # Content-based skip: extract existing managed block and compare strictly
-    if managed_block_file.is_file():
-        existing = managed_block_file.read_text(encoding="utf-8")
-        match = re.search(
-            rf"{re.escape(_MANAGED_BLOCK_BEGIN)}\n(.*?)\n{re.escape(_MANAGED_BLOCK_END)}",
-            existing,
-            re.DOTALL,
-        )
-        if match and match.group(1).strip() == full_content.strip():
-            return InstallPhaseResult(
-                action="skipped",
-                root=workspace_root / adapter.destination_dirname,
-                version=source_version,
-                paths=adapter.workspace_expected_paths(workspace_root),
-            )
-
     action = "updated" if managed_block_file.is_file() else "installed"
-
-    managed_block_file.parent.mkdir(parents=True, exist_ok=True)
-    _write_managed_block(managed_block_file, full_content)
+    if not _write_managed_block(managed_block_file, full_content):
+        action = "skipped"
 
     return InstallPhaseResult(
         action=action,
@@ -311,30 +308,6 @@ def _install_single_file_assets(
 
 _TEXT_SUFFIXES = {".md", ".py", ".yaml", ".yml", ".txt", ".json", ".toml"}
 _SKILL_DIRS_ORDER = ("analyze", "design", "develop", "kb", "templates")
-_SINGLE_FILE_SCRIPT_HEADINGS = {
-    "## 确定性逻辑（脚本优先）",
-    "## Deterministic logic first",
-}
-
-
-def _render_single_file_skill_entry(content: str) -> str:
-    """Remove tree-only script navigation from a flattened skill entry."""
-    rendered: list[str] = []
-    skipping_script_section = False
-    for line in content.splitlines():
-        if line in _SINGLE_FILE_SCRIPT_HEADINGS:
-            skipping_script_section = True
-            continue
-        if skipping_script_section:
-            if line.startswith("## "):
-                skipping_script_section = False
-            else:
-                continue
-        if "`scripts/" in line:
-            continue
-        line = line.replace("references/assets/scripts", "references/assets")
-        rendered.append(line)
-    return "\n".join(rendered).rstrip("\n")
 
 
 def render_single_file(
@@ -351,9 +324,23 @@ def render_single_file(
     if adapter.config_dir is not None:
         header = header.replace("{{config_dir}}", adapter.config_dir)
     else:
+        # Copilot has no global configuration directory.
+        header = "".join(
+            line for line in header.splitlines(keepends=True)
+            if "{{config_dir}}/sopify/" not in line
+        )
+        header = header.replace(" > 全局 `{{config_dir}}/sopify.config.yaml`", "")
+        header = header.replace(" > global `{{config_dir}}/sopify.config.yaml`", "")
         header = header.replace("{{config_dir}}", "")
 
     parts = [header.rstrip("\n")]
+    parts.append(
+        "本文件已内联所需规则和模板；Skill 名仅表示职责。直接使用下文对应章节，不查找外部 Skill、来源路径或未安装脚本；确定性判断按下文规则完成。"
+        if "lang=zh-CN" in header else
+        "Required rules and templates are inlined below; Skill names identify responsibilities. "
+        "Use these sections directly, without looking up external Skills, source paths or uninstalled scripts; "
+        "apply the stated rules for deterministic decisions."
+    )
 
     # Inline shared top-level references (e.g. shared-writing-dna.md)
     shared_refs = skills_source / "references"
@@ -372,18 +359,23 @@ def render_single_file(
         skill_md = skill_dir / "SKILL.md"
         if not skill_md.is_file():
             continue
-        skill_content = _render_single_file_skill_entry(
-            skill_md.read_text(encoding="utf-8")
-        )
-        parts.append(skill_content)
-        # Scripts are tree-only executable helpers. The flattened product keeps
-        # the equivalent rules from references/ and the user-facing assets.
+        # Phase entries only route to the rules below. KB/Templates carry their
+        # rules in SKILL.md, so retain those bodies without discovery metadata.
+        if not (skill_dir / "references" / f"{skill_name}-rules.md").is_file():
+            content = skill_md.read_text(encoding="utf-8")
+            parts.append(re.sub(r"\A---\n.*?\n---\n", "", content, count=1, flags=re.DOTALL).strip())
+        # The output contract already owns reply fields. Keep document templates,
+        # but omit repeated reply examples and tree-only executable scripts.
         for subdir_name in ("references", "assets"):
             subdir = skill_dir / subdir_name
             if not subdir.is_dir():
                 continue
             for child in sorted(subdir.iterdir()):
                 if child.is_file() and child.suffix in _TEXT_SUFFIXES:
+                    if subdir_name == "assets" and (
+                        child.name.startswith("output-") or child.name.endswith("-output.md")
+                    ):
+                        continue
                     file_content = child.read_text(encoding="utf-8").rstrip("\n")
                     rel_path = child.relative_to(skills_source)
                     parts.append(f"<!-- inlined: {rel_path} -->\n{file_content}")
@@ -391,14 +383,29 @@ def render_single_file(
     return "\n\n---\n\n".join(parts) + "\n"
 
 
-def _render_header(source: Path, destination: Path, adapter: HostAdapter) -> None:
-    """Render header template with host-specific variables and write to destination."""
+def _render_header_content(source: Path, adapter: HostAdapter) -> str:
+    """Render the source header without writing the shared destination file."""
     content = source.read_text(encoding="utf-8")
-    if adapter.config_dir is not None:
-        content = content.replace("{{config_dir}}", adapter.config_dir)
-    else:
-        content = content.replace("{{config_dir}}", "")
-    destination.write_text(content, encoding="utf-8")
+    return content.replace("{{config_dir}}", adapter.config_dir or "")
+
+
+def skill_tree_matches(
+    source: Path, destination: Path, *, overrides: dict[str, bytes] | None = None,
+) -> bool:
+    """Compare all owned files, including extras, with the copytree ignore policy."""
+    if not destination.is_dir():
+        return False
+
+    def contents(root: Path) -> dict[str, bytes]:
+        return {
+            path.relative_to(root).as_posix(): path.read_bytes()
+            for path in root.rglob("*")
+            if not _IGNORED_NAMES.intersection(path.relative_to(root).parts) and path.is_file()
+        }
+
+    expected = contents(source)
+    expected.update(overrides or {})
+    return expected == contents(destination)
 
 
 def render_user_plugin_rule(source: Path, adapter: HostAdapter) -> str:
@@ -412,34 +419,12 @@ def render_user_plugin_rule(source: Path, adapter: HostAdapter) -> str:
     return content.rstrip("\n") + "\n"
 
 
-def _write_managed_block(path: Path, content: str) -> bool:
-    """Upsert a managed instruction block, preserving user content outside markers.
-
-    If the file already contains BEGIN/END markers, only the managed section is
-    replaced.  Otherwise, the block is appended to the end of the file.
-    Returns True when the file was actually changed.
-    """
-    block = "\n".join((_MANAGED_BLOCK_BEGIN, content.strip(), _MANAGED_BLOCK_END))
-    existing = path.read_text(encoding="utf-8") if path.is_file() else ""
-
-    if _MANAGED_BLOCK_BEGIN in existing and _MANAGED_BLOCK_END in existing:
-        new_content = re.sub(
-            rf"{re.escape(_MANAGED_BLOCK_BEGIN)}.*?{re.escape(_MANAGED_BLOCK_END)}",
-            lambda _: block,
-            existing,
-            count=1,
-            flags=re.DOTALL,
-        )
-    else:
-        base = existing.rstrip("\n")
-        separator = "\n\n" if base else ""
-        new_content = f"{base}{separator}{block}"
-
-    new_content = new_content.rstrip("\n") + "\n"
-    if new_content == existing:
-        return False
-    path.write_text(new_content, encoding="utf-8")
-    return True
+def _write_managed_block(path: Path, content: str, *, migrate_legacy: bool = False) -> bool:
+    """Translate the standalone helper's validation error to the installer API."""
+    try:
+        return upsert_managed_instruction_block(path, content, migrate_legacy=migrate_legacy)
+    except ValueError as exc:
+        raise InstallError(f"{exc} ({path}); no files were changed.") from exc
 
 
 def read_sopify_version(path: Path) -> str | None:

@@ -1,0 +1,43 @@
+{
+  "evidence": {
+    "commits": [
+      "b81b93e",
+      "a49ac51",
+      "2bee037"
+    ],
+    "reports": [
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w5/t10-qoder.md",
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w5/visuals-codex.md",
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w5/newbie-fix-codex.md"
+    ],
+    "result": "README zh/en rewritten (161 lines each), pages synced; cross-host scene redrawn from the T9 sample; architecture and product-form diagrams list Antigravity and Trae (preview); Python <3.11 gets a one-line requirement; install summary suggests ~go plan; entry rule also binds when local state is not ignored (teammate clone)",
+    "tasks": [
+      "T10",
+      "newbie-driven fixes"
+    ],
+    "tests": {
+      "full": "422 passed, 101 subtests passed",
+      "links": "125/125",
+      "preflight": "All checks passed"
+    },
+    "writers": {
+      "installer_fixes": "codex",
+      "text_and_pages": "qoder (supervised Orca worker)",
+      "visuals": "codex (doc-to-sketch scene, fireworks-tech-graph diagrams)"
+    }
+  },
+  "provenance": {
+    "executors": [
+      "qoder",
+      "codex"
+    ],
+    "host": "claude-code",
+    "plan_id": "20261020_sopify_narrow_focus",
+    "plan_version": "sha256:5ef0b1fd6d95b0eb094338efdfef8f311d8b10c8b8fd2ac856cab1caa8e774ac",
+    "receipt_id": "exec_007",
+    "timestamp": "2026-10-21T04:26:53+00:00",
+    "written_by": "plan owner"
+  },
+  "timestamp": "2026-10-21T04:26:53+00:00",
+  "verdict": "implemented"
+}

@@ -2,215 +2,149 @@
 
 <div align="center">
 
-**Resumable AI coding — ask first, plans stay with the repo**
+**Version AI coding plans and evidence in Git — resume work across tools, teammates, and agents.**
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)](./LICENSE)
-[![Docs](https://img.shields.io/badge/docs-CC%20BY%204.0-green.svg?style=for-the-badge)](./LICENSE-docs)
-[![Version](https://img.shields.io/badge/version-2026--08--30.001152-orange.svg?style=for-the-badge)](#version-history)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](./CONTRIBUTING.md)
+Installs into the AI coding tools you already use. Questions and small fixes are handled directly; plans start only when needed.
 
-[![Codex](https://img.shields.io/badge/host-Codex-4A9EFF.svg?style=for-the-badge)](#quick-start)
-[![Claude](https://img.shields.io/badge/host-Claude-CC785C.svg?style=for-the-badge)](#quick-start)
-[![Qoder](https://img.shields.io/badge/host-Qoder-7C3AED.svg?style=for-the-badge)](#quick-start)
-[![Copilot](https://img.shields.io/badge/host-Copilot-000000.svg?style=for-the-badge)](#quick-start)
-[![Cursor](https://img.shields.io/badge/host-Cursor-111827.svg?style=for-the-badge)](./docs/cursor-host.md)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)](./LICENSE) [![Version](https://img.shields.io/badge/version-2026--08--30.001152-orange.svg?style=for-the-badge)](#version-history)
+
+[![Codex](https://img.shields.io/badge/Codex-4A9EFF.svg?style=for-the-badge)](#supported-hosts) [![Claude Code](https://img.shields.io/badge/Claude%20Code-CC785C.svg?style=for-the-badge)](#supported-hosts) [![Qoder](https://img.shields.io/badge/Qoder-7C3AED.svg?style=for-the-badge)](#supported-hosts) [![Copilot](https://img.shields.io/badge/Copilot-000000.svg?style=for-the-badge)](#supported-hosts) [![Cursor](https://img.shields.io/badge/Cursor-111827.svg?style=for-the-badge)](#supported-hosts) [![Antigravity](https://img.shields.io/badge/Antigravity-1A73E8.svg?style=for-the-badge)](#supported-hosts) [![Trae](https://img.shields.io/badge/Trae-00B96B.svg?style=for-the-badge)](#supported-hosts)
 
 English · [简体中文](./README.zh-CN.md) · [Quick Start](#quick-start) · [Contributors](./CONTRIBUTORS.md)
 
 </div>
 
 <div align="center">
-<img src="./assets/sopify-cover.jpg" width="660" alt="Sopify — Resumable AI coding, ask first, plans stay with the repo" />
+<img src="./assets/sopify-cover.jpg" width="660" alt="Sopify — plans, decisions and verification evidence saved as ordinary files in your repo" />
 </div>
 
 ---
 
-AI coding tools are fast. But when they jump to code before the facts are clear, speed turns into rework. Sopify is a development process protocol layer for AI coding: in managed workflows, the host asks before coding when requirements are incomplete or a decision still needs you.
-
-Sopify stores plans and verification receipts in `.sopify/` as project files tracked by git. Only the local resume pointers stay out of git. In the same repo, use the managed entry supported by your current host to resume from those files; entry shape and verification level stay explicit in the host support matrix.
-
-No new editor, no new CLI. Install into the host you already use — Codex, Claude, Qoder, Copilot, or Cursor.
-
-**Design principles:**
-
-- **Stop when unsure** — score every requirement; ask before assuming
-- **Resume across managed hosts** — plans and verification receipts are tracked in `.sopify/`; hosts with continuation support can pick up where you left off
-- **Trace every decision** — plans, choices, and reviews persist in `.sopify/`
-
-**What Sopify prevents:**
-
-- **Premature coding** — AI starts changing code before missing facts or decisions are resolved
-- **Lost context** — switching hosts, machines, or teammates forces the work to be re-explained
-- **Forgotten decisions** — important tradeoffs disappear into chat history instead of becoming project artifacts
-
-[See the workflow diagram, checkpoints, and resume flow →](./docs/how-sopify-works.en.md)
-
-## Sopify in a Real Codex Workflow
-
-This archived workflow shows Sopify running inside Codex, not a scripted terminal demo. A complex request became a tracked plan; an audit concern triggered a decision checkpoint; after the user approved a minimal fix, the verification evidence was recorded and the plan was archived.
-
-<p align="center">
-  <img src="./assets/readme-visuals/codex-dogfood.gif" alt="Sopify in a real Codex workflow: a request becomes a plan, an audit concern stops for the user's decision, and the minimal fix and verification evidence are recorded before archive" width="900" />
-</p>
-
-- **Plan first** — Codex did not start coding immediately; it first captured the goal, boundaries, and verification steps in a tracked plan.
-- **Stop for a decision** — the first audit found one concern; work paused for the user, then only a minimal identity check was added.
-- **Close with evidence** — the second audit found no open risk; 5 protocol checks and 55 targeted tests with 48 subtests were recorded before archive.
-
-The real task was an optional verifier integration. The animation explains how Sopify managed it; the archived files show what happened: [plan](./.sopify/history/2026-07/20260718_evidentloop_optional_audit_integration/plan.md) · [verification receipt](./.sopify/history/2026-07/20260718_evidentloop_optional_audit_integration/receipts/verify_001.json) · [final receipt](./.sopify/history/2026-07/20260718_evidentloop_optional_audit_integration/receipts/final.json).
+Sopify is a set of rules and Skills that installs into the AI coding tool you already use. When work needs a plan, it saves the plan, the decisions and the verification evidence as ordinary files under `.sopify/`, versioned in Git, so the next session — another tool, another person, another agent — resumes from the record instead of from memory.
 
 ## Quick Start
+
+**1. Install into your tool.**
 
 ```bash
 curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/install.sh | bash -s -- --target codex:en-US
 ```
 
-Sopify requires Python 3.11 or newer; the installer checks before downloading. This command
-installs Sopify only.
+| Your tool | `--target` |
+|---|---|
+| Codex | `codex:en-US` / `codex:zh-CN` |
+| Claude Code | `claude:en-US` / `claude:zh-CN` |
+| Qoder | `qoder:en-US` / `qoder:zh-CN` |
+| Copilot | `copilot:en-US` / `copilot:zh-CN` |
+| Cursor | `cursor:en-US` / `cursor:zh-CN` |
+| Antigravity | `antigravity:en-US` / `antigravity:zh-CN` |
+| Trae | `trae:en-US` / `trae:zh-CN` |
 
-Optional: append `--with-evidentloop` to the same command to install EvidentLoop; see
-[Installation](#installation).
+Python 3.11 or newer; the installer checks before downloading. It writes host instructions and Skills only.
 
-After install, use `~go` to start a managed workflow. See [Installation](#installation) for other hosts, Windows, and how to review the installer before running it.
+**2. In your project, type one line into the chat box.**
 
-**Already in a Sopify-managed repo?** Explicitly ask to continue or use `~go` to resume the current plan. Ordinary questions and small fixes are handled directly without automatically entering the previous plan workflow.
+```text
+~go plan add input validation to the signup form
+```
 
-## Why Sopify?
+Sopify asks about anything still unresolved and writes `.sopify/plan/YYYYMMDD_signup_form_validation/plan.md` only after you answer in the conversation. In a non-interactive session (such as `-p` / `--print`) the question ends that turn — send the request again with your answers included. This step changes no business code.
 
-**When requirements are unclear, it stops to plan first.**
-You say "add a caching layer." Sopify doesn't start coding — it plans first: analyze, design, split into tasks, then save to `.sopify/plan/`. Only after you confirm the plan does it write code. Every line changed traces back to a decision.
+**3. Run the plan, then archive it.**
+
+```text
+~go            # implement the plan task by task, recording verification evidence
+~go finalize   # move the finished plan to .sopify/history/
+```
+
+The plan and its evidence stay in Git, so another supported tool can resume the work.
+
+### What lands in your repo
+
+| Path | What it is | In Git? |
+|---|---|---|
+| `.sopify/sopify.json` | project marker | committed |
+| `.sopify/plan/`, `.sopify/history/` | plans and verification evidence | committed |
+| `.sopify/state/` | local pointers: active plan and resume hint | not committed; ignored by default through `.git/info/exclude` |
+
+Windows uses the PowerShell installer instead of step 1:
+
+```powershell
+iwr https://github.com/evidentloop/sopify/releases/latest/download/install.ps1 -OutFile sopify-install.ps1
+.\sopify-install.ps1 --target codex:en-US
+```
+
+## Where It Pays Off
+
+**A long task gets interrupted.**
+Before: the session ends and the reasoning ends with it. After: `~go` reads `.sopify/plan/` and resumes at the next unfinished task.
+
+**Another tool or another person takes over.**
+Before: paste the context again and hope nothing important was dropped. After: this release was built that way — a fresh Qoder session whose only input was `~go` resumed a plan written by Claude Code.
+
+**Several agents split the work.**
+Before: two agents edit the same files and overwrite each other. After: one owner holds the plan, workers take bounded tasks, and the evidence lands in one place. See [Using Sopify with Orca](./docs/orca.md).
 
 <div align="center">
-<img src="./assets/readme-visuals/sopify-scene-ask-en.jpg" width="720" alt="Plan first, code second — discuss, record, execute" />
+<img src="./assets/readme-visuals/sopify-scene-cross-host-en.jpg" width="720" alt="A plan written in Claude Code is resumed by a fresh Qoder session that reads .sopify/ after receiving only ~go" />
 </div>
-
-**Your teammate picks up where you left off.**
-You start a feature in Codex, finish the design, and implement two of four tasks. Next week your teammate opens the same repo in Claude, types `~go`. Sopify reads the checkpoint and continues from task 3 — no handoff doc, no re-explaining context.
-
-<div align="center">
-<img src="./assets/readme-visuals/sopify-scene-cross-host-en.jpg" width="720" alt="Seamless cross-host handoff" />
-</div>
-
-**Every decision leaves a trace.**
-A month later, someone asks why the cache key includes the user ID. The answer is in `.sopify/plan/` — the requirement that prompted the decision, the design that resolved it, the review that approved it.
 
 <div align="center">
 <img src="./assets/readme-visuals/sopify-scene-decision-en.jpg" width="720" alt="Every decision traced — auditable and reviewable" />
 </div>
 
-## Product Form
+## When Not to Use It
 
-<div align="center">
-<img src="./assets/sopify-product-form-release-en.svg" width="900" alt="Sopify Product Form — host, skills, project assets, local handoff, and explicit archive" />
-</div>
+- Questions, code reading, and explanations
+- Small fixes: a rename, a typo, a one-line style change
+- Throwaway scripts and exploratory tries
 
-The host LLM executes. Sopify supplies shared workflow rules and preserves plans, decisions, and verification evidence as project files in `.sopify/`. Local resume pointers remain on the machine.
+These are handled directly and never enter the plan workflow. A plan starts only when you type `~go plan`, ask to continue work in progress, or when `~go` decides one is needed.
 
-Sopify does three things:
+## Command Cheat Sheet
 
-- **Shared workflow protocol** — each adapter delivers the same protocol through the host surfaces it supports; entry mode and verification level remain explicit
-- **Git-tracked project record** — plans, decisions, and verification evidence travel with the repository; local pointers do not
-- **Explicit resume and closeout** — ask to continue or use `~go` before the host resumes; `~go finalize` archives the plan only after delivery evidence is ready
+| Command | When to type it |
+|---|---|
+| `~go plan <request>` | New work that needs a plan — asks first when anything is unclear, writes `.sopify/plan/<id>/plan.md` only after you answer, and changes no code |
+| `~go` | Start or continue. Routes the current request, and resumes the active plan when there is one |
+| `~go finalize` | Close out the active plan and move it to `.sopify/history/` |
 
-## Architecture Details
+## Supported Hosts
 
-For readers who want the internal layering behind the product form, the technical structure is below.
+| Host | Status | Install |
+|---|---|---|
+| Codex | Verified | `--target codex:en-US` / `codex:zh-CN` |
+| Claude Code | Verified | `--target claude:en-US` / `claude:zh-CN` |
+| Qoder | Verified | `--target qoder:en-US` / `qoder:zh-CN` |
+| Copilot | Baseline | `--target copilot:en-US` / `copilot:zh-CN` |
+| [Cursor](./docs/cursor-host.md) | Baseline | `--target cursor:en-US` / `cursor:zh-CN` |
+| [Antigravity](./docs/antigravity-host.md) | Baseline; tested in real sessions | `--target antigravity:en-US` / `antigravity:zh-CN` |
+| [Trae](./docs/trae-host.md) | Baseline | `--target trae:en-US` / `trae:zh-CN` |
 
-<div align="center">
-<img src="./assets/sopify-architecture.svg" width="760" alt="Sopify Architecture — protocol kernel + default workflow + knowledge layer" />
-</div>
+Verified means the managed workflow has been run in a real session on that host, not only installed. Baseline means the installation is verified; real-session evidence varies by host — see each host's doc.
 
-## Installation
+## A Real Case
 
-Review before running:
+This archived workflow ran inside Codex. A complex request became a tracked plan, an audit concern stopped the work for a user decision, and after the user approved a minimal fix the verification evidence was recorded and the plan was archived.
 
-```bash
-curl -fsSL -o sopify-install.sh https://github.com/evidentloop/sopify/releases/latest/download/install.sh
-less sopify-install.sh          # review before running
-bash sopify-install.sh --target codex:en-US
-```
+<p align="center">
+  <img src="./assets/readme-visuals/codex-dogfood.gif" alt="Sopify in a real Codex workflow: a request becomes a plan, an audit concern stops for the user's decision, and the minimal fix and verification evidence are recorded before archive" width="900" />
+</p>
 
-Windows PowerShell:
+- **Plan first** — Codex did not start coding immediately; it captured the goal, boundaries and verification steps in a tracked plan.
+- **Stop for a decision** — the first audit found one concern; work paused for the user, then only a minimal identity check was added.
+- **Close with evidence** — the second audit found no open risk; 5 protocol checks and 55 targeted tests with 48 subtests were recorded before archive.
 
-```powershell
-iwr https://github.com/evidentloop/sopify/releases/latest/download/install.ps1 -OutFile sopify-install.ps1
-Get-Content sopify-install.ps1 | more
-.\sopify-install.ps1 --target codex:en-US
-```
+The real task was an optional verifier integration. The animation shows how Sopify managed it; the archived files show what happened: [plan](./.sopify/history/2026-07/20260718_evidentloop_optional_audit_integration/plan.md) · [verification receipt](./.sopify/history/2026-07/20260718_evidentloop_optional_audit_integration/receipts/verify_001.json) · [final receipt](./.sopify/history/2026-07/20260718_evidentloop_optional_audit_integration/receipts/final.json).
 
-Host support:
+## Further Reading
 
-| Host | Tier | Target | Notes |
-|------|------|--------|-------|
-| Codex | PROTOCOL_VERIFIED | `codex:en-US` / `codex:zh-CN` | Full capability continuation |
-| Claude | PROTOCOL_VERIFIED | `claude:en-US` / `claude:zh-CN` | Full capability continuation |
-| Qoder | PROTOCOL_VERIFIED | `qoder` | Validated on Qoder CLI |
-| Copilot | BASELINE_SUPPORTED | `copilot:en-US` / `copilot:zh-CN` | Prompt-only; payload uplift planned |
-| [Cursor](docs/cursor-host.md) | BASELINE_SUPPORTED | `cursor:en-US` / `cursor:zh-CN` | One install for IDE and local CLI; plan/development/resume/closeout entry is model-selected |
-
-Pass `--workspace <path>` to target another repo for workspace-scope or prewarm installs; Cursor installs once at user scope and does not require it. Use `--language <lang>` to control output language.
-
-[EvidentLoop](https://github.com/evidentloop/evidentloop) is an optional code-change audit
-tool. It turns a local Git diff into an interactive report, ties audit findings to changed
-lines, and lets users update the report through feedback. To install the current official
-CLI and Skill with Sopify, or reuse healthy existing components, pass
-`--with-evidentloop` explicitly:
-
-```bash
-bash sopify-install.sh --target codex:en-US --with-evidentloop
-```
-
-Healthy existing components are reused without automatic upgrades. The Copilot Skill is
-project-scoped; Sopify does not commit or update it. See
-[Getting Started](./docs/getting-started.md#optional-evidentloop-companion) for
-prerequisites, host-specific paths, and the local/cloud boundary.
-
-For the full setup guide, see [Getting Started](./docs/getting-started.md). For a step-by-step demo, see [External Repo Quickstart](./examples/external-repo-quickstart/README.md).
-
-## Command Reference
-
-| Command | Description |
-|---------|-------------|
-| `~go` | Automatically route and run the full workflow (auto-resumes if active plan exists) |
-| `~go plan` | Plan only |
-| `~go finalize` | Close out the active plan |
-
-Most users only need `~go` and `~go plan`; maintainer validation commands live in [CONTRIBUTING.md](./CONTRIBUTING.md).
-
-## Configuration
-
-```bash
-cp examples/sopify.config.yaml ./sopify.config.yaml
-```
-
-```yaml
-brand: auto
-language: en-US
-
-workflow:
-  mode: adaptive   # strict | adaptive | minimal
-  require_score: 7
-
-```
-
-## Directory Structure
-
-```text
-sopify/
-├── scripts/               # install, diagnostics, and maintainer scripts
-├── examples/              # configuration examples
-├── docs/                  # workflow guides and developer references
-├── sopify_writer/         # protocol asset writer library
-├── sopify_contracts/      # schema definitions and shared data structures
-├── skills/                # prompt-layer source of truth
-├── installer/             # host adapters and install orchestration
-└── .sopify/               # project protocol root
-    ├── blueprint/         # protocol spec, design baseline, reduction targets
-    ├── plan/              # active plans + receipts
-    └── history/           # archived plans + receipts
-```
-
-See [How Sopify Works](./docs/how-sopify-works.en.md) for the full workflow, checkpoints, and knowledge layout.
+- [How Sopify Works](./docs/how-sopify-works.en.md) — workflow stages, checkpoints, the four files a new session reads first, the `.sopify/` layout, and the [product form](./assets/sopify-product-form-release-en.svg) and architecture diagrams
+- [Getting Started](./docs/getting-started.md) — install details, inspecting the script before running it, host-specific setup, updating, removing, and the optional EvidentLoop companion
+- [Using Sopify with Orca](./docs/orca.md) — owner, executor and reviewer roles for multi-agent work
+- [Host Onboarding](./docs/host-onboarding.md) — how a new host adapter is probed and recorded
+- [External Repo Quickstart](./examples/external-repo-quickstart/README.md) — step-by-step demo on a repo that is not Sopify's own
+- [Configuration example](./examples/sopify.config.yaml) — optional `sopify.config.yaml` overrides; defaults work without it
 
 ## Version History
 

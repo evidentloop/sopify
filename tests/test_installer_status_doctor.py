@@ -86,8 +86,8 @@ class HostCapabilityRegistryTests(unittest.TestCase):
         installable = [capability.host_id for capability in iter_installable_hosts()]
         declared = [capability.host_id for capability in iter_declared_hosts()]
 
-        self.assertEqual(set(installable), {"codex", "claude", "copilot", "cursor", "qoder"})
-        self.assertEqual(set(declared), {"codex", "claude", "copilot", "cursor", "qoder"})
+        self.assertEqual(set(installable), {"codex", "claude", "copilot", "cursor", "qoder", "antigravity", "trae"})
+        self.assertEqual(set(declared), {"codex", "claude", "copilot", "cursor", "qoder", "antigravity", "trae"})
 
     def test_cursor_capability_is_baseline_split_surface(self) -> None:
         cursor = get_host_capability("cursor")

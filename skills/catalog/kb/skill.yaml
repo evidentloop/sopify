@@ -20,4 +20,6 @@ host_support:
   - qoder
   - copilot
   - cursor
+  - antigravity
+  - trae
 permission_mode: default

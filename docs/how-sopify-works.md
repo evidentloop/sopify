@@ -16,9 +16,23 @@ Sopify 借鉴 harness engineering 的设计思路，但不把它作为仓库首�
 
 Sopify 把 AI 开发过程中的**方案、决策、交接、执行/验证证据和归档记录**沉淀为可追溯资产。跨 session、跨宿主的接续是这些资产可携带、可验证后的自然结果。
 
-宿主（Codex、Claude、Qoder、Copilot、Cursor）负责执行。Sopify 确保每个决策都留下痕迹，且这些痕迹能跨越 session 边界、宿主切换和团队交接。
+AI 编程宿主负责执行。Sopify 确保每个决策都留下痕迹，且这些痕迹能跨越 session 边界、宿主切换和团队交接。
 
 **Runtime 已退场；工作流保留。** analyze → design → develop → finalize 的默认工作流不变。变化的是：工作流规则现在活在协议文件和宿主 prompt 资产里，而不是 runtime 进程里。
+
+### 产品形态
+
+<div align="center">
+<img src="../assets/sopify-product-form-release.svg" width="900" alt="Sopify 产品形态 — 宿主、Skill、项目资产、本地交接与显式归档" />
+</div>
+
+Sopify 提供共享工作流规则，并把方案、决策和验证证据作为项目文件保存在 `.sopify/` 中；本地恢复指针只留在当前机器。
+
+Sopify 主要做三件事：
+
+- **共享工作流协议** — 各适配器通过宿主已支持的入口交付同一协议；入口形态与验证档位保持显式
+- **项目记录随 Git 携带** — 方案、决策和验证证据跟着仓库走，本地指针不跟随
+- **明确接续与收口** — 说“继续”或输入 `~go` 后，宿主才会恢复；交付证据就绪后，`~go finalize` 才归档方案
 
 ## 主工作流
 
@@ -29,7 +43,7 @@ Sopify 把 AI 开发过程中的**方案、决策、交接、执行/验证证据
 工作流要点：
 
 - 宿主从已安装的 prompt 资产中读取协议入口指令（通过 `install.sh --target <host>` 安装）
-- 进入 managed plan / continuation / finalize 前，宿主按 4 步读链恢复上下文：`state/active_plan.json` → `plan/<id>/plan.md` → `state/current_handoff.json` → `plan/<id>/receipts/`
+- managed plan / continuation / finalize 按[下文协议入口](#协议入口4-步读链)恢复上下文
 - consult 和 quick-fix 请求**不**自动接续 active plan
 - 陈旧或无效状态不会打断普通问答；只有进入方案操作时才按用户意图处理
 - 状态写入统一走 `sopify_writer`（协议资产的唯一写路径）
@@ -60,11 +74,17 @@ Sopify 把 AI 开发过程中的**方案、决策、交接、执行/验证证据
 
 ### 可选验证器
 
-Sopify 不默认安装或运行验证器。只用 Sopify、使用其他 Verifier、使用已独立安装的 EvidentLoop 都是完整路径。`--with-evidentloop` 只是显式安装便利，不是运行开关：新装组件使用 EvidentLoop 当前官方来源，已有组件通过健康检查后复用且不自动升级。兼容性由 EvidentLoop 自身负责，Sopify 不维护版本矩阵，也不卸载或记录组件状态。Copilot Skill 是项目中的 `.github/skills/evidentloop/` 内容；用户按需审查和提交，Sopify 不会自动提交或更新。安装成功只证明本地放置和健康检查；Skill discovery 与审计 E2E 仍需宿主证据，云端也不会自动获得本机安装的 CLI。
+Sopify 不默认执行验证器。可选安装与组件归属统一见 [Getting Started](./getting-started.md)。安装只证明放置和健康检查，宿主发现与审计行为仍需独立证据。
 
 独立审计不必绑定方案。正式方案主审计可放在 `audits/plan/`，针对性审计可放在 `audits/<scope>/`；只有用户采用为正式证据时，宿主才通过 writer 写 receipt。`audits/` 不进入 4 步默认读取链。
 
 ## 目录结构与层级
+
+产品形态背后的内部层次：
+
+<div align="center">
+<img src="../assets/sopify-architecture.svg" width="760" alt="Sopify 架构 — 协议内核 + 默认工作流 + 知识层" />
+</div>
 
 ```text
 .sopify/
@@ -103,13 +123,7 @@ Sopify 不默认安装或运行验证器。只用 Sopify、使用其他 Verifier
 
 ## 宿主支持
 
-| 宿主 | Tier | 安装命令 | 说明 |
-|------|------|---------|------|
-| Codex | PROTOCOL_VERIFIED | `install.sh --target codex:zh-CN` | 全能力接续 |
-| Claude | PROTOCOL_VERIFIED | `install.sh --target claude:zh-CN` | 全能力接续 |
-| Qoder | PROTOCOL_VERIFIED | `install.sh --target qoder` | 已在 Qoder CLI 验证 |
-| Copilot | BASELINE_SUPPORTED | `install.sh --target copilot` | 仅 prompt；payload 升级计划中 |
-| Cursor | BASELINE_SUPPORTED | `install.sh --target cursor:zh-CN` | 一次安装支持 IDE 与本地 CLI；CLI 方案/开发/接续/收口入口按需触发 |
+当前支持范围与安装 target 见 [README 宿主表](../README.zh-CN.md#支持的宿主)，此处不再维护一份副本。
 
 ## 附录：Plan 生命周期
 

@@ -535,6 +535,11 @@ def _build_next_step(target: InstallTarget, workspace_root: Path | None) -> str:
             "verify the Sopify user Plugin is enabled. "
             "The installer does not modify project files."
         )
+    if adapter.flat_skills:
+        return (
+            f"Start a new {_host_display_name(target.host)} session in your project and trigger Sopify. "
+            "Verify entry and Skill visibility; file installation does not prove host behavior."
+        )
     if workspace_root is None:
         return (
             f"Open {target.host} in any project workspace and trigger Sopify. "
@@ -583,11 +588,11 @@ def _render_distribution_user_result_en(report: DistributionInstallReport) -> st
         lines.extend(
             [
                 "  No project directory was changed.",
-                "  Sopify will initialize project files the first time you run `~go` in a workspace.",
+                "  Sopify sets up project files the first time you run ~go in a project.",
                 "",
                 "Next:",
                 f"  1. Open {host_name} in your project directory.",
-                "  2. Type: ~go",
+                "  2. Type: ~go plan <what you want to do>",
             ]
         )
     else:
@@ -598,7 +603,7 @@ def _render_distribution_user_result_en(report: DistributionInstallReport) -> st
                 "",
                 "Next:",
                 f"  1. Reopen {host_name} in that project.",
-                "  2. Type: ~go",
+                "  2. Type: ~go plan <what you want to do>",
             ]
         )
     lines.extend(
@@ -652,11 +657,11 @@ def _render_distribution_user_result_zh(report: DistributionInstallReport) -> st
         lines.extend(
             [
                 "  这次没有修改任何项目目录。",
-                "  进入项目后第一次输入 `~go` 时，会自动初始化 Sopify 项目文件。",
+                "  在项目里第一次输入 ~go 时，Sopify 会自动设置项目文件。",
                 "",
                 "下一步：",
                 f"  1. 在项目目录打开 {host_name}。",
-                "  2. 输入：~go",
+                "  2. 输入：~go plan <你要做的事>",
             ]
         )
     else:
@@ -667,7 +672,7 @@ def _render_distribution_user_result_zh(report: DistributionInstallReport) -> st
                 "",
                 "下一步：",
                 f"  1. 在该项目中重新打开 {host_name}。",
-                "  2. 输入：~go",
+                "  2. 输入：~go plan <你要做的事>",
             ]
         )
     lines.extend(
@@ -849,6 +854,8 @@ def _first_smoke_line(smoke_output: str) -> str:
 
 
 def _friendly_smoke_summary(smoke_output: str, language: str) -> str:
+    if not smoke_output.strip():
+        return "未执行运行时自检。" if language == "zh-CN" else "Runtime smoke check was not run."
     first_line = _first_smoke_line(smoke_output)
     if first_line.startswith("Runtime smoke check passed"):
         return "运行时自检已通过。" if language == "zh-CN" else "Runtime smoke check passed."
@@ -903,6 +910,9 @@ def _host_display_name(host_id: str) -> str:
         "claude": "Claude",
         "copilot": "Copilot",
         "qoder": "Qoder",
+        "cursor": "Cursor",
+        "antigravity": "Antigravity",
+        "trae": "Trae",
     }.get(host_id, host_id)
 
 

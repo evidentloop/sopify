@@ -23,7 +23,7 @@
 - `standard`：`plan.md + tasks.md`，适合新功能、跨模块或较复杂工作。
 - `architecture`：`plan.md + tasks.md + design.md`，只用于真实架构变更、新系统或重大重构。
 
-ADR、图、assets 和 receipts 均按证据创建，不预建空目录。方案正文模板唯一来自本 Skill 的 `assets/`。
+ADR、图、assets 和 receipts 均按证据创建，不预建空目录。方案正文模板由 Design 唯一维护，使用当前宿主提供的对应模板。
 
 ## 4. 判定 readiness
 
@@ -44,5 +44,7 @@ ADR、图、assets 和 receipts 均按证据创建，不预建空目录。方案
 任务状态：`[ ]` 待执行、`[x]` 已完成、`[-]` 已跳过、`[!]` 阻塞。
 
 ## 协议边界
+
+可选的增量写法示例：`Added`：补损坏文件回归；`Changed`：重装按内容判断；`Removed`：仅凭版本跳过。仅在描述现有行为变化更清楚时使用，省略空项；不新增必需章节或改变方案流程。
 
 Design 只生成或更新方案语义文件。`active_plan`、handoff 和 receipts 由宿主按正式协议通过 `sopify_writer` 写入。
