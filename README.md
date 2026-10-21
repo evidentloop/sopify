@@ -2,14 +2,13 @@
 
 <div align="center">
 
-**AI coding plans and proof in your repo — keep building across tools, teammates, and agents.**
+**Version AI coding plans and evidence in Git — resume work across tools, teammates, and agents.**
 
-Installs into the AI coding tools you already use. Questions and small fixes stay direct.
+Installs into the AI coding tools you already use. Questions and small fixes are handled directly; plans start only when needed.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)](./LICENSE) [![Version](https://img.shields.io/badge/version-2026--08--30.001152-orange.svg?style=for-the-badge)](#version-history)
 
-[![Codex](https://img.shields.io/badge/host-Codex-4A9EFF.svg?style=for-the-badge)](#supported-hosts) [![Claude Code](https://img.shields.io/badge/host-Claude%20Code-CC785C.svg?style=for-the-badge)](#supported-hosts) [![Qoder](https://img.shields.io/badge/host-Qoder-7C3AED.svg?style=for-the-badge)](#supported-hosts) [![Copilot](https://img.shields.io/badge/host-Copilot-000000.svg?style=for-the-badge)](#supported-hosts)
-[![Cursor](https://img.shields.io/badge/host-Cursor-111827.svg?style=for-the-badge)](#supported-hosts) [![Antigravity](https://img.shields.io/badge/host-Antigravity-1A73E8.svg?style=for-the-badge)](#supported-hosts) [![Trae](https://img.shields.io/badge/host-Trae-00B96B.svg?style=for-the-badge)](#supported-hosts)
+[![Codex](https://img.shields.io/badge/Codex-4A9EFF.svg?style=for-the-badge)](#supported-hosts) [![Claude Code](https://img.shields.io/badge/Claude%20Code-CC785C.svg?style=for-the-badge)](#supported-hosts) [![Qoder](https://img.shields.io/badge/Qoder-7C3AED.svg?style=for-the-badge)](#supported-hosts) [![Copilot](https://img.shields.io/badge/Copilot-000000.svg?style=for-the-badge)](#supported-hosts) [![Cursor](https://img.shields.io/badge/Cursor-111827.svg?style=for-the-badge)](#supported-hosts) [![Antigravity](https://img.shields.io/badge/Antigravity-1A73E8.svg?style=for-the-badge)](#supported-hosts) [![Trae](https://img.shields.io/badge/Trae-00B96B.svg?style=for-the-badge)](#supported-hosts)
 
 English · [简体中文](./README.zh-CN.md) · [Quick Start](#quick-start) · [Contributors](./CONTRIBUTORS.md)
 
@@ -21,7 +20,7 @@ English · [简体中文](./README.zh-CN.md) · [Quick Start](#quick-start) · [
 
 ---
 
-Sopify is a set of rules and Skills that installs into the AI coding tool you already use. When work needs a plan, it saves the plan, the decisions and the verification evidence as ordinary files under `.sopify/` in your repo, so the next session — another tool, another person, another agent — continues from the record instead of from memory. Not a new editor, not a new CLI.
+Sopify is a set of rules and Skills that installs into the AI coding tool you already use. When work needs a plan, it saves the plan, the decisions and the verification evidence as ordinary files under `.sopify/`, versioned in Git, so the next session — another tool, another person, another agent — resumes from the record instead of from memory.
 
 ## Quick Start
 
@@ -39,9 +38,9 @@ curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/instal
 | Copilot | `copilot:en-US` / `copilot:zh-CN` |
 | Cursor | `cursor:en-US` / `cursor:zh-CN` |
 | Antigravity | `antigravity:en-US` / `antigravity:zh-CN` |
-| Trae (Preview) | `trae:en-US` / `trae:zh-CN` |
+| Trae | `trae:en-US` / `trae:zh-CN` |
 
-Python 3.11 or newer; the installer checks before downloading. It writes host instructions and Skills only — no daemon, no background process, no new editor.
+Python 3.11 or newer; the installer checks before downloading. It writes host instructions and Skills only.
 
 **2. In your project, type one line into the chat box.**
 
@@ -58,11 +57,11 @@ Sopify asks about anything still unresolved and writes `.sopify/plan/YYYYMMDD_si
 ~go finalize   # move the finished plan to .sopify/history/
 ```
 
-The plan and its evidence stay in git, so another supported tool can pick the work back up.
+The plan and its evidence stay in Git, so another supported tool can resume the work.
 
 ### What lands in your repo
 
-| Path | What it is | In git? |
+| Path | What it is | In Git? |
 |---|---|---|
 | `.sopify/sopify.json` | project marker | committed |
 | `.sopify/plan/`, `.sopify/history/` | plans and verification evidence | committed |
@@ -81,13 +80,13 @@ iwr https://github.com/evidentloop/sopify/releases/latest/download/install.ps1 -
 Before: the session ends and the reasoning ends with it. After: `~go` reads `.sopify/plan/` and resumes at the next unfinished task.
 
 **Another tool or another person takes over.**
-Before: paste the context again and hope nothing important was dropped. After: this release was built that way — a plan written by Claude Code was continued by a fresh Qoder session whose only input was `~go`.
+Before: paste the context again and hope nothing important was dropped. After: this release was built that way — a fresh Qoder session whose only input was `~go` resumed a plan written by Claude Code.
 
 **Several agents split the work.**
 Before: two agents edit the same files and overwrite each other. After: one owner holds the plan, workers take bounded tasks, and the evidence lands in one place. See [Using Sopify with Orca](./docs/orca.md).
 
 <div align="center">
-<img src="./assets/readme-visuals/sopify-scene-cross-host-en.jpg" width="720" alt="A plan written in Claude Code is continued by a fresh Qoder session that reads .sopify/ after receiving only ~go" />
+<img src="./assets/readme-visuals/sopify-scene-cross-host-en.jpg" width="720" alt="A plan written in Claude Code is resumed by a fresh Qoder session that reads .sopify/ after receiving only ~go" />
 </div>
 
 <div align="center">
@@ -100,7 +99,7 @@ Before: two agents edit the same files and overwrite each other. After: one owne
 - Small fixes: a rename, a typo, a one-line style change
 - Throwaway scripts and exploratory tries
 
-These are handled directly and never enter the plan workflow. A plan starts only when you ask for one with `~go plan`, when you ask to continue work in progress, or when `~go` decides the request needs a plan.
+These are handled directly and never enter the plan workflow. A plan starts only when you type `~go plan`, ask to continue work in progress, or when `~go` decides one is needed.
 
 ## Command Cheat Sheet
 
@@ -119,14 +118,14 @@ These are handled directly and never enter the plan workflow. A plan starts only
 | Qoder | Verified | `--target qoder:en-US` / `qoder:zh-CN` |
 | Copilot | Baseline | `--target copilot:en-US` / `copilot:zh-CN` |
 | [Cursor](./docs/cursor-host.md) | Baseline | `--target cursor:en-US` / `cursor:zh-CN` |
-| [Antigravity](./docs/antigravity-host.md) | Baseline; dogfooded in a real session | `--target antigravity:en-US` / `antigravity:zh-CN` |
-| [Trae](./docs/trae-host.md) | Preview — not yet verified in a real session | `--target trae:en-US` / `trae:zh-CN` |
+| [Antigravity](./docs/antigravity-host.md) | Baseline; tested in real sessions | `--target antigravity:en-US` / `antigravity:zh-CN` |
+| [Trae](./docs/trae-host.md) | Baseline | `--target trae:en-US` / `trae:zh-CN` |
 
-Verified means the managed workflow has been run in a real session on that host, not only installed. Baseline means installation, rule visibility and Skill selection are recorded, while not every scenario has been proven in a real session. Preview means the adapter is in place but no real session has confirmed it yet.
+Verified means the managed workflow has been run in a real session on that host, not only installed. Baseline means the installation is verified; real-session evidence varies by host — see each host's doc.
 
 ## A Real Case
 
-This archived workflow ran inside Codex; it is not a scripted terminal demo. A complex request became a tracked plan, an audit concern stopped the work for a user decision, and after the user approved a minimal fix the verification evidence was recorded and the plan was archived.
+This archived workflow ran inside Codex. A complex request became a tracked plan, an audit concern stopped the work for a user decision, and after the user approved a minimal fix the verification evidence was recorded and the plan was archived.
 
 <p align="center">
   <img src="./assets/readme-visuals/codex-dogfood.gif" alt="Sopify in a real Codex workflow: a request becomes a plan, an audit concern stops for the user's decision, and the minimal fix and verification evidence are recorded before archive" width="900" />

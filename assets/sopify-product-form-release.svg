@@ -40,7 +40,7 @@
     <text x="84" y="144" class="stage-num" font-family="-apple-system,'Helvetica Neue',sans-serif">I</text>
     <text x="102" y="144" class="lbl" font-family="-apple-system,'Helvetica Neue',sans-serif">HOST</text>
     <text x="84" y="170" class="stage-title" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">用户在受支持宿主提需求</text>
-    <text x="84" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">同一协议，七个宿主（含预览）</text>
+    <text x="84" y="186" class="stage-sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">同一协议，七个宿主</text>
 
     <!-- Seven host adapters; the existing HOST stage and all other stages remain unchanged. -->
     <g transform="translate(84,206)" filter="url(#shadowSoft)">
@@ -77,7 +77,7 @@
       <rect width="86" height="32" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1.3" stroke-dasharray="3,2"/>
       <circle cx="12" cy="16" r="3" fill="#fbbf24"/>
       <text x="22" y="14" class="nm" style="font-size:11.5px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">Trae</text>
-      <text x="22" y="27" class="sm" style="font-size:9px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">预览</text>
+      <text x="22" y="27" class="sm" style="font-size:9px" font-family="-apple-system,'Helvetica Neue',Arial,'PingFang SC',sans-serif">基线</text>
     </g>
     <g transform="translate(84,326)" filter="url(#shadowSoft)">
       <rect width="178" height="32" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1.3" stroke-dasharray="3,2"/>
@@ -238,8 +238,8 @@
 
   <!-- Tagline (centered) -->
   <line x1="70" y1="490" x2="1330" y2="490" stroke="#d1d5db" stroke-width="1"/>
-  <text x="700" y="524" text-anchor="middle" class="tag" font-family="Georgia,'Times New Roman','Songti SC',serif">“AI 编程的方案和验收证据存进仓库，换工具、换人、换 agent 都能接着做。”</text>
-  <text x="700" y="548" text-anchor="middle" class="sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">宿主做事 · Skill 约束流程 · 项目记录随 Git 携带 · 明确要求后接续 · 显式收口</text>
+  <text x="700" y="524" text-anchor="middle" class="tag" font-family="Georgia,'Times New Roman','Songti SC',serif">“AI 编程的方案与验收证据纳入 Git 版本管理，跨工具、跨成员、跨 Agent 均可接续。”</text>
+  <text x="700" y="548" text-anchor="middle" class="sub" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">宿主做事 · Skill 约束流程 · 方案与证据纳入 Git 版本管理 · 明确要求后接续 · 显式收口</text>
 
   <!-- Legend -->
   <g transform="translate(70,590)">

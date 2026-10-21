@@ -92,3 +92,43 @@ CairoSVG 自动渲染能完成，但本机 PNG 会丢部分 CJK/箭头字形；�
 | `assets/sopify-product-form-release-en.svg` | `f9faa3cbc049529d3b94958057e665a13e710827ad2b095f363c8296b8991e5a` | 21629 → 21634 bytes | [校验](./visuals-rework-evidence/sopify-product-form-release-en-validation.log) · [预览](./visuals-rework-evidence/sopify-product-form-release-en.png) |
 
 修改前快照、当前文件副本及摘要见 [manifest.json](./visuals-rework-evidence/manifest.json)；本轮为执行者校验与视觉自查，后续独立验收由协调者安排。
+
+## 本轮变化
+
+按本次用户决定，将三张技术图中的 Trae 统一到基线支持口径，原路径覆盖，仅改 5 处文本节点：
+
+- 架构图：`Trae · preview` → `Trae`，继续使用与 Cursor、Copilot 相同的基线色块和圆点，含义对应现有 `Baseline` 图例。
+- 中文产品形态图：`同一协议，七个宿主（含预览）` → `同一协议，七个宿主`；Trae 状态 `预览` → `基线`。
+- 英文产品形态图：`Seven hosts; Trae in preview` → `One protocol, seven hosts`；Trae 状态 `preview` → `baseline`，与 Cursor、Copilot 一致。
+
+三图中已无大小写不敏感的 `preview` 或“预览”。逐项比对确认所有元素属性、原 `<style>`、行内 `style`、根尺寸、坐标、色板与结构均不变，保留此前 Claude Code 名称和中文状态统一修订。
+
+三图分别运行 fireworks `validate-svg.sh`，XML、marker 引用、箭头碰撞、语义几何、构图质量及渲染全部通过。另用 `rsvg-convert -w 1920` 导出 PNG，已逐张打开检查中文、Trae 状态、缩短后的副标题与卡片边界，无新增重叠或裁切；`visual_review: passed` 为执行者自查。`git diff --check` 通过。
+
+| 文件 | 体积 | SHA-256 | 证据 |
+|---|---:|---|---|
+| `assets/sopify-architecture.svg` | 11924 → 11913 bytes | `eb1fce03dbf8dfd13e67d1cf98d6346f77fcca453b2bb08a66f5a8a54841538d` | [校验](./visuals-trae-baseline-evidence/sopify-architecture-validation.log) · [预览](./visuals-trae-baseline-evidence/sopify-architecture.png) |
+| `assets/sopify-product-form-release.svg` | 21748 → 21733 bytes | `68f13457fd8016025b0269575b2fa62aa4f3dadb1f32c976720f9f90b7fe9abe` | [校验](./visuals-trae-baseline-evidence/sopify-product-form-release-validation.log) · [预览](./visuals-trae-baseline-evidence/sopify-product-form-release.png) |
+| `assets/sopify-product-form-release-en.svg` | 21634 → 21632 bytes | `36bf21466ccf29e3e4dcb756ba7aadd694eccad53e991348d3ce330423a2a7d5` | [校验](./visuals-trae-baseline-evidence/sopify-product-form-release-en-validation.log) · [预览](./visuals-trae-baseline-evidence/sopify-product-form-release-en.png) |
+
+修改前快照、当前 SVG 副本与完整摘要见 [manifest.json](./visuals-trae-baseline-evidence/manifest.json)。本轮基于 `cc3e391f5f92066803ebc8e72140999b9afb6f75`；仓库只修改任务指定的三张 SVG，没有改 README/Pages 或其他文本文件，未 commit、未 push。报告和取证文件仅追加在外部 scratchpad。
+
+## 本轮变化（标语）
+
+本轮只更新指定三张 SVG 中的 6 处标语/旧口径文本，原路径覆盖。三处主标语均有空间容纳用户选定的完整版本，没有删减：
+
+- 中文产品形态图：`AI 编程的方案与验收证据纳入 Git 版本管理，跨工具、跨成员、跨 Agent 均可接续。`
+- 架构图与英文产品形态图：`Version AI coding plans and evidence in Git — resume work across tools, teammates, and agents.`
+- 架构图底部辅助句改为 `Plans, decisions, and receipts are versioned in Git`；中英文产品图页脚原“随 Git 携带 / travel with Git”同步改为方案与证据纳入 Git 版本管理。
+
+按本轮开始时的现存 SVG 快照逐项比对，只有以上 6 个文本节点变化；所有元素属性、`<style>`、行内 `style`、根尺寸、坐标、字体、色板、箭头和卡片布局均不变。此前 Trae 基线标注及 Claude Code 名称完整保留。三图中已无 `proof in your repo`、`keep building`、“存进仓库”、“接着做”、“随 Git 携带”或 `travel with Git`。
+
+使用此前已读取的 fireworks-tech-graph skill 执行 `validate-svg.sh`，三图的 XML、marker 引用、箭头碰撞、语义几何、构图质量与渲染共六项检查均通过。另用 `rsvg-convert -w 1920` 导出 PNG 并逐张打开检查：完整标语有足够留白、中文和英文无缺字，无新增重叠、裁切或贴边，`visual_review: passed`。`git diff --check` 通过。
+
+| 文件 | 体积 | SHA-256 | 证据 |
+|---|---:|---|---|
+| `assets/sopify-architecture.svg` | 11913 → 11890 bytes | `e9735ae2d9e77dd356a8bf121acdd5128fd95af52317f22b581bdc05bd73bc79` | [校验](./visuals-slogan-evidence/sopify-architecture-validation.log) · [预览](./visuals-slogan-evidence/sopify-architecture.png) |
+| `assets/sopify-product-form-release.svg` | 21733 → 21756 bytes | `46e26621e96f0b874d26f797418d539a03da49f4ceb0ba15e56082a97b403eba` | [校验](./visuals-slogan-evidence/sopify-product-form-release-validation.log) · [预览](./visuals-slogan-evidence/sopify-product-form-release.png) |
+| `assets/sopify-product-form-release-en.svg` | 21632 → 21639 bytes | `a0a4c25716dd06a411f40f7b7404209a02b68fab5e2629f047fffff773fb0435` | [校验](./visuals-slogan-evidence/sopify-product-form-release-en-validation.log) · [预览](./visuals-slogan-evidence/sopify-product-form-release-en.png) |
+
+取证目录保留本轮修改前快照、当前 SVG 副本和 [manifest.json](./visuals-slogan-evidence/manifest.json)，便于与此前 Trae 修订区分。仓库本轮仅写任务指定的三张图片；README/Pages、方案及测试等并行文本改动未触碰，没有 commit 或 push。报告和取证文件仅写入外部 scratchpad；后续独立验收由协调者安排。

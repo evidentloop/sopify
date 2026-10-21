@@ -2,14 +2,13 @@
 
 <div align="center">
 
-**AI 编程的方案和验收证据存进仓库，换工具、换人、换 agent 都能接着做。**
+**AI 编程的方案与验收证据纳入 Git 版本管理，跨工具、跨成员、跨 Agent 均可接续。**
 
-装进你已经在用的 AI 编程工具；问答和小修照常，不强制走流程。
+安装到你现有的 AI 编程工具；日常问答和小修直接处理，需要时才生成方案。
 
 [![许可证](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)](./LICENSE) [![版本](https://img.shields.io/badge/version-2026--08--30.001152-orange.svg?style=for-the-badge)](#版本历史)
 
-[![Codex](https://img.shields.io/badge/host-Codex-4A9EFF.svg?style=for-the-badge)](#支持的宿主) [![Claude Code](https://img.shields.io/badge/host-Claude%20Code-CC785C.svg?style=for-the-badge)](#支持的宿主) [![Qoder](https://img.shields.io/badge/host-Qoder-7C3AED.svg?style=for-the-badge)](#支持的宿主) [![Copilot](https://img.shields.io/badge/host-Copilot-000000.svg?style=for-the-badge)](#支持的宿主)
-[![Cursor](https://img.shields.io/badge/host-Cursor-111827.svg?style=for-the-badge)](#支持的宿主) [![Antigravity](https://img.shields.io/badge/host-Antigravity-1A73E8.svg?style=for-the-badge)](#支持的宿主) [![Trae](https://img.shields.io/badge/host-Trae-00B96B.svg?style=for-the-badge)](#支持的宿主)
+[![Codex](https://img.shields.io/badge/Codex-4A9EFF.svg?style=for-the-badge)](#支持的宿主) [![Claude Code](https://img.shields.io/badge/Claude%20Code-CC785C.svg?style=for-the-badge)](#支持的宿主) [![Qoder](https://img.shields.io/badge/Qoder-7C3AED.svg?style=for-the-badge)](#支持的宿主) [![Copilot](https://img.shields.io/badge/Copilot-000000.svg?style=for-the-badge)](#支持的宿主) [![Cursor](https://img.shields.io/badge/Cursor-111827.svg?style=for-the-badge)](#支持的宿主) [![Antigravity](https://img.shields.io/badge/Antigravity-1A73E8.svg?style=for-the-badge)](#支持的宿主) [![Trae](https://img.shields.io/badge/Trae-00B96B.svg?style=for-the-badge)](#支持的宿主)
 
 [English](./README.md) · 简体中文 · [快速开始](#快速开始) · [贡献者](./CONTRIBUTORS.md)
 
@@ -21,7 +20,7 @@
 
 ---
 
-Sopify 是一套规则和 Skill，装进你已经在用的 AI 编程工具。需要方案的工作，它会把方案、决策和验收证据作为普通文件保存在仓库的 `.sopify/` 里；下一个会话——换一个工具、换一个人、换一个 agent——从这份记录接着做，而不是靠记忆重来。不是新编辑器，也不是新 CLI。
+Sopify 是一套规则和 Skill，装进你已经在用的 AI 编程工具。需要方案的工作，它会把方案、决策和验收证据作为普通文件保存在 `.sopify/` 并纳入 Git；下一个会话——换一个工具、换一个人、换一个 agent——从这份记录接续，而不是靠记忆重来。
 
 ## 快速开始
 
@@ -39,9 +38,9 @@ curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/instal
 | Copilot | `copilot:zh-CN` / `copilot:en-US` |
 | Cursor | `cursor:zh-CN` / `cursor:en-US` |
 | Antigravity | `antigravity:zh-CN` / `antigravity:en-US` |
-| Trae（预览） | `trae:zh-CN` / `trae:en-US` |
+| Trae | `trae:zh-CN` / `trae:en-US` |
 
-需要 Python 3.11 或更高版本，安装器会在下载前检查。它只写入宿主指令和 Skill——没有守护进程、没有后台进程、不是新编辑器。
+需要 Python 3.11 或更高版本，安装器会在下载前检查。它只写入宿主指令和 Skill。
 
 **2. 在项目里，往聊天框输入一行。**
 
@@ -58,7 +57,7 @@ Sopify 会先追问还没定的事实，等你在对话里回答后才写 `.sopi
 ~go finalize   # 把做完的方案移到 .sopify/history/
 ```
 
-方案和证据都留在 git 里，换到其他受支持的工具时可以接着做下去。
+方案和证据都留在 Git 里，换到其他受支持的工具时可以接续。
 
 ### 仓库里会多出什么
 
@@ -78,16 +77,16 @@ iwr https://github.com/evidentloop/sopify/releases/latest/download/install.ps1 -
 ## 价值场景
 
 **长任务做到一半被打断。**
-以前：会话结束，思路也一起结束。现在：`~go` 读 `.sopify/plan/`，从下一个未完成的任务接着做。
+以前：会话结束，思路也一起结束。现在：`~go` 读 `.sopify/plan/`，从下一个未完成的任务接续。
 
 **换工具或换人接手。**
-以前：把上下文重新粘一遍，还得担心漏掉关键约束。现在：这个版本就是这样做出来的——Claude Code 写的方案，由一个只收到 `~go` 的全新 Qoder 会话接着做下去。
+以前：把上下文重新粘贴一遍，还得担心漏掉关键约束。现在：这个版本就是这样做出来的——一个只收到 `~go` 的全新 Qoder 会话，接续了 Claude Code 写下的方案。
 
 **多个 agent 分工。**
 以前：两个 agent 改同一批文件，互相覆盖。现在：一个 owner 持有方案，worker 领取有边界的任务，证据落在同一个地方。见[在 Orca 中使用 Sopify](./docs/orca.md)。
 
 <div align="center">
-<img src="./assets/readme-visuals/sopify-scene-cross-host.jpg" width="720" alt="Claude Code 写的方案，由一个只收到 ~go 的全新 Qoder 会话读取 .sopify/ 后接着做下去" />
+<img src="./assets/readme-visuals/sopify-scene-cross-host.jpg" width="720" alt="Claude Code 写的方案，由一个只收到 ~go 的全新 Qoder 会话读取 .sopify/ 后续接" />
 </div>
 
 <div align="center">
@@ -100,14 +99,14 @@ iwr https://github.com/evidentloop/sopify/releases/latest/download/install.ps1 -
 - 小修：改名字、修拼写、调一行样式
 - 一次性脚本和探索性尝试
 
-这些请求直接处理，不进入方案流程。只有你用 `~go plan` 明确要方案、明确要求接着做未完成的工作，或 `~go` 判断这个请求需要方案时，才会开始一个方案。
+这些请求直接处理，不进入方案流程。只有在你输入 `~go plan`、明确要求接续未完成工作，或 `~go` 判定需要时，才会建立方案。
 
 ## 命令速查
 
 | 命令 | 什么时候输入 |
 |---|---|
 | `~go plan <需求>` | 需要方案的新工作——不清楚时先追问，等你回答后才写 `.sopify/plan/<id>/plan.md`，不改代码 |
-| `~go` | 开始或继续。按当前请求路由，有活动方案时就接着做 |
+| `~go` | 开始或继续。按当前请求路由，有活动方案时就接续 |
 | `~go finalize` | 收口当前活动方案，并移到 `.sopify/history/` |
 
 ## 支持的宿主
@@ -119,14 +118,14 @@ iwr https://github.com/evidentloop/sopify/releases/latest/download/install.ps1 -
 | Qoder | 已验证 | `--target qoder:zh-CN` / `qoder:en-US` |
 | Copilot | 基线 | `--target copilot:zh-CN` / `copilot:en-US` |
 | [Cursor](./docs/cursor-host.md) | 基线 | `--target cursor:zh-CN` / `cursor:en-US` |
-| [Antigravity](./docs/antigravity-host.md) | 基线；已在真实会话中 dogfood | `--target antigravity:zh-CN` / `antigravity:en-US` |
-| [Trae](./docs/trae-host.md) | 预览——尚未在真实会话中验证 | `--target trae:zh-CN` / `trae:en-US` |
+| [Antigravity](./docs/antigravity-host.md) | 基线；已在真实会话中实测 | `--target antigravity:zh-CN` / `antigravity:en-US` |
+| [Trae](./docs/trae-host.md) | 基线 | `--target trae:zh-CN` / `trae:en-US` |
 
-已验证指托管工作流在真实会话中执行过，不只是完成安装。基线指安装、规则可见性和 Skill 选择都有记录，但并非每个场景都在真实会话中证实过。预览指适配已就位，尚未有真实会话确认。
+已验证指托管工作流在真实会话中执行过，不只是完成安装。基线指安装已验证；真实会话证据因宿主而异，见各宿主文档。
 
 ## 真实案例
 
-下面是 Sopify 在一次真实 Codex 任务中的运行过程，不是编排好的终端演示。复杂需求先沉淀为方案，审计发现问题时流程停车等用户裁定，用户确认最小修正后，验收证据写入收据再归档。
+下面是 Sopify 在一次真实 Codex 任务中的运行过程。复杂需求先沉淀为方案，审计发现问题时流程停车等用户裁定，用户确认最小修正后，验收证据写入收据再归档。
 
 <p align="center">
   <img src="./assets/readme-visuals/codex-dogfood.gif" alt="Sopify 在真实 Codex 任务中的运行过程：需求形成方案，审计发现问题后等待用户裁定，最小修正和验证证据写入收据后再归档" width="900" />
@@ -136,15 +135,15 @@ iwr https://github.com/evidentloop/sopify/releases/latest/download/install.ps1 -
 - **发现问题就停车** — 首次审计发现一项风险；流程等待用户裁定，随后只补最薄的身份校验。
 - **有证据再收口** — 复审确认没有开放风险；最终收据记录 5 项协议检查、55 项定向测试和 48 项子测试，随后才归档。
 
-真实任务是一次可选验证器接入。动效解释 Sopify 如何管理这项工作，归档文件记录实际过程：[方案](./.sopify/history/2026-07/20260718_evidentloop_optional_audit_integration/plan.md) · [验证收据](./.sopify/history/2026-07/20260718_evidentloop_optional_audit_integration/receipts/verify_001.json) · [最终收据](./.sopify/history/2026-07/20260718_evidentloop_optional_audit_integration/receipts/final.json)。
+真实任务是一次可选验证器接入。上方动图展示了 Sopify 如何管理这项工作，归档文件记录实际过程：[方案](./.sopify/history/2026-07/20260718_evidentloop_optional_audit_integration/plan.md) · [验证收据](./.sopify/history/2026-07/20260718_evidentloop_optional_audit_integration/receipts/verify_001.json) · [最终收据](./.sopify/history/2026-07/20260718_evidentloop_optional_audit_integration/receipts/final.json)。
 
 ## 深入阅读
 
 - [Sopify 如何工作](./docs/how-sopify-works.md) — 工作流阶段、checkpoint、新会话最先读的四个文件、`.sopify/` 层级，以及[产品形态](./assets/sopify-product-form-release.svg)与架构图
-- [Getting Started](./docs/getting-started.md) — 安装细节、先审查脚本再安装、各宿主安装、更新与卸载、可选的 EvidentLoop 配套
+- [入门指引](./docs/getting-started.md) — 安装细节、先审查脚本再安装、各宿主安装、更新与卸载、可选的 EvidentLoop 配套
 - [在 Orca 中使用 Sopify](./docs/orca.md) — 多 agent 协作中的 owner、executor 与 reviewer 角色
 - [宿主接入指南](./docs/host-onboarding.md) — 新宿主适配如何探针与记录
-- [外部仓库 Quickstart](./examples/external-repo-quickstart/README.md) — 在非 Sopify 自身仓库上的分步 demo
+- [外部仓库快速上手](./examples/external-repo-quickstart/README.md) — 在独立外部仓库上的分步实操演示
 - [配置示例](./examples/sopify.config.yaml) — 可选的 `sopify.config.yaml` 覆盖项；不配置也能用默认值
 
 ## 版本历史

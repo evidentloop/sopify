@@ -111,3 +111,42 @@ Pages 链接人工核对：两页 HTML 解析无未闭合标签，全部本地 `
 - 命令速查的 `~go plan` 行仍写 "Writes `.sopify/plan/<id>/plan.md` and changes no code"，与第 2 步新表述存在粒度差（B3）；完全对齐需改速查表，属第 5 处修改。
 - 新手报告其余条目未处理：Python 3.9 下安装器直接抛 ImportError 而无提示（需改安装器或 README 明说）、安装输出 `Next: 2. Type: ~go` 与 Quick Start 示例不一致（安装器输出）、`[demo-ai]` 项目代号来源、`6 errors loading agent configs` 的归属、以及 `.git/info/exclude` 不随仓库分发对「换人接手」卖点的影响说明（属设计取舍，需大脑决定是否在 README 表态）。
 - **第 5 处修改（2026-10-21，大脑授权）**：命令速查表 `~go plan` 行改为与快速开始第 2 步同口径的一句话——EN "New work that needs a plan — asks first when anything is unclear, writes `.sopify/plan/<id>/plan.md` only after you answer, and changes no code"；ZH「需要方案的新工作——不清楚时先追问，等你回答后才写 `.sopify/plan/<id>/plan.md`，不改代码」。Pages 无同句，未改。`python3 scripts/check-readme-links.py` 与 `pytest tests/test_check_readme_links.py -q`（4 passed）通过，正文 125/125、中英文各 161 行，`git diff --check` 干净。上一节遗留的第一条（B3 粒度差）至此关闭。
+
+## 本轮变化（润色，2026-10-21）
+
+写集：`README.md`、`README.zh-CN.md`、`index.html`、`zh-CN.html`。主标语行（README 第 5 行、Pages 的 `<h1>`/`<title>`/og）未动。未 commit、未 push、未碰 `assets/**`（Codex 并行改三张图）。
+
+**用户已定的三项**：
+
+1. **徽章排成一行**：7 个宿主徽章改 shields message-only 写法（去掉重复的 `host-` 前缀，只留宿主名），由两行合并为一行，风格与 License/Version 徽章一致；中英文同。
+2. **Trae 去预览**：target 表、宿主表、Pages 宿主清单与 FAQ 一律改为基线 / Baseline；「基线」定义改为「安装已验证；真实会话证据因宿主而异，见各宿主文档」/ "the installation is verified; real-session evidence varies by host — see each host's doc"；删除「预览 / Preview」定义句。
+3. **删否定式说明**：README 导语末尾 "Not a new editor, not a new CLI." / 「不是新编辑器，也不是新 CLI。」、Quick Start 的 "— no daemon, no background process, no new editor" / 「——没有守护进程、没有后台进程、不是新编辑器」、Pages hero-note 的同类短语、Pages install-trust 的否定排比，全部删除或改肯定句。
+
+**采纳措辞审计（`language-audit-gemini.md`，含大脑修正）**：
+
+4. `dogfood` → 「已在真实会话中实测」/ "tested in real sessions"（README 宿主表 Antigravity 状态、Pages FAQ；不采用审计原文「深度验证」）。
+5. FAQ 首条由否定设问重构为正面问法，答案只写事实：EN "How does Sopify work with existing AI coding tools?" / "Sopify is a set of rules and Skills that installs into the AI coding tools you already use."；ZH「Sopify 如何与我现有的 AI 编程工具协同？」/「Sopify 是一套规则和 Skill，安装到你已有的 AI 编程工具里。」
+6. 页脚：EN "Sopify · AI coding workflows that can stop, resume, and be inspected."；ZH「Sopify · 能停车、能恢复、能追溯的 AI 编程工作流。」
+7. README 中文：安装说明删否定尾句；`git`→`Git`；「粘」→「粘贴」；「什么时候不用」收尾句去重复的「方案/明确」；真实案例删「不是编排好的终端演示」；「动效解释」→「上方动图展示了」；深入阅读链接标题 `Getting Started`→「入门指引」、「外部仓库 Quickstart／分步 demo」→「外部仓库快速上手／分步实操演示」。
+8. README 英文：安装说明删否定尾句；`git`→`Git`（并把「What lands in your repo」表头 "In git?" 一并改为 "In Git?"）；「When Not to Use It」收尾句与中文同构精简；真实案例删 "; it is not a scripted terminal demo"。
+9. Pages：install-trust 改肯定句（EN "Installs host instructions and supporting assets directly into your tools."、ZH「仅把宿主指令与配套资产写入你的工具。」）；install-note 宿主清单补 Antigravity/Trae（做法见下节第 1 条）。
+
+**校验**：`python3 scripts/check-readme-links.py` 通过（正文 125/125）；`pytest tests/test_check_readme_links.py tests/test_plain_language_contracts.py -q` → 20 passed；`git diff --check` 退出 0；README 中英文各 160 行、逐段对齐。四个文件已无用户可见的 preview/预览/dogfood/「新编辑器」字样（grep 残留命中仅为资产文件名 `codex-dogfood.gif` 与 CSS 类名 `architecture-preview`/`preview-link`）。
+
+## 我没采纳的审计建议及理由
+
+1. **审计三 L207 / 四 L215 的原文改法未照搬**。审计要求把 Pages install-note 的宿主清单行改写为含 7 宿主与 Claude Code 全称；但 `tests/test_plain_language_contracts.py::test_static_pages_include_cursor_host` 钉住了 "Codex, Claude, Qoder, Copilot, and Cursor targets" 与「支持 Codex、Claude、Qoder、Copilot 与 Cursor」两个子串，本轮写集不含 tests。折中做法：钉住行原文保留，其后新增一行 li 补齐事实（EN "Antigravity and Trae targets"、ZH「支持 Antigravity 与 Trae」）。代价是该行内 Claude→Claude Code 的重命名仍未做（Pages 宿主 pills 与 README 两处均已是 Claude Code）；如需彻底统一，需大脑授权改该测试。
+2. **审计一 L122 / 三 L250 的「深度验证」措辞未采纳**：按大脑修正改为「已在真实会话中实测」/ "tested in real sessions"，「深度」属无度量的夸大词。
+3. **审计三 L237-239 / 四 L245-247 答案中的「无需更换工具或改变习惯」/ "without changing your setup" 未采纳**：按大脑修正，FAQ 答案只保留事实句。
+4. 其余审计条目全部采纳。审计未覆盖、我自行延伸的仅一处：EN 表头 "In git?" → "In Git?"，与审计 L61 的专有名词大小写保持一致。
+
+## 本轮变化（标语，2026-10-21）
+
+写集：`README.md`、`README.zh-CN.md`、`index.html`、`zh-CN.html`，以及 `tests/test_plain_language_contracts.py` 的一处期望子串（本任务授权）。未 commit、未 push、未碰 `assets/**`（Codex 并行改三张图）。
+
+1. **主/副标语替换为用户选定的 A 版**：README 中英文第 5/7 行逐字替换；Pages 的 `<title>`、`og:title`、meta description、`og:description`、hero `<h1>`、hero-lede 的 strong 与 hero-note（副标语逐字）同步；ZH 的 `<h1>` 保留 `keep-together`/`<wbr />` 断行结构。
+2. **正文口径统一为「纳入 Git / 接续」**（按句意改写，未逐字硬替换）：README EN 导语 "in your repo … continues from the record" → "versioned in Git … resumes from the record"；第 3 步说明 "pick the work back up" → "resume the work"；价值场景第二条改为 "a fresh Qoder session whose only input was `~go` resumed a plan written by Claude Code"；cross-host 插画 alt 同步。README ZH 导语「保存在仓库的 `.sopify/` 里…接着做」→「保存在 `.sopify/` 并纳入 Git…接续」；第 3 步说明、价值场景两条、alt、命令速查 `~go` 行同步。Pages：EN `#why` 卡片 "live with the repo / continue" → "versioned in Git / resume"，hero-lede 正文同步；ZH `#why` 卡片与 `#resume` 首段同步。
+3. **Pages 安装说明宿主行恢复单行 7 宿主**：删除上一轮为绕开测试新增的重复 li；单行改为 EN "Codex, Claude Code, Qoder, Copilot, Cursor, Antigravity, and Trae targets"、ZH「支持 Codex、Claude Code、Qoder、Copilot、Cursor、Antigravity 与 Trae」，Claude 统一为 Claude Code。同步把 `tests/test_plain_language_contracts.py::test_static_pages_include_cursor_host` 的两个 `install_copy` 期望子串改为上述新串——只改这一处参数，断言逻辑未放宽、未删除。
+4. **校验**：`python3 scripts/check-readme-links.py` 通过（正文 125/125）；`pytest tests/test_check_readme_links.py tests/test_plain_language_contracts.py -q` → 20 passed；`git diff --check` 退出 0；README 中英文各 160 行、逐段对齐。四个文本文件 grep 旧标语字样（存进仓库／接着做／keep building／proof in your repo／stay direct／不强制走流程）均无命中。
+
+**跨资产遗留**：`assets/sopify-architecture.svg` 与两张产品形态 SVG 内嵌的仍是旧标语（"AI coding plans and proof in your repo — keep building across tools, teammates, and agents." / 「AI 编程的方案和验收证据存进仓库，换工具、换人、换 agent 都能接着做。」）。assets 本轮禁改，需 Codex 下一轮按新标语 A 覆盖这三张 SVG 的文字，否则图与文不一致。

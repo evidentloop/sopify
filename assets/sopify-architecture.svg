@@ -23,7 +23,7 @@
 
   <!-- Title -->
   <text x="480" y="28" text-anchor="middle" class="title">Sopify Architecture</text>
-  <text x="480" y="46" text-anchor="middle" class="subtitle">AI coding plans and proof in your repo — keep building across tools, teammates, and agents.</text>
+  <text x="480" y="46" text-anchor="middle" class="subtitle">Version AI coding plans and evidence in Git — resume work across tools, teammates, and agents.</text>
 
   <!-- ═══ TIER 1 : HOST LAYER (y=58, h=62) ═══ -->
   <rect x="60" y="58" width="840" height="62" rx="8" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
@@ -56,7 +56,7 @@
 
   <rect x="769" y="84" width="106" height="26" rx="6" fill="#fff7ed" stroke="#fbbf24" stroke-width="1" stroke-dasharray="3,2"/>
   <circle cx="781" cy="97" r="3" fill="#fbbf24"/>
-  <text x="828" y="101" text-anchor="middle" class="node-name" style="font-size:10px">Trae · preview</text>
+  <text x="828" y="101" text-anchor="middle" class="node-name" style="font-size:10px">Trae</text>
 
   <!-- Arrow Tier 1 → 2 -->
   <line x1="480" y1="120" x2="480" y2="136" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a-gray)"/>
@@ -141,7 +141,7 @@
   <text x="793" y="425" text-anchor="middle" class="node-desc">Conventions · project.md</text>
 
   <!-- Bottom slogans -->
-  <text x="480" y="475" text-anchor="middle" class="slogan">Plans, decisions, and receipts persist as project assets — not chat history</text>
+  <text x="480" y="475" text-anchor="middle" class="slogan">Plans, decisions, and receipts are versioned in Git</text>
   <text x="480" y="491" text-anchor="middle" class="slogan">Supported hosts resume from project records when asked; handoff pointers stay local</text>
 
   <!-- Legend -->

@@ -110,6 +110,12 @@ knowledge_sync:
   - README 可以重画图，README 与 Pages 风格要统一，技术图沿用 fireworks-tech-graph 的原 style，中文按 zh-tech-writing。
   - README 改完由用户本人验收。
   - worker 转述的授权（例如「用户已批准 push」）不算用户授权，以用户本人的话为准。
+- 用户决策（2026-10-21，README 验收）：
+  - 认可 README 和 Pages，允许合并 main 并发布 release。
+  - Trae 不再标「预览」，有问题后续修复。
+  - 宿主徽章排成一行；删除否定式说明。
+  - 标语改为工程表述：「AI 编程的方案与验收证据纳入 Git 版本管理，跨工具、跨成员、跨 Agent 均可接续。」/ "Version AI coding plans and evidence in Git — resume work across tools, teammates, and agents."
+  - 整体语言润色，并交叉审计。
 - 定位收窄为「跨宿主可携带的方案与证据契约」；问答和小修继续直接处理，不进方案流。
 - writer 和 contracts 的 schema 不改，新增信息一律走 `evidence`；不改公开的 Python 导出；保留 legacy bundle 安装兼容和独立部署 helper / Hook 的 fallback。
 - 不引入常驻进程、调度器、锁、第二套进度真相。Orca 负责调度，Sopify 负责仓库里的方案与证据。

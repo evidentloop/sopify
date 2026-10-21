@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f7f3ea" />
     <meta
       name="description"
-      content="AI 编程的方案和验收证据存进仓库，换工具、换人、换 agent 都能接着做。装进你已经在用的 AI 编程工具；问答和小修照常，不强制走流程。"
+      content="AI 编程的方案与验收证据纳入 Git 版本管理，跨工具、跨成员、跨 Agent 均可接续。安装到你现有的 AI 编程工具；日常问答和小修直接处理，需要时才生成方案。"
     />
     <link rel="canonical" href="https://evidentloop.github.io/sopify/zh-CN.html" />
     <link rel="alternate" hreflang="en" href="https://evidentloop.github.io/sopify/" />
@@ -16,14 +16,14 @@
     <meta property="og:site_name" content="Sopify" />
     <meta property="og:locale" content="zh_CN" />
     <meta property="og:locale:alternate" content="en_US" />
-    <meta property="og:title" content="Sopify — AI 编程的方案和验收证据存进仓库" />
-    <meta property="og:description" content="换工具、换人、换 agent 都能接着做。装进你已经在用的 AI 编程工具；问答和小修照常，不强制走流程。" />
+    <meta property="og:title" content="Sopify — AI 编程的方案与验收证据纳入 Git 版本管理" />
+    <meta property="og:description" content="跨工具、跨成员、跨 Agent 均可接续。日常问答和小修直接处理，需要时才生成方案。" />
     <meta property="og:url" content="https://evidentloop.github.io/sopify/zh-CN.html" />
     <meta property="og:image" content="https://evidentloop.github.io/sopify/assets/sopify-og-zh-CN.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
-    <title>Sopify — AI 编程的方案和验收证据存进仓库</title>
+    <title>Sopify — AI 编程的方案与验收证据纳入 Git 版本管理</title>
     <link rel="icon" href="./assets/logo.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./assets/sopify-site.css" />
     <script src="./assets/sopify-site.js" defer></script>
@@ -55,15 +55,15 @@
       <section class="section hero" id="top">
         <div class="hero-copy">
           <p class="eyebrow">Sopify · AI 编程</p>
-          <h1><span class="keep-together">AI 编程的方案和</span><wbr /><span class="keep-together">验收证据存进仓库</span></h1>
+          <h1><span class="keep-together">AI 编程的方案与验收证据</span><wbr /><span class="keep-together">纳入 Git 版本管理</span></h1>
           <p class="hero-lede">
-            <strong>换工具、换人、换 agent 都能接着做。</strong><span class="keep-together">方案、决策和验收证据作为普通文件保存在仓库里，</span><wbr /><span class="keep-together">下一个会话从这份记录接着做，而不是靠记忆重来。</span>
+            <strong>跨工具、跨成员、跨 Agent 均可接续。</strong><span class="keep-together">方案、决策和验收证据作为普通文件保存在</span> <code>.sopify/</code> <span class="keep-together">并纳入 Git，</span><wbr /><span class="keep-together">下一个会话从这份记录接续，而不是靠记忆重来。</span>
           </p>
           <div class="hero-actions">
             <a class="button button-primary" href="#install">安装 Sopify <span aria-hidden="true">↓</span></a>
             <a class="button button-secondary" href="https://github.com/evidentloop/sopify">查看 GitHub</a>
           </div>
-          <p class="hero-note">装进你已经在用的 AI 编程工具，不用换编辑器，也不用多装一个 CLI。方案就放在 <code>.sopify/</code> 下；问答和小修照常，不强制走流程。</p>
+          <p class="hero-note">安装到你现有的 AI 编程工具；日常问答和小修直接处理，需要时才生成方案。</p>
         </div>
 
         <figure class="hero-visual">
@@ -93,7 +93,7 @@
           <article class="card">
             <span class="card-index">02 / 恢复</span>
             <h3>接力断档</h3>
-            <p>方案与证据跟着项目走，换会话、工具、机器或队友都能从同一份记录继续。</p>
+            <p>方案与证据纳入 Git，换会话、工具、机器或队友都能从同一份记录接续。</p>
           </article>
           <article class="card">
             <span class="card-index">03 / 留痕</span>
@@ -149,7 +149,7 @@
           <div class="resume-copy">
             <p class="eyebrow">产品形态</p>
             <h2><span class="keep-together">宿主负责执行，</span><wbr /><span class="keep-together">Sopify 让工作可接续</span></h2>
-            <p>Sopify 是一套规则和 Skill，装进你已经在用的 AI 编程工具。它把方案、决策和验收证据作为项目文件保存在 <code>.sopify/</code>。</p>
+            <p>Sopify 是一套规则和 Skill，装进你已经在用的 AI 编程工具。它把方案、决策和验收证据作为项目文件保存在 <code>.sopify/</code> 并纳入 Git。</p>
             <p>明确要求继续，或输入 <code>~go</code>，宿主才会从这些记录接续未完成的方案；本地交接指针为同一工作区提供接续提示。</p>
             <span class="repo-path">.sopify/plan/…</span>
             <ul class="host-list" aria-label="支持的 AI 编程宿主">
@@ -159,7 +159,7 @@
               <li class="baseline">Copilot · 基线支持</li>
               <li class="baseline">Cursor · 基线支持</li>
               <li class="baseline">Antigravity · 基线支持</li>
-              <li class="baseline">Trae · 预览</li>
+              <li class="baseline">Trae · 基线支持</li>
             </ul>
           </div>
           <a
@@ -204,11 +204,11 @@
           <aside class="install-note">
             <h3>选择宿主，然后开始</h3>
             <ul>
-              <li>支持 Codex、Claude、Qoder、Copilot 与 Cursor</li>
+              <li>支持 Codex、Claude Code、Qoder、Copilot、Cursor、Antigravity 与 Trae</li>
               <li>提供中文和英文指令</li>
               <li>包含 macOS、Linux 与 Windows 安装路径</li>
             </ul>
-            <p class="install-trust">安装宿主指令与配套资产；不会增加守护进程、编辑器或后台进程。</p>
+            <p class="install-trust">仅把宿主指令与配套资产写入你的工具。</p>
             <div class="install-links">
               <a class="text-link" href="./install.sh">检查 install.sh →</a>
               <a class="text-link" href="./docs/getting-started.md">查看安装说明 →</a>
@@ -234,8 +234,8 @@
 
         <div class="faq-list">
           <details>
-            <summary>Sopify 是另一个编辑器或 Agent CLI 吗？</summary>
-            <p>不是。Sopify 把工作流指令和项目约定安装到你已有的 AI 编程宿主中。</p>
+            <summary>Sopify 如何与我现有的 AI 编程工具协同？</summary>
+            <p>Sopify 是一套规则和 Skill，安装到你已有的 AI 编程工具里。</p>
           </details>
           <details>
             <summary>普通问题也会自动进入方案吗？</summary>
@@ -247,7 +247,7 @@
           </details>
           <details>
             <summary>换宿主后能力完全一样吗？</summary>
-            <p>不一样。Codex、Claude Code 和 Qoder 已验证：托管工作流在真实会话中跑过，不只是装上了。Copilot、Cursor 和 Antigravity 为基线支持——安装、规则可见性和 Skill 选择都有记录，其中 Antigravity 还已在真实会话中 dogfood，但并非每个场景都已在真实会话中证实。Trae 为预览：适配已就位，还没有真实会话确认。Cursor 安装一次即可覆盖 IDE 与本地 CLI，CLI 会在方案、开发、接续和收口类请求中按需选择入口。Cloud Agent 仍不在范围内。</p>
+            <p>不一样。Codex、Claude Code 和 Qoder 已验证：托管工作流在真实会话中跑过，不只是装上了。Copilot、Cursor、Antigravity 和 Trae 为基线支持：安装已验证，真实会话证据因宿主而异，见各宿主文档；其中 Antigravity 已在真实会话中实测。Cursor 安装一次即可覆盖 IDE 与本地 CLI，CLI 会在方案、开发、接续和收口类请求中按需选择入口。Cloud Agent 仍不在范围内。</p>
           </details>
           <details>
             <summary>必须安装 EvidentLoop 吗？</summary>
@@ -258,7 +258,7 @@
     </main>
 
     <footer class="site-footer">
-      <span>Sopify · 能停车、能恢复、能追溯的 AI 工作。</span>
+      <span>Sopify · 能停车、能恢复、能追溯的 AI 编程工作流。</span>
       <nav class="footer-links" aria-label="页脚导航">
         <a href="https://github.com/evidentloop/sopify">GitHub</a>
         <a href="./docs/how-sopify-works.md">工作流说明</a>

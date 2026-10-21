@@ -230,12 +230,12 @@ def test_static_pages_keep_release_metadata(
         (
             "index.html",
             "Cursor · baseline",
-            "Codex, Claude, Qoder, Copilot, and Cursor targets",
+            "Codex, Claude Code, Qoder, Copilot, Cursor, Antigravity, and Trae targets",
         ),
         (
             "zh-CN.html",
             "Cursor · 基线支持",
-            "支持 Codex、Claude、Qoder、Copilot 与 Cursor",
+            "支持 Codex、Claude Code、Qoder、Copilot、Cursor、Antigravity 与 Trae",
         ),
     ],
 )

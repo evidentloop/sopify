@@ -1,0 +1,28 @@
+{
+  "evidence": {
+    "reports": [
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w5/language-audit-gemini.md",
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w5/tagline-critique-gemini.md",
+      ".sopify/plan/20261020_sopify_narrow_focus/audits/w5/polish-verify-gemini.md"
+    ],
+    "result": "tagline A consistent across README, pages and three SVGs; audit items applied or justified; badges on one line; host lists unified as Claude Code; 422 passed and preflight green",
+    "reviewers": [
+      "antigravity acceptor (language audit, tagline critique, final cross-verification)"
+    ],
+    "tasks": [
+      "T10"
+    ],
+    "user_signoff": "2026-10-21: user approved README and pages, then asked for tagline A, single-line badges, no Trae preview label, no negation-style lines, and a language pass"
+  },
+  "provenance": {
+    "host": "claude-code",
+    "plan_id": "20261020_sopify_narrow_focus",
+    "plan_version": "sha256:5172812bc86ee8408695ceeeeb21f55aa3091d662701e5201745d35f3b76b312",
+    "receipt_id": "verify_008",
+    "reviewer": "antigravity",
+    "timestamp": "2026-10-21T07:15:54+00:00",
+    "written_by": "plan owner"
+  },
+  "timestamp": "2026-10-21T07:15:54+00:00",
+  "verdict": "pass"
+}

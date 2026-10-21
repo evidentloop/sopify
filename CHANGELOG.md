@@ -6,7 +6,34 @@ Format: Summary → Changed → Plan Packages. File-level details live in `git l
 
 ## [Unreleased]
 
-- Removed the local `sync-skills.sh` cache helper; preview a header with `python3 scripts/render-host-skills.py --host codex --lang zh --output /tmp/sopify-preview/AGENTS.md`.
+### Summary
+
+Sopify now does one job: AI coding plans and verification evidence are versioned in Git, so work can resume across tools, teammates and agents. This release adds a full test gate, installers that preserve your instruction files, project setup on the first `~go`, two new hosts and a rewritten README.
+
+### Changed
+
+- **README and pages**: Rewritten around what Sopify is, a short start (install, then `~go plan` in your project), when not to use it, what appears in your repository, and host status in plain words.
+- **Cross-tool resume, tested**: A plan written in Claude Code was resumed and completed by a fresh Qoder CLI session given only `~go`. The evidence is archived with the plan.
+- **First run sets up the project**: Host rules now call the installed bootstrap helper before the first managed write, and again when local state is not ignored (for example after a teammate clones the repository). The first `~go` creates `.sopify/sopify.json` and the local ignore rule for `.sopify/state/`. Non-interactive runs stop without creating a marker.
+- **Your instruction files are kept**: Claude Code, Codex and Qoder home instruction files now use the same managed block as Copilot. Content outside the block is preserved. Whole-file installs from releases since 2026-06-10 migrate automatically, and malformed markers stop the install without writing anything.
+- **Reinstall repairs**: Corrupted, missing or stale Sopify files are restored on reinstall instead of skipped; language switches apply immediately.
+- **New hosts**:
+  - Antigravity CLI (`antigravity:<lang>`) has been tested in real local sessions.
+  - Trae CLI (`trae:<lang>`) is installed from its documented load surface; Doctor reports its behavior check as not yet verified.
+  - Both use a flat `sopify-*` Skill layout.
+- **Smaller entry**: The shared host entry is about half its former size; the flattened Copilot file shrinks by about a third.
+- **Guides**: `docs/orca.md` describes an optional owner, executor and reviewer split for running a plan with Orca. `docs/host-onboarding.md` is the recipe for adding a host.
+- **Reliability**:
+  - CI and release preflight run every test, and preflight fails on golden drift instead of regenerating and staging snapshots.
+  - The writer rejects non-object JSON state.
+  - On Python older than 3.11, the Python installer and init script print the requirement instead of a traceback.
+  - The install summary suggests `~go plan`, names Cursor correctly and says when the runtime check was not run.
+- **Maintainers**: Removed `scripts/sync-skills.sh` (preview a header with `python3 scripts/render-host-skills.py --host codex --lang zh --output /tmp/sopify-preview/AGENTS.md`), the simulated Qoder proof, the advisory enhancement check and the private resume helper. Retired history in the blueprint now points to archived plans.
+
+### Plan Packages
+
+- `20261020_sopify_narrow_focus` → archived with this release.
+- `20260819_cursor_support` → archived on 2026-10-20 after PR #71.
 
 ## [2026-08-30.001152] - 2026-08-30
 
