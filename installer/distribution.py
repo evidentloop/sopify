@@ -592,7 +592,7 @@ def _render_distribution_user_result_en(report: DistributionInstallReport) -> st
                 "",
                 "Next:",
                 f"  1. Open {host_name} in your project directory.",
-                "  2. Type: ~go",
+                "  2. Type: ~go plan <what you want to do>",
             ]
         )
     else:
@@ -603,7 +603,7 @@ def _render_distribution_user_result_en(report: DistributionInstallReport) -> st
                 "",
                 "Next:",
                 f"  1. Reopen {host_name} in that project.",
-                "  2. Type: ~go",
+                "  2. Type: ~go plan <what you want to do>",
             ]
         )
     lines.extend(
@@ -661,7 +661,7 @@ def _render_distribution_user_result_zh(report: DistributionInstallReport) -> st
                 "",
                 "下一步：",
                 f"  1. 在项目目录打开 {host_name}。",
-                "  2. 输入：~go",
+                "  2. 输入：~go plan <你要做的事>",
             ]
         )
     else:
@@ -672,7 +672,7 @@ def _render_distribution_user_result_zh(report: DistributionInstallReport) -> st
                 "",
                 "下一步：",
                 f"  1. 在该项目中重新打开 {host_name}。",
-                "  2. 输入：~go",
+                "  2. 输入：~go plan <你要做的事>",
             ]
         )
     lines.extend(

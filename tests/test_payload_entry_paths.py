@@ -1,8 +1,11 @@
 """Installed entry instructions resolve against the same host payload."""
 
 import json
+import os
 from pathlib import Path
 import re
+import subprocess
+import sys
 
 import pytest
 
@@ -48,3 +51,61 @@ def test_installed_entry_payload_paths(tmp_path, host, language):
     assert (bundle / "sopify_writer/__init__.py").is_file()
     assert "bundle_template_dir" in text and "sys.path" in text
     assert "from sopify_writer import ProtocolStore" in text
+    assert "git check-ignore -q .sopify/state/active_plan.json" in text
+
+
+def test_cloned_marker_repairs_local_ignores_with_existing_helper(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+    env.update(HOME=str(home), GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
+
+    def git(workspace, *args, check=True):
+        return subprocess.run(
+            ["git", *args], cwd=workspace, env=env,
+            capture_output=True, text=True, check=check,
+        )
+
+    adapter = get_host_adapter("qoder")
+    install_host_assets(adapter, repo_root=ROOT, home_root=home, language_directory="en-US")
+    payload = install_global_payload(adapter, repo_root=ROOT, home_root=home)
+
+    def bootstrap(workspace):
+        result = subprocess.run(
+            [sys.executable, str(payload.root / "helpers/bootstrap_workspace.py"),
+             "--workspace-root", str(workspace), "--request", "~go",
+             "--interaction-mode", "interactive"],
+            env=env, capture_output=True, text=True, check=True,
+        )
+        return json.loads(result.stdout)
+
+    source = tmp_path / "source"
+    source.mkdir()
+    git(source, "init", "-q")
+    assert bootstrap(source)["action"] == "bootstrapped"
+    git(source, "add", ".sopify/sopify.json")
+    git(source, "-c", "user.name=Sopify Test", "-c", "user.email=sopify@example.invalid",
+        "-c", "commit.gpgsign=false", "-c", f"core.hooksPath={os.devnull}",
+        "commit", "-qm", "fixture marker")
+    clone = tmp_path / "clone"
+    git(tmp_path, "clone", "-q", str(source), str(clone))
+    marker = clone / ".sopify/sopify.json"
+    marker_before = marker.read_bytes()
+    state_path = ".sopify/state/active_plan.json"
+    assert git(clone, "check-ignore", "-q", state_path, check=False).returncode == 1
+    (clone / ".sopify/state").mkdir()
+    (clone / state_path).write_text('{"plan_id":"fixture"}\n', encoding="utf-8")
+    assert state_path in git(clone, "status", "--porcelain", "--untracked-files=all").stdout
+    exclude = clone / ".git/info/exclude"
+    exclude.write_text(exclude.read_text(encoding="utf-8") + "\n.local-only/\n", encoding="utf-8")
+
+    assert bootstrap(clone)["action"] == "updated"
+    assert git(clone, "check-ignore", "-q", state_path).returncode == 0
+    assert git(clone, "status", "--porcelain", "--untracked-files=all").stdout == ""
+    assert git(clone, "check-ignore", "-q", ".sopify/plan/new/plan.md", check=False).returncode == 1
+    assert marker.read_bytes() == marker_before
+    assert ".local-only/" in exclude.read_text(encoding="utf-8")
+    assert exclude.read_text(encoding="utf-8").count("# BEGIN sopify-managed") == 1
+    before_repeat = (exclude.read_bytes(), exclude.stat().st_mtime_ns)
+    assert bootstrap(clone)["action"] == "skipped"
+    assert (exclude.read_bytes(), exclude.stat().st_mtime_ns) == before_repeat

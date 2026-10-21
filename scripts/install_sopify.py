@@ -8,6 +8,24 @@ import os
 from pathlib import Path
 import sys
 
+if sys.version_info < (3, 11):
+    _version_parser = argparse.ArgumentParser(add_help=False)
+    _version_parser.add_argument("--target", default="")
+    _version_parser.add_argument("--language", default=None)
+    _version_args, _ = _version_parser.parse_known_args()
+    _language = (
+        _version_args.target.rsplit(":", 1)[1] if ":" in _version_args.target
+        else _version_args.language or os.environ.get("LANG", "")
+    )
+    _version = ".".join(str(part) for part in sys.version_info[:3])
+    print(
+        f"Sopify 需要 Python 3.11 或更新版本，当前为 {_version}。"
+        if "zh" in _language.lower()
+        else f"Sopify needs Python 3.11 or newer; current version: {_version}.",
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))

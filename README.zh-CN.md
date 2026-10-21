@@ -35,13 +35,13 @@ curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/instal
 |---|---|
 | Codex | `codex:zh-CN` / `codex:en-US` |
 | Claude Code | `claude:zh-CN` / `claude:en-US` |
-| Qoder | `qoder` |
+| Qoder | `qoder:zh-CN` / `qoder:en-US` |
 | Copilot | `copilot:zh-CN` / `copilot:en-US` |
 | Cursor | `cursor:zh-CN` / `cursor:en-US` |
 | Antigravity | `antigravity:zh-CN` / `antigravity:en-US` |
 | Trae（预览） | `trae:zh-CN` / `trae:en-US` |
 
-需要 Python 3.11 或更高版本，安装器会在下载前检查。它只写入宿主指令和 Skill——没有守护进程、没有运行时、不是新编辑器。
+需要 Python 3.11 或更高版本，安装器会在下载前检查。它只写入宿主指令和 Skill——没有守护进程、没有后台进程、不是新编辑器。
 
 **2. 在项目里，往聊天框输入一行。**
 
@@ -49,7 +49,7 @@ curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/instal
 ~go plan 给注册表单加上输入校验
 ```
 
-Sopify 会先追问还没定的事实，然后写出 `.sopify/plan/YYYYMMDD_signup_form_validation/plan.md`。这一步不改业务代码。
+Sopify 会先追问还没定的事实，等你在对话里回答后才写 `.sopify/plan/YYYYMMDD_signup_form_validation/plan.md`。非交互会话（如 `-p` / `--print`）下提问会结束本轮——把答案写进请求再发一次即可。这一步不改业务代码。
 
 **3. 执行方案，做完归档。**
 
@@ -59,6 +59,14 @@ Sopify 会先追问还没定的事实，然后写出 `.sopify/plan/YYYYMMDD_sign
 ```
 
 方案和证据都留在 git 里，换到其他受支持的工具时可以接着做下去。
+
+### 仓库里会多出什么
+
+| 路径 | 是什么 | 是否提交 |
+|---|---|---|
+| `.sopify/sopify.json` | 项目标记 | 提交 |
+| `.sopify/plan/`、`.sopify/history/` | 方案与验收证据 | 提交 |
+| `.sopify/state/` | 本机指针：当前活动方案与接续提示 | 不提交；默认通过 `.git/info/exclude` 忽略 |
 
 Windows 用 PowerShell 安装器替代第 1 步：
 
@@ -98,7 +106,7 @@ iwr https://github.com/evidentloop/sopify/releases/latest/download/install.ps1 -
 
 | 命令 | 什么时候输入 |
 |---|---|
-| `~go plan <需求>` | 需要方案的新工作。写出 `.sopify/plan/<id>/plan.md`，不改代码 |
+| `~go plan <需求>` | 需要方案的新工作——不清楚时先追问，等你回答后才写 `.sopify/plan/<id>/plan.md`，不改代码 |
 | `~go` | 开始或继续。按当前请求路由，有活动方案时就接着做 |
 | `~go finalize` | 收口当前活动方案，并移到 `.sopify/history/` |
 
@@ -108,7 +116,7 @@ iwr https://github.com/evidentloop/sopify/releases/latest/download/install.ps1 -
 |---|---|---|
 | Codex | 已验证 | `--target codex:zh-CN` / `codex:en-US` |
 | Claude Code | 已验证 | `--target claude:zh-CN` / `claude:en-US` |
-| Qoder | 已验证 | `--target qoder` |
+| Qoder | 已验证 | `--target qoder:zh-CN` / `qoder:en-US` |
 | Copilot | 基线 | `--target copilot:zh-CN` / `copilot:en-US` |
 | [Cursor](./docs/cursor-host.md) | 基线 | `--target cursor:zh-CN` / `cursor:en-US` |
 | [Antigravity](./docs/antigravity-host.md) | 基线；已在真实会话中 dogfood | `--target antigravity:zh-CN` / `antigravity:en-US` |

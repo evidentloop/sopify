@@ -35,13 +35,13 @@ curl -fsSL https://github.com/evidentloop/sopify/releases/latest/download/instal
 |---|---|
 | Codex | `codex:en-US` / `codex:zh-CN` |
 | Claude Code | `claude:en-US` / `claude:zh-CN` |
-| Qoder | `qoder` |
+| Qoder | `qoder:en-US` / `qoder:zh-CN` |
 | Copilot | `copilot:en-US` / `copilot:zh-CN` |
 | Cursor | `cursor:en-US` / `cursor:zh-CN` |
 | Antigravity | `antigravity:en-US` / `antigravity:zh-CN` |
 | Trae (Preview) | `trae:en-US` / `trae:zh-CN` |
 
-Python 3.11 or newer; the installer checks before downloading. It writes host instructions and Skills only — no daemon, no runtime, no new editor.
+Python 3.11 or newer; the installer checks before downloading. It writes host instructions and Skills only — no daemon, no background process, no new editor.
 
 **2. In your project, type one line into the chat box.**
 
@@ -49,7 +49,7 @@ Python 3.11 or newer; the installer checks before downloading. It writes host in
 ~go plan add input validation to the signup form
 ```
 
-Sopify asks about anything still unresolved, then writes `.sopify/plan/YYYYMMDD_signup_form_validation/plan.md`. It changes no business code at this step.
+Sopify asks about anything still unresolved and writes `.sopify/plan/YYYYMMDD_signup_form_validation/plan.md` only after you answer in the conversation. In a non-interactive session (such as `-p` / `--print`) the question ends that turn — send the request again with your answers included. This step changes no business code.
 
 **3. Run the plan, then archive it.**
 
@@ -59,6 +59,14 @@ Sopify asks about anything still unresolved, then writes `.sopify/plan/YYYYMMDD_
 ```
 
 The plan and its evidence stay in git, so another supported tool can pick the work back up.
+
+### What lands in your repo
+
+| Path | What it is | In git? |
+|---|---|---|
+| `.sopify/sopify.json` | project marker | committed |
+| `.sopify/plan/`, `.sopify/history/` | plans and verification evidence | committed |
+| `.sopify/state/` | local pointers: active plan and resume hint | not committed; ignored by default through `.git/info/exclude` |
 
 Windows uses the PowerShell installer instead of step 1:
 
@@ -98,7 +106,7 @@ These are handled directly and never enter the plan workflow. A plan starts only
 
 | Command | When to type it |
 |---|---|
-| `~go plan <request>` | New work that needs a plan. Writes `.sopify/plan/<id>/plan.md` and changes no code |
+| `~go plan <request>` | New work that needs a plan — asks first when anything is unclear, writes `.sopify/plan/<id>/plan.md` only after you answer, and changes no code |
 | `~go` | Start or continue. Routes the current request, and resumes the active plan when there is one |
 | `~go finalize` | Close out the active plan and move it to `.sopify/history/` |
 
@@ -108,7 +116,7 @@ These are handled directly and never enter the plan workflow. A plan starts only
 |---|---|---|
 | Codex | Verified | `--target codex:en-US` / `codex:zh-CN` |
 | Claude Code | Verified | `--target claude:en-US` / `claude:zh-CN` |
-| Qoder | Verified | `--target qoder` |
+| Qoder | Verified | `--target qoder:en-US` / `qoder:zh-CN` |
 | Copilot | Baseline | `--target copilot:en-US` / `copilot:zh-CN` |
 | [Cursor](./docs/cursor-host.md) | Baseline | `--target cursor:en-US` / `cursor:zh-CN` |
 | [Antigravity](./docs/antigravity-host.md) | Baseline; dogfooded in a real session | `--target antigravity:en-US` / `antigravity:zh-CN` |

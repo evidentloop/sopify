@@ -29,7 +29,7 @@ alwaysApply: true
 - 需要澄清且问题适合有限选项时，如果当前会话提供 Cursor 内建 AskQuestion（`ask_question`），则优先调用；它不是 MCP 工具，不得通过 `GetMcpTools` 判断其不存在。使用问卷自带的自由输入，不要手工追加“其他”选项；当前会话未提供该工具或调用失败时，回退为简短文本追问。开放式事实直接用文本询问。问卷未回答前不得进入 Design/Develop，也不得写 plan、state、handoff 或 receipt。
 - 只有 `new_plan`、`continue_plan`、`finalize` 或明确的 managed develop 才进入四步读链：
   `state/active_plan.json` → `plan/<id>/plan.md` → `state/current_handoff.json` → `plan/<id>/receipts/`。
-- 首次受管写入前，若 `.sopify/sopify.json` 缺失，调用 `python3 {{config_dir}}/sopify/helpers/bootstrap_workspace.py --workspace-root <project_root> --request <current_request> --interaction-mode <interactive|non_interactive>`，传入本轮完整请求和实际交互模式；仅绑定成功后继续，非交互模式不会创建标记，其他结果按返回提示停车。
+- 首次受管写入前，若 `.sopify/sopify.json` 缺失，或在 Git 仓库中 `git check-ignore -q .sopify/state/active_plan.json` 表明 state 未被忽略，调用 `python3 {{config_dir}}/sopify/helpers/bootstrap_workspace.py --workspace-root <project_root> --request <current_request> --interaction-mode <interactive|non_interactive>`，传入本轮完整请求和实际交互模式；仅绑定成功后继续，非交互模式不会创建标记，其他结果按返回提示停车。
 - writer 导入：读取 `{{config_dir}}/sopify/payload-manifest.json` 的 `bundle_template_dir`，相对该 manifest 所在目录解析并展开 `~`，将结果加入 Python `sys.path` 后 `from sopify_writer import ProtocolStore`；只用库 API，非 CLI。
 - machine truth 只能经已安装 payload 中的 `sopify_writer` 库 API 写入；不得虚构 `python3 -m sopify_writer`，不得直接编辑 state、handoff 或 receipt。
 

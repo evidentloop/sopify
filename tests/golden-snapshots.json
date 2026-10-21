@@ -8,17 +8,17 @@
   },
   "protocol_version": "1.0",
   "snapshots": {
-    "codex:zh-CN:header": "59b65df01ae0aca179a7da0d7cc711846ebe36a22262a0d54ba71be003199533",
-    "codex:en-US:header": "4858f85ac4281c6d7772da99d14d926989c1d852b2d71506aeb958b9bd25fdab",
-    "claude:zh-CN:header": "fe93bda4027c437d4594a5ff0abda9d9a88b4d2570ed5c9ee00d7f9db33d3d50",
-    "claude:en-US:header": "31622ceb9f6c15387ba60d0e9b84b50f76bd391ebbe47de71ef66b61be06db5b",
+    "codex:zh-CN:header": "87980bd1c3a0d3d2a11c01c47d033f4e572b87b5dee927b1e2c7f135080da306",
+    "codex:en-US:header": "09351c0aa4f99a0bce67d0bac51aff8cc22441f1bb611c5de72984fc881e2858",
+    "claude:zh-CN:header": "e11b08ffd096c5139c5fce8fa92f70940a2fb160315f88aca7b069d0dcbce0e1",
+    "claude:en-US:header": "2425acb9947006210a7557e48d8e4ad85dee1ab0b9e821495701caabdecb45fc",
     "copilot:zh-CN:managed_block_payload": "a68fe2c20bb4e3b29d9cfe9ab0b180bab3e5df7bb67ce4ab4282f9405aefe73c",
     "skills:zh-CN:tree": "e253a0cb07032064cbb10105badaefc33aeaff845c698bb2cbf3a142147d404d",
     "copilot:en-US:managed_block_payload": "0e82dc1b3c35ab66461b204693327eb5620f149f7ad5fa8d4737904f4c9c59d8",
     "skills:en-US:tree": "05ad605e2c0dee93bc992c4494cb6eb8c582f17bc7e478870a7f87626f3c4864",
-    "antigravity:zh-CN:flat_prompt_tree": "3a0852d09bad147ffb8013b887010147b3551c344ed405436727d544ee232baa",
-    "antigravity:en-US:flat_prompt_tree": "7c1372a8e62180b9cb323c009c4b88ab8419a253146542709082ef743cc3a817",
-    "trae:zh-CN:flat_prompt_tree": "4eed55068d83b78105b1d05422c15b2c3bcea899e4f22a4abac3ffef4d1bc376",
-    "trae:en-US:flat_prompt_tree": "5b1ca9664a8f618d6c075869a80499485a8ec473eb1286121e69db035fd42dfb"
+    "antigravity:zh-CN:flat_prompt_tree": "45b84935023eb358205bbd7b9ac4b80d337f8d355b1f202670a1704030443b0c",
+    "antigravity:en-US:flat_prompt_tree": "1f7bbbd8b0e6a0ffd49cec4cd02ec31ed920fa5d8616927881f4ae5b3f0cfbc2",
+    "trae:zh-CN:flat_prompt_tree": "de7a0b3b5e2a3caa1ae6adaad4be6b4437538fe440a1aca948a237096cce899a",
+    "trae:en-US:flat_prompt_tree": "5625e43bb77f9f46da098c842ba09a45cdd04b824b31e102184af70d29db2c15"
   }
 }
